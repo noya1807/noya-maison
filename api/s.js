@@ -1,9 +1,19 @@
 // Shared gift-box page: shows the image and gives WhatsApp / social apps a large link preview.
-// GET ?i=<image URL in this project's Blob storage>
+// GET /s/<id> (rewritten to ?id=<id>) or the older ?i=<image URL in this project's Blob storage>
+import { head } from "@vercel/blob";
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-export default function handler(req, res) {
-  const img = String(req.query?.i || "");
+async function imageFor(q) {
+  const id = String(q?.id || "");
+  if (/^[a-z0-9]{6,24}$/.test(id)) {
+    for (const ext of ["jpg", "png", "webp"]) { try { return (await head(`share/${id}.${ext}`)).url; } catch (e) {} }
+    return "";
+  }
+  return String(q?.i || "");
+}
+
+export default async function handler(req, res) {
+  const img = await imageFor(req.query);
   const ok = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\/share\/[a-z0-9]+\.(jpg|png|webp)$/i.test(img);
   const host = req.headers["x-forwarded-host"] || req.headers.host;
   const home = `https://${host}/`;
