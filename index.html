@@ -1143,9 +1143,9 @@ const SHARE_ENDPOINT=window.NOYA_SHARE_ENDPOINT||"api/share";
 let shareAvailable=false;
 fetch(SHARE_ENDPOINT+"?ping=1").then(r=>r.ok?r.json():null).then(j=>{shareAvailable=!!(j&&j.ok);}).catch(()=>{});
 function currentBoxImage(){return (!aiImg.hidden&&aiImg.src)?aiImg.src:cv.toDataURL("image/jpeg",.9);}
-function toJpeg(src,max,q){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");
+function toJpeg(src,max,q){return new Promise((ok,no)=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>{const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");
   c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);const x=c.getContext("2d");x.fillStyle="#f7efe4";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);ok(c.toDataURL("image/jpeg",q));};im.onerror=no;im.src=src;});}
-function toPngBlob(src){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");
+function toPngBlob(src){return new Promise((ok,no)=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>{const s=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");
   c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);const x=c.getContext("2d");x.fillStyle="#f7efe4";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
   c.toBlob(b=>b?ok(b):no(new Error("png")),"image/png");};im.onerror=no;im.src=src;});}
 function shareText(){const t=totals();
@@ -1154,7 +1154,7 @@ let sharing=false, shareReady=null; // shareReady: a prepared phone share, so a 
 const CTA_LINE="עצבו את המארז שלכם ✨";
 async function shareLink(jpg){ // page with the designed image and one button to start designing; falls back to the site itself
   if(!shareAvailable)return location.origin+"/";
-  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg})});
+  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:{items:[...cart],pack:pack.id,bg:bg.id,variant}})});
   const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw new Error(j.error||r.status);return j.url;}
 async function shareWhatsApp(src){
   if(sharing||!cart.size)return;
@@ -1375,7 +1375,25 @@ function catalogChanged(){
   if(!pack.none&&!PACKS.includes(pack))pack=PACKS.find(k=>k.id===pack.id)||NO_PACK;
   renderPacks();update(false);
 }
-store.load().then(c=>{if(c&&c.products&&c.products.length){applyCatalog(c);catalogChanged();}});
+store.load().then(c=>{if(c&&c.products&&c.products.length){applyCatalog(c);catalogChanged();}}).catch(()=>{}).finally(()=>loadSharedBox());
+// "אני רוצה את המארז הזה" on a shared link opens the same box, already designed (no new AI run)
+async function loadSharedBox(){
+  const id=new URLSearchParams(location.search).get("box");if(!id||!/^[a-z0-9]{6,24}$/.test(id))return;
+  history.replaceState(null,"",location.pathname+location.hash);
+  try{
+    const r=await fetch(SHARE_ENDPOINT+"?box="+id);const j=await r.json().catch(()=>({}));if(!r.ok||!j.box)throw new Error("not found");
+    const b=j.box,all=Array.isArray(b.items)?b.items:[],items=all.filter(([pid,q])=>byId[pid]&&!byId[pid].hidden&&+q>0);
+    if(!items.length){showToast("המארז ששותף כבר לא זמין. אפשר לעצב מארז משלכם ✨");return;}
+    cart=new Map(items.map(([pid,q])=>[pid,Math.min(99,+q)]));
+    pack=b.pack==="none"||!b.pack?NO_PACK:(PACKS.find(k=>k.id===b.pack)||NO_PACK);
+    const bb=BGS.find(x=>x.id===b.bg);if(bb){bg=bb;renderBgs();applyBg();}
+    variant=Math.max(0,+b.variant||0);manual.clear();renderPacks();update(false);
+    const full=items.length===all.length;
+    if(b.image&&full){const key=comboKey();aiCache.set(key,b.image);finishReveal(key,b.image);}
+    showToast(full?"המארז נטען ✓ אפשר להמשיך להזמנה או לשנות אותו":"המארז נטען. חלק מהמוצרים כבר לא זמינים, אפשר להשלים ולחשוף מחדש");
+    document.getElementById("scene").scrollIntoView({block:"start"});
+  }catch(e){showToast("לא הצלחנו לטעון את המארז ששותף. אפשר לעצב מארז משלכם ✨");}
+}
 
 const ROLE_OPTS=[["stand","עומד"],["plat","מגש / משטח (מוצרים עומדים עליו)"],["lean","נשען על האריזה"],["lie","שוכב באלכסון"]];
 const isDirty=()=>JSON.stringify(draft)!==JSON.stringify(catalog);
