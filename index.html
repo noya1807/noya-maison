@@ -359,7 +359,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
     <div class="scene" id="scene" aria-label="תצוגת המארז">
       <canvas id="cv" aria-hidden="true"></canvas><div class="empty" id="emptyMsg" hidden>בחרו מוצרים והם יסתדרו כאן</div>
       <img id="aiImg" class="ai-img" alt="עיצוב המארז שנוצר על ידי מעצב ה-AI" hidden>
-      <div class="ai-load" id="aiLoad" hidden><div class="ai-orb"></div><b id="aiStep">המעצב שלנו מסדר את המארז…</b><span id="aiTime"></span></div>
+      <div class="ai-load" id="aiLoad" hidden><div class="ai-orb"></div><b id="aiStep">נויה עובדת על העיצוב…</b><span id="aiTime"></span></div>
       <span class="ai-tag" id="aiTag" hidden>✨ עוצב ע"י AI</span>
       <div class="veil" id="veil" hidden><div class="veil-in"><span class="veil-mark">✦</span><b>המארז שלכם מחכה לחשיפה</b><em class="veil-quote">"אין גבול למה שאפשר ליצור כשמעזים לחשוב אחרת." ✨</em><small id="veilCount"></small></div></div>
     </div>
@@ -980,7 +980,7 @@ async function generateAi(force){
 function renderAiBar(){
   const b=document.getElementById("aibar"),q=id=>document.getElementById(id);
   if(!cart.size){b.innerHTML=`<span class="ai-note">בחרו מוצר ראשון, והמארז שלכם יחכה לחשיפה ✨</span>`;return;}
-  if(aiBusy){b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn busy" disabled>המעצב שלנו עובד על המארז…</button><span class="reveal-sub">עוד רגע הקסם מתגלה</span></div>`;return;}
+  if(aiBusy){b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn busy" disabled>נויה עובדת על העיצוב…</button><span class="reveal-sub">עוד רגע הקסם מתגלה</span></div>`;return;}
   const reset=manual.size?`<button class="ghost small" id="aiReset">איפוס סידור</button>`:"";
   if(!revealed||(editing&&aiStale)){
     b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn" id="aiGo">חשפו את המארז שלכם ✨</button><span class="reveal-sub">רגע של הפתעה. תנו לקסם להתגלות.</span></div>`
