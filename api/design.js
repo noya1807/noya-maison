@@ -21,6 +21,7 @@ const PACK_FILES = { box0: "pack/box0.webp", box1: "pack/box1.webp", box2: "pack
 function prompt(items, pack, variant, manual) {
   const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, about ${it.heightCm} cm tall, role: ${it.role}`).join("\n");
   const hero = items.find(i => i.role === "hero");
+  const noPack = pack.id === "none"; // customer chose no packaging: products only
   const moods = [
     "warm beige seamless backdrop with soft palm-leaf shadows from an upper-left window",
     "creamy limestone backdrop, gentle morning light, delicate leaf shadows on the wall",
@@ -32,12 +33,12 @@ Create ONE photorealistic catalogue photograph of a styled gift set.
 
 INPUT IMAGES
 - Image 1: a rough layout sketch built from the real products. Use it for which products appear, their relative scale and a starting arrangement${manual ? " — the customer arranged it by hand, so keep their placement closely" : ", then improve the styling like a professional designer would"}.
-- Next images: the ONLY products in the set, one photo each (in the order listed below), followed by the packaging.
+- Next images: the ONLY products in the set, one photo each (in the order listed below)${noPack ? "" : ", followed by the packaging"}.
 - Last image: style reference for mood, light, palette and propping only. Never copy its products.
 
 PRODUCTS (include every one, exactly this quantity, nothing else):
 ${list}
-Packaging: ${pack.name}, standing at the back as the backdrop of the set.
+${noPack ? "No packaging: arrange the products freely on the surface as an open styled set, with no box, bag or gift container." : `Packaging: ${pack.name}, standing at the back as the backdrop of the set.`}
 
 FIDELITY
 Reproduce each product as photographed: same shape, proportions, colours, materials, logos and label text (e.g. NOYA, MAISON NOYA). Keep true relative sizes from the heights given. Do not add, duplicate or remove products, and do not invent brands.
