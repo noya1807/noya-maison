@@ -327,7 +327,14 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   .adm{padding:14px 12px 60px}
   .adm-act{flex-wrap:wrap}
   .adm-tools{flex-wrap:wrap}
+  .fab-reveal{position:fixed;left:12px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:35;border:0;border-radius:99px;padding:12px 18px;min-height:48px;
+    font-family:var(--display);font-size:17px;font-weight:500;color:#fffaf3;background:linear-gradient(135deg,#3f271c,#6e4d3b 55%,#b08a4f);
+    box-shadow:0 8px 22px rgba(74,47,34,.35);transition:opacity .25s,transform .25s,bottom .3s;touch-action:manipulation}
+  .fab-reveal.off{opacity:0;transform:translateY(12px);pointer-events:none}
+  .toast.show~.fab-reveal{bottom:calc(150px + env(safe-area-inset-bottom))}
 }
+.fab-reveal{display:none}
+@media (max-width:760px){.fab-reveal{display:block}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -470,6 +477,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   <p class="note">מחירים לדוגמה, כולל מע"מ. המחיר הסופי יאושר מול נציג.</p>
 </div>
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="undo">ביטול</button></div>
+<button class="fab-reveal" id="fabReveal" hidden>חשפו את המארז ✨</button>
 
 <script>
 // ---- Data (names & prices are placeholders, editable in stage 3) ----
@@ -842,6 +850,18 @@ new ResizeObserver(()=>recompose(false)).observe(scene);
   const st=document.querySelector(".stage");let h0=st.offsetHeight;
   new ResizeObserver(()=>{const h=st.offsetHeight,d=h-h0;h0=h;if(!d||!phone.matches||document.getElementById("buildView").hidden)return;
     if(st.getBoundingClientRect().bottom-d<=0)window.scrollBy(0,d);}).observe(st);
+})();
+// phone: while scrolling the products, keep a "reveal" button at hand (it just presses the existing reveal button)
+(()=>{const fab=document.getElementById("fabReveal"),bar=document.getElementById("aibar");let barSeen=true;
+  const sync=()=>{const go=document.getElementById("aiGo");const show=!!go&&!go.disabled&&!barSeen&&!document.getElementById("buildView").hidden;
+    if(show){fab.hidden=false;requestAnimationFrame(()=>fab.classList.remove("off"));}else{fab.classList.add("off");}};
+  fab.classList.add("off");
+  new IntersectionObserver(es=>{barSeen=es[es.length-1].isIntersecting;sync();}).observe(bar);
+  new MutationObserver(sync).observe(bar,{childList:true,subtree:true});
+  new MutationObserver(sync).observe(document.getElementById("buildView"),{attributes:true,attributeFilter:["hidden"]});
+  fab.onclick=()=>{const go=document.getElementById("aiGo");if(!go)return;
+    document.getElementById("scene").scrollIntoView({behavior:"smooth",block:"start"});
+    setTimeout(()=>{const g=document.getElementById("aiGo");g&&!g.disabled&&g.click();},450);};
 })();
 function layout(){recompose(true);}
 function applyBg(){recompose(false);}
