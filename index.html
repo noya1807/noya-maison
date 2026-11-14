@@ -1115,7 +1115,13 @@ function openSummary(){
     +`<div class="ln tot"><span></span><span>מחיר למארז (${t.count} פריטים)</span><span>${ils(t.total)}</span></div>`;
   $("perBox").textContent=ils(t.total);
   boxes=Math.max(1,boxes);renderQty();showView("sum");
+  prepOrderImage();
 }
+// the box picture travels with the order as a short link (uploaded in the background while the customer fills the form)
+let orderImg={src:"",url:""};
+function prepOrderImage(){const src=$("sumImg").src;if(!src||orderImg.src===src)return;const cur=orderImg={src,url:""};
+  const go=()=>{if(!shareAvailable)return;toJpeg(src,1280,.82).then(shareLink).then(u=>{cur.url=u;}).catch(()=>{});};
+  shareAvailable?go():setTimeout(go,1500);}
 function renderQty(){
   const per=totals().total,sum=per*boxes,need=Math.ceil(CONFIG.minOrder/per),ok=sum>=CONFIG.minOrder;
   $("qBoxes").value=boxes;$("grand").textContent=ils(sum);
@@ -1145,6 +1151,7 @@ function buildOrder(){
   const lines=[`הזמנת מארז – נויה במתנה (${ref})`,"",
     `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,date?`תאריך אספקה רצוי: ${date}`:null,"",
     "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""} – ${ils(byId[id].price*q)}`),(pack.none?"• אריזה: ללא":`• אריזה: ${pack.name} – ${ils(pack.price)}`),"",
+    orderImg.url&&orderImg.src===$("sumImg").src?`📸 תמונת המארז: ${orderImg.url}`:null,orderImg.url&&orderImg.src===$("sumImg").src?"":null,
     `מחיר למארז: ${ils(t.total)}`,`כמות מארזים: ${boxes}`,`סה"כ: ${ils(t.total*boxes)} (כולל מע"מ, לאישור נציג)`,
     f("fNotes")?"":null,f("fNotes")?`הערות: ${f("fNotes")}`:null].filter(x=>x!==null);
   return {ref,text:lines.join("\n")};
