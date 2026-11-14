@@ -283,6 +283,15 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   .scrim.open{opacity:1;pointer-events:auto}
   .sheet .list{max-height:none}
 }
+/* ---- packaging section (after the products) ---- */
+.pack-sec{margin-top:28px;padding-top:20px;border-top:1px solid var(--line);scroll-margin-top:12px}
+.pcard{font:inherit;text-align:start;cursor:pointer}
+.pcard .ph img{filter:drop-shadow(0 8px 8px rgba(74,47,34,.18))}
+.pcard[aria-checked="true"]{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.pcard .pick{margin-top:auto;border:1px solid var(--cocoa);border-radius:10px;padding:8px;text-align:center;font-weight:700;font-size:15px}
+.pcard[aria-checked="true"] .pick{background:var(--cocoa);color:var(--paper)}
+.bar-pack{border:0;background:none;padding:0;font:inherit;color:var(--cocoa);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.totals .chg{border:0;background:none;padding:0 4px;font:inherit;color:var(--cocoa);text-decoration:underline;cursor:pointer}
 /* ---- phone comfort: touch sizes, scrolling, no sideways drift (layout only) ---- */
 @media (max-width:760px){
   html,body{overflow-x:clip}
@@ -303,6 +312,10 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   .ghost.small{min-height:40px}
   .tog{min-height:40px}
   .tog input{width:20px;height:20px;margin:0}
+  .pcard .pick{min-height:44px;display:flex;align-items:center;justify-content:center}
+  .bar .bar-pack{margin:0;background:none;color:var(--cocoa);padding:4px 0;border-radius:0;font-weight:600;font-size:13px;text-decoration:underline;min-height:28px;white-space:nowrap}
+  .bar>div{min-width:0}
+  #barBtn{flex:0 0 auto}
   .aibar button{min-height:44px}
   .reveal-more{flex-wrap:wrap}
   .row{grid-template-columns:40px minmax(0,1fr) auto auto 36px;gap:8px}
@@ -350,12 +363,17 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
     <p class="hint">כל מוצר שתוסיפו יסתדר מיד בתמונת המארז. אין מגבלת פריטים.</p>
     <div class="chips" id="chips"></div>
     <div class="grid" id="grid"></div>
+    <div class="pack-sec" id="packSec">
+      <h2>בחרו אריזה למארז</h2>
+      <p class="hint">האריזה מתחלפת מיד בתמונת המארז. אפשר להחליף בכל שלב.</p>
+      <div class="grid" id="packGrid" role="radiogroup" aria-label="בחירת אריזה"></div>
+    </div>
   </section>
 
   <section class="stage" aria-labelledby="st-h">
     <h2 id="st-h">המארז שלכם</h2>
     <div class="sets" id="sets" aria-label="מארזי השראה"></div>
-    <div class="packs" id="packs" aria-label="בחירת אריזה"></div>
+    <div class="packs" id="packs" aria-label="בחירת אריזה" hidden></div>
     <div class="scene" id="scene" aria-label="תצוגת המארז">
       <canvas id="cv" aria-hidden="true"></canvas><div class="empty" id="emptyMsg" hidden>בחרו מוצרים והם יסתדרו כאן</div>
       <img id="aiImg" class="ai-img" alt="עיצוב המארז שנוצר על ידי מעצב ה-AI" hidden>
@@ -581,8 +599,17 @@ document.getElementById("clear").onclick=()=>{if(!cart.size)return;cart.clear();
 
 // ---- Packaging & backgrounds ----
 const packsEl=document.getElementById("packs");
-function renderPacks(){packsEl.innerHTML=PACKS.map(k=>`<button class="pack" aria-pressed="${k===pack}" data-id="${k.id}"><img src="${k.img}" alt=""><span><b>${k.name}</b>${ils(k.price)}</span></button>`).join("");}
+const packGrid=document.getElementById("packGrid");
+function choosePack(id){const k=PACKS.find(x=>x.id===id);if(!k||k===pack)return;pack=k;renderPacks();update(true);
+  if(matchMedia("(max-width:980px)").matches)showToast(`האריזה הוחלפה: ${k.name}`);}
+function goToPacks(){document.getElementById("sheet").classList.remove("open");document.getElementById("scrim").classList.remove("open");
+  document.getElementById("packSec").scrollIntoView({behavior:"smooth",block:"start"});}
+function renderPacks(){
+  packGrid.innerHTML=PACKS.map(k=>`<button class="card pcard" role="radio" aria-checked="${k===pack}" data-id="${k.id}">${k===pack?`<span class="tick">נבחרה ✓</span>`:""}<div class="ph"><img src="${k.img}" alt="" loading="lazy"></div><div class="nm">${k.name}</div><div class="pr">${ils(k.price)}</div><span class="pick">${k===pack?"האריזה שלכם":"בחירה"}</span></button>`).join("");
+  packsEl.innerHTML=PACKS.map(k=>`<button class="pack" aria-pressed="${k===pack}" data-id="${k.id}"><img src="${k.img}" alt=""><span><b>${k.name}</b>${ils(k.price)}</span></button>`).join("");}
 packsEl.onclick=e=>{const b=e.target.closest(".pack");if(!b)return;pack=PACKS.find(k=>k.id===b.dataset.id);renderPacks();update(true);};
+document.addEventListener("click",e=>{if(e.target.closest("[data-packs]"))goToPacks();});
+packGrid.onclick=e=>{const b=e.target.closest(".pcard");if(b)choosePack(b.dataset.id);};
 const bgsEl=document.getElementById("bgs");
 function renderBgs(){bgsEl.innerHTML=BGS.map(b=>`<button class="sw" title="${b.name}" aria-label="רקע ${b.name}" aria-pressed="${b===bg}" data-id="${b.id}" style="background:${b.wall?`url(${b.wall}) center/cover`:`linear-gradient(${b.w1},${b.w2})`}"></button>`).join("");}
 bgsEl.onclick=e=>{const b=e.target.closest(".sw");if(!b)return;bg=BGS.find(x=>x.id===b.dataset.id);renderBgs();applyBg();};
@@ -883,7 +910,7 @@ function rowsHTML(){
     <span class="mini"><button data-a="inc" aria-label="הוספה">+</button><output>${q}</output><button data-a="dec" aria-label="הפחתה">−</button></span>
     <span class="sum">${ils(p.price*q)}</span><button class="del" data-a="del" aria-label="הסרת ${esc(p.name)}">✕</button></div>`}).join("");
 }
-function totalsHTML(t){return `<span>אריזה: ${pack.name}</span><span>${ils(pack.price)}</span>
+function totalsHTML(t){return `<span>אריזה: ${pack.name} <button class="chg" data-packs>החלפה</button></span><span>${ils(pack.price)}</span>
   <span>מוצרים (${t.count} פריטים)</span><span>${ils(t.items)}</span>
   <span class="lbl">מחיר למארז</span><span class="big" id="bigP">${ils(t.total)}</span>`;}
 function onRow(e){const b=e.target.closest("button[data-a]");if(!b)return;const id=b.closest(".row").dataset.id;
@@ -897,7 +924,7 @@ function update(flash){
   document.getElementById("list").innerHTML=document.getElementById("list2").innerHTML=rowsHTML();
   document.getElementById("totals").innerHTML=document.getElementById("totals2").innerHTML=totalsHTML(t);
   document.getElementById("barP").textContent=ils(t.total);
-  document.getElementById("barC").textContent=`${t.count} פריטים · ${pack.name}`;
+  document.getElementById("barC").innerHTML=`${t.count} פריטים · <button class="bar-pack" data-packs>אריזה: ${esc(pack.name)} · החלפה</button>`;
   if(flash) document.querySelectorAll("#bigP,#barP").forEach(el=>{el.classList.remove("priceflash");void el.offsetWidth;el.classList.add("priceflash");});
   layout();
   onCartChanged();
