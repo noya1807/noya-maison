@@ -1019,7 +1019,7 @@ async function shareWhatsApp(src){
     const jpg=await toJpeg(src,1280,.82);
     if(mobile&&navigator.canShare){
       const file=new File([await (await fetch(jpg)).blob()],"noya-gift-box.jpg",{type:"image/jpeg"});
-      if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text});return;}catch(e){if(e.name==="AbortError")return;}}
+      if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:text+"\n"+location.origin+"/"});return;}catch(e){if(e.name==="AbortError")return;}}
     }
     if(!shareAvailable){showToast("שיתוף התמונה בוואטסאפ פעיל באתר. כאן אפשר להוריד צילום מסך ולשלוח אותו.");return;}
     showToast("מכין את התמונה לשיתוף…");
