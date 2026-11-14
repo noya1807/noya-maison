@@ -227,6 +227,34 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   .cut-prev{grid-template-columns:1fr}
   .adm-act{width:100%}
 }
+/* ---- reveal experience ---- */
+.scene canvas{transition:filter 1.4s cubic-bezier(.2,.7,.1,1),transform 1.4s cubic-bezier(.2,.7,.1,1)}
+.scene.veiled canvas{filter:blur(22px) saturate(.8) brightness(1.06);transform:scale(1.08)}
+.veil{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 55%,rgba(255,250,243,.25),rgba(247,239,228,.7) 75%)}
+.veil::before{content:"";position:absolute;inset:-40%;background:linear-gradient(115deg,transparent 42%,rgba(255,240,210,.45) 50%,transparent 58%);animation:shimmer 4.5s ease-in-out infinite}
+@keyframes shimmer{0%{transform:translateX(-35%)}100%{transform:translateX(35%)}}
+.scene.busy .veil-in{opacity:0}
+.veil-in{position:relative;transition:opacity .4s;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--cocoa);text-align:center}
+.veil-in b{font-family:var(--display);font-weight:500;font-size:clamp(18px,2.4vw,26px);letter-spacing:.3px}
+.veil-in small{font-size:13px;color:var(--cocoa-soft)}
+.veil-mark{font-size:26px;color:var(--gold);animation:glow 2.6s ease-in-out infinite}
+@keyframes glow{0%,100%{opacity:.45;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
+.scene.revealing .ai-img{animation:unveil 2s cubic-bezier(.2,.7,.1,1)}
+@keyframes unveil{0%{filter:blur(26px) brightness(1.18);transform:scale(1.08);opacity:.15}55%{opacity:1}100%{filter:none;transform:none;opacity:1}}
+.scene.revealing::after{content:"";position:absolute;inset:0;z-index:8;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,236,200,.6) 50%,transparent 65%);animation:sweep 1.9s cubic-bezier(.3,.6,.2,1) forwards}
+@keyframes sweep{0%{transform:translateX(-110%)}100%{transform:translateX(110%)}}
+.reveal-cta{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
+.reveal-btn{position:relative;overflow:hidden;width:100%;border:0;border-radius:14px;padding:14px 18px;cursor:pointer;
+  font-family:var(--display);font-size:20px;font-weight:500;letter-spacing:.3px;color:#fffaf3;
+  background:linear-gradient(135deg,#3f271c,#6e4d3b 55%,#b08a4f);box-shadow:0 10px 24px rgba(74,47,34,.28);transition:transform .2s,box-shadow .2s}
+.reveal-btn:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(74,47,34,.32)}
+.reveal-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,240,210,.35) 50%,transparent 60%);transform:translateX(-100%);animation:btnshine 3.2s ease-in-out infinite}
+@keyframes btnshine{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.reveal-btn.busy{cursor:progress;opacity:.85}
+.reveal-sub{font-size:13px;color:var(--cocoa-soft);font-style:italic}
+.reveal-more{display:flex;gap:8px;justify-content:center;width:100%}
 /* bottom bar + sheet: phone only */
 .bar,.sheet,.scrim{display:none}
 
@@ -277,6 +305,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       <img id="aiImg" class="ai-img" alt="עיצוב המארז שנוצר על ידי מעצב ה-AI" hidden>
       <div class="ai-load" id="aiLoad" hidden><div class="ai-orb"></div><b id="aiStep">המעצב שלנו מסדר את המארז…</b><span id="aiTime"></span></div>
       <span class="ai-tag" id="aiTag" hidden>✨ עוצב ע"י AI</span>
+      <div class="veil" id="veil" hidden><div class="veil-in"><span class="veil-mark">✦</span><b>המארז שלכם מחכה לחשיפה</b><small id="veilCount"></small></div></div>
     </div>
     <div class="bgs"><span class="lbl">רקע:</span><span id="bgs" style="display:flex;gap:8px"></span>
       <button class="ghost small" id="restyle">↻ הצעה עיצובית נוספת</button>
@@ -807,34 +836,46 @@ setsEl.onclick=e=>{const b=e.target.closest(".set");if(!b)return;const x=SETS[+b
   lastRemoved=null;undoSet=prev;showToast(`נטען מארז השראה "${x.name}"`,true);};
 let undoSet=null;
 document.getElementById("tip").onclick=e=>{const b=e.target.closest("button[data-add]");if(b)add(b.dataset.add);};
-// ===================== AI Designer (GPT Image) =====================
-// 3+ products: the live composition above is sent as a layout sketch, together with the original product photos
-// and one of the NOYA inspiration photos, to a small server function (/api/design) that calls GPT Image.
-// The page never holds an API key. Where no server is present (e.g. inside Claude), the live designer stays on.
+// ===================== AI Designer (GPT Image) — reveal experience =====================
+// The design engine itself is unchanged: same live sketch, same payload, same /api/design call, same prompt.
+// Only the way the customer reaches the result changed: the box stays veiled while products are chosen,
+// and "חשפו את המארז שלכם" runs the existing AI and unveils its result. Any change in content re-veils it.
+// Where no server is present (e.g. inside Claude), the reveal shows the live arrangement instead.
 const AI_ENDPOINT=window.NOYA_AI_ENDPOINT||"api/design";
-let aiAvailable=false, aiBusy=false, aiStale=false, aiView="ai", aiFirstDone=false, aiTimer=0, aiCache=new Map(), aiCurrent=null, aiCtrl=null;
-const aiImg=document.getElementById("aiImg"), aiLoad=document.getElementById("aiLoad"), aiTag=document.getElementById("aiTag");
+let aiAvailable=false, aiBusy=false, aiStale=false, aiCache=new Map(), aiCurrent=null, aiCtrl=null, revealed=false, revealedKey=null, editing=false;
+const aiImg=document.getElementById("aiImg"), aiLoad=document.getElementById("aiLoad"), aiTag=document.getElementById("aiTag"), veil=document.getElementById("veil");
 fetch(AI_ENDPOINT+"?ping=1").then(r=>r.ok?r.json():null).then(j=>{aiAvailable=!!(j&&j.ok);renderAiBar();onCartChanged();}).catch(()=>{aiAvailable=false;renderAiBar();});
 const comboKey=()=>[...cart].map(([id,q])=>id+"x"+q).sort().join(",")+"|"+pack.id+"|"+bg.id+"|"+variant+"|"+[...manual].map(([k,m])=>k+Math.round(m.dx*100)+"/"+Math.round(m.dy*100)).join(",");
+const contentKey=()=>[...cart].map(([id,q])=>id+"x"+q).sort().join(",")+"|"+pack.id;
 function showAi(src){
-  const on=!!src&&aiView==="ai"&&cart.size>=3;
+  const on=!!src&&!editing&&cart.size>=1;
   if(on&&aiImg.getAttribute("src")!==src)aiImg.src=src;
   aiImg.hidden=!on;aiTag.hidden=!on;
 }
+function setVeil(){
+  const v=cart.size>0&&!revealed&&!editing;
+  scene.classList.toggle("veiled",v);veil.hidden=!v;
+  if(v){const n=[...cart.values()].reduce((a,b)=>a+b,0);document.getElementById("veilCount").textContent=n===1?"פריט אחד נבחר":n+" פריטים נבחרו";}
+}
+// every add / remove / quantity / packaging change returns to the veiled state
 function onCartChanged(){
-  if(!aiAvailable){renderAiBar();return;}
-  if(cart.size<3){showAi(null);renderAiBar();return;}
-  const k=comboKey();
-  if(aiCache.has(k)){aiCurrent=k;aiStale=false;showAi(aiCache.get(k));renderAiBar();return;}
-  aiStale=!!aiCurrent;
-  if(!aiFirstDone&&!aiBusy){clearTimeout(aiTimer);aiTimer=setTimeout(()=>{if(cart.size>=3&&!aiFirstDone)generateAi();},1800);}
-  renderAiBar();
+  if(revealed&&contentKey()!==revealedKey){revealed=false;editing=false;aiStale=false;showAi(null);}
+  if(!cart.size){revealed=false;editing=false;showAi(null);}
+  setVeil();renderAiBar();
+}
+function playReveal(){scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);}
+function finishReveal(key,src){
+  aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();
+  showAi(src);setVeil();playReveal();renderAiBar();
 }
 const STEPS=["בוחר את המוצר המוביל…","בונה שכבות ועומק…","מאזן צבעים וצורות…","מעמיד את המוצרים על הבמה…","מכוון אור וצללים…","מלטש לצילום קטלוגי…"];
-async function generateAi(){
-  if(aiBusy||cart.size<3)return;
-  aiBusy=true;aiFirstDone=true;aiView="live";showAi(null);renderAiBar();
-  const key=comboKey(),t0=Date.now();let si=0;
+async function generateAi(force){
+  if(aiBusy||cart.size<1)return;                       // one run at a time, from the first product
+  const key=comboKey();
+  if(!aiAvailable){revealed=true;editing=false;aiStale=false;revealedKey=contentKey();setVeil();playReveal();renderAiBar();return;}
+  if(!force&&aiCache.has(key)){finishReveal(key,aiCache.get(key));return;}
+  aiBusy=true;scene.classList.add("busy");renderAiBar();
+  const t0=Date.now();let si=0;
   aiLoad.hidden=false;const tick=setInterval(()=>{const s=Math.round((Date.now()-t0)/1000);document.getElementById("aiTime").textContent=s+" שניות · בדרך כלל 20–60 שניות";
     if(s%5===0)document.getElementById("aiStep").textContent=STEPS[(si++)%STEPS.length];},1000);
   document.getElementById("aiStep").textContent=STEPS[0];
@@ -851,26 +892,30 @@ async function generateAi(){
     clearTimeout(to);
     const j=await r.json().catch(()=>({}));
     if(!r.ok||!j.image)throw new Error(j.error||("שגיאה "+r.status));
-    aiCache.set(key,j.image);aiCurrent=key;aiStale=comboKey()!==key;aiView="ai";
-    if(!aiStale)showAi(j.image);
-  }catch(e){showToast(e.name==="AbortError"?"מעצב ה-AI לא הספיק לסיים. הסידור החי נשאר, אפשר לנסות שוב.":"מעצב ה-AI לא זמין כרגע ("+e.message+"). הסידור החי נשאר.");}
-  finally{clearInterval(tick);aiLoad.hidden=true;aiBusy=false;renderAiBar();}
+    aiCache.set(key,j.image);
+    if(comboKey()===key)finishReveal(key,j.image);
+    else showToast("המארז השתנה בזמן העיצוב. לחצו שוב על \"חשפו את המארז שלכם\" לעיצוב התכולה העדכנית.");
+  }catch(e){showToast(e.name==="AbortError"?"העיצוב לקח יותר מדי זמן. המארז נשאר מוסתר, אפשר לנסות שוב.":"לא הצלחנו לעצב את המארז כרגע ("+e.message+"). המארז נשאר מוסתר, אפשר לנסות שוב.");}
+  finally{clearInterval(tick);aiLoad.hidden=true;aiBusy=false;scene.classList.remove("busy");renderAiBar();}
 }
 function renderAiBar(){
-  const b=document.getElementById("aibar");
-  if(cart.size<3){b.innerHTML=cart.size?`<span class="ai-note">✨ ממוצר שלישי ומעלה, מעצב ה-AI יעצב את המארז כצילום קטלוגי.</span>`:"";return;}
-  if(!aiAvailable){b.innerHTML=`<button class="ai-go" disabled title="פעיל באתר עם השרת">✨ עיצוב AI</button><span class="ai-note">מעצב ה-AI יפעל באתר (כאן מוצג הסידור החי). אפשר לגרור מוצרים לתיקון.</span>`;return;}
-  if(aiBusy){b.innerHTML=`<span class="ai-note">המעצב עובד… אפשר להמשיך לבחור מוצרים בינתיים.</span>`;return;}
-  const has=aiCurrent&&aiCache.has(aiCurrent);
-  b.innerHTML=(aiStale||!has?`<button class="ai-go" id="aiGo">✨ ${has?"עדכן את עיצוב ה-AI":"עצב עם AI"}</button>${has?`<span class="ai-stale">המארז השתנה מאז העיצוב האחרון</span>`:""}`
-      :`<button class="ai-go" id="aiRe">↻ עיצוב מחדש</button>`)
-    +(has?`<button class="ghost small" id="aiView">${aiView==="ai"?"✋ תיקון ידני":"🖼 הצג תמונת AI"}</button>`:"")
-    +(manual.size?`<button class="ghost small" id="aiReset">איפוס סידור</button>`:"");
-  const q=id=>document.getElementById(id);
-  q("aiGo")&&(q("aiGo").onclick=generateAi);
-  q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);aiStale=true;generateAi();});
-  q("aiView")&&(q("aiView").onclick=()=>{aiView=aiView==="ai"?"live":"ai";showAi(aiView==="ai"&&!aiStale?aiCache.get(aiCurrent):null);
-    if(aiView==="live")showToast("גררו מוצרים בתמונה כדי לתקן את המיקום, ואז לחצו \"עדכן את עיצוב ה-AI\"");renderAiBar();});
+  const b=document.getElementById("aibar"),q=id=>document.getElementById(id);
+  if(!cart.size){b.innerHTML=`<span class="ai-note">בחרו מוצר ראשון, והמארז שלכם יחכה לחשיפה ✨</span>`;return;}
+  if(aiBusy){b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn busy" disabled>המעצב שלנו עובד על המארז…</button><span class="reveal-sub">עוד רגע הקסם מתגלה</span></div>`;return;}
+  const reset=manual.size?`<button class="ghost small" id="aiReset">איפוס סידור</button>`:"";
+  if(!revealed||(editing&&aiStale)){
+    b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn" id="aiGo">חשפו את המארז שלכם ✨</button><span class="reveal-sub">רגע של הפתעה. תנו לקסם להתגלות.</span></div>`
+      +(editing?`<div class="reveal-more"><button class="ghost small" id="aiView">🖼 הצג את המארז המעוצב</button>${reset}</div>`:"");
+  } else {
+    b.innerHTML=`<button class="ai-go" id="aiRe">↻ עצבו מחדש באמצעות AI</button>`
+      +(aiAvailable&&aiCache.has(aiCurrent)?`<button class="ghost small" id="aiView">${editing?"🖼 הצג את המארז המעוצב":"✋ תיקון ידני"}</button>`:"")+reset;
+  }
+  q("aiGo")&&(q("aiGo").onclick=()=>generateAi(false));
+  q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);generateAi(true);});
+  q("aiView")&&(q("aiView").onclick=()=>{editing=!editing;
+    if(editing){showAi(null);showToast("גררו מוצרים בתמונה כדי לתקן את המיקום, ואז לחצו \"חשפו את המארז שלכם\"");}
+    else{aiStale=false;showAi(aiCache.get(aiCurrent));}
+    setVeil();renderAiBar();});
   q("aiReset")&&(q("aiReset").onclick=()=>{manual.clear();recompose(true);aiStale=true;renderAiBar();});
 }
 // ===================== Stage 2: summary, details, send =====================
