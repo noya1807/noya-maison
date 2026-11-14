@@ -283,6 +283,51 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   .scrim.open{opacity:1;pointer-events:auto}
   .sheet .list{max-height:none}
 }
+/* ---- phone comfort: touch sizes, scrolling, no sideways drift (layout only) ---- */
+@media (max-width:760px){
+  html,body{overflow-x:clip}
+  body{overflow-anchor:none;-webkit-text-size-adjust:100%}
+  button,.chip,.set,.pack,.sw,label{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .stage{position:relative;top:auto}
+  .chip{min-height:40px;padding:8px 16px}
+  .grid{gap:10px}
+  .add{min-height:44px}
+  .stepper button{width:44px;height:44px}
+  .sets,.packs{scroll-snap-type:x proximity;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .sets::-webkit-scrollbar,.packs::-webkit-scrollbar{display:none}
+  .set,.pack{scroll-snap-align:start}
+  .set{min-height:38px;padding:8px 14px}
+  .pack{min-height:50px}
+  .bgs{row-gap:6px}
+  .sw{width:38px;height:38px}
+  .ghost.small{min-height:40px}
+  .tog{min-height:40px}
+  .tog input{width:20px;height:20px;margin:0}
+  .aibar button{min-height:44px}
+  .reveal-more{flex-wrap:wrap}
+  .row{grid-template-columns:40px minmax(0,1fr) auto auto 36px;gap:8px}
+  .row .mini button{width:36px;height:36px}
+  .row .del{width:36px;height:36px}
+  .sheet{padding-bottom:0}
+  .sheet .actions{position:sticky;bottom:0;background:var(--paper);margin:0 -16px;padding:10px 16px 6px}
+  .sheet .note{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom));max-width:calc(100% - 24px);width:max-content;transform:translateX(-50%) translateY(calc(100% + 120px))}
+  .toast.show{transform:translateX(-50%)}
+  .toast button{min-height:36px;padding:0 6px}
+  .back{min-height:40px}
+  .stepper.big button{width:48px;height:48px}
+  .qty-row{flex-wrap:wrap;gap:12px}
+  .card2{padding:14px}
+  .card2 input,.card2 textarea,.modal-in input,.modal-in select,.adm-tools input,.arow input,.arow select,.arow textarea{font-size:16px}
+  .card2 input,.card2 textarea{min-height:44px}
+  .send{flex-wrap:wrap}
+  .send>button{min-height:48px;min-width:140px;padding-inline:8px;white-space:nowrap}
+  #copyOrder{min-height:44px}
+  .done-view{padding:20px 16px 60px}
+  .adm{padding:14px 12px 60px}
+  .adm-act{flex-wrap:wrap}
+  .adm-tools{flex-wrap:wrap}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -789,6 +834,15 @@ cv.addEventListener("pointermove",ev=>{
   const a=anim[drag.id];if(a){const T=compose().find(e=>e.key===drag.id);if(T){a.cur={...a.cur,cx:T.cx,base:T.base,z:T.z};a.to={...a.to,cx:T.cx,base:T.base,z:T.z};a.from={...a.cur};}}draw();});
 cv.addEventListener("pointerup",()=>{if(drag&&drag.moved){aiStale=true;renderAiBar();}drag=null;});
 new ResizeObserver(()=>recompose(false)).observe(scene);
+// phone comfort (no change to behaviour): a finger that starts on an empty part of the picture scrolls the page,
+// a finger on a product still drags it; and the product list stays put when the box panel above it changes height.
+(()=>{const phone=matchMedia("(max-width:760px)");
+  cv.style.touchAction=phone.matches?"pan-y":"";phone.addEventListener?.("change",()=>{cv.style.touchAction=phone.matches?"pan-y":"";});
+  cv.addEventListener("touchstart",e=>{if(!phone.matches||e.touches.length!==1)return;const t=e.touches[0];if(hit({clientX:t.clientX,clientY:t.clientY}))e.preventDefault();},{passive:false});
+  const st=document.querySelector(".stage");let h0=st.offsetHeight;
+  new ResizeObserver(()=>{const h=st.offsetHeight,d=h-h0;h0=h;if(!d||!phone.matches||document.getElementById("buildView").hidden)return;
+    if(st.getBoundingClientRect().bottom-d<=0)window.scrollBy(0,d);}).observe(st);
+})();
 function layout(){recompose(true);}
 function applyBg(){recompose(false);}
 document.getElementById("restyle").onclick=()=>{variant=(variant+1)%4;manual.clear();recompose(true);};
