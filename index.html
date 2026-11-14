@@ -751,8 +751,8 @@ function compose(){
   els.forEach(e=>{k=Math.min(k,(H*BASE[e.plane]-H*.05)/(e.h*PER[e.plane]));});
   const cx0=W/2-((minX+maxX)/2)*k, T=[];
   const X=(x,pl)=>cx0+x*k*PER[pl];
-  // packaging backdrop
-  const ph=pack.h*k*.9; T.push({key:"pack",src:pack.img,cx:cx0,base:H*.775,w:ph*pack.ar,h:ph,rot:0,z:0,cast:.16});
+  // packaging backdrop (only once there is something in the box: an empty scene stays clean)
+  const ph=pack.h*k*.9; if(all.length)T.push({key:"pack",src:pack.img,cx:cx0,base:H*.775,w:ph*pack.ar,h:ph,rot:0,z:0,cast:.16});
   // leaning flat pieces: first one balances the peak from the opposite side
   R.leans.forEach((p,i)=>{const sd=(i%2?side:-side),h=p.h*k*.92,w=h*p.ar,off=pkW*(.5+Math.floor(i/2)*.18)*k*.92;
     T.push({key:p.id,p,src:p.img,cx:cx0+sd*off,base:H*.79,w,h,rot:sd<0?5:-5,z:1+i*.01,cast:.14});});
