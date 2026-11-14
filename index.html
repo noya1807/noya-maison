@@ -32,6 +32,8 @@ img{max-width:100%}
 header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--paper)}
 .brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.5px}
 .brand small{display:block;font-family:var(--body);font-weight:400;font-size:13px;color:var(--cocoa-soft);letter-spacing:0}
+.hq{flex:1;min-width:0;margin:0;text-align:center;font-family:var(--display);font-style:italic;font-size:17px;color:var(--cocoa-soft);text-wrap:balance;transition:opacity .7s}
+.hq.fade{opacity:0}
 .steps{margin-inline-start:auto;display:flex;gap:6px;font-size:13px;color:var(--cocoa-soft)}
 .steps span{padding:4px 10px;border-radius:99px;border:1px solid var(--line)}
 .steps .on{background:var(--cocoa);color:var(--paper);border-color:var(--cocoa)}
@@ -265,7 +267,8 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 @media (max-width:980px){
   .tip{font-size:12px;padding:6px 10px}
   .layout{grid-template-columns:minmax(0,1fr);padding:0 0 90px;gap:0}
-  header{padding:10px 16px}
+  header{padding:10px 16px;flex-wrap:wrap;row-gap:4px}
+  .hq{flex-basis:100%;text-align:start;font-size:14px;line-height:1.4}
   .steps{display:none}
   .stage{order:-1;top:0;z-index:20;background:var(--cream);padding:10px 16px 8px;border-bottom:1px solid var(--line);gap:8px}
   .stage h2,.stage .hint,.summary{display:none}
@@ -354,6 +357,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 <body>
 <header>
   <div class="brand">נויה במתנה<small>בנו מארז מתנה משלכם</small></div>
+  <p class="hq" id="hq" hidden></p>
   <div class="steps" aria-label="שלבי ההזמנה" id="steps"><span class="on">1. בניית המארז</span><span>2. סיכום ופרטים</span><span>3. שליחה</span></div>
 </header>
 
@@ -547,7 +551,9 @@ P.forEach(p=>{Object.assign(p,ROLES[p.id]||{});p.role=p.role||"stand";p.ride=RID
   p.label=LABEL0.has(p.id);p.desc="";p.hidden=false;p.heroBoost=false;});
 const byId={};
 // Settings the business can change in the admin screen
-const CONFIG={orderEmail:"moshe@noyaglobal.com", whatsapp:"972543219070", minOrder:3000};
+const CONFIG={orderEmail:"moshe@noyaglobal.com", whatsapp:"972543219070", minOrder:3000,
+  // inspiration lines in the header: one per hour, same for everyone; editable in the admin screen (Settings)
+  quotes:["מתנה טובה מתחילה במחשבה על מישהו אחר.", "הדברים הקטנים הם אלה שנזכרים הכי הרבה.", "כל מארז הוא מכתב תודה שאפשר להחזיק ביד.", "נתינה היא הדרך הכי יפה להגיד \"ראיתי אותך\".", "יופי אמיתי נמצא בפרטים.", "מתנה שנבחרה באהבה מרגישים מהרגע הראשון.", "לפעמים הדבר הכי חשוב במתנה הוא הרגע שפותחים אותה.", "הוקרה טובה לא מחכה להזדמנות, היא יוצרת אותה.", "כשנותנים מהלב, זה תמיד מגיע ללב.", "מארז יפה מספר סיפור עוד לפני שפותחים אותו.", "השקעה קטנה במחשבה, הפתעה גדולה בלב.", "טוב לב מתחיל בפעולה קטנה אחת.", "מתנה היא דרך לומר תודה בלי מילים.", "כל פרט שנבחר בקפידה הוא עוד חיוך בדרך.", "העולם נעשה יפה יותר עם כל מתנה שניתנת.", "לשמח מישהו אחר זו אחת ההנאות הגדולות שיש.", "הרגע שלפני הפתיחה שווה את כל ההכנות.", "מתנה מושלמת היא לא היקרה ביותר, היא המדויקת ביותר.", "תודה שנאמרת בזמן שווה פי כמה.", "יצירתיות מתחילה כשמעזים לבחור אחרת.", "גם רגע רגיל יכול להפוך לזיכרון עם הפתעה קטנה.", "ארגון שמוקיר את האנשים שלו, האנשים שלו מוקירים אותו.", "הלב מבין עיצוב יפה עוד לפני העיניים.", "כל מתנה היא גשר קטן בין אנשים.", "מה שנעשה באהבה, מרגישים.", "השמחה של הנותן גדולה לפעמים משמחת המקבל.", "עטיפה יפה היא ההבטחה, והתוכן הוא הקסם.", "אין גיל ואין סיבה לקבל מתנה מרגשת.", "שווה לעצור לרגע ולחשוב מה ישמח את מי שמולך.", "מתנה טובה ממשיכה לשמח גם אחרי שהסרט נפתח.", "כשבוחרים בקפידה, כל פריט מקבל משמעות.", "החג מתחיל ברגע שמתחילים לתכנן מתנה.", "לפעמים \"חשבתי עליך\" הוא המשפט הכי חזק שיש.", "יופי פשוט הוא יופי שנשאר.", "הוקרה היא דלק לאנשים טובים.", "מתנה היא דרך לחגוג את מי שמקבל אותה.", "הדבר הכי אישי במתנה הוא הבחירה.", "קשרים טובים נבנים מרגעים קטנים של תשומת לב.", "מארז אחד יכול להאיר יום שלם.", "נדיבות היא תמיד באופנה.", "כשמשהו נעשה בכוונה, רואים את זה בכל פרט.", "הפתעה קטנה, חיוך גדול.", "מתנה טובה מדברת בשפה של מי שמקבל אותה.", "ההבדל בין טוב למושלם נמצא בתשומת הלב.", "כל צבע, כל מרקם, כל פרט מספר משהו.", "תנו למתנה לומר את מה שקשה לומר במילים.", "אנשים מרגישים כשחושבים עליהם באמת.", "השילוב הנכון הופך פריטים פשוטים לחוויה.", "יצירה מתחילה בבחירה אחת אמיצה.", "מתנות טובות לא נשכחות, הן מקבלות מקום של כבוד.", "הסוד של מארז מושלם הוא איזון.", "כשנותנים בשמחה, מקבלים בחזרה פי כמה.", "תודה גדולה מגיעה לפעמים בקופסה קטנה.", "מה שבוחרים לתת אומר הרבה על מי שנותן.", "עיצוב טוב הוא שקט, מדויק ומרגש.", "כל מקבל ראוי לרגע שכולו שלו.", "אין דבר יפה יותר מהבעת הפנים של מי שהופתע.", "מתנה היא זיכרון שמחכה לקרות.", "להעריך זה לבחור לראות את הטוב.", "גם פרט קטן יכול להיות כל הסיפור.", "שמחה שמשתפים, גדלה.", "הבית מתמלא חום מדברים שנבחרו באהבה.", "לפעמים מתנה היא ההתחלה של מסורת חדשה.", "כל מארז הוא הזדמנות להפתיע.", "כשהלב בוחר, אין טעויות.", "הוקרה אמיתית נראית, נשמעת ומורגשת.", "דברים יפים לוקחים זמן, ושווים כל רגע.", "מתנה שנעשתה בשבילך מרגישה אחרת.", "האווירה הנכונה מתחילה בפרט הנכון.", "נתינה היא שפה שכולם מבינים.", "עיצוב הוא הדרך להפוך רגש לחפץ.", "מה שמשמח אותנו הכי הרבה הוא לשמח אחרים.", "כל עונה היא עונה טובה להודות.", "פשטות ואלגנטיות הן תמיד בחירה בטוחה.", "מתנה מקשרת בין רגע של היום לזיכרון של מחר.", "כשרואים את האדם, מוצאים את המתנה.", "בכל מארז יש קצת מהנותן.", "החיים יפים יותר כשיש למי לתת.", "המתנה הכי טובה היא זו שגורמת למקבל להרגיש מיוחד.", "אל תחכו לחג כדי לומר תודה.", "יופי מתחיל בכוונה.", "כל פריט במקום הנכון יוצר הרמוניה.", "מתנה טובה היא חיבוק שאפשר לשלוח.", "מה שעשוי באכפתיות מחזיק לאורך זמן.", "התרגשות של מקבל מתנה היא תרופה לנותן.", "צוות שמרגיש מוערך, נותן את הלב.", "כל קשר טוב שווה חגיגה קטנה.", "עיצוב מושלם מרגיש טבעי, כאילו תמיד היה שם.", "להעז לבחור אחרת זה להעז להפתיע.", "הרגעים המתוקים נמצאים בין הסרט לנייר העטיפה.", "מתנה נכונה הופכת יום רגיל ליום מיוחד.", "כשמשקיעים במתנה, משקיעים בקשר.", "טעם טוב הוא מתנה בפני עצמו.", "תנו לפרטים לעשות את הקסם.", "כל מארז מתחיל בשאלה: מה ישמח אותו?", "הנתינה הכי יפה היא זו שלא מצפה לכלום.", "גם המילים הכי פשוטות מרגשות כשהן מגיעות עם מתנה.", "מתנה היא דרך לומר \"אתה חשוב לי\".", "כשהעיצוב נכון, המתנה מדברת בעצמה.", "עוד מתנה, עוד חיוך, עוד רגע ששווה לזכור."]};
 // The whole catalogue as one editable object (saved by the admin screen; these are the starting values)
 const PFIELDS=["id","name","desc","price","h","ar","cat","img","role","surf","ride","lie","soft","label","hidden","heroBoost","origUrl"];
 const pick=(o,f)=>Object.fromEntries(f.filter(k=>o[k]!==undefined).map(k=>[k,o[k]]));
@@ -558,7 +564,7 @@ function applyCatalog(c){
   P.splice(0,P.length,...catalog.products.map(x=>({...x,role:x.role||"stand",surf:x.surf||.5})));
   PACKS.splice(0,PACKS.length,...catalog.packs.map(x=>({...x})));
   Object.keys(byId).forEach(k=>delete byId[k]);P.forEach(p=>byId[p.id]=p);
-  Object.assign(CONFIG,catalog.settings||{});
+  Object.assign(CONFIG,catalog.settings||{});catalog.settings=JSON.parse(JSON.stringify(CONFIG)); // keep new settings (e.g. quotes) when an older saved catalogue lacks them
 }
 applyCatalog(DEFAULT_CATALOG);
 // Ready-made boxes shown in the "מארזי השראה" row. Empty = the row is hidden.
@@ -1167,6 +1173,7 @@ const store={mode:"local",
   }};
 let draft=null, adminKey="", pendingOrig=new Map(), admTab="p";
 function catalogChanged(){
+  if(typeof showQuote==="function")showQuote();
   P.forEach(p=>asset(p.img));PACKS.forEach(p=>asset(p.img));
   [...cart.keys()].forEach(id=>{if(!byId[id])cart.delete(id);});
   if(!PACKS.includes(pack))pack=PACKS.find(k=>k.id===pack.id)||PACKS[0];
@@ -1214,7 +1221,8 @@ function renderAdmin(){
     $("admS").innerHTML=`<div class="adm-form">
       <label>מייל לקבלת הזמנות<input data-s="orderEmail" type="email" value="${esc(s.orderEmail)}"></label>
       <label>וואטסאפ לקבלת הזמנות (בפורמט בינלאומי, למשל 972543219070)<input data-s="whatsapp" inputmode="tel" value="${esc(s.whatsapp)}"></label>
-      <label>מינימום הזמנה (₪)<input data-s="minOrder" type="number" min="0" value="${s.minOrder}"></label></div>`;
+      <label>מינימום הזמנה (₪)<input data-s="minOrder" type="number" min="0" value="${s.minOrder}"></label>
+      <label>משפטי השראה בכותרת (משפט בכל שורה. מתחלף כל שעה, אותו משפט לכל מי שנכנס באותה שעה)<textarea data-s="quotes" rows="14" style="font:16px var(--body);color:var(--cocoa);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical">${esc((s.quotes||[]).join("\n"))}</textarea></label></div>`;
   }
   $("admSave").textContent=isDirty()?"שמירת שינויים •":"שמירת שינויים";
 }
@@ -1224,7 +1232,7 @@ const NUM=new Set(["price","h","minOrder"]);
 function admEdit(e){
   const el=e.target,f=el.dataset.f,s=el.dataset.s;if(!f&&!s)return;
   const v=el.type==="checkbox"?el.checked:NUM.has(f||s)?Math.max(0,+el.value||0):el.value;
-  if(s){draft.settings[s]=v;}
+  if(s){draft.settings[s]=s==="quotes"?el.value.split("\n").map(x=>x.trim()).filter(Boolean):v;}
   else{const row=el.closest("[data-i],[data-k]");const obj=row.dataset.i!=null?draft.products[+row.dataset.i]:draft.packs[+row.dataset.k];
     obj[f]=v;if(f==="role"&&v==="plat"&&!obj.surf)obj.surf=.5;if(f==="role"&&v==="lie"&&!obj.lie)obj.lie={turn:0};if(f==="role"&&v!=="lie")obj.lie=null;
     if(f==="hidden")row.classList.toggle("off",v);}
@@ -1314,6 +1322,13 @@ $("addOk").onclick=()=>{
 };
 $("admLink").onclick=e=>{e.preventDefault();location.hash="admin";};
 window.addEventListener("hashchange",()=>{if(location.hash==="#admin")openAdmin();});
+// ---- Header inspiration line: changes every hour (same line for everyone at the same hour) ----
+const hqEl=document.getElementById("hq");
+function showQuote(){const q=(CONFIG.quotes||[]).map(x=>String(x).trim()).filter(Boolean);hqEl.hidden=!q.length;if(!q.length)return;
+  const t=q[Math.floor(Date.now()/36e5)%q.length];if(hqEl.textContent===t)return;
+  if(!hqEl.textContent){hqEl.textContent=t;return;}
+  hqEl.classList.add("fade");setTimeout(()=>{hqEl.textContent=t;hqEl.classList.remove("fade");},700);}
+showQuote();setTimeout(function tick(){showQuote();setTimeout(tick,36e5-Date.now()%36e5+500);},36e5-Date.now()%36e5+500);
 // ---- Phone sheet & next step ----
 const sheet=document.getElementById("sheet"),scrim=document.getElementById("scrim");
 document.getElementById("barBtn").onclick=()=>{sheet.classList.add("open");scrim.classList.add("open");};
