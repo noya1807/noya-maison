@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>בונה מארזים נויה במתנה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Noya brand world: cream paper, chocolate ink, soft gold. Layout: catalogue on the right, live gift scene + running price on the left. */
+  --cream:#f7efe4;
+  --paper:#fffaf3;
+  --sand:#e9dccb;
+  --cocoa:#4a2f22;
+  --cocoa-soft:#7a5a48;
+  --gold:#b08a4f;
+  --line:#e2d3c0;
+  --ok:#3f7a52;
+  --display:"Frank Ruhl Libre", "David Libre", Georgia, serif;
+  --body:"Assistant", "Segoe UI", Arial, sans-serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--cream);color:var(--cocoa);font-family:var(--body);font-size:16px;line-height:1.45}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+img{max-width:100%}
+
+header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--paper)}
+.brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.5px}
+.brand small{display:block;font-family:var(--body);font-weight:400;font-size:13px;color:var(--cocoa-soft);letter-spacing:0}
+.steps{margin-inline-start:auto;display:flex;gap:6px;font-size:13px;color:var(--cocoa-soft)}
+.steps span{padding:4px 10px;border-radius:99px;border:1px solid var(--line)}
+.steps .on{background:var(--cocoa);color:var(--paper);border-color:var(--cocoa)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px;padding:20px 24px 40px;max-width:1500px;margin:0 auto}
+
+/* catalogue */
+.cat h2,.stage h2{font-family:var(--display);font-weight:500;font-size:22px;margin:0 0 4px;text-wrap:balance}
+.hint{color:var(--cocoa-soft);font-size:14px;margin:0 0 12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:6px 14px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--cocoa);color:var(--paper);border-color:var(--cocoa)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px;position:relative;transition:border-color .2s, box-shadow .2s}
+.card.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.card .ph{aspect-ratio:1/1;border-radius:10px;background:linear-gradient(180deg,#f3e6d6,#eadbc8);display:flex;align-items:flex-end;justify-content:center;padding:10px;overflow:hidden}
+.card .ph img{max-height:100%;object-fit:contain;filter:drop-shadow(0 6px 6px rgba(74,47,34,.18))}
+.card .nm{font-size:14px;font-weight:600;min-height:2.6em}
+.card .ds{font-size:12px;color:var(--cocoa-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:-4px}
+.card .pr{font-size:15px;color:var(--cocoa-soft);font-variant-numeric:tabular-nums}
+.card .tick{position:absolute;top:8px;left:8px;background:var(--gold);color:#fff;border-radius:99px;font-size:12px;padding:2px 8px;font-weight:700}
+.add{border:0;background:var(--cocoa);color:var(--paper);border-radius:10px;padding:8px;font-weight:700;font-size:15px}
+.add:hover{background:#5d3c2c}
+.stepper{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--cocoa);border-radius:10px;overflow:hidden}
+.stepper button{border:0;background:transparent;width:40px;height:36px;font-size:20px;line-height:1}
+.stepper button:hover{background:var(--sand)}
+.stepper output{font-weight:700;font-variant-numeric:tabular-nums}
+
+/* stage */
+.stage{position:sticky;top:12px;align-self:start;display:flex;flex-direction:column;gap:12px}
+.packs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.pack{flex:0 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:6px 10px 6px 12px;font-size:13px;text-align:start}
+.pack img{height:38px;width:30px;object-fit:contain}
+.pack b{display:block;font-size:13px}
+.pack[aria-pressed="true"]{border-color:var(--cocoa);box-shadow:0 0 0 1px var(--cocoa)}
+.scene{position:relative;width:100%;aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:var(--sand);box-shadow:0 10px 30px rgba(74,47,34,.12)}
+.scene .wall{position:absolute;inset:0 0 38% 0;background-size:cover;background-position:center bottom}
+.scene .floor{position:absolute;inset:62% 0 0 0}
+.scene .horizon{position:absolute;left:0;right:0;top:62%;height:40px;transform:translateY(-50%);filter:blur(12px);opacity:.55}
+.item{position:absolute;transition:left .45s cubic-bezier(.2,.8,.2,1),top .45s cubic-bezier(.2,.8,.2,1),width .45s,height .45s,opacity .3s;will-change:left,top}
+.item img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 8px rgba(60,35,20,.28));display:block}
+.item .sh{position:absolute;left:8%;right:8%;bottom:-4%;height:10%;background:radial-gradient(closest-side,rgba(60,35,20,.35),transparent);z-index:-1}
+.item .q{position:absolute;top:-6px;inset-inline-end:-6px;background:var(--cocoa);color:var(--paper);font-size:12px;font-weight:700;border-radius:99px;padding:2px 7px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.item.pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.4) translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.item button{all:unset;cursor:pointer;position:absolute;inset:0}
+.pkg{position:absolute;transition:all .45s}
+.pkg img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 18px rgba(60,35,20,.25))}
+.empty{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);background:rgba(255,250,243,.88);padding:8px 16px;border-radius:99px;font-size:14px;white-space:nowrap}
+.bgs{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--cocoa-soft)}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--paper);box-shadow:0 0 0 1px var(--line);background-size:cover}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--cocoa)}
+
+.summary{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.list{display:flex;flex-direction:column;gap:6px;max-height:190px;overflow:auto;margin-bottom:10px}
+.row{display:grid;grid-template-columns:40px 1fr auto auto 28px;gap:10px;align-items:center;font-size:14px}
+.row img{width:40px;height:40px;object-fit:contain}
+.row .mini{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px}
+.row .mini button{border:0;background:none;width:26px;height:26px;font-size:16px}
+.row .mini output{min-width:18px;text-align:center;font-variant-numeric:tabular-nums}
+.row .sum{font-variant-numeric:tabular-nums;min-width:56px;text-align:left}
+.row .del{border:0;background:none;font-size:16px;color:var(--cocoa-soft)}
+.totals{border-top:1px solid var(--line);padding-top:10px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:14px;color:var(--cocoa-soft);font-variant-numeric:tabular-nums}
+.totals .big{font-family:var(--display);font-size:28px;color:var(--cocoa);font-weight:700}
+.totals .lbl{align-self:end;color:var(--cocoa);font-weight:600}
+.actions{display:flex;gap:10px;margin-top:12px}
+.go{flex:1;border:0;background:var(--cocoa);color:var(--paper);border-radius:12px;padding:12px;font-size:16px;font-weight:700}
+.ghost{border:1px solid var(--line);background:transparent;border-radius:12px;padding:12px 14px;font-size:14px}
+.note{font-size:12px;color:var(--cocoa-soft);margin-top:8px}
+.priceflash{animation:fl .5s}
+@keyframes fl{0%{color:var(--gold)}100%{color:var(--cocoa)}}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--cocoa);color:var(--paper);padding:10px 16px;border-radius:12px;display:flex;gap:14px;align-items:center;transition:transform .3s;z-index:50;font-size:14px}
+.toast.show{transform:translateX(-50%)}
+.toast button{border:0;background:none;color:#f0d29a;font-weight:700;text-decoration:underline}
+
+.sets{display:flex;gap:8px;align-items:center;overflow-x:auto;font-size:13px;color:var(--cocoa-soft)}
+.sets b{flex:0 0 auto;font-weight:600;color:var(--cocoa)}
+.set{flex:0 0 auto;border:1px dashed var(--gold);background:transparent;border-radius:99px;padding:5px 12px;font-size:13px;color:var(--cocoa)}
+.set:hover{background:var(--paper)}
+.tip{margin:0;background:var(--paper);border:1px solid var(--line);border-inline-start:3px solid var(--gold);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--cocoa-soft)}
+.tip b{color:var(--cocoa)}
+.tip button{border:0;background:none;color:var(--cocoa);font-weight:700;text-decoration:underline;padding:0 4px}
+.item.lean{transform-origin:bottom center}
+.scene canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.bgs{flex-wrap:wrap}
+.ghost.small{padding:6px 12px;font-size:13px;background:var(--paper)}
+.tog{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--cocoa)}
+.tog .muted{color:var(--cocoa-soft);font-size:12px}
+[hidden]{display:none!important}
+.ai-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:5;animation:fadein .7s ease}
+@keyframes fadein{from{opacity:0;filter:blur(6px)}to{opacity:1;filter:none}}
+.ai-load{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(247,239,228,.55);backdrop-filter:blur(3px);color:var(--cocoa);font-size:15px;text-align:center}
+.ai-load span{font-size:12px;color:var(--cocoa-soft);font-variant-numeric:tabular-nums}
+.ai-orb{width:54px;height:54px;border-radius:50%;background:conic-gradient(from 0deg,var(--gold),#f3e3c6,var(--cocoa-soft),var(--gold));animation:spin 1.6s linear infinite;mask:radial-gradient(circle,transparent 52%,#000 54%);-webkit-mask:radial-gradient(circle,transparent 52%,#000 54%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-tag{position:absolute;top:10px;inset-inline-start:10px;z-index:7;background:rgba(74,47,34,.82);color:var(--paper);font-size:12px;padding:4px 10px;border-radius:99px}
+.aibar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+.aibar:empty{display:none}
+.ai-go{border:0;border-radius:10px;padding:8px 14px;font-weight:700;background:linear-gradient(135deg,#b08a4f,#8a6a3b);color:#fff}
+.ai-go:disabled{opacity:.55;cursor:not-allowed}
+.ai-note{color:var(--cocoa-soft);font-size:12px}
+.ai-stale{background:#fff3df;border:1px solid #e9cf9f;border-radius:10px;padding:6px 10px;color:var(--cocoa)}
+.scene canvas{touch-action:none}
+
+/* ---- stage 2: summary, details, send ---- */
+.sum-view{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;padding:20px 24px 40px;max-width:1300px;margin:0 auto}
+.sum-box h2,.done h2{font-family:var(--display);font-weight:500;font-size:24px;margin:14px 0 8px;text-wrap:balance}
+.back{border:0;background:none;color:var(--cocoa-soft);font-size:14px;padding:0 0 10px}
+.sum-img{border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(74,47,34,.12);aspect-ratio:4/3;background:var(--sand)}
+.sum-img img{width:100%;height:100%;object-fit:cover;display:block}
+.sum-lines{display:flex;flex-direction:column;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.sum-lines .ln{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;font-size:14px;font-variant-numeric:tabular-nums}
+.sum-lines img{width:36px;height:36px;object-fit:contain}
+.sum-lines .tot{border-top:1px solid var(--line);padding-top:8px;margin-top:4px;font-weight:700}
+.sum-side{display:flex;flex-direction:column;gap:14px}
+.card2{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.card2 h3{margin:0;font-family:var(--display);font-weight:500;font-size:19px}
+.qty-row{display:flex;align-items:center;gap:16px}
+.stepper.big{width:170px}.stepper.big input{width:70px;border:0;text-align:center;font:700 20px var(--body);color:var(--cocoa);background:transparent;-moz-appearance:textfield}
+.stepper.big input::-webkit-inner-spin-button{display:none}
+.per{font-size:13px;color:var(--cocoa-soft)}.per b{font-size:18px;color:var(--cocoa);font-variant-numeric:tabular-nums}
+.minbar{height:8px;border-radius:99px;background:var(--sand);overflow:hidden}
+.minbar div{height:100%;background:var(--gold);transition:width .3s}
+.minbar.ok div{background:var(--ok)}
+.minmsg{margin:0;font-size:14px}
+.minmsg button{border:0;background:none;color:var(--cocoa);font-weight:700;text-decoration:underline;padding:0}
+.grand{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:10px}
+.grand b{font-family:var(--display);font-size:30px;font-variant-numeric:tabular-nums}
+.card2 label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--cocoa-soft);flex:1}
+.card2 input,.card2 textarea{font:15px var(--body);color:var(--cocoa);border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:#fff}
+.card2 input:focus,.card2 textarea:focus{outline:2px solid var(--gold);outline-offset:0}
+.card2 input.bad{border-color:#b4533a}
+.f2{display:flex;gap:10px}
+.err{margin:0;color:#9d3f28;font-size:13px}
+.send{display:flex;gap:10px}
+.send .go{flex:1}
+.wa{flex:1;border:0;border-radius:12px;padding:12px;font-size:16px;font-weight:700;background:#2f6e4b;color:#fff}
+.go:disabled,.wa:disabled{opacity:.45;cursor:not-allowed}
+.done-view{padding:30px 24px 60px}
+.done{max-width:620px;margin:0 auto;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.check{width:60px;height:60px;border-radius:50%;background:var(--ok);color:#fff;font-size:30px;display:flex;align-items:center;justify-content:center}
+.done-box{display:grid;grid-template-columns:200px 1fr;gap:14px;text-align:start;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px;width:100%;font-size:14px}
+.done-box img{width:100%;border-radius:10px;aspect-ratio:4/3;object-fit:cover}
+@media (max-width:980px){
+  .sum-view{grid-template-columns:1fr;padding:12px 16px 40px}
+  .f2{flex-direction:column}
+  .done-box{grid-template-columns:1fr}
+}
+
+/* ---- stage 3: admin ---- */
+.foot{text-align:center;font-size:12px;color:var(--cocoa-soft);padding:10px 0 100px}
+.foot a{color:var(--cocoa-soft)}
+.adm{max-width:1200px;margin:0 auto;padding:20px 24px 60px;display:flex;flex-direction:column;gap:14px}
+.adm-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.adm-head h2{font-family:var(--display);font-weight:500;font-size:24px;margin:0}
+.mode{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--sand)}
+.mode.srv{background:#dfeee4;color:#2d5a3e}
+.adm-act{margin-inline-start:auto;display:flex;gap:8px}
+.adm-act .go{padding:8px 16px;font-size:15px}
+.adm-tools{display:flex;gap:10px;margin-bottom:10px}
+.adm-tools input{flex:1;font:15px var(--body);border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.arow{display:grid;grid-template-columns:64px minmax(140px,1.2fr) minmax(140px,1.4fr) 80px 70px 120px 190px auto;gap:8px;align-items:start;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:6px}
+.arow.off{opacity:.55}
+.arow.new{border-color:var(--gold)}
+.arow img{width:64px;height:64px;object-fit:contain;background:linear-gradient(180deg,#f3e6d6,#eadbc8);border-radius:8px}
+.arow input,.arow select,.arow textarea,.adm-form input{font:14px var(--body);color:var(--cocoa);border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff;width:100%}
+.arow textarea{resize:vertical;min-height:34px}
+.arow .flags{display:flex;flex-direction:column;gap:2px;font-size:12px}
+.arow .flags label{display:flex;gap:4px;align-items:center;white-space:nowrap}
+.arow .flags input[type=checkbox]{width:auto}
+.arow .del{border:0;background:none;color:#9d3f28;font-size:13px}
+.ahead{display:grid;grid-template-columns:64px minmax(140px,1.2fr) minmax(140px,1.4fr) 80px 70px 120px 190px auto;gap:8px;font-size:12px;color:var(--cocoa-soft);padding:0 10px 4px}
+.adm-form{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;max-width:520px}
+.adm-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--cocoa-soft)}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(40,25,18,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-in{background:var(--paper);border-radius:18px;padding:18px;width:min(640px,100%);max-height:92%;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.modal-in.narrow{width:min(380px,100%)}
+.modal-in h3{margin:0;font-family:var(--display);font-weight:500;font-size:20px}
+.modal-in label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--cocoa-soft);flex:1}
+.modal-in input,.modal-in select{font:15px var(--body);color:var(--cocoa);border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.modal-in .tog{flex-direction:row}
+.cut-prev{display:grid;grid-template-columns:220px 1fr;gap:12px;align-items:start}
+.chk{height:220px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#efe6da 0 25%,#fff 0 50%) 0 0/18px 18px}
+.chk canvas{max-width:100%;max-height:100%}
+.cut-ctl{display:flex;flex-direction:column;gap:8px}
+.cut-ctl details label{margin-top:6px}
+@media (max-width:980px){
+  .ahead{display:none}
+  .arow{grid-template-columns:64px 1fr 1fr}
+  .arow>*:nth-child(n+3){grid-column:span 1}
+  .arow textarea{grid-column:2/4}
+  .cut-prev{grid-template-columns:1fr}
+  .adm-act{width:100%}
+}
+/* bottom bar + sheet: phone only */
+.bar,.sheet,.scrim{display:none}
+
+@media (max-width:980px){
+  .tip{font-size:12px;padding:6px 10px}
+  .layout{grid-template-columns:minmax(0,1fr);padding:0 0 90px;gap:0}
+  header{padding:10px 16px}
+  .steps{display:none}
+  .stage{order:-1;top:0;z-index:20;background:var(--cream);padding:10px 16px 8px;border-bottom:1px solid var(--line);gap:8px}
+  .stage h2,.stage .hint,.summary{display:none}
+  .scene{aspect-ratio:16/10;border-radius:14px}
+  .cat{padding:14px 16px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .bgs .lbl{display:none}
+  .bar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--paper);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));gap:12px;align-items:center}
+  .bar .p{font-family:var(--display);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .bar .c{font-size:13px;color:var(--cocoa-soft)}
+  .bar button{margin-inline-start:auto;border:0;background:var(--cocoa);color:var(--paper);border-radius:10px;padding:10px 14px;font-weight:700}
+  .sheet{display:block;position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--paper);border-radius:18px 18px 0 0;padding:16px;max-height:75%;overflow:auto;transform:translateY(105%);transition:transform .3s}
+  .sheet.open{transform:none}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(40,25,18,.35);z-index:40;opacity:0;pointer-events:none;transition:opacity .3s}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .sheet .list{max-height:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">נויה במתנה<small>בנו מארז מתנה משלכם</small></div>
+  <div class="steps" aria-label="שלבי ההזמנה" id="steps"><span class="on">1. בניית המארז</span><span>2. סיכום ופרטים</span><span>3. שליחה</span></div>
+</header>
+
+<div class="layout" id="buildView">
+  <section class="cat" aria-labelledby="cat-h">
+    <h2 id="cat-h">בחרו מוצרים למארז</h2>
+    <p class="hint">כל מוצר שתוסיפו יסתדר מיד בתמונת המארז. אין מגבלת פריטים.</p>
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="stage" aria-labelledby="st-h">
+    <h2 id="st-h">המארז שלכם</h2>
+    <div class="sets" id="sets" aria-label="מארזי השראה"></div>
+    <div class="packs" id="packs" aria-label="בחירת אריזה"></div>
+    <div class="scene" id="scene" aria-label="תצוגת המארז">
+      <canvas id="cv" aria-hidden="true"></canvas><div class="empty" id="emptyMsg" hidden>בחרו מוצרים והם יסתדרו כאן</div>
+      <img id="aiImg" class="ai-img" alt="עיצוב המארז שנוצר על ידי מעצב ה-AI" hidden>
+      <div class="ai-load" id="aiLoad" hidden><div class="ai-orb"></div><b id="aiStep">המעצב שלנו מסדר את המארז…</b><span id="aiTime"></span></div>
+      <span class="ai-tag" id="aiTag" hidden>✨ עוצב ע"י AI</span>
+    </div>
+    <div class="bgs"><span class="lbl">רקע:</span><span id="bgs" style="display:flex;gap:8px"></span>
+      <button class="ghost small" id="restyle">↻ הצעה עיצובית נוספת</button>
+      <label class="tog"><input type="checkbox" id="props" checked> אביזרי סטיילינג <span class="muted">(לא כלולים במארז)</span></label>
+      <button class="ghost small" id="clear" style="margin-inline-start:auto">ריקון המארז</button></div>
+    <div class="aibar" id="aibar"></div>
+    <p class="tip" id="tip" hidden></p>
+    <div class="summary">
+      <div class="list" id="list"></div>
+      <div class="totals" id="totals"></div>
+      <div class="actions"><button class="go" id="go">המשך לסיכום ←</button></div>
+      <p class="note">מחירים לדוגמה, כולל מע"מ. המחיר הסופי יאושר מול נציג.</p>
+    </div>
+  </section>
+</div>
+
+
+<main class="sum-view" id="sumView" hidden>
+  <section class="sum-box">
+    <button class="back" id="backBtn">→ חזרה לעריכת המארז</button>
+    <div class="sum-img"><img id="sumImg" alt="תמונת המארז שבניתם"></div>
+    <h2>המארז שלכם</h2>
+    <div class="sum-lines" id="sumLines"></div>
+  </section>
+  <section class="sum-side">
+    <div class="card2">
+      <h3>כמה מארזים תרצו?</h3>
+      <div class="qty-row">
+        <div class="stepper big"><button id="qInc" aria-label="מארז נוסף">+</button><input id="qBoxes" type="number" min="1" value="1" inputmode="numeric" aria-label="מספר מארזים"><button id="qDec" aria-label="מארז אחד פחות">−</button></div>
+        <div class="per">מחיר למארז<br><b id="perBox"></b></div>
+      </div>
+      <div class="minbar"><div id="minFill"></div></div>
+      <p class="minmsg" id="minMsg"></p>
+      <div class="grand"><span>סה"כ להזמנה</span><b id="grand"></b></div>
+      <p class="note">מחירים כולל מע"מ. המחיר הסופי, משלוח ומיתוג יאושרו מול נציג.</p>
+    </div>
+    <form class="card2" id="orderForm" novalidate>
+      <h3>פרטים ליצירת קשר</h3>
+      <div class="f2">
+        <label>שם מלא *<input id="fName" required autocomplete="name"></label>
+        <label>טלפון *<input id="fPhone" required type="tel" inputmode="tel" autocomplete="tel" placeholder="050-0000000"></label>
+      </div>
+      <div class="f2">
+        <label>אימייל<input id="fEmail" type="email" autocomplete="email"></label>
+        <label>ארגון / חברה<input id="fOrg" autocomplete="organization"></label>
+      </div>
+      <label>תאריך אספקה רצוי<input id="fDate" type="date"></label>
+      <label>הערות (מיתוג, כרטיס ברכה, כתובת למשלוח)<textarea id="fNotes" rows="3"></textarea></label>
+      <p class="err" id="fErr" hidden></p>
+      <div class="send">
+        <button type="button" class="go" id="sendMail">✉ שליחה במייל</button>
+        <button type="button" class="wa" id="sendWa">שליחה בוואטסאפ</button>
+      </div>
+      <button type="button" class="ghost small" id="copyOrder">העתקת פרטי ההזמנה</button>
+    </form>
+  </section>
+</main>
+
+<main class="done-view" id="doneView" hidden>
+  <div class="done">
+    <div class="check">✓</div>
+    <h2 id="doneTitle"></h2>
+    <p id="doneText"></p>
+    <div class="done-box"><img id="doneImg" alt="המארז שהוזמן"><div id="doneSum"></div></div>
+    <p class="note" id="doneRef"></p>
+    <div class="send"><button class="ghost" id="resend">פתיחת ההודעה שוב</button><button class="go" id="newBox">בניית מארז נוסף</button></div>
+  </div>
+</main>
+
+<main class="adm" id="admView" hidden>
+  <div class="adm-head">
+    <h2>ניהול הקטלוג</h2><span class="mode" id="admMode"></span>
+    <div class="adm-act"><button class="ghost small" id="admBack">→ חזרה לאפליקציה</button><button class="ghost small" id="admRevert">ביטול שינויים</button><button class="go" id="admSave">שמירת שינויים</button></div>
+  </div>
+  <div class="chips" id="admTabs"><button class="chip" aria-pressed="true" data-t="p">מוצרים</button><button class="chip" aria-pressed="false" data-t="k">אריזות</button><button class="chip" aria-pressed="false" data-t="s">הגדרות</button></div>
+  <div id="admP">
+    <div class="adm-tools"><input id="admQ" type="search" placeholder="חיפוש מוצר…" aria-label="חיפוש מוצר"><button class="ai-go" id="admAdd">+ הוספת מוצר</button></div>
+    <div id="admList"></div>
+  </div>
+  <div id="admK" hidden></div>
+  <div id="admS" hidden></div>
+</main>
+<div class="modal" id="addModal" hidden role="dialog" aria-label="הוספת מוצר">
+  <div class="modal-in">
+    <h3>הוספת מוצר חדש</h3>
+    <label class="file">תמונת המוצר (צילום חזיתי, רקע אחיד)<input type="file" id="addFile" accept="image/*"></label>
+    <div class="cut-prev"><div class="chk"><canvas id="cutCv"></canvas></div>
+      <div class="cut-ctl">
+      <button type="button" class="ai-go" id="addAiCut" hidden>✨ הסרת רקע עם AI</button>
+      <p class="ai-note" id="addAiMsg" hidden></p>
+      <details id="addQuick"><summary class="ai-note">הסרה מהירה בלי AI</summary>
+      <label>רגישות <input type="range" id="addTol" min="4" max="60" value="12"></label></details>
+      <label class="tog"><input type="checkbox" id="addKeep"> בלי הסרת רקע</label>
+      <p class="ai-note">לתוצאה הכי נקייה אפשר גם לשלוח לי את הצילום, ואחתוך אותו בכלי המקצועי.</p></div></div>
+    <div class="f2"><label>שם המוצר<input id="addName"></label><label>מחיר (₪)<input id="addPrice" type="number" min="0" value="50"></label></div>
+    <div class="f2"><label>גובה משוער (ס"מ)<input id="addH" type="number" min="1" value="15"></label><label>קטגוריה<select id="addCat"></select></label></div>
+    <label>תיאור קצר<input id="addDesc"></label>
+    <p class="err" id="addErr" hidden></p>
+    <div class="send"><button class="ghost" id="addCancel">ביטול</button><button class="go" id="addOk">הוספה לקטלוג</button></div>
+  </div>
+</div>
+<div class="modal" id="pwModal" hidden role="dialog" aria-label="כניסת מנהל">
+  <div class="modal-in narrow"><h3>כניסה לניהול</h3><label>סיסמת מנהל<input id="pwIn" type="password" autocomplete="current-password"></label>
+  <p class="err" id="pwErr" hidden></p><div class="send"><button class="ghost" id="pwCancel">ביטול</button><button class="go" id="pwOk">כניסה</button></div></div>
+</div>
+<footer class="foot">© נויה במתנה · <a href="#admin" id="admLink">ניהול</a></footer>
+<div class="bar" id="bar"><div><div class="p" id="barP"></div><div class="c" id="barC"></div></div><button id="barBtn">פרטי המארז</button></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-label="פרטי המארז">
+  <div class="list" id="list2"></div><div class="totals" id="totals2"></div>
+  <div class="actions"><button class="go" id="go2">המשך לסיכום ←</button></div>
+  <p class="note">מחירים לדוגמה, כולל מע"מ. המחיר הסופי יאושר מול נציג.</p>
+</div>
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="undo">ביטול</button></div>
+
+<script>
+// ---- Data (names & prices are placeholders, editable in stage 3) ----
+// h = approximate real height in cm, used to keep items in proportion; ar = image width/height.
+const CATS={scent:"נרות וריח",decor:"אגרטלים ועיצוב",serve:"הגשה ומטבח",textile:"טקסטיל"};
+const P=[
+ ["01","זוג בקבוקוני זכוכית חומים",69,22,.918,"decor"],["02","סט פמוטי קרמיקה על מגש",89,11,2.281,"scent"],
+ ["03","מגבת וופל NOYA",49,26,.427,"textile"],["04","סט מקינטה Eleganza",179,15,2.02,"serve"],
+ ["05","מפזר ריח + שרוול",119,24,.718,"scent"],["06","אגרטל קרמיקה מסולסל",79,26,.478,"decor"],
+ ["07","כוס תרמית Coffee",89,20,.814,"serve"],["08","פלייסמנט קש עגול",29,24,1.376,"serve"],
+ ["09","קערת קרמיקה רחבה",69,8,2.0,"serve"],["10","מגבת כחולה בגלגול",39,8,2.151,"textile"],
+ ["11","מגבת פסים כחול-לבן",59,18,.78,"textile"],["12","מבער שמנים + 2 שמנים",99,13,1.282,"scent"],
+ ["13","אגרטל זכוכית אדום",59,22,.576,"decor"],["14","מגבת וופל לבנה",49,22,.517,"textile"],
+ ["15","זוג אגרטלים אדומים",89,20,1.019,"decor"],["16","כפות עץ להגשה",45,26,.512,"serve"],
+ ["17","נר Classic בינוני",49,12,.586,"scent"],["18","אגרטל כדורי צהוב",59,9,1.188,"decor"],
+ ["19","בקבוקי שמן וחומץ",89,18,.988,"serve"],["20","קרש חיתוך מעץ",99,30,.595,"serve"],
+ ["21","נר ריחני בצנצנת",79,10,1.575,"scent"],["22","זוג נרות מסולסלים",59,28,.487,"scent"],
+ ["23","אגרטל אדום שטוח",69,14,.849,"decor"],["24","מגבת מגולגלת סגולה",59,16,.821,"textile"],
+ ["25","נר Classic גדול",69,15,.59,"scent"],["26","מפזר ריח NOYA",129,25,.628,"scent"],
+ ["27","אגרטל קרמיקה טבעות",89,28,.427,"decor"],["28","מגבת תחרה בגלגול",49,8,2.643,"textile"],
+ ["29","מלחייה ופלפלייה מעץ",79,10,1.556,"serve"],["30","מפזר ריח Maison NOYA",149,26,.867,"scent"],
+ ["32","קרש הגשה מעץ",129,16,1.504,"serve"],["33","מגש קרמיקה אובלי",49,6,2.985,"serve"],
+ ["34","נר Classic קטן",35,8,.709,"scent"],["35","אגרטל זכוכית שקוף",59,26,.348,"decor"],
+ ["36","נר קרמיקה בקופסה",89,11,.812,"scent"],["38","סט מפזר ריח + מילוי",159,26,.873,"scent"],
+ ["40","מגש עץ עגול",99,26,.993,"serve"],["41","זוג תחתיות קש",39,10,2.027,"serve"],
+ ["43","זוג פמוטים מצולעים",49,7,1.43,"decor"],["44","זוג נרות בקופסה ורודה",59,28,.227,"scent"]
+].map(([id,name,price,h,ar,cat])=>({id,name,price,h,ar,cat,img:`img/p/${id}.webp`}));
+const PACKS=[
+ {id:"box0",name:"קופסה גדולה",price:35,h:44,ar:.735,img:"img/pack/box0.webp"},
+ {id:"box1",name:"קופסה מוארכת",price:30,h:44,ar:.585,img:"img/pack/box1.webp"},
+ {id:"box2",name:"קופסה קטנה",price:22,h:30,ar:.852,img:"img/pack/box2.webp"},
+ {id:"42",name:"שקית לבנה עם חלון",price:18,h:38,ar:.73,img:"img/pack/42.webp"},
+ {id:"31",name:"שקית יוטה",price:25,h:40,ar:.592,img:"img/pack/31.webp"},
+ {id:"39",name:"תיק יוטה",price:25,h:34,ar:.908,img:"img/pack/39.webp"}
+];
+const BGS=[
+ {id:"cream",wall:"img/bg/wall2.jpg",f1:[233,203,172],f2:[244,228,210],name:"קרם וצללי עלים"},
+ {id:"blush",wall:"img/bg/wall1.jpg",f1:[199,141,108],f2:[224,184,154],name:"ורוד חם"},
+ {id:"plain",wall:"",w1:"#f3ece3",w2:"#ebe0d2",f1:[229,216,199],f2:[240,232,220],name:"בהיר נקי"}
+];
+// Styling roles: "plat" = a surface other items stand on; "lean" = flat piece leaning against the packaging;
+// RIDE = items that look good standing on a tray. surf = where the tray's top surface sits (share of its height from the bottom).
+const ROLES={"33":{role:"plat",h:10,surf:.5},"20":{role:"lean"},"40":{role:"lean"},"08":{role:"lean"},"41":{role:"lean"}};
+const RIDE=new Set(["01","05","06","13","17","18","21","23","25","27","34","35","43","19","29","15"]);
+const LIE0={"10":{turn:0},"28":{turn:0},"16":{turn:-90}};     // items that lie on the surface (16 is photographed upright)
+const SOFT0=new Set(["03","11","14","24"]);                    // soft tall textiles: backdrop / framing pieces
+const LABEL0=new Set(["03","04","05","07","12","17","21","22","25","26","30","34","36","38","44"]); // keep brand face visible
+P.forEach(p=>{Object.assign(p,ROLES[p.id]||{});p.role=p.role||"stand";p.ride=RIDE.has(p.id);p.lie=LIE0[p.id]||null;p.soft=SOFT0.has(p.id);
+  p.label=LABEL0.has(p.id);p.desc="";p.hidden=false;p.heroBoost=false;});
+const byId={};
+// Settings the business can change in the admin screen
+const CONFIG={orderEmail:"moshe@noyaglobal.com", whatsapp:"972543219070", minOrder:3000};
+// The whole catalogue as one editable object (saved by the admin screen; these are the starting values)
+const PFIELDS=["id","name","desc","price","h","ar","cat","img","role","surf","ride","lie","soft","label","hidden","heroBoost","origUrl"];
+const pick=(o,f)=>Object.fromEntries(f.filter(k=>o[k]!==undefined).map(k=>[k,o[k]]));
+const DEFAULT_CATALOG=JSON.parse(JSON.stringify({v:1,products:P.map(p=>pick(p,PFIELDS)),packs:PACKS,settings:CONFIG}));
+let catalog=DEFAULT_CATALOG;
+function applyCatalog(c){
+  catalog=JSON.parse(JSON.stringify(c));
+  P.splice(0,P.length,...catalog.products.map(x=>({...x,role:x.role||"stand",surf:x.surf||.5})));
+  PACKS.splice(0,PACKS.length,...catalog.packs.map(x=>({...x})));
+  Object.keys(byId).forEach(k=>delete byId[k]);P.forEach(p=>byId[p.id]=p);
+  Object.assign(CONFIG,catalog.settings||{});
+}
+applyCatalog(DEFAULT_CATALOG);
+const SETS=[
+ {name:"בית מעוצב",pack:"box0",items:["33","05","06","22","40","03"]},
+ {name:"ערב נרות",pack:"box1",items:["33","25","17","34","44","36","43","02"]},
+ {name:"ספא ביתי",pack:"42",items:["33","13","25","11","14","24","12"]},
+ {name:"שולחן חג",pack:"39",items:["33","19","20","29","16","41","04"]}
+];
+
+// ---- State ----
+let cart=new Map(SETS[0].items.map(id=>[id,1])); // opens on an inspiration box so the scene starts alive
+let pack=PACKS[0], bg=BGS[0], cat="all", fresh=new Set(), lastRemoved=null, toastT;
+const ils=n=>"₪"+(+n||0).toLocaleString("he-IL");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+// ---- Catalogue ----
+const chipsEl=document.getElementById("chips"), gridEl=document.getElementById("grid");
+function renderChips(){
+  chipsEl.innerHTML=[["all","הכול"],...Object.entries(CATS)].map(([k,v])=>`<button class="chip" aria-pressed="${k===cat}" data-c="${k}">${v}</button>`).join("");
+}
+chipsEl.onclick=e=>{const b=e.target.closest(".chip");if(!b)return;cat=b.dataset.c;renderChips();renderGrid();};
+function renderGrid(){
+  gridEl.innerHTML=P.filter(p=>!p.hidden&&(cat==="all"||p.cat===cat)).map(p=>{
+    const q=cart.get(p.id)||0;
+    return `<article class="card ${q?"sel":""}" data-id="${p.id}">
+      ${q?`<span class="tick">✓ במארז</span>`:""}
+      <div class="ph"><img src="${p.img}" alt="${esc(p.name)}" loading="lazy"></div>
+      <div class="nm">${esc(p.name)}</div>${p.desc?`<div class="ds">${esc(p.desc)}</div>`:""}<div class="pr">${ils(p.price)}</div>
+      ${q?`<div class="stepper"><button data-a="inc" aria-label="הוספת יחידה">+</button><output>${q}</output><button data-a="dec" aria-label="הסרת יחידה">−</button></div>`
+         :`<button class="add" data-a="inc">+ הוספה</button>`}
+    </article>`}).join("");
+}
+gridEl.onclick=e=>{const b=e.target.closest("button[data-a]");if(!b)return;const id=b.closest(".card").dataset.id;b.dataset.a==="inc"?add(id):dec(id);};
+
+function add(id){const had=cart.has(id);cart.set(id,(cart.get(id)||0)+1);if(!had)fresh.add(id);update(true);}
+function dec(id){const q=cart.get(id);if(!q)return;if(q===1)remove(id);else{cart.set(id,q-1);update(true);}}
+function remove(id){undoSet=null;lastRemoved=[id,cart.get(id)];cart.delete(id);update(true);showToast(`${byId[id].name} הוסר מהמארז`,true);}
+function showToast(m,undo){const t=document.getElementById("toast");document.getElementById("toastMsg").textContent=m;document.getElementById("undo").hidden=!undo;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),5000);}
+document.getElementById("undo").onclick=()=>{if(undoSet){cart=undoSet[0];pack=undoSet[1];undoSet=null;renderPacks();update(true);}else if(lastRemoved){cart.set(...lastRemoved);fresh.add(lastRemoved[0]);lastRemoved=null;update(true);}document.getElementById("toast").classList.remove("show");};
+document.getElementById("clear").onclick=()=>{if(!cart.size)return;cart.clear();update(true);};
+
+// ---- Packaging & backgrounds ----
+const packsEl=document.getElementById("packs");
+function renderPacks(){packsEl.innerHTML=PACKS.map(k=>`<button class="pack" aria-pressed="${k===pack}" data-id="${k.id}"><img src="${k.img}" alt=""><span><b>${k.name}</b>${ils(k.price)}</span></button>`).join("");}
+packsEl.onclick=e=>{const b=e.target.closest(".pack");if(!b)return;pack=PACKS.find(k=>k.id===b.dataset.id);renderPacks();update(true);};
+const bgsEl=document.getElementById("bgs");
+function renderBgs(){bgsEl.innerHTML=BGS.map(b=>`<button class="sw" title="${b.name}" aria-label="רקע ${b.name}" aria-pressed="${b===bg}" data-id="${b.id}" style="background:${b.wall?`url(${b.wall}) center/cover`:`linear-gradient(${b.w1},${b.w2})`}"></button>`).join("");}
+bgsEl.onclick=e=>{const b=e.target.closest(".sw");if(!b)return;bg=BGS.find(x=>x.id===b.dataset.id);renderBgs();applyBg();};
+
+// ===================== Stylist composition engine =====================
+// Built from the reference photos: an asymmetric pyramid with an off-centre peak, three depth planes
+// (backdrop / hero / foreground accents), one hero item raised on a tray or stone riser, height rhythm,
+// 15-30% overlap that keeps labels clear, diagonal lying accents in front, colour + weight balance,
+// negative space above, and one light source with matching cast, contact and overlap shadows.
+const scene=document.getElementById("scene"), cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+let variant=0, useProps=true, dpr=1, W=0, H=0;
+
+// ---- assets: image + silhouette (for cast shadows) + measured brightness / saturation ----
+const IMG={};
+function asset(src){
+  let o=IMG[src]; if(o) return o;
+  o=IMG[src]={im:new Image(),ready:false,lum:.6,sat:.1};
+  o.im.onload=()=>{prepAsset(o);recompose(false);};
+  o.im.src=src; return o;
+}
+function prepAsset(o){
+  const im=o.im,c=document.createElement("canvas");c.width=im.naturalWidth;c.height=im.naturalHeight;
+  const x=c.getContext("2d");x.drawImage(im,0,0);x.globalCompositeOperation="source-in";x.fillStyle="#2b1a10";x.fillRect(0,0,c.width,c.height);o.sil=c;
+  try{const s=document.createElement("canvas");s.width=s.height=28;const y=s.getContext("2d");y.drawImage(im,0,0,28,28);
+    const d=y.getImageData(0,0,28,28).data;let L=0,S=0,n=0;
+    for(let i=0;i<d.length;i+=4){if(d[i+3]<140)continue;const r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b);L+=.299*r+.587*g+.114*b;S+=mx?(mx-mn)/mx:0;n++;}
+    if(n){o.lum=L/n;o.sat=S/n;}}catch(e){}
+  o.ready=true;
+}
+P.forEach(p=>asset(p.img)); PACKS.forEach(p=>asset(p.img)); // (reloaded for new items in applyCatalog callers)
+ BGS.forEach(b=>b.wall&&asset(b.wall));
+const lumOf=p=>asset(p.img).lum, satOf=p=>asset(p.img).sat;
+
+function rng(seed){let s=(seed>>>0)||1;return()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return((s>>>0)%100000)/100000;};}
+const heroScore=p=>p.price*Math.sqrt(p.h*p.h*p.ar)*(p.label?1.15:1)*(p.soft?.45:1)*(p.h<10?.6:1)*(p.heroBoost?2.5:1);
+const wOf=p=>p.h*p.ar;
+
+// ---- 1. roles: backdrop / focal / supporting / foreground ----
+function roles(all){
+  const leans=all.filter(p=>p.role==="lean").sort((a,b)=>b.h-a.h);
+  const lies=all.filter(p=>p.role==="lie"||p.lie);
+  const plat=all.find(p=>p.role==="plat");
+  let stand=all.filter(p=>!leans.includes(p)&&!lies.includes(p)&&p!==plat);
+  let focal=null;
+  if(plat){
+    const c=stand.filter(p=>p.ride).sort((a,b)=>heroScore(b)-heroScore(a)), riders=[], cap=wOf(plat)*.98; let used=0;
+    if(c[0]){riders.push(c[0]);used=wOf(c[0])*.9;}
+    c.slice(1).sort((a,b)=>Math.abs(a.h-riders[0].h*.55)-Math.abs(b.h-riders[0].h*.55)).forEach(r=>{
+      const w=wOf(r)*.9; if(riders.length<3&&used+w<=cap){riders.push(r);used+=w;}});
+    stand=stand.filter(p=>!riders.includes(p));
+    const lift=plat.h*plat.surf, top=riders.reduce((m,r)=>Math.max(m,r.h),0);
+    focal={kind:"tray",plat,riders,w:wOf(plat),h:Math.max(plat.h,lift+top),lift};
+  } else {
+    const pool=stand.filter(p=>!p.soft);
+    const hero=(pool.length?pool:stand).sort((a,b)=>heroScore(b)-heroScore(a))[0];
+    if(hero){
+      stand=stand.filter(p=>p!==hero);
+      const riser=useProps&&all.length>=3, steps=riser&&all.length>=6, rh=riser?(steps?6.5:3.6):0;
+      focal={kind:"hero",hero,riders:[hero],w:wOf(hero)*(riser?1.55:1),h:hero.h+rh,lift:rh,riser,steps};
+    }
+  }
+  const FH=focal?focal.h:24, planes={back:[],mid:[],front:[]};
+  stand.forEach(p=>{ if(p.soft||p.h>=FH*.82) planes.back.push(p); else if(p.h<10||p.h<=FH*.45) planes.front.push(p); else planes.mid.push(p); });
+  while(planes.back.length>4){planes.back.sort((a,b)=>b.h-a.h);planes.mid.push(planes.back.pop());}
+  while(planes.front.length>5){planes.front.sort((a,b)=>a.h-b.h);planes.mid.push(planes.front.pop());}
+  return {leans,lies,focal,planes,FH};
+}
+
+// ---- 2. arrange one candidate (cm space, x=0 is the packaging centre) ----
+function arrange(R,side,pkW,r){
+  const peak=side*pkW*.2, els=[];
+  const seqLay=(list,anchor,plane,ov)=>{
+    let tot=list.reduce((t,p)=>t+wOf(p),0)-ov*list.slice(1).reduce((t,p,i)=>t+Math.min(wOf(p),wOf(list[i])),0), x=anchor-tot/2;
+    list.forEach((p,i)=>{const w=wOf(p);if(i)x-=ov*Math.min(w,wOf(list[i-1]));els.push({p,plane,x0:x,x1:x+w,h:p.h,rank:Math.abs(i-(list.length-1)/2)});x+=w;});
+  };
+  const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  // backdrop plane: tall pieces flank the hero from behind and peek out on both sides; the tallest one
+  // tends to land opposite the peak as the second anchor (the balance score rewards that)
+  {const B=shuffle(R.planes.back),bl=[],br=[];B.forEach((p,i)=>(i===0?(r()<.75?(side>0?bl:br):(side>0?br:bl)):(r()<.5?bl:br)).push(p));
+   const fw=R.focal?R.focal.w:0;
+   const lay=(arr,dir)=>{let edge=peak+dir*fw*.15;arr.forEach((p,i)=>{const w=wOf(p),x0=dir<0?edge-w:edge;els.push({p,plane:"back",x0,x1:x0+w,h:p.h,rank:i});edge=dir<0?x0+w*.22:x0+w*.78;});};
+   lay(bl,-1);lay(br,1);}
+  // hero plane: focal at the peak, supporting items step down outward on both sides
+  if(R.focal){els.push({focal:R.focal,plane:"mid",x0:peak-R.focal.w/2,x1:peak+R.focal.w/2,h:R.focal.h,rank:0});}
+  const L=[],Rt=[]; shuffle(R.planes.mid).forEach(p=>(r()<.5?L:Rt).push(p));
+  const outward=(arr,dir)=>{arr.sort((a,b)=>b.h-a.h); if(arr.length>2&&r()<.35){const i=1+Math.floor(r()*(arr.length-2));[arr[i],arr[i+1]]=[arr[i+1],arr[i]];}
+    let edge=R.focal?(dir<0?peak-R.focal.w/2:peak+R.focal.w/2):peak;
+    arr.forEach((p,i)=>{const w=wOf(p),ov=.14*Math.min(w,i?wOf(arr[i-1]):(R.focal?R.focal.w:w));
+      const x0=dir<0?edge+ov-w:edge-ov;els.push({p,plane:"mid",x0,x1:x0+w,h:p.h,rank:i+1});edge=dir<0?x0:x0+w;});};
+  outward(L,-1);outward(Rt,1);
+  // foreground: small pieces gathered at the hero's foot, drifting to the low side
+  seqLay(shuffle(R.planes.front),peak*.15-side*pkW*.12,"front",.08);
+  return els;
+}
+
+// ---- 3. score a candidate against the principles (lower is better) ----
+function evaluate(els,R,side,pkW){
+  if(!els.length) return 0;
+  const peak=side*pkW*.2, FH=R.FH; let s=0;
+  const minX=Math.min(...els.map(e=>e.x0)), maxX=Math.max(...els.map(e=>e.x1));
+  // silhouette vs. target pyramid
+  for(let i=0;i<=40;i++){const x=minX+(maxX-minX)*i/40;let top=0;els.forEach(e=>{if(x>=e.x0&&x<=e.x1)top=Math.max(top,e.h);});
+    const half=x<peak?peak-minX:maxX-peak, tgt=FH*(1-.62*Math.min(1,Math.abs(x-peak)/Math.max(half,1)));s+=((top-tgt)/FH)**2*.1;}
+  // height rhythm + stepping down outward
+  ["back","mid","front"].forEach(pl=>{const a=els.filter(e=>e.plane===pl).sort((x,y)=>x.x0-y.x0);
+    for(let i=1;i<a.length;i++){if(Math.abs(a[i].h-a[i-1].h)/Math.max(a[i].h,a[i-1].h)<.12)s+=.25;}});
+  els.filter(e=>e.plane==="mid"&&e.rank>1).forEach(e=>{const inner=els.find(o=>o.plane==="mid"&&o.rank===e.rank-1&&Math.sign(o.x0-peak)===Math.sign(e.x0-peak));if(inner&&e.h>inner.h*1.15)s+=.3;});
+  // colour: no two dark anchors touching, one accent per side
+  for(let i=0;i<els.length;i++)for(let j=i+1;j<els.length;j++){const a=els[i],b=els[j];if(!a.p||!b.p)continue;
+    const touch=a.x1>b.x0-1&&b.x1>a.x0-1; if(touch&&lumOf(a.p)<.38&&lumOf(b.p)<.38)s+=.4;
+    if(satOf(a.p)>.5&&satOf(b.p)>.5&&Math.sign((a.x0+a.x1)/2)===Math.sign((b.x0+b.x1)/2))s+=.3;}
+  // visual weight balance around the packaging axis
+  let Lw=0,Rw=0;els.forEach(e=>{const w=(e.x1-e.x0)*e.h*(1.25-(e.p?lumOf(e.p):.6)),c=(e.x0+e.x1)/2;c<0?Lw+=w:Rw+=w;});
+  s+=Math.max(0,Math.abs(Lw-Rw)/(Lw+Rw||1)-.28)*2;
+  // labels: front pieces must not hide the brand face of what stands behind
+  const depth={back:0,mid:1,front:2};
+  els.forEach(b=>{if(!b.p||!b.p.label)return;const c0=b.x0+(b.x1-b.x0)*.25,c1=b.x1-(b.x1-b.x0)*.25;
+    els.forEach(f=>{if(depth[f.plane]<=depth[b.plane]||f.h<b.h*.35)return;const ov=Math.max(0,Math.min(c1,f.x1)-Math.max(c0,f.x0));s+=ov/(c1-c0)*.8;});});
+  // compact around the packaging, keep negative space
+  s+=Math.max(0,(maxX-minX)-pkW*2.2)/pkW*1.5;
+  return s;
+}
+
+// ---- 4. compose: search, then fit to the frame and build the draw list ----
+let targets=[], drawn=[], anim={}, manual=new Map();
+function compose(){
+  const all=[...cart.keys()].map(id=>byId[id]), side=variant%2?1:-1, pkW=pack.h*pack.ar;
+  const R=roles(all), r=rng(977+variant*7919+all.length*131+all.reduce((t,p)=>t+(+p.id),0));
+  let best=null;
+  for(let t=0;t<320;t++){const els=arrange(R,side,pkW,r),sc=evaluate(els,R,side,pkW);if(!best||sc<best.sc)best={els,sc};}
+  const els=best?best.els:[];
+  // fit: one physical scale for everything, so proportions stay true
+  const BASE={back:.80,mid:.875,front:.95},PER={back:.94,mid:1,front:1.05};
+  let k=H*.6/(pack.h*.9);
+  const ext=[...els.map(e=>[e.x0*PER[e.plane],e.x1*PER[e.plane]]),[-pkW*.9/2,pkW*.9/2]];
+  if(R.leans.length)ext.push([-pkW*.85,pkW*.85]);
+  const minX=Math.min(...ext.map(e=>e[0])),maxX=Math.max(...ext.map(e=>e[1]));
+  k=Math.min(k,W*.92/(maxX-minX||1));
+  els.forEach(e=>{k=Math.min(k,(H*BASE[e.plane]-H*.05)/(e.h*PER[e.plane]));});
+  const cx0=W/2-((minX+maxX)/2)*k, T=[];
+  const X=(x,pl)=>cx0+x*k*PER[pl];
+  // packaging backdrop
+  const ph=pack.h*k*.9; T.push({key:"pack",src:pack.img,cx:cx0,base:H*.775,w:ph*pack.ar,h:ph,rot:0,z:0,cast:.16});
+  // leaning flat pieces: first one balances the peak from the opposite side
+  R.leans.forEach((p,i)=>{const sd=(i%2?side:-side),h=p.h*k*.92,w=h*p.ar,off=pkW*(.5+Math.floor(i/2)*.18)*k*.92;
+    T.push({key:p.id,p,src:p.img,cx:cx0+sd*off,base:H*.79,w,h,rot:sd<0?5:-5,z:1+i*.01,cast:.14});});
+  // planes
+  els.forEach(e=>{
+    const pl=e.plane,s=k*PER[pl],base=H*BASE[pl],zb={back:200,mid:300,front:400}[pl];
+    if(e.focal){const f=e.focal,cx=X((e.x0+e.x1)/2,pl);let top=base;
+      if(f.kind==="tray"){const p=f.plat,w=wOf(p)*s,h=p.h*s;T.push({key:p.id,p,src:p.img,cx,base,w,h,rot:0,z:zb+50,cast:.1});top=base-h*p.surf;
+        const rs=[],srt=[...f.riders].sort((a,b)=>b.h-a.h);srt.forEach((q,j)=>j%2?rs.push(q):rs.unshift(q));
+        const tw=rs.reduce((t,q)=>t+wOf(q)*s*.9,0);let x=cx-tw/2;
+        rs.forEach((q,j)=>{const w=wOf(q)*s,h=q.h*s;T.push({key:q.id,p:q,src:q.img,cx:x+w*.45,base:top,w,h,rot:0,z:zb+51+(q===srt[0]?2:0),cast:.18});x+=w*.9;});
+      } else {
+        if(f.riser){const sw=f.w*s,h1=3.6*s;
+          if(f.steps){T.push({key:"slab1",slab:true,cx:cx+side*sw*.12,base,w:sw*1.35,h:2.9*s,z:zb+40});top-=2.9*s;}
+          T.push({key:"slab0",slab:true,cx,base:top,w:sw,h:h1,z:zb+41});top-=h1*1.1;}
+        const q=f.hero,w=wOf(q)*s,h=q.h*s;T.push({key:q.id,p:q,src:q.img,cx,base:top,w,h,rot:0,z:zb+52,cast:.2,hero:true});
+      }
+    } else {const p=e.p,w=wOf(p)*s,h=p.h*s;T.push({key:p.id,p,src:p.img,cx:X((e.x0+e.x1)/2,pl),base,w,h,rot:0,z:zb+e.rank,cast:.18});}
+  });
+  // lying accents lead the eye diagonally into the hero
+  const peakPx=X(side*pkW*.2,"mid");
+  R.lies.forEach((p,i)=>{const turn=(p.lie&&p.lie.turn)||0,sd=i%2?side:-side,tilt=sd*(i?9:-12),len=turn?p.h:wOf(p);
+    const s=Math.min(k*1.06,W*.3/len),nw=wOf(p)*s,nh=p.h*s,th=(turn+tilt)*Math.PI/180;
+    const foot=Math.abs(nw*Math.cos(th))+Math.abs(nh*Math.sin(th)),bh=Math.abs(nw*Math.sin(th))+Math.abs(nh*Math.cos(th));
+    const fr=T.filter(q=>q.z>=400&&q.z<500),lo=fr.length?Math.min(...fr.map(q=>q.cx-q.w/2)):peakPx,hi=fr.length?Math.max(...fr.map(q=>q.cx+q.w/2)):peakPx;
+    let cx=fr.length?(sd<0?lo-foot*.3:hi+foot*.3):peakPx-sd*foot*.45;cx=Math.max(foot/2+W*.03,Math.min(W-foot/2-W*.03,cx));
+    T.push({key:p.id,p,src:p.img,lie:true,cx,base:H*.97,w:nw,h:nh,bh,rot:turn+tilt,foot,z:500+i,cast:0});});
+  // manual corrections made by dragging (kept as a share of the frame so they survive resizing)
+  T.forEach(e=>{const m=e.p&&manual.get(e.p.id);if(m){e.cx+=m.dx*W;e.base+=m.dy*H;e.z+=m.z||0;}});
+  return T;
+}
+
+// ---- 5. animate between compositions ----
+let raf=0,t0=0;
+const ease=t=>1-Math.pow(1-t,3);
+function recompose(animate){
+  W=scene.clientWidth;H=scene.clientHeight;if(!W)return;
+  dpr=Math.min(2,window.devicePixelRatio||1);
+  if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
+  const T=compose(),now=performance.now(),seen=new Set();
+  T.forEach(e=>{seen.add(e.key);const a=anim[e.key];
+    if(a&&animate){a.from={...a.cur};a.to=e;}
+    else if(!a){const pop=animate&&fresh.has(e.key);const from={...e,alpha:pop?0:1,w:e.w*(pop?.8:1),h:e.h*(pop?.8:1)};anim[e.key]={from,to:e,cur:{...from}};}
+    else {a.from={...e};a.to=e;a.cur={...e};}
+    anim[e.key].to.alpha=1;});
+  Object.keys(anim).forEach(k=>{if(!seen.has(k)){const a=anim[k];a.from={...a.cur};a.to={...a.cur,alpha:0,dead:true};}});
+  fresh.clear();t0=now;cancelAnimationFrame(raf);raf=requestAnimationFrame(frame);
+  document.getElementById("emptyMsg").hidden=cart.size>0;
+  renderTip([...cart.keys()].map(id=>byId[id]));
+}
+function frame(now){
+  const t=Math.min(1,(now-t0)/520),e=ease(t);
+  Object.entries(anim).forEach(([k,a])=>{const c={...a.to};["cx","base","w","h","rot","alpha"].forEach(f=>{const v0=a.from[f]??a.to[f],v1=a.to[f];c[f]=v0+(v1-v0)*e;});a.cur=c;});
+  draw();
+  if(t<1)raf=requestAnimationFrame(frame);else Object.keys(anim).forEach(k=>{if(anim[k].to.dead)delete anim[k];});
+}
+
+// ---- 6. render: background, then back-to-front with one light source ----
+function drawBg(){
+  const hz=H*.62,c=(a,o)=>`rgba(${a[0]},${a[1]},${a[2]},${o})`;
+  if(bg.wall&&asset(bg.wall).ready){const im=asset(bg.wall).im,r=Math.max(W/im.naturalWidth,hz/im.naturalHeight),w=im.naturalWidth*r,h=im.naturalHeight*r;
+    ctx.save();ctx.filter="blur(1px)";ctx.drawImage(im,(W-w)/2,hz-h,w,h);ctx.restore();}
+  else{const g=ctx.createLinearGradient(0,0,0,hz);g.addColorStop(0,bg.w1||c(bg.f2,1));g.addColorStop(1,bg.w2||c(bg.f1,1));ctx.fillStyle=g;ctx.fillRect(0,0,W,hz);}
+  // seamless sweep: wall melts into the floor like a studio backdrop
+  const m=ctx.createLinearGradient(0,hz-H*.14,0,hz+1);m.addColorStop(0,c(bg.f1,0));m.addColorStop(1,c(bg.f1,1));ctx.fillStyle=m;ctx.fillRect(0,hz-H*.14,W,H*.14+1);
+  const f=ctx.createLinearGradient(0,hz,0,H);f.addColorStop(0,c(bg.f1,1));f.addColorStop(1,c(bg.f2,1));ctx.fillStyle=f;ctx.fillRect(0,hz,W,H-hz);
+  const v=ctx.createRadialGradient(W*.5,H*.6,Math.min(W,H)*.3,W*.5,H*.6,Math.max(W,H)*.8);v.addColorStop(0,"rgba(60,35,20,0)");v.addColorStop(1,"rgba(60,35,20,.22)");
+  ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+}
+function contact(cx,base,w,a){const g=ctx.createRadialGradient(cx,base,0,cx,base,w*.5);g.addColorStop(0,`rgba(40,24,14,${.38*a})`);g.addColorStop(1,"rgba(40,24,14,0)");
+  ctx.save();ctx.translate(cx,base);ctx.scale(1,.1);ctx.translate(-cx,-base);ctx.fillStyle=g;ctx.fillRect(cx-w*.5,base-w*.5,w,w);ctx.restore();}
+function slab(e){
+  const {cx,base,w,h,alpha}=e, top=h*.32;
+  ctx.save();ctx.globalAlpha=alpha;contact(cx,base,w*1.1,alpha);
+  ctx.shadowColor="rgba(45,28,18,.25)";ctx.shadowBlur=14*dpr;ctx.shadowOffsetX=4;ctx.shadowOffsetY=3;
+  const g=ctx.createLinearGradient(0,base-h,0,base);g.addColorStop(0,"#e3d5c1");g.addColorStop(1,"#cdbca5");ctx.fillStyle=g;
+  ctx.beginPath();ctx.roundRect(cx-w/2,base-h,w,h,Math.min(6,h*.25));ctx.fill();ctx.shadowColor="transparent";
+  ctx.fillStyle="#efe5d6";ctx.beginPath();ctx.moveTo(cx-w/2+2,base-h+1);ctx.lineTo(cx+w/2-2,base-h+1);ctx.lineTo(cx+w/2-w*.05,base-h-top);ctx.lineTo(cx-w/2+w*.05,base-h-top);ctx.closePath();ctx.fill();
+  const r=rng(Math.round(w));ctx.fillStyle="rgba(150,125,95,.35)";for(let i=0;i<w*h/90;i++){ctx.beginPath();ctx.arc(cx-w/2+r()*w,base-h+r()*h,r()*1.4+.3,0,7);ctx.fill();}
+  ctx.restore();
+}
+function draw(){
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);drawBg();drawn=[];
+  Object.values(anim).map(a=>a.cur).sort((a,b)=>a.z-b.z).forEach(e=>{
+    if(e.alpha<=.01)return;
+    if(e.slab){slab(e);return;}
+    const A=asset(e.src);if(!A.ready)return;
+    ctx.save();ctx.globalAlpha=e.alpha;
+    if(e.cast){ctx.save();ctx.translate(e.cx,e.base);ctx.transform(1,0,-.6,.24,0,0);ctx.filter=`blur(${Math.max(3,e.h*.03)}px)`;ctx.globalAlpha=e.alpha*e.cast*1.6;
+      ctx.drawImage(A.sil,-e.w/2,-e.h,e.w,e.h);ctx.restore();}
+    contact(e.cx,e.base-(e.lie?2:0),(e.lie?e.foot:e.w)*.95,e.alpha);
+    ctx.shadowColor="rgba(45,28,18,.24)";ctx.shadowBlur=Math.max(8,e.h*.08);ctx.shadowOffsetX=Math.max(3,e.h*.025);ctx.shadowOffsetY=2;
+    if(e.lie){ctx.translate(e.cx,e.base-e.bh/2);ctx.rotate(e.rot*Math.PI/180);ctx.drawImage(A.im,-e.w/2,-e.h/2,e.w,e.h);}
+    else{ctx.translate(e.cx,e.base);ctx.rotate(e.rot*Math.PI/180);ctx.drawImage(A.im,-e.w/2,-e.h,e.w,e.h);}
+    ctx.restore();
+    if(e.p){const fw=e.lie?e.foot:e.w,fh=e.lie?e.bh:e.h;drawn.push({id:e.p.id,x0:e.cx-fw/2,x1:e.cx+fw/2,y0:e.base-fh,y1:e.base,z:e.z});
+      const q=cart.get(e.p.id);if(q>1){const bx=e.cx+fw/2-10,by=e.base-fh+4;ctx.save();ctx.fillStyle="#4a2f22";ctx.beginPath();ctx.roundRect(bx-14,by,28,18,9);ctx.fill();
+        ctx.fillStyle="#fffaf3";ctx.font="700 12px Assistant, sans-serif";ctx.textAlign="center";ctx.fillText("×"+q,bx,by+13);ctx.restore();}}
+  });
+}
+function hit(ev){const r=cv.getBoundingClientRect(),x=ev.clientX-r.left,y=ev.clientY-r.top;
+  return drawn.filter(d=>x>=d.x0+(d.x1-d.x0)*.08&&x<=d.x1-(d.x1-d.x0)*.08&&y>=d.y0&&y<=d.y1).sort((a,b)=>b.z-a.z)[0];}
+// manual correction: drag any product to move it; the AI can then restyle from your arrangement
+let drag=null;
+cv.addEventListener("pointerdown",ev=>{const h=hit(ev);if(!h)return;cv.setPointerCapture(ev.pointerId);
+  const m=manual.get(h.id)||{dx:0,dy:0,z:0};drag={id:h.id,x:ev.clientX,y:ev.clientY,m0:{...m},moved:false};});
+cv.addEventListener("pointermove",ev=>{
+  if(!drag){const h=hit(ev);cv.style.cursor=h?"grab":"default";cv.title=h?byId[h.id].name+" · גררו להזזה":"";return;}
+  const dx=ev.clientX-drag.x,dy=ev.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;
+  manual.set(drag.id,{dx:drag.m0.dx+dx/W,dy:drag.m0.dy+dy/H,z:1000});cv.style.cursor="grabbing";
+  const a=anim[drag.id];if(a){const T=compose().find(e=>e.key===drag.id);if(T){a.cur={...a.cur,cx:T.cx,base:T.base,z:T.z};a.to={...a.to,cx:T.cx,base:T.base,z:T.z};a.from={...a.cur};}}draw();});
+cv.addEventListener("pointerup",()=>{if(drag&&drag.moved){aiStale=true;renderAiBar();}drag=null;});
+new ResizeObserver(()=>recompose(false)).observe(scene);
+function layout(){recompose(true);}
+function applyBg(){recompose(false);}
+document.getElementById("restyle").onclick=()=>{variant=(variant+1)%4;manual.clear();recompose(true);};
+document.getElementById("props").onchange=e=>{useProps=e.target.checked;recompose(true);};
+
+// a gentle styling nudge under the scene
+function renderTip(all){
+  const t=document.getElementById("tip"); if(!t)return;
+  const hasPlat=all.some(p=>p.role==="plat"), riders=all.filter(p=>p.ride);
+  if(!hasPlat&&riders.length){t.innerHTML=`<b>טיפ עיצובי:</b> הוסיפו מגש, והמוצרים הקטנים יעמדו עליו כמו בתצוגה. <button data-add="33">+ מגש קרמיקה אובלי</button>`;t.hidden=false;}
+  else if(all.length&&!all.some(p=>p.role==="lean")){t.innerHTML=`<b>טיפ עיצובי:</b> קרש או מגש עגול שנשען על האריזה מוסיף עומק לתמונה. <button data-add="40">+ מגש עץ עגול</button>`;t.hidden=false;}
+  else t.hidden=true;
+}
+
+
+// ---- Summary & price ----
+function rowsHTML(){
+  if(!cart.size) return `<p class="hint" style="margin:4px 0">עדיין לא נבחרו מוצרים.</p>`;
+  return [...cart].map(([id,q])=>{const p=byId[id];return `<div class="row" data-id="${id}">
+    <img src="${p.img}" alt=""><span>${esc(p.name)}</span>
+    <span class="mini"><button data-a="inc" aria-label="הוספה">+</button><output>${q}</output><button data-a="dec" aria-label="הפחתה">−</button></span>
+    <span class="sum">${ils(p.price*q)}</span><button class="del" data-a="del" aria-label="הסרת ${esc(p.name)}">✕</button></div>`}).join("");
+}
+function totalsHTML(t){return `<span>אריזה: ${pack.name}</span><span>${ils(pack.price)}</span>
+  <span>מוצרים (${t.count} פריטים)</span><span>${ils(t.items)}</span>
+  <span class="lbl">מחיר למארז</span><span class="big" id="bigP">${ils(t.total)}</span>`;}
+function onRow(e){const b=e.target.closest("button[data-a]");if(!b)return;const id=b.closest(".row").dataset.id;
+  ({inc:()=>add(id),dec:()=>dec(id),del:()=>remove(id)})[b.dataset.a]();}
+["list","list2"].forEach(i=>document.getElementById(i).onclick=onRow);
+
+function totals(){let items=0,count=0;for(const [id,q] of cart){items+=byId[id].price*q;count+=q;}return {items,count,total:items+pack.price};}
+function update(flash){
+  const t=totals();
+  renderGrid();
+  document.getElementById("list").innerHTML=document.getElementById("list2").innerHTML=rowsHTML();
+  document.getElementById("totals").innerHTML=document.getElementById("totals2").innerHTML=totalsHTML(t);
+  document.getElementById("barP").textContent=ils(t.total);
+  document.getElementById("barC").textContent=`${t.count} פריטים · ${pack.name}`;
+  if(flash) document.querySelectorAll("#bigP,#barP").forEach(el=>{el.classList.remove("priceflash");void el.offsetWidth;el.classList.add("priceflash");});
+  layout();
+  onCartChanged();
+}
+
+// ---- Inspiration boxes & styling tip ----
+const setsEl=document.getElementById("sets");
+setsEl.innerHTML=`<b>מארזי השראה:</b>`+SETS.map((x,i)=>`<button class="set" data-i="${i}">${x.name}</button>`).join("");
+setsEl.onclick=e=>{const b=e.target.closest(".set");if(!b)return;const x=SETS[+b.dataset.i];
+  const prev=[new Map(cart),pack];cart=new Map(x.items.map(id=>[id,1]));x.items.forEach(id=>fresh.add(id));
+  pack=PACKS.find(k=>k.id===x.pack);manual.clear();renderPacks();update(true);
+  lastRemoved=null;undoSet=prev;showToast(`נטען מארז השראה "${x.name}"`,true);};
+let undoSet=null;
+document.getElementById("tip").onclick=e=>{const b=e.target.closest("button[data-add]");if(b)add(b.dataset.add);};
+// ===================== AI Designer (GPT Image) =====================
+// 3+ products: the live composition above is sent as a layout sketch, together with the original product photos
+// and one of the NOYA inspiration photos, to a small server function (/api/design) that calls GPT Image.
+// The page never holds an API key. Where no server is present (e.g. inside Claude), the live designer stays on.
+const AI_ENDPOINT=window.NOYA_AI_ENDPOINT||"api/design";
+let aiAvailable=false, aiBusy=false, aiStale=false, aiView="ai", aiFirstDone=false, aiTimer=0, aiCache=new Map(), aiCurrent=null, aiCtrl=null;
+const aiImg=document.getElementById("aiImg"), aiLoad=document.getElementById("aiLoad"), aiTag=document.getElementById("aiTag");
+fetch(AI_ENDPOINT+"?ping=1").then(r=>r.ok?r.json():null).then(j=>{aiAvailable=!!(j&&j.ok);renderAiBar();onCartChanged();}).catch(()=>{aiAvailable=false;renderAiBar();});
+const comboKey=()=>[...cart].map(([id,q])=>id+"x"+q).sort().join(",")+"|"+pack.id+"|"+bg.id+"|"+variant+"|"+[...manual].map(([k,m])=>k+Math.round(m.dx*100)+"/"+Math.round(m.dy*100)).join(",");
+function showAi(src){
+  const on=!!src&&aiView==="ai"&&cart.size>=3;
+  if(on&&aiImg.getAttribute("src")!==src)aiImg.src=src;
+  aiImg.hidden=!on;aiTag.hidden=!on;
+}
+function onCartChanged(){
+  if(!aiAvailable){renderAiBar();return;}
+  if(cart.size<3){showAi(null);renderAiBar();return;}
+  const k=comboKey();
+  if(aiCache.has(k)){aiCurrent=k;aiStale=false;showAi(aiCache.get(k));renderAiBar();return;}
+  aiStale=!!aiCurrent;
+  if(!aiFirstDone&&!aiBusy){clearTimeout(aiTimer);aiTimer=setTimeout(()=>{if(cart.size>=3&&!aiFirstDone)generateAi();},1800);}
+  renderAiBar();
+}
+const STEPS=["בוחר את המוצר המוביל…","בונה שכבות ועומק…","מאזן צבעים וצורות…","מעמיד את המוצרים על הבמה…","מכוון אור וצללים…","מלטש לצילום קטלוגי…"];
+async function generateAi(){
+  if(aiBusy||cart.size<3)return;
+  aiBusy=true;aiFirstDone=true;aiView="live";showAi(null);renderAiBar();
+  const key=comboKey(),t0=Date.now();let si=0;
+  aiLoad.hidden=false;const tick=setInterval(()=>{const s=Math.round((Date.now()-t0)/1000);document.getElementById("aiTime").textContent=s+" שניות · בדרך כלל 20–60 שניות";
+    if(s%5===0)document.getElementById("aiStep").textContent=STEPS[(si++)%STEPS.length];},1000);
+  document.getElementById("aiStep").textContent=STEPS[0];
+  try{
+    // layout sketch = what the live designer drew (products only, no UI)
+    const sketch=cv.toDataURL("image/jpeg",.85);
+    const all=[...cart.keys()].map(id=>byId[id]),R=roles(all);
+    const hero=R.focal?(R.focal.kind==="tray"?R.focal.riders[0]:R.focal.hero):null;
+    const items=[...cart].map(([id,q])=>{const p=byId[id];return {id,name:p.name,qty:q,heightCm:p.h,
+      role:p===hero?"hero":p.role==="plat"?"tray":p.role==="lean"?"leaning":(byId[id].lie||byId[id].role==="lie")?"lying":R.planes.back.includes(p)?"back":R.planes.front.includes(p)?"front":"middle"};});
+    aiCtrl=new AbortController();const to=setTimeout(()=>aiCtrl.abort(),150000);
+    const r=await fetch(AI_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},signal:aiCtrl.signal,
+      body:JSON.stringify({layout:sketch,items,pack:{id:pack.id,name:pack.name},background:bg.id,variant,manual:manual.size>0})});
+    clearTimeout(to);
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.image)throw new Error(j.error||("שגיאה "+r.status));
+    aiCache.set(key,j.image);aiCurrent=key;aiStale=comboKey()!==key;aiView="ai";
+    if(!aiStale)showAi(j.image);
+  }catch(e){showToast(e.name==="AbortError"?"מעצב ה-AI לא הספיק לסיים. הסידור החי נשאר, אפשר לנסות שוב.":"מעצב ה-AI לא זמין כרגע ("+e.message+"). הסידור החי נשאר.");}
+  finally{clearInterval(tick);aiLoad.hidden=true;aiBusy=false;renderAiBar();}
+}
+function renderAiBar(){
+  const b=document.getElementById("aibar");
+  if(cart.size<3){b.innerHTML=cart.size?`<span class="ai-note">✨ ממוצר שלישי ומעלה, מעצב ה-AI יעצב את המארז כצילום קטלוגי.</span>`:"";return;}
+  if(!aiAvailable){b.innerHTML=`<button class="ai-go" disabled title="פעיל באתר עם השרת">✨ עיצוב AI</button><span class="ai-note">מעצב ה-AI יפעל באתר (כאן מוצג הסידור החי). אפשר לגרור מוצרים לתיקון.</span>`;return;}
+  if(aiBusy){b.innerHTML=`<span class="ai-note">המעצב עובד… אפשר להמשיך לבחור מוצרים בינתיים.</span>`;return;}
+  const has=aiCurrent&&aiCache.has(aiCurrent);
+  b.innerHTML=(aiStale||!has?`<button class="ai-go" id="aiGo">✨ ${has?"עדכן את עיצוב ה-AI":"עצב עם AI"}</button>${has?`<span class="ai-stale">המארז השתנה מאז העיצוב האחרון</span>`:""}`
+      :`<button class="ai-go" id="aiRe">↻ עיצוב מחדש</button>`)
+    +(has?`<button class="ghost small" id="aiView">${aiView==="ai"?"✋ תיקון ידני":"🖼 הצג תמונת AI"}</button>`:"")
+    +(manual.size?`<button class="ghost small" id="aiReset">איפוס סידור</button>`:"");
+  const q=id=>document.getElementById(id);
+  q("aiGo")&&(q("aiGo").onclick=generateAi);
+  q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);aiStale=true;generateAi();});
+  q("aiView")&&(q("aiView").onclick=()=>{aiView=aiView==="ai"?"live":"ai";showAi(aiView==="ai"&&!aiStale?aiCache.get(aiCurrent):null);
+    if(aiView==="live")showToast("גררו מוצרים בתמונה כדי לתקן את המיקום, ואז לחצו \"עדכן את עיצוב ה-AI\"");renderAiBar();});
+  q("aiReset")&&(q("aiReset").onclick=()=>{manual.clear();recompose(true);aiStale=true;renderAiBar();});
+}
+// ===================== Stage 2: summary, details, send =====================
+// Set these for the business. orderEmail empty = email button asks the customer to use WhatsApp or copy.
+let boxes=1, orderText="", lastSend=null;
+const $=id=>document.getElementById(id);
+function setStep(n){[...$("steps").children].forEach((s,i)=>s.classList.toggle("on",i===n));}
+function showView(v){
+  $("buildView").hidden=v!=="build";$("sumView").hidden=v!=="sum";$("doneView").hidden=v!=="done";$("admView").hidden=v!=="admin";
+  $("bar").style.display=v==="build"?"":"none";$("steps").style.visibility=v==="admin"?"hidden":"";setStep(v==="build"?0:v==="sum"?1:2);
+  sheet.classList.remove("open");scrim.classList.remove("open");window.scrollTo(0,0);
+  if(v==="build")requestAnimationFrame(()=>recompose(false));
+}
+function boxImage(){return (!aiImg.hidden&&aiImg.src)?aiImg.src:cv.toDataURL("image/jpeg",.9);}
+function openSummary(){
+  if(!cart.size){showToast("הוסיפו לפחות מוצר אחד למארז");return;}
+  $("sumImg").src=boxImage();
+  const t=totals();
+  $("sumLines").innerHTML=[...cart].map(([id,q])=>{const p=byId[id];return `<div class="ln"><img src="${p.img}" alt=""><span>${esc(p.name)}${q>1?` × ${q}`:""}</span><span>${ils(p.price*q)}</span></div>`}).join("")
+    +`<div class="ln"><img src="${pack.img}" alt=""><span>אריזה: ${pack.name}</span><span>${ils(pack.price)}</span></div>`
+    +`<div class="ln tot"><span></span><span>מחיר למארז (${t.count} פריטים)</span><span>${ils(t.total)}</span></div>`;
+  $("perBox").textContent=ils(t.total);
+  boxes=Math.max(1,boxes);renderQty();showView("sum");
+}
+function renderQty(){
+  const per=totals().total,sum=per*boxes,need=Math.ceil(CONFIG.minOrder/per),ok=sum>=CONFIG.minOrder;
+  $("qBoxes").value=boxes;$("grand").textContent=ils(sum);
+  $("minFill").style.width=Math.min(100,sum/CONFIG.minOrder*100)+"%";$("minFill").parentElement.classList.toggle("ok",ok);
+  $("minMsg").innerHTML=ok?`✓ ההזמנה עומדת במינימום של ${ils(CONFIG.minOrder)}`
+    :`חסרים ${ils(CONFIG.minOrder-sum)} להזמנת מינימום של ${ils(CONFIG.minOrder)}. <button type="button" id="toMin">${need} מארזים יעמדו במינימום</button>`;
+  $("toMin")&&($("toMin").onclick=()=>{boxes=need;renderQty();});
+  ["sendMail","sendWa","copyOrder"].forEach(i=>{$(i).disabled=!ok;$(i).title=ok?"":"ההזמנה צריכה להגיע למינימום"});
+}
+$("qInc").onclick=()=>{boxes++;renderQty();};
+$("qDec").onclick=()=>{boxes=Math.max(1,boxes-1);renderQty();};
+$("qBoxes").oninput=e=>{const v=parseInt(e.target.value,10);if(v>0){boxes=Math.min(10000,v);renderQty();}};
+$("backBtn").onclick=()=>showView("build");
+
+function validate(){
+  const name=$("fName").value.trim(),phone=$("fPhone").value.replace(/[^\d+]/g,""),email=$("fEmail").value.trim();
+  const errs=[];$("fName").classList.toggle("bad",!name);if(!name)errs.push("שם מלא");
+  const pOk=/^(\+?972|0)\d{8,9}$/.test(phone);$("fPhone").classList.toggle("bad",!pOk);if(!pOk)errs.push("מספר טלפון תקין");
+  const eOk=!email||/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);$("fEmail").classList.toggle("bad",!eOk);if(!eOk)errs.push("כתובת מייל תקינה");
+  $("fErr").hidden=!errs.length;$("fErr").textContent=errs.length?"חסר או לא תקין: "+errs.join(", "):"";
+  return !errs.length;
+}
+function buildOrder(){
+  const t=totals(),d=new Date(),ref="NOYA-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
+  const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
+  const lines=[`הזמנת מארז – נויה במתנה (${ref})`,"",
+    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,date?`תאריך אספקה רצוי: ${date}`:null,"",
+    "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""} – ${ils(byId[id].price*q)}`),`• אריזה: ${pack.name} – ${ils(pack.price)}`,"",
+    `מחיר למארז: ${ils(t.total)}`,`כמות מארזים: ${boxes}`,`סה"כ: ${ils(t.total*boxes)} (כולל מע"מ, לאישור נציג)`,
+    f("fNotes")?"":null,f("fNotes")?`הערות: ${f("fNotes")}`:null].filter(x=>x!==null);
+  return {ref,text:lines.join("\n")};
+}
+function send(kind){
+  if(!validate()){$("fErr").scrollIntoView({block:"center",behavior:"smooth"});return;}
+  const o=buildOrder();orderText=o.text;lastSend=kind;
+  let href;
+  if(kind==="wa") href=`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(o.text)}`;
+  else if(CONFIG.orderEmail) href=`mailto:${CONFIG.orderEmail}?subject=${encodeURIComponent("הזמנת מארז "+o.ref)}&body=${encodeURIComponent(o.text)}`;
+  else {showToast("כתובת המייל להזמנות עדיין לא הוגדרה. אפשר לשלוח בוואטסאפ או להעתיק את הפרטים.");return;}
+  const a=document.createElement("a");a.href=href;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();
+  $("doneTitle").textContent=`תודה, ${$("fName").value.trim().split(" ")[0]}!`;
+  $("doneText").innerHTML=kind==="wa"?"פתחנו הודעת וואטסאפ מוכנה עם כל פרטי ההזמנה. <b>כדי שנקבל אותה, לחצו שליחה בוואטסאפ.</b> נחזור אליכם תוך יום עסקים."
+    :`פתחנו מייל מוכן אל ${CONFIG.orderEmail} עם כל פרטי ההזמנה. <b>כדי שנקבל אותו, לחצו שליחה בתוכנת המייל.</b> נחזור אליכם תוך יום עסקים.`;
+  $("doneImg").src=$("sumImg").src;
+  $("doneSum").innerHTML=`<b>${boxes} מארזים · ${ils(totals().total*boxes)}</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${pack.name}`;
+  $("doneRef").textContent="מספר הזמנה: "+o.ref+" · אם ההודעה לא נפתחה, חזרו ולחצו \"העתקת פרטי ההזמנה\".";
+  showView("done");
+}
+$("sendMail").onclick=()=>send("mail");
+$("sendWa").onclick=()=>send("wa");
+$("resend").onclick=()=>send(lastSend||"wa");
+$("copyOrder").onclick=async()=>{if(!validate())return;const o=buildOrder();
+  try{await navigator.clipboard.writeText(o.text);showToast("פרטי ההזמנה הועתקו. אפשר להדביק במייל או בוואטסאפ ל-054-3219070");}
+  catch(e){showToast("ההעתקה נחסמה בדפדפן. שלחו בוואטסאפ ל-054-3219070");}};
+$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;$("orderForm").reset();update(true);showView("build");};
+["fName","fPhone","fEmail"].forEach(i=>$(i).addEventListener("blur",()=>{if($("fErr").hidden===false)validate();}));
+// ===================== Stage 3: admin (catalogue editing) =====================
+// Storage: on the website the catalogue is saved by /api/catalog (shared with every customer, protected by the
+// admin password). Where there is no server (e.g. inside Claude) it is saved in this browser only.
+const CAT_ENDPOINT=window.NOYA_CAT_ENDPOINT||"api/catalog";
+const store={mode:"local",
+  async load(){
+    try{const r=await fetch(CAT_ENDPOINT,{cache:"no-store"});const j=await r.json().catch(()=>null);
+      if(r.ok&&j&&("catalog" in j)){this.mode="server";return j.catalog;}}catch(e){}
+    this.mode="local";try{const s=localStorage.getItem("noya_catalog");return s?JSON.parse(s):null;}catch(e){return null;}
+  },
+  async check(key){if(this.mode!=="server")return true;const r=await fetch(CAT_ENDPOINT+"?auth=1",{headers:{"x-admin-key":key}});return r.ok;},
+  async upload(id,dataUrl,key){const r=await fetch(CAT_ENDPOINT+"?upload="+encodeURIComponent(id),{method:"POST",headers:{"Content-Type":"application/json","x-admin-key":key},body:JSON.stringify({orig:dataUrl})});
+    const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||r.status);return j.url;},
+  async save(cat,key){
+    if(this.mode==="server"){const r=await fetch(CAT_ENDPOINT,{method:"PUT",headers:{"Content-Type":"application/json","x-admin-key":key},body:JSON.stringify({catalog:cat})});
+      const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||r.status);return cat;}
+    localStorage.setItem("noya_catalog",JSON.stringify(cat));return cat;
+  }};
+let draft=null, adminKey="", pendingOrig=new Map(), admTab="p";
+function catalogChanged(){
+  P.forEach(p=>asset(p.img));PACKS.forEach(p=>asset(p.img));
+  [...cart.keys()].forEach(id=>{if(!byId[id])cart.delete(id);});
+  if(!PACKS.includes(pack))pack=PACKS.find(k=>k.id===pack.id)||PACKS[0];
+  renderPacks();update(false);
+}
+store.load().then(c=>{if(c&&c.products&&c.products.length){applyCatalog(c);catalogChanged();}});
+
+const ROLE_OPTS=[["stand","עומד"],["plat","מגש / משטח (מוצרים עומדים עליו)"],["lean","נשען על האריזה"],["lie","שוכב באלכסון"]];
+const isDirty=()=>JSON.stringify(draft)!==JSON.stringify(catalog);
+function openAdmin(){
+  const go=()=>{draft=JSON.parse(JSON.stringify(catalog));pendingOrig.clear();showView("admin");renderAdmin();};
+  if(store.mode==="server"&&!adminKey){$("pwModal").hidden=false;$("pwIn").value="";$("pwErr").hidden=true;$("pwIn").focus();
+    $("pwOk").onclick=async()=>{const k=$("pwIn").value;if(await store.check(k)){adminKey=k;$("pwModal").hidden=true;go();}else{$("pwErr").hidden=false;$("pwErr").textContent="הסיסמה שגויה";}};
+    $("pwCancel").onclick=()=>{$("pwModal").hidden=true;location.hash="";};return;}
+  go();
+}
+function renderAdmin(){
+  $("admMode").textContent=store.mode==="server"?"נשמר באתר, לכל הלקוחות":"תצוגה מקדימה: נשמר בדפדפן הזה בלבד";
+  $("admMode").classList.toggle("srv",store.mode==="server");
+  [...$("admTabs").children].forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===admTab));
+  $("admP").hidden=admTab!=="p";$("admK").hidden=admTab!=="k";$("admS").hidden=admTab!=="s";
+  const catOpts=v=>Object.entries(CATS).map(([k,n])=>`<option value="${k}"${k===v?" selected":""}>${n}</option>`).join("");
+  if(admTab==="p"){
+    const q=$("admQ").value.trim();
+    $("admList").innerHTML=`<div class="ahead"><span></span><span>שם</span><span>תיאור</span><span>מחיר ₪</span><span>גובה ס"מ</span><span>קטגוריה</span><span>תפקיד בתמונה</span><span></span></div>`+
+      draft.products.map((p,i)=>({p,i})).filter(({p})=>!q||p.name.includes(q)||(p.desc||"").includes(q)).map(({p,i})=>`
+      <div class="arow ${p.hidden?"off":""} ${pendingOrig.has(p.id)?"new":""}" data-i="${i}">
+        <img src="${esc(p.img)}" alt="">
+        <input data-f="name" value="${esc(p.name)}" aria-label="שם">
+        <textarea data-f="desc" rows="1" placeholder="תיאור קצר (מופיע בכרטיס)" aria-label="תיאור">${esc(p.desc||"")}</textarea>
+        <input data-f="price" type="number" min="0" value="${p.price}" aria-label="מחיר">
+        <input data-f="h" type="number" min="1" value="${p.h}" aria-label="גובה בס״מ">
+        <select data-f="cat" aria-label="קטגוריה">${catOpts(p.cat)}</select>
+        <div class="flags"><select data-f="role" aria-label="תפקיד">${ROLE_OPTS.map(([k,n])=>`<option value="${k}"${(p.role||"stand")===k?" selected":""}>${n}</option>`).join("")}</select>
+          <label><input type="checkbox" data-f="ride"${p.ride?" checked":""}> יכול לעמוד על מגש</label>
+          <label><input type="checkbox" data-f="heroBoost"${p.heroBoost?" checked":""}> מוצר מוביל מועדף</label>
+          <label><input type="checkbox" data-f="hidden"${p.hidden?" checked":""}> מוסתר מהקטלוג</label></div>
+        <button class="del" data-del="${i}">מחיקה</button>
+      </div>`).join("");
+  } else if(admTab==="k"){
+    $("admK").innerHTML=draft.packs.map((k,i)=>`<div class="arow" data-k="${i}" style="grid-template-columns:64px 1fr 100px 100px">
+      <img src="${esc(k.img)}" alt=""><label>שם<input data-f="name" value="${esc(k.name)}"></label><label>מחיר ₪<input data-f="price" type="number" min="0" value="${k.price}"></label><label>גובה ס"מ<input data-f="h" type="number" min="1" value="${k.h}"></label></div>`).join("");
+  } else {
+    const s=draft.settings;
+    $("admS").innerHTML=`<div class="adm-form">
+      <label>מייל לקבלת הזמנות<input data-s="orderEmail" type="email" value="${esc(s.orderEmail)}"></label>
+      <label>וואטסאפ לקבלת הזמנות (בפורמט בינלאומי, למשל 972543219070)<input data-s="whatsapp" inputmode="tel" value="${esc(s.whatsapp)}"></label>
+      <label>מינימום הזמנה (₪)<input data-s="minOrder" type="number" min="0" value="${s.minOrder}"></label></div>`;
+  }
+  $("admSave").textContent=isDirty()?"שמירת שינויים •":"שמירת שינויים";
+}
+$("admTabs").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;admTab=b.dataset.t;renderAdmin();};
+$("admQ").oninput=()=>renderAdmin();
+const NUM=new Set(["price","h","minOrder"]);
+function admEdit(e){
+  const el=e.target,f=el.dataset.f,s=el.dataset.s;if(!f&&!s)return;
+  const v=el.type==="checkbox"?el.checked:NUM.has(f||s)?Math.max(0,+el.value||0):el.value;
+  if(s){draft.settings[s]=v;}
+  else{const row=el.closest("[data-i],[data-k]");const obj=row.dataset.i!=null?draft.products[+row.dataset.i]:draft.packs[+row.dataset.k];
+    obj[f]=v;if(f==="role"&&v==="plat"&&!obj.surf)obj.surf=.5;if(f==="role"&&v==="lie"&&!obj.lie)obj.lie={turn:0};if(f==="role"&&v!=="lie")obj.lie=null;
+    if(f==="hidden")row.classList.toggle("off",v);}
+  $("admSave").textContent=isDirty()?"שמירת שינויים •":"שמירת שינויים";
+}
+["admList","admK","admS"].forEach(id=>{$(id).addEventListener("input",admEdit);$(id).addEventListener("change",admEdit);});
+$("admList").addEventListener("click",e=>{const b=e.target.closest("[data-del]");if(!b)return;const i=+b.dataset.del,p=draft.products[i];
+  draft.products.splice(i,1);pendingOrig.delete(p.id);renderAdmin();showToast(`"${p.name}" יימחק בשמירה`);});
+$("admRevert").onclick=()=>{draft=JSON.parse(JSON.stringify(catalog));pendingOrig.clear();renderAdmin();showToast("השינויים בוטלו");};
+$("admBack").onclick=()=>{if(isDirty()&&!$("admBack").dataset.warned){$("admBack").dataset.warned=1;showToast("יש שינויים שלא נשמרו. לחצו שוב כדי לצאת בלי לשמור.");return;}
+  delete $("admBack").dataset.warned;location.hash="";showView("build");};
+$("admSave").onclick=async()=>{
+  const bad=draft.products.find(p=>!p.name.trim()||!(p.price>=0)||!(p.h>0));
+  if(bad){showToast("לכל מוצר צריך שם, מחיר וגובה");return;}
+  $("admSave").disabled=true;$("admSave").textContent="שומר…";
+  try{
+    for(const [id,orig] of pendingOrig){if(store.mode==="server"){const url=await store.upload(id,orig,adminKey);const p=draft.products.find(x=>x.id===id);if(p)p.origUrl=url;}}
+    pendingOrig.clear();
+    const saved=await store.save(draft,adminKey);applyCatalog(saved);draft=JSON.parse(JSON.stringify(catalog));catalogChanged();
+    showToast(store.mode==="server"?"נשמר. הלקוחות יראו את השינויים מיד (עד דקה)":"נשמר בדפדפן הזה. באתר השמירה תהיה לכל הלקוחות.");
+  }catch(e){showToast("השמירה נכשלה: "+e.message);}
+  finally{$("admSave").disabled=false;renderAdmin();}
+};
+
+// ---- add product with in-browser background removal ----
+let addImg=null, addCut=null;
+$("admAdd").onclick=()=>{$("addModal").hidden=false;$("addErr").hidden=true;$("addFile").value="";addImg=null;addCut=null;$("addAiCut").hidden=true;$("addAiMsg").hidden=true;$("addAiCut").textContent="✨ הסרת רקע עם AI";
+  $("addCat").innerHTML=Object.entries(CATS).map(([k,n])=>`<option value="${k}">${n}</option>`).join("");
+  ["addName","addDesc"].forEach(i=>$(i).value="");const c=$("cutCv");c.width=c.height=1;};
+$("addCancel").onclick=()=>{$("addModal").hidden=true;};
+$("addFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{addImg=im;runCut();if(aiAvailable&&store.mode==="server")aiCut();};im.src=URL.createObjectURL(f);
+  if(!$("addName").value)$("addName").value=f.name.replace(/\.[^.]+$/,"");};
+$("addTol").oninput=()=>addImg&&runCut();
+$("addKeep").onchange=()=>addImg&&runCut();
+// AI cut-out through the site's server (same OpenAI key); falls back to the quick in-browser cut
+async function aiCut(){
+  const b=$("addAiCut"),m=$("addAiMsg");b.hidden=false;b.disabled=true;m.hidden=false;m.textContent="מסיר רקע עם AI… בדרך כלל 15–40 שניות";
+  try{const oc=document.createElement("canvas"),s=Math.min(1,1024/Math.max(addImg.naturalWidth,addImg.naturalHeight));oc.width=Math.round(addImg.naturalWidth*s);oc.height=Math.round(addImg.naturalHeight*s);
+    oc.getContext("2d").drawImage(addImg,0,0,oc.width,oc.height);
+    const r=await fetch(window.NOYA_CUT_ENDPOINT||"api/cutout",{method:"POST",headers:{"Content-Type":"application/json","x-admin-key":adminKey},body:JSON.stringify({image:oc.toDataURL("image/jpeg",.9)})});
+    const j=await r.json().catch(()=>({}));if(!r.ok||!j.image)throw new Error(j.error||r.status);
+    const im=new Image();await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src=j.image;});
+    const c=document.createElement("canvas");c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext("2d").drawImage(im,0,0);
+    addCut=trimTo(c,600);const cv2=$("cutCv");cv2.width=addCut.width;cv2.height=addCut.height;cv2.getContext("2d").drawImage(addCut,0,0);
+    m.textContent="✓ הרקע הוסר עם AI. בדקו שהמוצר נראה נכון לפני ההוספה.";
+  }catch(e){m.textContent="הסרת הרקע עם AI נכשלה ("+e.message+"). מוצגת ההסרה המהירה.";}
+  finally{b.disabled=false;b.textContent="↻ נסו שוב עם AI";}
+}
+$("addAiCut").onclick=()=>addImg&&aiCut();
+function runCut(){addCut=removeBg(addImg,+$("addTol").value,$("addKeep").checked);const c=$("cutCv");c.width=addCut.width;c.height=addCut.height;c.getContext("2d").drawImage(addCut,0,0);}
+// flood-fill from the photo edges: removes a plain studio background, follows soft gradients and shadows
+function removeBg(img,tol,keep){
+  const s=Math.min(1,1100/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*s),h=Math.round(img.naturalHeight*s);
+  const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.drawImage(img,0,0,w,h);
+  if(keep)return trimTo(c,600);
+  const id=x.getImageData(0,0,w,h),d=id.data,seen=new Uint8Array(w*h),q=new Int32Array(w*h);let qh=0,qt=0;
+  let br=0,bgc=0,bb=0,n=0;for(let i=0;i<w;i++)for(const j of [0,h-1]){const k=(j*w+i)*4;br+=d[k];bgc+=d[k+1];bb+=d[k+2];n++;}
+  for(let j=0;j<h;j++)for(const i of [0,w-1]){const k=(j*w+i)*4;br+=d[k];bgc+=d[k+1];bb+=d[k+2];n++;}
+  br/=n;bgc/=n;bb/=n;const T=(tol*.45)**2*3,G=(tol*1.7)**2*3;
+  const dist=(k,r,g,b)=>(d[k]-r)**2+(d[k+1]-g)**2+(d[k+2]-b)**2;
+  const push=p=>{if(!seen[p]){seen[p]=1;q[qt++]=p;}};
+  for(let i=0;i<w;i++){push(i);push((h-1)*w+i);}for(let j=0;j<h;j++){push(j*w);push(j*w+w-1);}
+  while(qh<qt){const p=q[qh++],k=p*4;if(dist(k,br,bgc,bb)>G){seen[p]=2;continue;}d[k+3]=0;
+    const px=p%w,py=(p-px)/w;
+    for(const [nx,ny] of [[px+1,py],[px-1,py],[px,py+1],[px,py-1]]){if(nx<0||ny<0||nx>=w||ny>=h)continue;const np=ny*w+nx;if(seen[np])continue;
+      if(dist(np*4,d[k],d[k+1],d[k+2])<=T)push(np);}}
+  for(let p=0;p<w*h;p++){if(d[p*4+3]===0)continue;const px=p%w,py=(p-px)/w;let z=0;
+    for(const [nx,ny] of [[px+1,py],[px-1,py],[px,py+1],[px,py-1]])if(nx>=0&&ny>=0&&nx<w&&ny<h&&d[(ny*w+nx)*4+3]===0)z++;if(z)d[p*4+3]=z>=2?110:190;}
+  x.putImageData(id,0,0);return trimTo(c,600);
+}
+function trimTo(c,max){const x=c.getContext("2d"),d=x.getImageData(0,0,c.width,c.height).data;let x0=c.width,y0=c.height,x1=0,y1=0;
+  for(let y=0;y<c.height;y++)for(let i=0;i<c.width;i++)if(d[(y*c.width+i)*4+3]>40){if(i<x0)x0=i;if(i>x1)x1=i;if(y<y0)y0=y;if(y>y1)y1=y;}
+  if(x1<=x0||y1<=y0){x0=0;y0=0;x1=c.width-1;y1=c.height-1;}
+  const w=x1-x0+1,h=y1-y0+1,s=Math.min(1,max/Math.max(w,h)),o=document.createElement("canvas");o.width=Math.round(w*s);o.height=Math.round(h*s);
+  o.getContext("2d").drawImage(c,x0,y0,w,h,0,0,o.width,o.height);return o;}
+$("addOk").onclick=()=>{
+  const name=$("addName").value.trim(),price=+$("addPrice").value,h=+$("addH").value;
+  const err=!addCut?"בחרו תמונה":!name?"כתבו שם למוצר":!(h>0)?"כתבו גובה משוער":"";
+  if(err){$("addErr").hidden=false;$("addErr").textContent=err;return;}
+  const id="n"+Date.now().toString(36);
+  const oc=document.createElement("canvas"),s=Math.min(1,1024/Math.max(addImg.naturalWidth,addImg.naturalHeight));oc.width=Math.round(addImg.naturalWidth*s);oc.height=Math.round(addImg.naturalHeight*s);
+  oc.getContext("2d").drawImage(addImg,0,0,oc.width,oc.height);
+  pendingOrig.set(id,oc.toDataURL("image/jpeg",.85));
+  draft.products.unshift({id,name,desc:$("addDesc").value.trim(),price:Math.max(0,price||0),h,ar:+(addCut.width/addCut.height).toFixed(3),cat:$("addCat").value,
+    img:addCut.toDataURL("image/webp",.85),role:"stand",ride:h<=24,lie:null,soft:false,label:false,hidden:false,heroBoost:false});
+  $("addModal").hidden=true;admTab="p";renderAdmin();showToast(`"${name}" נוסף. לחצו "שמירת שינויים" כדי לפרסם.`);
+};
+$("admLink").onclick=e=>{e.preventDefault();location.hash="admin";};
+window.addEventListener("hashchange",()=>{if(location.hash==="#admin")openAdmin();});
+// ---- Phone sheet & next step ----
+const sheet=document.getElementById("sheet"),scrim=document.getElementById("scrim");
+document.getElementById("barBtn").onclick=()=>{sheet.classList.add("open");scrim.classList.add("open");};
+scrim.onclick=()=>{sheet.classList.remove("open");scrim.classList.remove("open");};
+["go","go2"].forEach(i=>document.getElementById(i).onclick=()=>openSummary());
+
+renderChips();renderPacks();renderBgs();update(false);
+if(location.hash==="#admin")setTimeout(openAdmin,300);
+</script>
+</body>
+</html>
