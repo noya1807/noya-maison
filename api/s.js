@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   const title = "המארז שבניתי ב-נויה במתנה ✨";
   const desc = "מארז מתנה בעיצוב אישי. בחרו מוצרים, ונויה תעצב לכם מארז משלכם.";
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("Cache-Control", "public, max-age=3600");
+  res.setHeader("Cache-Control", "no-cache"); // always fresh, so new buttons show up on links opened before
   res.end(`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
