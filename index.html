@@ -543,12 +543,9 @@ function applyCatalog(c){
   Object.assign(CONFIG,catalog.settings||{});
 }
 applyCatalog(DEFAULT_CATALOG);
-const SETS=[
- {name:"בית מעוצב",pack:"box0",items:["33","05","06","22","40","03"]},
- {name:"ערב נרות",pack:"box1",items:["33","25","17","34","44","36","43","02"]},
- {name:"ספא ביתי",pack:"42",items:["33","13","25","11","14","24","12"]},
- {name:"שולחן חג",pack:"39",items:["33","19","20","29","16","41","04"]}
-];
+// Ready-made boxes shown in the "מארזי השראה" row. Empty = the row is hidden.
+// Each: {name:"שם המארז", pack:"<packaging id>", items:["<product id>", ...]}
+const SETS=[];
 
 // ---- State ----
 let cart=new Map(); // every visitor starts from an empty box and designs their own
@@ -908,6 +905,7 @@ function update(flash){
 
 // ---- Inspiration boxes & styling tip ----
 const setsEl=document.getElementById("sets");
+setsEl.hidden=!SETS.length;
 setsEl.innerHTML=`<b>מארזי השראה:</b>`+SETS.map((x,i)=>`<button class="set" data-i="${i}">${x.name}</button>`).join("");
 setsEl.onclick=e=>{const b=e.target.closest(".set");if(!b)return;const x=SETS[+b.dataset.i];
   const prev=[new Map(cart),pack];cart=new Map(x.items.map(id=>[id,1]));x.items.forEach(id=>fresh.add(id));
