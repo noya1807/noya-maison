@@ -177,9 +177,31 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .done{max-width:620px;margin:0 auto;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
 .check{width:60px;height:60px;border-radius:50%;background:var(--ok);color:#fff;font-size:30px;display:flex;align-items:center;justify-content:center}
 .done-box{display:grid;grid-template-columns:200px 1fr;gap:14px;text-align:start;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px;width:100%;font-size:14px}
+.eng h3 .opt,.eng-file .opt{font-family:var(--body);font-size:13px;color:var(--cocoa-soft);font-weight:400}
+.eng-pitch{margin:0;font-size:14px;color:var(--cocoa-soft)}
+.eng-list{display:flex;flex-direction:column;gap:6px}
+.eng-item{display:grid!important;grid-template-columns:auto 40px minmax(0,1fr) auto;min-width:0;gap:10px!important;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 10px;cursor:pointer;color:var(--cocoa)!important;font-size:14px!important;flex:none!important}
+.eng-item:has(input:checked){border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);background:#fffaf0}
+.eng-item input{width:20px;height:20px;margin:0;accent-color:var(--cocoa)}
+.eng-item img{width:40px;height:40px;object-fit:contain}
+.eng-item span{min-width:0;overflow-wrap:anywhere}
+.eng,.eng-up,.eng-file{min-width:0;max-width:100%}
+.eng-file input{max-width:100%;min-width:0;width:100%}
+.eng-item b{font-variant-numeric:tabular-nums;color:var(--cocoa);font-size:13px;white-space:nowrap}
+.eng-up{display:flex;flex-direction:column;gap:10px;border-top:1px dashed var(--line);padding-top:10px}
+.eng-file{border:1.5px dashed var(--gold);border-radius:12px;padding:12px;background:var(--paper);color:var(--cocoa)!important;font-weight:600}
+.eng-file input{border:0!important;padding:6px 0!important;background:transparent!important;font-size:14px}
+.eng-files{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.eng-files:empty{display:none}
+.eng-f{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.eng-f span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eng-f .st{flex:none;color:var(--cocoa-soft)}.eng-f .st.ok{color:var(--ok)}.eng-f .st.bad{color:#9d3f28}
+.eng-f button{border:0;background:none;color:var(--cocoa-soft);font-size:16px;min-width:32px;min-height:32px}
+.done-logo{width:100%;background:#fffaf0;border:1px solid #e9cf9f;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:center;font-size:14px}
+.done-logo .wa{flex:none;padding:10px 18px;font-size:15px}
 .done-box img{width:100%;border-radius:10px;aspect-ratio:4/3;object-fit:cover}
 @media (max-width:980px){
-  .sum-view{grid-template-columns:1fr;padding:12px 16px 40px}
+  .sum-view{grid-template-columns:minmax(0,1fr);padding:12px 16px 40px}
   .f2{flex-direction:column}
   .done-box{grid-template-columns:1fr}
 }
@@ -428,6 +450,17 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       <div class="grand"><span>סה"כ להזמנה</span><b id="grand"></b></div>
       <p class="note">מחירים כולל מע"מ. המחיר הסופי, משלוח ומיתוג יאושרו מול נציג.</p>
     </div>
+    <div class="card2 eng" id="engCard" hidden>
+      <h3>✨ הוסיפו חריטת לוגו <span class="opt">(לא חובה)</span></h3>
+      <p class="eng-pitch">מתנה ממותגת נשארת על השולחן ומזכירה אתכם כל יום. סמנו על אילו פריטים לחרוט:</p>
+      <div class="eng-list" id="engList"></div>
+      <div class="eng-up" id="engUp" hidden>
+        <label class="eng-file"><span>העלו את קובץ הלוגו <span class="opt">(אפשר גם אחרי ההזמנה)</span></span><input type="file" id="engFile" multiple accept=".png,.jpg,.jpeg,.webp,.svg,.pdf,.ai,.eps"></label>
+        <div class="eng-files" id="engFiles"></div>
+        <label>הערות לחריטה (מיקום, גודל, גוון)<textarea id="engNotes" rows="2"></textarea></label>
+        <p class="note">PNG, JPG, SVG, PDF, AI, EPS · עד 4MB לקובץ. אין קובץ כרגע? אפשר לשלוח אותו אחרי ההזמנה. תקבלו הדמיה של החריטה לאישור לפני הייצור.</p>
+      </div>
+    </div>
     <form class="card2" id="orderForm" novalidate>
       <h3>פרטים ליצירת קשר</h3>
       <div class="f2">
@@ -456,6 +489,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
     <h2 id="doneTitle"></h2>
     <p id="doneText"></p>
     <div class="done-box"><img id="doneImg" alt="המארז שהוזמן"><div id="doneSum"></div></div>
+    <div class="done-logo" id="doneLogo" hidden></div>
     <p class="note" id="doneRef"></p>
     <div class="send"><button class="ghost" id="resend">פתיחת ההודעה שוב</button><button class="go" id="newBox">בניית מארז נוסף</button></div>
   </div>
@@ -562,7 +596,7 @@ const CONFIG={orderEmail:"moshe@noyaglobal.com", whatsapp:"972543219070", minOrd
   // inspiration lines in the header: one per hour, same for everyone; editable in the admin screen (Settings)
   quotes:["מתנה טובה מתחילה במחשבה על מישהו אחר.", "הדברים הקטנים הם אלה שנזכרים הכי הרבה.", "כל מארז הוא מכתב תודה שאפשר להחזיק ביד.", "נתינה היא הדרך הכי יפה להגיד \"ראיתי אותך\".", "יופי אמיתי נמצא בפרטים.", "מתנה שנבחרה באהבה מרגישים מהרגע הראשון.", "לפעמים הדבר הכי חשוב במתנה הוא הרגע שפותחים אותה.", "הוקרה טובה לא מחכה להזדמנות, היא יוצרת אותה.", "כשנותנים מהלב, זה תמיד מגיע ללב.", "מארז יפה מספר סיפור עוד לפני שפותחים אותו.", "השקעה קטנה במחשבה, הפתעה גדולה בלב.", "טוב לב מתחיל בפעולה קטנה אחת.", "מתנה היא דרך לומר תודה בלי מילים.", "כל פרט שנבחר בקפידה הוא עוד חיוך בדרך.", "העולם נעשה יפה יותר עם כל מתנה שניתנת.", "לשמח מישהו אחר זו אחת ההנאות הגדולות שיש.", "הרגע שלפני הפתיחה שווה את כל ההכנות.", "מתנה מושלמת היא לא היקרה ביותר, היא המדויקת ביותר.", "תודה שנאמרת בזמן שווה פי כמה.", "יצירתיות מתחילה כשמעזים לבחור אחרת.", "גם רגע רגיל יכול להפוך לזיכרון עם הפתעה קטנה.", "ארגון שמוקיר את האנשים שלו, האנשים שלו מוקירים אותו.", "הלב מבין עיצוב יפה עוד לפני העיניים.", "כל מתנה היא גשר קטן בין אנשים.", "מה שנעשה באהבה, מרגישים.", "השמחה של הנותן גדולה לפעמים משמחת המקבל.", "עטיפה יפה היא ההבטחה, והתוכן הוא הקסם.", "אין גיל ואין סיבה לקבל מתנה מרגשת.", "שווה לעצור לרגע ולחשוב מה ישמח את מי שמולך.", "מתנה טובה ממשיכה לשמח גם אחרי שהסרט נפתח.", "כשבוחרים בקפידה, כל פריט מקבל משמעות.", "החג מתחיל ברגע שמתחילים לתכנן מתנה.", "לפעמים \"חשבתי עליך\" הוא המשפט הכי חזק שיש.", "יופי פשוט הוא יופי שנשאר.", "הוקרה היא דלק לאנשים טובים.", "מתנה היא דרך לחגוג את מי שמקבל אותה.", "הדבר הכי אישי במתנה הוא הבחירה.", "קשרים טובים נבנים מרגעים קטנים של תשומת לב.", "מארז אחד יכול להאיר יום שלם.", "נדיבות היא תמיד באופנה.", "כשמשהו נעשה בכוונה, רואים את זה בכל פרט.", "הפתעה קטנה, חיוך גדול.", "מתנה טובה מדברת בשפה של מי שמקבל אותה.", "ההבדל בין טוב למושלם נמצא בתשומת הלב.", "כל צבע, כל מרקם, כל פרט מספר משהו.", "תנו למתנה לומר את מה שקשה לומר במילים.", "אנשים מרגישים כשחושבים עליהם באמת.", "השילוב הנכון הופך פריטים פשוטים לחוויה.", "יצירה מתחילה בבחירה אחת אמיצה.", "מתנות טובות לא נשכחות, הן מקבלות מקום של כבוד.", "הסוד של מארז מושלם הוא איזון.", "כשנותנים בשמחה, מקבלים בחזרה פי כמה.", "תודה גדולה מגיעה לפעמים בקופסה קטנה.", "מה שבוחרים לתת אומר הרבה על מי שנותן.", "עיצוב טוב הוא שקט, מדויק ומרגש.", "כל מקבל ראוי לרגע שכולו שלו.", "אין דבר יפה יותר מהבעת הפנים של מי שהופתע.", "מתנה היא זיכרון שמחכה לקרות.", "להעריך זה לבחור לראות את הטוב.", "גם פרט קטן יכול להיות כל הסיפור.", "שמחה שמשתפים, גדלה.", "הבית מתמלא חום מדברים שנבחרו באהבה.", "לפעמים מתנה היא ההתחלה של מסורת חדשה.", "כל מארז הוא הזדמנות להפתיע.", "כשהלב בוחר, אין טעויות.", "הוקרה אמיתית נראית, נשמעת ומורגשת.", "דברים יפים לוקחים זמן, ושווים כל רגע.", "מתנה שנעשתה בשבילך מרגישה אחרת.", "האווירה הנכונה מתחילה בפרט הנכון.", "נתינה היא שפה שכולם מבינים.", "עיצוב הוא הדרך להפוך רגש לחפץ.", "מה שמשמח אותנו הכי הרבה הוא לשמח אחרים.", "כל עונה היא עונה טובה להודות.", "פשטות ואלגנטיות הן תמיד בחירה בטוחה.", "מתנה מקשרת בין רגע של היום לזיכרון של מחר.", "כשרואים את האדם, מוצאים את המתנה.", "בכל מארז יש קצת מהנותן.", "החיים יפים יותר כשיש למי לתת.", "המתנה הכי טובה היא זו שגורמת למקבל להרגיש מיוחד.", "אל תחכו לחג כדי לומר תודה.", "יופי מתחיל בכוונה.", "כל פריט במקום הנכון יוצר הרמוניה.", "מתנה טובה היא חיבוק שאפשר לשלוח.", "מה שעשוי באכפתיות מחזיק לאורך זמן.", "התרגשות של מקבל מתנה היא תרופה לנותן.", "צוות שמרגיש מוערך, נותן את הלב.", "כל קשר טוב שווה חגיגה קטנה.", "עיצוב מושלם מרגיש טבעי, כאילו תמיד היה שם.", "להעז לבחור אחרת זה להעז להפתיע.", "הרגעים המתוקים נמצאים בין הסרט לנייר העטיפה.", "מתנה נכונה הופכת יום רגיל ליום מיוחד.", "כשמשקיעים במתנה, משקיעים בקשר.", "טעם טוב הוא מתנה בפני עצמו.", "תנו לפרטים לעשות את הקסם.", "כל מארז מתחיל בשאלה: מה ישמח אותו?", "הנתינה הכי יפה היא זו שלא מצפה לכלום.", "גם המילים הכי פשוטות מרגשות כשהן מגיעות עם מתנה.", "מתנה היא דרך לומר \"אתה חשוב לי\".", "כשהעיצוב נכון, המתנה מדברת בעצמה.", "עוד מתנה, עוד חיוך, עוד רגע ששווה לזכור."]};
 // The whole catalogue as one editable object (saved by the admin screen; these are the starting values)
-const PFIELDS=["id","name","desc","price","h","ar","cat","img","role","surf","ride","lie","soft","label","hidden","heroBoost","origUrl"];
+const PFIELDS=["id","name","desc","price","h","ar","cat","img","role","surf","ride","lie","soft","label","hidden","heroBoost","origUrl","engrave","engravePrice"];
 const pick=(o,f)=>Object.fromEntries(f.filter(k=>o[k]!==undefined).map(k=>[k,o[k]]));
 const DEFAULT_CATALOG=JSON.parse(JSON.stringify({v:1,products:P.map(p=>pick(p,PFIELDS)),packs:PACKS,settings:CONFIG}));
 let catalog=DEFAULT_CATALOG;
@@ -1109,11 +1143,7 @@ function boxImage(){return (!aiImg.hidden&&aiImg.src)?aiImg.src:cv.toDataURL("im
 function openSummary(){
   if(!cart.size){showToast("הוסיפו לפחות מוצר אחד למארז");return;}
   $("sumImg").src=boxImage();
-  const t=totals();
-  $("sumLines").innerHTML=[...cart].map(([id,q])=>{const p=byId[id];return `<div class="ln"><img src="${p.img}" alt=""><span>${esc(p.name)}${q>1?` × ${q}`:""}</span><span>${ils(p.price*q)}</span></div>`}).join("")
-    +(pack.none?`<div class="ln"><span></span><span>אריזה: ללא</span><span>${ils(0)}</span></div>`:`<div class="ln"><img src="${pack.img}" alt=""><span>אריזה: ${pack.name}</span><span>${ils(pack.price)}</span></div>`)
-    +`<div class="ln tot"><span></span><span>מחיר למארז (${t.count} פריטים)</span><span>${ils(t.total)}</span></div>`;
-  $("perBox").textContent=ils(t.total);
+  renderEng();renderSumLines();
   boxes=Math.max(1,boxes);renderQty();showView("sum");
   prepOrderImage();
 }
@@ -1122,8 +1152,38 @@ let orderImg={src:"",url:""};
 function prepOrderImage(){const src=$("sumImg").src;if(!src||orderImg.src===src)return;const cur=orderImg={src,url:""};
   const go=()=>{if(!shareAvailable)return;toJpeg(src,1280,.82).then(shareLink).then(u=>{cur.url=u;}).catch(()=>{});};
   shareAvailable?go():setTimeout(go,1500);}
+// ---- logo engraving (optional upsell, chosen per item at order time) ----
+let engSel=new Set(), engFiles=[];
+const engItems=()=>[...cart.keys()].filter(id=>byId[id]&&byId[id].engrave);
+const engCost=()=>[...engSel].reduce((s,id)=>s+(+byId[id]?.engravePrice||0)*(cart.get(id)||0),0);
+const orderPer=()=>totals().total+engCost();
+const engNames=()=>[...engSel].map(id=>byId[id].name+((cart.get(id)||1)>1?` × ${cart.get(id)}`:"")).join(", ");
+function renderSumLines(){const t=totals();
+  $("sumLines").innerHTML=[...cart].map(([id,q])=>{const p=byId[id];return `<div class="ln"><img src="${p.img}" alt=""><span>${esc(p.name)}${q>1?` × ${q}`:""}</span><span>${ils(p.price*q)}</span></div>`}).join("")
+    +(pack.none?`<div class="ln"><span></span><span>אריזה: ללא</span><span>${ils(0)}</span></div>`:`<div class="ln"><img src="${pack.img}" alt=""><span>אריזה: ${pack.name}</span><span>${ils(pack.price)}</span></div>`)
+    +(engSel.size?`<div class="ln"><span>✨</span><span>חריטת לוגו: ${esc(engNames())}</span><span>${ils(engCost())}</span></div>`:"")
+    +`<div class="ln tot"><span></span><span>מחיר למארז (${t.count} פריטים)</span><span>${ils(orderPer())}</span></div>`;
+  $("perBox").textContent=ils(orderPer());}
+function renderEng(){
+  const items=engItems();[...engSel].forEach(id=>{if(!items.includes(id))engSel.delete(id);});
+  $("engCard").hidden=!items.length;if(!items.length)return;
+  $("engList").innerHTML=items.map(id=>{const p=byId[id],q=cart.get(id);return `<label class="eng-item"><input type="checkbox" data-eng="${id}"${engSel.has(id)?" checked":""}><img src="${p.img}" alt=""><span>${esc(p.name)}${q>1?` × ${q}`:""}</span><b>${+p.engravePrice?`+${ils(p.engravePrice)} ליחידה`:"ללא תוספת"}</b></label>`;}).join("");
+  $("engUp").hidden=!engSel.size;renderEngFiles();}
+function renderEngFiles(){$("engFiles").innerHTML=engFiles.map((f,i)=>`<div class="eng-f"><span>📎 ${esc(f.name)}</span><span class="st ${f.url?"ok":f.err?"bad":""}">${f.url?"✓ הועלה":f.err?f.err:"מעלה…"}</span><button type="button" data-rmf="${i}" aria-label="הסרת הקובץ">×</button></div>`).join("");}
+$("engList").addEventListener("change",e=>{const c=e.target.closest("[data-eng]");if(!c)return;c.checked?engSel.add(c.dataset.eng):engSel.delete(c.dataset.eng);
+  $("engUp").hidden=!engSel.size;renderSumLines();renderQty();});
+$("engFiles").addEventListener("click",e=>{const b=e.target.closest("[data-rmf]");if(!b)return;engFiles.splice(+b.dataset.rmf,1);renderEngFiles();});
+$("engFile").addEventListener("change",e=>{
+  for(const file of [...e.target.files]){const f={name:file.name,url:"",err:""};engFiles.push(f);
+    if(!/\.(png|jpe?g|webp|svg|pdf|ai|eps)$/i.test(file.name))f.err="סוג קובץ לא נתמך";
+    else if(file.size>4*1024*1024)f.err="גדול מ-4MB, אפשר לשלוח אחרי ההזמנה";
+    else if(!shareAvailable)f.err="העלאה זמינה באתר";
+    else fetch((window.NOYA_LOGO_ENDPOINT||"api/logo"),{method:"POST",headers:{"Content-Type":file.type||"application/octet-stream","x-file-name":encodeURIComponent(file.name)},body:file})
+      .then(r=>r.json().then(j=>{if(!r.ok||!j.url)throw new Error(j.error||r.status);f.url=j.url;}))
+      .catch(()=>{f.err="ההעלאה נכשלה, אפשר לנסות שוב או לשלוח אחרי ההזמנה";}).finally(renderEngFiles);}
+  e.target.value="";renderEngFiles();});
 function renderQty(){
-  const per=totals().total,sum=per*boxes,need=Math.ceil(CONFIG.minOrder/per),ok=sum>=CONFIG.minOrder;
+  const per=orderPer(),sum=per*boxes,need=Math.ceil(CONFIG.minOrder/per),ok=sum>=CONFIG.minOrder;
   $("qBoxes").value=boxes;$("grand").textContent=ils(sum);
   $("minFill").style.width=Math.min(100,sum/CONFIG.minOrder*100)+"%";$("minFill").parentElement.classList.toggle("ok",ok);
   $("minMsg").innerHTML=ok?`✓ ההזמנה עומדת במינימום של ${ils(CONFIG.minOrder)}`
@@ -1151,13 +1211,17 @@ function buildOrder(){
   const lines=[`הזמנת מארז – נויה במתנה (${ref})`,"",
     `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,date?`תאריך אספקה רצוי: ${date}`:null,"",
     "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""} – ${ils(byId[id].price*q)}`),(pack.none?"• אריזה: ללא":`• אריזה: ${pack.name} – ${ils(pack.price)}`),"",
+    ...(engSel.size?[`✨ חריטת לוגו: ${engNames()} (+${ils(engCost())} למארז)`,
+      `📎 קובץ לוגו: ${engFiles.filter(f=>f.url).map(f=>f.name+" – "+f.url).join(" | ")||"יישלח בהמשך"}`,
+      f("engNotes")?`הערות לחריטה: ${f("engNotes")}`:null,""]:[]),
     orderImg.url&&orderImg.src===$("sumImg").src?`📸 תמונת המארז: ${orderImg.url}`:null,orderImg.url&&orderImg.src===$("sumImg").src?"":null,
-    `מחיר למארז: ${ils(t.total)}`,`כמות מארזים: ${boxes}`,`סה"כ: ${ils(t.total*boxes)} (כולל מע"מ, לאישור נציג)`,
+    `מחיר למארז: ${ils(orderPer())}`,`כמות מארזים: ${boxes}`,`סה"כ: ${ils(orderPer()*boxes)} (כולל מע"מ, לאישור נציג)`,
     f("fNotes")?"":null,f("fNotes")?`הערות: ${f("fNotes")}`:null].filter(x=>x!==null);
   return {ref,text:lines.join("\n")};
 }
 function send(kind){
   if(!validate()){$("fErr").scrollIntoView({block:"center",behavior:"smooth"});return;}
+  if(engSel.size&&engFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הלוגו עדיין עולה…");return;}
   const o=buildOrder();orderText=o.text;lastSend=kind;
   let href;
   if(kind==="wa") href=`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(o.text)}`;
@@ -1168,7 +1232,11 @@ function send(kind){
   $("doneText").innerHTML=kind==="wa"?"פתחנו הודעת וואטסאפ מוכנה עם כל פרטי ההזמנה. <b>כדי שנקבל אותה, לחצו שליחה בוואטסאפ.</b> נחזור אליכם תוך יום עסקים."
     :`פתחנו מייל מוכן אל ${CONFIG.orderEmail} עם כל פרטי ההזמנה. <b>כדי שנקבל אותו, לחצו שליחה בתוכנת המייל.</b> נחזור אליכם תוך יום עסקים.`;
   $("doneImg").src=$("sumImg").src;
-  $("doneSum").innerHTML=`<b>${boxes} מארזים · ${ils(totals().total*boxes)}</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
+  $("doneSum").innerHTML=`<b>${boxes} מארזים · ${ils(orderPer()*boxes)}</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
+  const logoLater=engSel.size&&!engFiles.some(f=>f.url);$("doneLogo").hidden=!logoLater;
+  if(logoLater)$("doneLogo").innerHTML=`<span>✨ בחרתם חריטת לוגו. שלחו לנו את קובץ הלוגו עם מספר ההזמנה <b>${o.ref}</b>:</span>
+    <a class="wa" href="https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(`קובץ לוגו לחריטה להזמנה ${o.ref} (מצורף)`)}" target="_blank" rel="noopener" style="text-decoration:none;border-radius:12px">שליחת הלוגו בוואטסאפ</a>
+    ${CONFIG.orderEmail?`<span class="note">או במייל: ${esc(CONFIG.orderEmail)}</span>`:""}`;
   $("doneRef").textContent="מספר הזמנה: "+o.ref+" · אם ההודעה לא נפתחה, חזרו ולחצו \"העתקת פרטי ההזמנה\".";
   showView("done");
 }
@@ -1178,7 +1246,7 @@ $("resend").onclick=()=>send(lastSend||"wa");
 $("copyOrder").onclick=async()=>{if(!validate())return;const o=buildOrder();
   try{await navigator.clipboard.writeText(o.text);showToast("פרטי ההזמנה הועתקו. אפשר להדביק במייל או בוואטסאפ ל-054-3219070");}
   catch(e){showToast("ההעתקה נחסמה בדפדפן. שלחו בוואטסאפ ל-054-3219070");}};
-$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;$("orderForm").reset();update(true);showView("build");};
+$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];$("orderForm").reset();update(true);showView("build");};
 ["fName","fPhone","fEmail"].forEach(i=>$(i).addEventListener("blur",()=>{if($("fErr").hidden===false)validate();}));
 // ===================== Stage 3: admin (catalogue editing) =====================
 // Storage: on the website the catalogue is saved by /api/catalog (shared with every customer, protected by the
@@ -1237,7 +1305,9 @@ function renderAdmin(){
         <div class="flags"><select data-f="role" aria-label="תפקיד">${ROLE_OPTS.map(([k,n])=>`<option value="${k}"${(p.role||"stand")===k?" selected":""}>${n}</option>`).join("")}</select>
           <label><input type="checkbox" data-f="ride"${p.ride?" checked":""}> יכול לעמוד על מגש</label>
           <label><input type="checkbox" data-f="heroBoost"${p.heroBoost?" checked":""}> מוצר מוביל מועדף</label>
-          <label><input type="checkbox" data-f="hidden"${p.hidden?" checked":""}> מוסתר מהקטלוג</label></div>
+          <label><input type="checkbox" data-f="hidden"${p.hidden?" checked":""}> מוסתר מהקטלוג</label>
+          <label><input type="checkbox" data-f="engrave"${p.engrave?" checked":""}> ניתן לחריטת לוגו</label>
+          <label>חריטה ₪ ליחידה <input data-f="engravePrice" type="number" min="0" value="${p.engravePrice||0}" style="width:64px"></label></div>
         <button class="del" data-del="${i}">מחיקה</button>
       </div>`).join("");
   } else if(admTab==="k"){
@@ -1255,7 +1325,7 @@ function renderAdmin(){
 }
 $("admTabs").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;admTab=b.dataset.t;renderAdmin();};
 $("admQ").oninput=()=>renderAdmin();
-const NUM=new Set(["price","h","minOrder"]);
+const NUM=new Set(["price","h","minOrder","engravePrice"]);
 function admEdit(e){
   const el=e.target,f=el.dataset.f,s=el.dataset.s;if(!f&&!s)return;
   const v=el.type==="checkbox"?el.checked:NUM.has(f||s)?Math.max(0,+el.value||0):el.value;
