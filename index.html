@@ -947,7 +947,7 @@ function finishReveal(key,src){
   aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();
   showAi(src);setVeil();playReveal();renderAiBar();
 }
-const STEPS=["בוחר את המוצר המוביל…","בונה שכבות ועומק…","מאזן צבעים וצורות…","מעמיד את המוצרים על הבמה…","מכוון אור וצללים…","מלטש לצילום קטלוגי…"];
+const STEPS=["נויה בוחרת את המוצר המוביל…","נויה בונה שכבות ועומק…","נויה מאזנת צבעים וצורות…","נויה מעמידה את המוצרים על הבמה…","נויה מכוונת אור וצללים…","נויה מלטשת לצילום קטלוגי…"];
 async function generateAi(force){
   if(aiBusy||cart.size<1)return;                       // one run at a time, from the first product
   const key=comboKey();
