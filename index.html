@@ -1024,7 +1024,7 @@ function renderAiBar(){
       +(editing?`<div class="reveal-more"><button class="ghost small" id="aiView">🖼 הצג את המארז המעוצב</button>${reset}</div>`:"");
   } else {
     b.innerHTML=`<button class="wa-share" id="aiShare">שתפו בוואטסאפ להתייעצות</button><button class="ai-go" id="aiRe">↻ עצבו מחדש באמצעות AI</button>`
-      +(aiAvailable&&aiCache.has(aiCurrent)?`<button class="ghost small" id="aiView">${editing?"🖼 הצג את המארז המעוצב":"✋ תיקון ידני"}</button>`:"")+reset;
+      +reset; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
   }
   q("aiGo")&&(q("aiGo").onclick=()=>generateAi(false));
   q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
