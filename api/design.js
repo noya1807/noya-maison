@@ -65,7 +65,7 @@ export default async function handler(req, res) {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const items = (body.items || []).filter(i => /^[a-z0-9]{2,20}$/i.test(i.id)).slice(0, 12)
       .map(i => ({ id: i.id, name: clean(i.name), qty: Math.max(1, Math.min(20, +i.qty || 1)), role: clean(i.role, 12), heightCm: Math.max(1, Math.min(80, +i.heightCm || 10)) }));
-    if (items.length < 3) { res.status(400).json({ error: "need at least 3 products" }); return; }
+    if (items.length < 1) { res.status(400).json({ error: "need at least 1 product" }); return; }
     const pack = { id: clean(body.pack?.id, 8), name: clean(body.pack?.name) };
     const variant = Math.abs(+body.variant || 0);
 
