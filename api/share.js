@@ -1,5 +1,5 @@
 // Share a finished gift-box image (e.g. on WhatsApp) to consult before ordering.
-// POST {image: dataURL (jpeg/png/webp, ≤ 3 MB)} → {url: page with a rich link preview, image: direct image URL}
+// POST {image: dataURL (jpeg/png/webp, ≤ 3 MB)} → {url: short page link /s/<id> with a rich link preview, image: direct image URL}
 // GET ?ping=1 → {ok}
 import { put } from "@vercel/blob";
 
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     const ext = m[1] === "jpeg" ? "jpg" : m[1];
     const blob = await put(`share/${id}.${ext}`, buf, { access: "public", contentType: `image/${m[1]}`, addRandomSuffix: false });
     const host = req.headers["x-forwarded-host"] || req.headers.host;
-    const page = `https://${host}/api/s?i=${encodeURIComponent(blob.url)}`;
+    const page = `https://${host}/s/${id}`; // short link: previews more reliably in WhatsApp
     res.status(200).json({ url: page, image: blob.url });
   } catch (e) {
     res.status(500).json({ error: String(e.message || e).slice(0, 200) });
