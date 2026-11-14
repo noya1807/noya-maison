@@ -204,6 +204,20 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .card-who{display:flex;flex-direction:column;gap:6px}
 .card-who label{flex-direction:row!important;align-items:center;gap:8px!important;font-size:14px!important;color:var(--cocoa)!important;min-height:36px}
 .card-who input{width:18px;height:18px;margin:0;accent-color:var(--cocoa);flex:none}
+.dlv{border:0;padding:0;margin:4px 0 0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.dlv legend{font-family:var(--display);font-weight:500;font-size:19px;color:var(--cocoa);padding:0;margin-bottom:8px}
+.dlv-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dlv-opt{display:grid!important;grid-template-columns:auto auto minmax(0,1fr);gap:8px!important;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;color:var(--cocoa)!important;font-size:14px!important;flex:none!important;background:#fff}
+.dlv-opt:has(input:checked){border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);background:#fffaf0}
+.dlv-opt input{width:18px;height:18px;margin:0;padding:0;min-height:0!important;accent-color:var(--cocoa)}
+.dlv-opt .di{font-size:22px}
+.dlv-opt b{display:block;font-size:15px}.dlv-opt small{display:block;color:var(--cocoa-soft);font-size:12px}
+.dlv-box{display:flex;flex-direction:column;gap:10px}
+.dlv-box .tog{flex-direction:row!important;align-items:center;gap:8px;color:var(--cocoa)!important;font-size:14px!important}
+.dlv-box .tog input{width:18px;height:18px;margin:0;padding:0;flex:none;min-height:0!important}
+.pick{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;color:var(--cocoa)}
+.pick a{color:var(--cocoa);font-weight:700}
+.ship-line{margin:0;font-size:14px;color:var(--cocoa-soft);font-variant-numeric:tabular-nums}
 .done-logo{width:100%;background:#fffaf0;border:1px solid #e9cf9f;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:center;font-size:14px}
 .done-logo .wa{flex:none;padding:10px 18px;font-size:15px}
 .done-box img{width:100%;border-radius:10px;aspect-ratio:4/3;object-fit:cover}
@@ -373,6 +387,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   .card2 input,.card2 textarea,.modal-in input,.modal-in select,.adm-tools input,.arow input,.arow select,.arow textarea{font-size:16px}
   .card2 input,.card2 textarea{min-height:44px}
   .send{flex-wrap:wrap}
+  .dlv-opts{grid-template-columns:1fr}
   .send>button{min-height:48px;min-width:140px;padding-inline:8px;white-space:nowrap}
   #copyOrder{min-height:44px}
   .done-view{padding:20px 16px 60px}
@@ -454,6 +469,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       </div>
       <div class="minbar"><div id="minFill"></div></div>
       <p class="minmsg" id="minMsg"></p>
+      <p class="ship-line" id="shipLine"></p>
       <div class="grand"><span>סה"כ להזמנה</span><b id="grand"></b></div>
       <p class="note">מחירים כולל מע"מ. המחיר הסופי, משלוח ומיתוג יאושרו מול נציג.</p>
     </div>
@@ -493,8 +509,31 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
         <label>אימייל<input id="fEmail" type="email" autocomplete="email"></label>
         <label>ארגון / חברה<input id="fOrg" autocomplete="organization"></label>
       </div>
+      <fieldset class="dlv">
+        <legend>איך תרצו לקבל את ההזמנה?</legend>
+        <div class="dlv-opts">
+          <label class="dlv-opt"><input type="radio" name="dlv" value="ship" checked><span class="di">🚚</span><span><b>משלוח עד הכתובת</b><small id="shipNote"></small></span></label>
+          <label class="dlv-opt"><input type="radio" name="dlv" value="pickup"><span class="di">🏬</span><span><b>איסוף עצמי</b><small id="pickNote"></small></span></label>
+        </div>
+        <div class="dlv-box" id="shipBox">
+          <div id="addrBox">
+            <div class="f2">
+              <label>עיר *<input id="fCity" autocomplete="address-level2"></label>
+              <label>רחוב ומספר *<input id="fStreet" autocomplete="address-line1"></label>
+            </div>
+            <label>קומה, כניסה והערות לשליח<input id="fAddrNote"></label>
+          </div>
+          <label class="tog"><input type="checkbox" id="multiAddr"> המשלוח לכמה כתובות (תשלחו לנו רשימת כתובות אחרי ההזמנה)</label>
+          <label class="tog"><input type="checkbox" id="rcvSame" checked> אני איש הקשר לקבלת המשלוח</label>
+          <div class="f2" id="rcvBox" hidden>
+            <label>שם מקבל המשלוח *<input id="fRcvName" autocomplete="off"></label>
+            <label>טלפון מקבל המשלוח *<input id="fRcvPhone" type="tel" inputmode="tel" placeholder="050-0000000" autocomplete="off"></label>
+          </div>
+        </div>
+        <div class="dlv-box pick" id="pickBox" hidden></div>
+      </fieldset>
       <label>תאריך אספקה רצוי<input id="fDate" type="date"></label>
-      <label>הערות (מיתוג, כרטיס ברכה, כתובת למשלוח)<textarea id="fNotes" rows="3"></textarea></label>
+      <label>הערות נוספות<textarea id="fNotes" rows="3"></textarea></label>
       <p class="err" id="fErr" hidden></p>
       <div class="send">
         <button type="button" class="go" id="sendMail">✉ שליחה במייל</button>
@@ -614,7 +653,7 @@ P.forEach(p=>{Object.assign(p,ROLES[p.id]||{});p.role=p.role||"stand";p.ride=RID
   p.label=LABEL0.has(p.id);p.desc="";p.hidden=false;p.heroBoost=false;});
 const byId={};
 // Settings the business can change in the admin screen
-const CONFIG={orderEmail:"moshe@noyaglobal.com", whatsapp:"972543219070", minOrder:3000, cardPrice:4,
+const CONFIG={orderEmail:"moshe@noyaglobal.com", whatsapp:"972543219070", minOrder:3000, cardPrice:4, shipPerBox:2.36, pickupAddress:"הענבר 1, ברקן", pickupHours:"בתיאום מראש",
   // inspiration lines in the header: one per hour, same for everyone; editable in the admin screen (Settings)
   quotes:["מתנה טובה מתחילה במחשבה על מישהו אחר.", "הדברים הקטנים הם אלה שנזכרים הכי הרבה.", "כל מארז הוא מכתב תודה שאפשר להחזיק ביד.", "נתינה היא הדרך הכי יפה להגיד \"ראיתי אותך\".", "יופי אמיתי נמצא בפרטים.", "מתנה שנבחרה באהבה מרגישים מהרגע הראשון.", "לפעמים הדבר הכי חשוב במתנה הוא הרגע שפותחים אותה.", "הוקרה טובה לא מחכה להזדמנות, היא יוצרת אותה.", "כשנותנים מהלב, זה תמיד מגיע ללב.", "מארז יפה מספר סיפור עוד לפני שפותחים אותו.", "השקעה קטנה במחשבה, הפתעה גדולה בלב.", "טוב לב מתחיל בפעולה קטנה אחת.", "מתנה היא דרך לומר תודה בלי מילים.", "כל פרט שנבחר בקפידה הוא עוד חיוך בדרך.", "העולם נעשה יפה יותר עם כל מתנה שניתנת.", "לשמח מישהו אחר זו אחת ההנאות הגדולות שיש.", "הרגע שלפני הפתיחה שווה את כל ההכנות.", "מתנה מושלמת היא לא היקרה ביותר, היא המדויקת ביותר.", "תודה שנאמרת בזמן שווה פי כמה.", "יצירתיות מתחילה כשמעזים לבחור אחרת.", "גם רגע רגיל יכול להפוך לזיכרון עם הפתעה קטנה.", "ארגון שמוקיר את האנשים שלו, האנשים שלו מוקירים אותו.", "הלב מבין עיצוב יפה עוד לפני העיניים.", "כל מתנה היא גשר קטן בין אנשים.", "מה שנעשה באהבה, מרגישים.", "השמחה של הנותן גדולה לפעמים משמחת המקבל.", "עטיפה יפה היא ההבטחה, והתוכן הוא הקסם.", "אין גיל ואין סיבה לקבל מתנה מרגשת.", "שווה לעצור לרגע ולחשוב מה ישמח את מי שמולך.", "מתנה טובה ממשיכה לשמח גם אחרי שהסרט נפתח.", "כשבוחרים בקפידה, כל פריט מקבל משמעות.", "החג מתחיל ברגע שמתחילים לתכנן מתנה.", "לפעמים \"חשבתי עליך\" הוא המשפט הכי חזק שיש.", "יופי פשוט הוא יופי שנשאר.", "הוקרה היא דלק לאנשים טובים.", "מתנה היא דרך לחגוג את מי שמקבל אותה.", "הדבר הכי אישי במתנה הוא הבחירה.", "קשרים טובים נבנים מרגעים קטנים של תשומת לב.", "מארז אחד יכול להאיר יום שלם.", "נדיבות היא תמיד באופנה.", "כשמשהו נעשה בכוונה, רואים את זה בכל פרט.", "הפתעה קטנה, חיוך גדול.", "מתנה טובה מדברת בשפה של מי שמקבל אותה.", "ההבדל בין טוב למושלם נמצא בתשומת הלב.", "כל צבע, כל מרקם, כל פרט מספר משהו.", "תנו למתנה לומר את מה שקשה לומר במילים.", "אנשים מרגישים כשחושבים עליהם באמת.", "השילוב הנכון הופך פריטים פשוטים לחוויה.", "יצירה מתחילה בבחירה אחת אמיצה.", "מתנות טובות לא נשכחות, הן מקבלות מקום של כבוד.", "הסוד של מארז מושלם הוא איזון.", "כשנותנים בשמחה, מקבלים בחזרה פי כמה.", "תודה גדולה מגיעה לפעמים בקופסה קטנה.", "מה שבוחרים לתת אומר הרבה על מי שנותן.", "עיצוב טוב הוא שקט, מדויק ומרגש.", "כל מקבל ראוי לרגע שכולו שלו.", "אין דבר יפה יותר מהבעת הפנים של מי שהופתע.", "מתנה היא זיכרון שמחכה לקרות.", "להעריך זה לבחור לראות את הטוב.", "גם פרט קטן יכול להיות כל הסיפור.", "שמחה שמשתפים, גדלה.", "הבית מתמלא חום מדברים שנבחרו באהבה.", "לפעמים מתנה היא ההתחלה של מסורת חדשה.", "כל מארז הוא הזדמנות להפתיע.", "כשהלב בוחר, אין טעויות.", "הוקרה אמיתית נראית, נשמעת ומורגשת.", "דברים יפים לוקחים זמן, ושווים כל רגע.", "מתנה שנעשתה בשבילך מרגישה אחרת.", "האווירה הנכונה מתחילה בפרט הנכון.", "נתינה היא שפה שכולם מבינים.", "עיצוב הוא הדרך להפוך רגש לחפץ.", "מה שמשמח אותנו הכי הרבה הוא לשמח אחרים.", "כל עונה היא עונה טובה להודות.", "פשטות ואלגנטיות הן תמיד בחירה בטוחה.", "מתנה מקשרת בין רגע של היום לזיכרון של מחר.", "כשרואים את האדם, מוצאים את המתנה.", "בכל מארז יש קצת מהנותן.", "החיים יפים יותר כשיש למי לתת.", "המתנה הכי טובה היא זו שגורמת למקבל להרגיש מיוחד.", "אל תחכו לחג כדי לומר תודה.", "יופי מתחיל בכוונה.", "כל פריט במקום הנכון יוצר הרמוניה.", "מתנה טובה היא חיבוק שאפשר לשלוח.", "מה שעשוי באכפתיות מחזיק לאורך זמן.", "התרגשות של מקבל מתנה היא תרופה לנותן.", "צוות שמרגיש מוערך, נותן את הלב.", "כל קשר טוב שווה חגיגה קטנה.", "עיצוב מושלם מרגיש טבעי, כאילו תמיד היה שם.", "להעז לבחור אחרת זה להעז להפתיע.", "הרגעים המתוקים נמצאים בין הסרט לנייר העטיפה.", "מתנה נכונה הופכת יום רגיל ליום מיוחד.", "כשמשקיעים במתנה, משקיעים בקשר.", "טעם טוב הוא מתנה בפני עצמו.", "תנו לפרטים לעשות את הקסם.", "כל מארז מתחיל בשאלה: מה ישמח אותו?", "הנתינה הכי יפה היא זו שלא מצפה לכלום.", "גם המילים הכי פשוטות מרגשות כשהן מגיעות עם מתנה.", "מתנה היא דרך לומר \"אתה חשוב לי\".", "כשהעיצוב נכון, המתנה מדברת בעצמה.", "עוד מתנה, עוד חיוך, עוד רגע ששווה לזכור."]};
 // The whole catalogue as one editable object (saved by the admin screen; these are the starting values)
@@ -1165,7 +1204,7 @@ function boxImage(){return (!aiImg.hidden&&aiImg.src)?aiImg.src:cv.toDataURL("im
 function openSummary(){
   if(!cart.size){showToast("הוסיפו לפחות מוצר אחד למארז");return;}
   $("sumImg").src=boxImage();
-  renderEng();renderSumLines();
+  renderEng();renderSumLines();syncDlv();
   boxes=Math.max(1,boxes);renderQty();showView("sum");
   prepOrderImage();
 }
@@ -1216,9 +1255,21 @@ $("engFile").addEventListener("change",e=>{
       .then(r=>r.json().then(j=>{if(!r.ok||!j.url)throw new Error(j.error||r.status);f.url=j.url;}))
       .catch(()=>{f.err="ההעלאה נכשלה, אפשר לנסות שוב או לשלוח אחרי ההזמנה";}).finally(renderEngFiles);}
   e.target.value="";renderEngFiles();});
+// ---- delivery: shipping (per box) or self pickup ----
+const dlvMode=()=>(document.querySelector('input[name="dlv"]:checked')||{}).value||"ship";
+const r2=n=>Math.round(n*100)/100;
+const shipCost=()=>dlvMode()==="ship"?r2((+CONFIG.shipPerBox||0)*boxes):0;
+const grandTotal=()=>r2(orderPer()*boxes+shipCost());
+function syncDlv(){const ship=dlvMode()==="ship",multi=$("multiAddr").checked;
+  $("shipNote").textContent=`${ils(CONFIG.shipPerBox)} למארז`;$("pickNote").textContent=`ללא עלות · ${CONFIG.pickupAddress||""}`;
+  $("shipBox").hidden=!ship;$("pickBox").hidden=ship;$("addrBox").hidden=multi;$("rcvBox").hidden=$("rcvSame").checked;
+  $("pickBox").innerHTML=`איסוף מ: <b>${esc(CONFIG.pickupAddress||"")}</b>${CONFIG.pickupHours?` · ${esc(CONFIG.pickupHours)}`:""} · <a href="https://waze.com/ul?q=${encodeURIComponent(CONFIG.pickupAddress||"")}&navigate=yes" target="_blank" rel="noopener">ניווט ב-Waze</a>`;}
+document.querySelectorAll('input[name="dlv"]').forEach(r=>r.addEventListener("change",()=>{syncDlv();renderQty();}));
+["multiAddr","rcvSame"].forEach(i=>$(i).addEventListener("change",syncDlv));
 function renderQty(){
   const per=orderPer(),sum=per*boxes,need=Math.ceil(CONFIG.minOrder/per),ok=sum>=CONFIG.minOrder;
-  $("qBoxes").value=boxes;$("grand").textContent=ils(sum);
+  $("qBoxes").value=boxes;$("grand").textContent=ils(grandTotal());
+  $("shipLine").textContent=dlvMode()==="ship"?`משלוח: ${boxes} מארזים × ${ils(CONFIG.shipPerBox)} = ${ils(shipCost())}`:"איסוף עצמי: ללא עלות משלוח";
   $("minFill").style.width=Math.min(100,sum/CONFIG.minOrder*100)+"%";$("minFill").parentElement.classList.toggle("ok",ok);
   $("minMsg").innerHTML=ok?`✓ ההזמנה עומדת במינימום של ${ils(CONFIG.minOrder)}`
     :`חסרים ${ils(CONFIG.minOrder-sum)} להזמנת מינימום של ${ils(CONFIG.minOrder)}. <button type="button" id="toMin">${need} מארזים יעמדו במינימום</button>`;
@@ -1236,6 +1287,13 @@ function validate(){
   const errs=[];$("fName").classList.toggle("bad",!name);if(!name)errs.push("שם מלא");
   const pOk=/^(\+?972|0)\d{8,9}$/.test(phone);$("fPhone").classList.toggle("bad",!pOk);if(!pOk)errs.push("מספר טלפון תקין");
   const eOk=!email||/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);$("fEmail").classList.toggle("bad",!eOk);if(!eOk)errs.push("כתובת מייל תקינה");
+  ["fCity","fStreet","fRcvName","fRcvPhone"].forEach(i=>$(i).classList.remove("bad"));
+  if(dlvMode()==="ship"){
+    if(!$("multiAddr").checked){const c=$("fCity").value.trim(),st=$("fStreet").value.trim();
+      $("fCity").classList.toggle("bad",!c);$("fStreet").classList.toggle("bad",!st);if(!c||!st)errs.push("כתובת למשלוח");}
+    if(!$("rcvSame").checked){const rn=$("fRcvName").value.trim(),rp=$("fRcvPhone").value.replace(/[^\d+]/g,"");
+      $("fRcvName").classList.toggle("bad",!rn);if(!rn)errs.push("שם מקבל המשלוח");
+      const rOk=/^(\+?972|0)\d{8,9}$/.test(rp);$("fRcvPhone").classList.toggle("bad",!rOk);if(!rOk)errs.push("טלפון מקבל המשלוח");}}
   $("fErr").hidden=!errs.length;$("fErr").textContent=errs.length?"חסר או לא תקין: "+errs.join(", "):"";
   return !errs.length;
 }
@@ -1243,13 +1301,20 @@ function buildOrder(){
   const t=totals(),d=new Date(),ref="NOYA-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
   const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
   const lines=[`הזמנת מארז – נויה במתנה (${ref})`,"",
-    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,date?`תאריך אספקה רצוי: ${date}`:null,"",
+    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,"",
+    ...(dlvMode()==="ship"?["🚚 אספקה: משלוח",
+      $("multiAddr").checked?"כתובות: משלוח לכמה כתובות, הרשימה תישלח בהמשך":`כתובת: ${f("fStreet")}, ${f("fCity")}${f("fAddrNote")?` · ${f("fAddrNote")}`:""}`,
+      `איש קשר לקבלה: ${$("rcvSame").checked?`${f("fName")}, ${f("fPhone")}`:`${f("fRcvName")}, ${f("fRcvPhone")}`}`]
+      :[`🏬 אספקה: איסוף עצמי מ${CONFIG.pickupAddress||""}`]),
+    date?`תאריך אספקה רצוי: ${date}`:null,"",
     "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""} – ${ils(byId[id].price*q)}`),(pack.none?"• אריזה: ללא":`• אריזה: ${pack.name} – ${ils(pack.price)}`),"",
     ...(engSel.size?[`✨ חריטת לוגו: ${engNames()} (+${ils(engCost())} למארז)`,f("engNotes")?`הערות לחריטה: ${f("engNotes")}`:null]:[]),
     ...(cardOn?[`💌 כרטיס ברכה ממותג 10×15 (+${ils(cardCost())} למארז)`,cardSelf?"עיצוב הכרטיס: הלקוח ישלח עיצוב מוכן בהמשך":`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[]),
     ...(needLogo()?[`📎 קובץ לוגו: ${engFiles.filter(f=>f.url).map(f=>f.name+" – "+f.url).join(" | ")||"יישלח בהמשך"}`,""]:[]),
     orderImg.url&&orderImg.src===$("sumImg").src?`📸 תמונת המארז: ${orderImg.url}`:null,orderImg.url&&orderImg.src===$("sumImg").src?"":null,
-    `מחיר למארז: ${ils(orderPer())}`,`כמות מארזים: ${boxes}`,`סה"כ: ${ils(orderPer()*boxes)} (כולל מע"מ, לאישור נציג)`,
+    `מחיר למארז: ${ils(orderPer())}`,`כמות מארזים: ${boxes}`,
+    dlvMode()==="ship"?`משלוח: ${boxes} × ${ils(CONFIG.shipPerBox)} = ${ils(shipCost())}`:"משלוח: איסוף עצמי (ללא עלות)",
+    `סה"כ: ${ils(grandTotal())} (כולל מע"מ, לאישור נציג)`,
     f("fNotes")?"":null,f("fNotes")?`הערות: ${f("fNotes")}`:null].filter(x=>x!==null);
   return {ref,text:lines.join("\n")};
 }
@@ -1266,9 +1331,9 @@ function send(kind){
   $("doneText").innerHTML=kind==="wa"?"פתחנו הודעת וואטסאפ מוכנה עם כל פרטי ההזמנה. <b>כדי שנקבל אותה, לחצו שליחה בוואטסאפ.</b> נחזור אליכם תוך יום עסקים."
     :`פתחנו מייל מוכן אל ${CONFIG.orderEmail} עם כל פרטי ההזמנה. <b>כדי שנקבל אותו, לחצו שליחה בתוכנת המייל.</b> נחזור אליכם תוך יום עסקים.`;
   $("doneImg").src=$("sumImg").src;
-  $("doneSum").innerHTML=`<b>${boxes} מארזים · ${ils(orderPer()*boxes)}</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
+  $("doneSum").innerHTML=`<b>${boxes} מארזים · ${ils(grandTotal())}</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
   const logoLater=needLogo()&&!engFiles.some(f=>f.url), cardLater=cardOn&&cardSelf;
-  const toSend=[logoLater?"קובץ הלוגו":null,cardLater?"עיצוב כרטיס הברכה (10×15 ס״מ)":null].filter(Boolean);
+  const toSend=[logoLater?"קובץ הלוגו":null,cardLater?"עיצוב כרטיס הברכה (10×15 ס״מ)":null,dlvMode()==="ship"&&$("multiAddr").checked?"רשימת כתובות המשלוח":null].filter(Boolean);
   $("doneLogo").hidden=!toSend.length;
   if(toSend.length)$("doneLogo").innerHTML=`<span>✨ נשאר רק לשלוח לנו את ${toSend.join(" ואת ")}, עם מספר ההזמנה <b>${o.ref}</b>:</span>
     <a class="wa" href="https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(`${toSend.join(" ו")} להזמנה ${o.ref} (מצורף)`)}" target="_blank" rel="noopener" style="text-decoration:none;border-radius:12px">שליחה בוואטסאפ</a>
@@ -1282,7 +1347,7 @@ $("resend").onclick=()=>send(lastSend||"wa");
 $("copyOrder").onclick=async()=>{if(!validate())return;const o=buildOrder();
   try{await navigator.clipboard.writeText(o.text);showToast("פרטי ההזמנה הועתקו. אפשר להדביק במייל או בוואטסאפ ל-054-3219070");}
   catch(e){showToast("ההעתקה נחסמה בדפדפן. שלחו בוואטסאפ ל-054-3219070");}};
-$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];cardOn=false;cardSelf=false;$("orderForm").reset();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
+$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];cardOn=false;cardSelf=false;$("orderForm").reset();syncDlv();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
 ["fName","fPhone","fEmail"].forEach(i=>$(i).addEventListener("blur",()=>{if($("fErr").hidden===false)validate();}));
 // ===================== Stage 3: admin (catalogue editing) =====================
 // Storage: on the website the catalogue is saved by /api/catalog (shared with every customer, protected by the
@@ -1355,6 +1420,9 @@ function renderAdmin(){
       <label>מייל לקבלת הזמנות<input data-s="orderEmail" type="email" value="${esc(s.orderEmail)}"></label>
       <label>וואטסאפ לקבלת הזמנות (בפורמט בינלאומי, למשל 972543219070)<input data-s="whatsapp" inputmode="tel" value="${esc(s.whatsapp)}"></label>
       <label>מינימום הזמנה (₪)<input data-s="minOrder" type="number" min="0" value="${s.minOrder}"></label>
+      <label>משלוח: מחיר למארז ₪<input data-s="shipPerBox" type="number" min="0" step="0.01" value="${s.shipPerBox??2.36}"></label>
+      <label>כתובת לאיסוף עצמי<input data-s="pickupAddress" value="${esc(s.pickupAddress??"")}"></label>
+      <label>שעות איסוף עצמי<input data-s="pickupHours" value="${esc(s.pickupHours??"")}"></label>
       <label>כרטיס ברכה ממותג: מחיר למארז ₪ (0 = לא להציע)<input data-s="cardPrice" type="number" min="0" value="${s.cardPrice??4}"></label>
       <label>משפטי השראה בכותרת (משפט בכל שורה. מתחלף כל שעה, אותו משפט לכל מי שנכנס באותה שעה)<textarea data-s="quotes" rows="14" style="font:16px var(--body);color:var(--cocoa);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical">${esc((s.quotes||[]).join("\n"))}</textarea></label></div>`;
   }
@@ -1362,7 +1430,7 @@ function renderAdmin(){
 }
 $("admTabs").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;admTab=b.dataset.t;renderAdmin();};
 $("admQ").oninput=()=>renderAdmin();
-const NUM=new Set(["price","h","minOrder","engravePrice","cardPrice"]);
+const NUM=new Set(["price","h","minOrder","engravePrice","cardPrice","shipPerBox"]);
 function admEdit(e){
   const el=e.target,f=el.dataset.f,s=el.dataset.s;if(!f&&!s)return;
   const v=el.type==="checkbox"?el.checked:NUM.has(f||s)?Math.max(0,+el.value||0):el.value;
