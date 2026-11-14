@@ -238,6 +238,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .veil-in{position:relative;transition:opacity .4s;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--cocoa);text-align:center}
 .veil-in b{font-family:var(--display);font-weight:500;font-size:clamp(18px,2.4vw,26px);letter-spacing:.3px}
 .veil-in small{font-size:13px;color:var(--cocoa-soft)}
+.veil-quote{font-family:var(--display);font-style:italic;font-size:clamp(14px,1.6vw,17px);color:var(--cocoa-soft);max-width:30ch;line-height:1.5;text-wrap:balance}
 .veil-mark{font-size:26px;color:var(--gold);animation:glow 2.6s ease-in-out infinite}
 @keyframes glow{0%,100%{opacity:.45;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
 .scene.revealing .ai-img{animation:unveil 2s cubic-bezier(.2,.7,.1,1)}
@@ -305,7 +306,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       <img id="aiImg" class="ai-img" alt="עיצוב המארז שנוצר על ידי מעצב ה-AI" hidden>
       <div class="ai-load" id="aiLoad" hidden><div class="ai-orb"></div><b id="aiStep">המעצב שלנו מסדר את המארז…</b><span id="aiTime"></span></div>
       <span class="ai-tag" id="aiTag" hidden>✨ עוצב ע"י AI</span>
-      <div class="veil" id="veil" hidden><div class="veil-in"><span class="veil-mark">✦</span><b>המארז שלכם מחכה לחשיפה</b><small id="veilCount"></small></div></div>
+      <div class="veil" id="veil" hidden><div class="veil-in"><span class="veil-mark">✦</span><b>המארז שלכם מחכה לחשיפה</b><em class="veil-quote">"אין גבול למה שאפשר ליצור כשמעזים לחשוב אחרת." ✨</em><small id="veilCount"></small></div></div>
     </div>
     <div class="bgs"><span class="lbl">רקע:</span><span id="bgs" style="display:flex;gap:8px"></span>
       <button class="ghost small" id="restyle">↻ הצעה עיצובית נוספת</button>
