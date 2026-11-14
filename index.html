@@ -294,6 +294,9 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .pcard .pick{margin-top:auto;border:1px solid var(--cocoa);border-radius:10px;padding:8px;text-align:center;font-weight:700;font-size:15px}
 .pcard[aria-checked="true"] .pick{background:var(--cocoa);color:var(--paper)}
 .bar-pack{border:0;background:none;padding:0;font:inherit;color:var(--cocoa);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.pack-sec .opt{font-family:var(--body);font-size:15px;color:var(--cocoa-soft);font-weight:400}
+.pcard .ph.nopack{align-items:center;border:1.5px dashed var(--line);background:var(--paper)}
+.pcard .ph.nopack span{color:var(--cocoa-soft);font-size:14px}
 .totals .chg{border:0;background:none;padding:0 4px;font:inherit;color:var(--cocoa);text-decoration:underline;cursor:pointer}
 /* ---- phone comfort: touch sizes, scrolling, no sideways drift (layout only) ---- */
 @media (max-width:760px){
@@ -368,8 +371,8 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
     <div class="chips" id="chips"></div>
     <div class="grid" id="grid"></div>
     <div class="pack-sec" id="packSec">
-      <h2>בחרו אריזה למארז</h2>
-      <p class="hint">האריזה מתחלפת מיד בתמונת המארז. אפשר להחליף בכל שלב.</p>
+      <h2>רוצים להוסיף אריזה? <span class="opt">(לא חובה)</span></h2>
+      <p class="hint">המארז מגיע גם בלי אריזה. אריזה שתבחרו תתווסף לתמונת המארז ולמחיר.</p>
       <div class="grid" id="packGrid" role="radiogroup" aria-label="בחירת אריזה"></div>
     </div>
   </section>
@@ -573,7 +576,10 @@ const SETS=[];
 
 // ---- State ----
 let cart=new Map(); // every visitor starts from an empty box and designs their own
-let pack=PACKS[0], bg=BGS[0], cat="all", fresh=new Set(), lastRemoved=null, toastT;
+// "no packaging" is the default: packaging is an optional add-on. h/ar only keep the product scale steady; it is never drawn or charged.
+const NO_PACK={id:"none",name:"ללא אריזה",price:0,h:40,ar:.72,img:"",none:true};
+const packLabel=()=>pack.none?"ללא":pack.name;
+let pack=NO_PACK, bg=BGS[0], cat="all", fresh=new Set(), lastRemoved=null, toastT;
 const ils=n=>"₪"+(+n||0).toLocaleString("he-IL");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -606,12 +612,12 @@ document.getElementById("clear").onclick=()=>{if(!cart.size)return;cart.clear();
 // ---- Packaging & backgrounds ----
 const packsEl=document.getElementById("packs");
 const packGrid=document.getElementById("packGrid");
-function choosePack(id){const k=PACKS.find(x=>x.id===id);if(!k||k===pack)return;pack=k;renderPacks();update(true);
-  if(matchMedia("(max-width:980px)").matches)showToast(`האריזה הוחלפה: ${k.name}`);}
+function choosePack(id){const k=id==="none"?NO_PACK:PACKS.find(x=>x.id===id);if(!k||k===pack)return;pack=k;renderPacks();update(true);
+  if(matchMedia("(max-width:980px)").matches)showToast(k.none?"המארז בלי אריזה":`נוספה אריזה: ${k.name}`);}
 function goToPacks(){document.getElementById("sheet").classList.remove("open");document.getElementById("scrim").classList.remove("open");
   document.getElementById("packSec").scrollIntoView({behavior:"smooth",block:"start"});}
 function renderPacks(){
-  packGrid.innerHTML=PACKS.map(k=>`<button class="card pcard" role="radio" aria-checked="${k===pack}" data-id="${k.id}">${k===pack?`<span class="tick">נבחרה ✓</span>`:""}<div class="ph"><img src="${k.img}" alt="" loading="lazy"></div><div class="nm">${k.name}</div><div class="pr">${ils(k.price)}</div><span class="pick">${k===pack?"האריזה שלכם":"בחירה"}</span></button>`).join("");
+  packGrid.innerHTML=`<button class="card pcard" role="radio" aria-checked="${pack.none}" data-id="none">${pack.none?`<span class="tick">נבחר ✓</span>`:""}<div class="ph nopack"><span>ללא אריזה</span></div><div class="nm">ללא אריזה</div><div class="pr">${ils(0)}</div><span class="pick">${pack.none?"נבחר":"בחירה"}</span></button>`+PACKS.map(k=>`<button class="card pcard" role="radio" aria-checked="${k===pack}" data-id="${k.id}">${k===pack?`<span class="tick">נבחרה ✓</span>`:""}<div class="ph"><img src="${k.img}" alt="" loading="lazy"></div><div class="nm">${k.name}</div><div class="pr">${ils(k.price)}</div><span class="pick">${k===pack?"האריזה שלכם":"בחירה"}</span></button>`).join("");
   packsEl.innerHTML=PACKS.map(k=>`<button class="pack" aria-pressed="${k===pack}" data-id="${k.id}"><img src="${k.img}" alt=""><span><b>${k.name}</b>${ils(k.price)}</span></button>`).join("");}
 packsEl.onclick=e=>{const b=e.target.closest(".pack");if(!b)return;pack=PACKS.find(k=>k.id===b.dataset.id);renderPacks();update(true);};
 document.addEventListener("click",e=>{if(e.target.closest("[data-packs]"))goToPacks();});
@@ -758,7 +764,7 @@ function compose(){
   const cx0=W/2-((minX+maxX)/2)*k, T=[];
   const X=(x,pl)=>cx0+x*k*PER[pl];
   // packaging backdrop (only once there is something in the box: an empty scene stays clean)
-  const ph=pack.h*k*.9; if(all.length)T.push({key:"pack",src:pack.img,cx:cx0,base:H*.775,w:ph*pack.ar,h:ph,rot:0,z:0,cast:.16});
+  const ph=pack.h*k*.9; if(all.length&&!pack.none)T.push({key:"pack",src:pack.img,cx:cx0,base:H*.775,w:ph*pack.ar,h:ph,rot:0,z:0,cast:.16});
   // leaning flat pieces: first one balances the peak from the opposite side
   R.leans.forEach((p,i)=>{const sd=(i%2?side:-side),h=p.h*k*.92,w=h*p.ar,off=pkW*(.5+Math.floor(i/2)*.18)*k*.92;
     T.push({key:p.id,p,src:p.img,cx:cx0+sd*off,base:H*.79,w,h,rot:sd<0?5:-5,z:1+i*.01,cast:.14});});
@@ -916,7 +922,7 @@ function rowsHTML(){
     <span class="mini"><button data-a="inc" aria-label="הוספה">+</button><output>${q}</output><button data-a="dec" aria-label="הפחתה">−</button></span>
     <span class="sum">${ils(p.price*q)}</span><button class="del" data-a="del" aria-label="הסרת ${esc(p.name)}">✕</button></div>`}).join("");
 }
-function totalsHTML(t){return `<span>אריזה: ${pack.name} <button class="chg" data-packs>החלפה</button></span><span>${ils(pack.price)}</span>
+function totalsHTML(t){return `<span>אריזה: ${packLabel()} <button class="chg" data-packs>${pack.none?"הוספה":"החלפה"}</button></span><span>${ils(pack.price)}</span>
   <span>מוצרים (${t.count} פריטים)</span><span>${ils(t.items)}</span>
   <span class="lbl">מחיר למארז</span><span class="big" id="bigP">${ils(t.total)}</span>`;}
 function onRow(e){const b=e.target.closest("button[data-a]");if(!b)return;const id=b.closest(".row").dataset.id;
@@ -930,7 +936,7 @@ function update(flash){
   document.getElementById("list").innerHTML=document.getElementById("list2").innerHTML=rowsHTML();
   document.getElementById("totals").innerHTML=document.getElementById("totals2").innerHTML=totalsHTML(t);
   document.getElementById("barP").textContent=ils(t.total);
-  document.getElementById("barC").innerHTML=`${t.count} פריטים · <button class="bar-pack" data-packs>אריזה: ${esc(pack.name)} · החלפה</button>`;
+  document.getElementById("barC").innerHTML=`${t.count} פריטים · <button class="bar-pack" data-packs>אריזה: ${esc(packLabel())} · ${pack.none?"הוספה":"החלפה"}</button>`;
   if(flash) document.querySelectorAll("#bigP,#barP").forEach(el=>{el.classList.remove("priceflash");void el.offsetWidth;el.classList.add("priceflash");});
   layout();
   onCartChanged();
@@ -942,7 +948,7 @@ setsEl.hidden=!SETS.length;
 setsEl.innerHTML=`<b>מארזי השראה:</b>`+SETS.map((x,i)=>`<button class="set" data-i="${i}">${x.name}</button>`).join("");
 setsEl.onclick=e=>{const b=e.target.closest(".set");if(!b)return;const x=SETS[+b.dataset.i];
   const prev=[new Map(cart),pack];cart=new Map(x.items.map(id=>[id,1]));x.items.forEach(id=>fresh.add(id));
-  pack=PACKS.find(k=>k.id===x.pack);manual.clear();renderPacks();update(true);
+  pack=PACKS.find(k=>k.id===x.pack)||NO_PACK;manual.clear();renderPacks();update(true);
   lastRemoved=null;undoSet=prev;showToast(`נטען מארז השראה "${x.name}"`,true);};
 let undoSet=null;
 document.getElementById("tip").onclick=e=>{const b=e.target.closest("button[data-add]");if(b)add(b.dataset.add);};
@@ -1040,7 +1046,7 @@ function currentBoxImage(){return (!aiImg.hidden&&aiImg.src)?aiImg.src:cv.toData
 function toJpeg(src,max,q){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");
   c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);const x=c.getContext("2d");x.fillStyle="#f7efe4";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);ok(c.toDataURL("image/jpeg",q));};im.onerror=no;im.src=src;});}
 function shareText(){const t=totals();
-  return `תראו את מארז המתנה שבניתי ב-נויה במתנה ✨\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${pack.name}\nמחיר למארז: ${ils(t.total)}\nמה דעתכם?`;}
+  return `תראו את מארז המתנה שבניתי ב-נויה במתנה ✨\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${ils(t.total)}\nמה דעתכם?`;}
 let sharing=false, shareReady=null; // shareReady: a prepared phone share, so a second tap can share instantly
 const CTA_LINE="עצבו את המארז שלכם ✨";
 async function shareLink(jpg){ // page with the designed image and one button to start designing; falls back to the site itself
@@ -1091,7 +1097,7 @@ function openSummary(){
   $("sumImg").src=boxImage();
   const t=totals();
   $("sumLines").innerHTML=[...cart].map(([id,q])=>{const p=byId[id];return `<div class="ln"><img src="${p.img}" alt=""><span>${esc(p.name)}${q>1?` × ${q}`:""}</span><span>${ils(p.price*q)}</span></div>`}).join("")
-    +`<div class="ln"><img src="${pack.img}" alt=""><span>אריזה: ${pack.name}</span><span>${ils(pack.price)}</span></div>`
+    +(pack.none?`<div class="ln"><span></span><span>אריזה: ללא</span><span>${ils(0)}</span></div>`:`<div class="ln"><img src="${pack.img}" alt=""><span>אריזה: ${pack.name}</span><span>${ils(pack.price)}</span></div>`)
     +`<div class="ln tot"><span></span><span>מחיר למארז (${t.count} פריטים)</span><span>${ils(t.total)}</span></div>`;
   $("perBox").textContent=ils(t.total);
   boxes=Math.max(1,boxes);renderQty();showView("sum");
@@ -1124,7 +1130,7 @@ function buildOrder(){
   const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
   const lines=[`הזמנת מארז – נויה במתנה (${ref})`,"",
     `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,date?`תאריך אספקה רצוי: ${date}`:null,"",
-    "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""} – ${ils(byId[id].price*q)}`),`• אריזה: ${pack.name} – ${ils(pack.price)}`,"",
+    "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""} – ${ils(byId[id].price*q)}`),(pack.none?"• אריזה: ללא":`• אריזה: ${pack.name} – ${ils(pack.price)}`),"",
     `מחיר למארז: ${ils(t.total)}`,`כמות מארזים: ${boxes}`,`סה"כ: ${ils(t.total*boxes)} (כולל מע"מ, לאישור נציג)`,
     f("fNotes")?"":null,f("fNotes")?`הערות: ${f("fNotes")}`:null].filter(x=>x!==null);
   return {ref,text:lines.join("\n")};
@@ -1141,7 +1147,7 @@ function send(kind){
   $("doneText").innerHTML=kind==="wa"?"פתחנו הודעת וואטסאפ מוכנה עם כל פרטי ההזמנה. <b>כדי שנקבל אותה, לחצו שליחה בוואטסאפ.</b> נחזור אליכם תוך יום עסקים."
     :`פתחנו מייל מוכן אל ${CONFIG.orderEmail} עם כל פרטי ההזמנה. <b>כדי שנקבל אותו, לחצו שליחה בתוכנת המייל.</b> נחזור אליכם תוך יום עסקים.`;
   $("doneImg").src=$("sumImg").src;
-  $("doneSum").innerHTML=`<b>${boxes} מארזים · ${ils(totals().total*boxes)}</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${pack.name}`;
+  $("doneSum").innerHTML=`<b>${boxes} מארזים · ${ils(totals().total*boxes)}</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
   $("doneRef").textContent="מספר הזמנה: "+o.ref+" · אם ההודעה לא נפתחה, חזרו ולחצו \"העתקת פרטי ההזמנה\".";
   showView("done");
 }
@@ -1176,7 +1182,7 @@ function catalogChanged(){
   if(typeof showQuote==="function")showQuote();
   P.forEach(p=>asset(p.img));PACKS.forEach(p=>asset(p.img));
   [...cart.keys()].forEach(id=>{if(!byId[id])cart.delete(id);});
-  if(!PACKS.includes(pack))pack=PACKS.find(k=>k.id===pack.id)||PACKS[0];
+  if(!pack.none&&!PACKS.includes(pack))pack=PACKS.find(k=>k.id===pack.id)||NO_PACK;
   renderPacks();update(false);
 }
 store.load().then(c=>{if(c&&c.products&&c.products.length){applyCatalog(c);catalogChanged();}});
