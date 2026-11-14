@@ -1292,13 +1292,31 @@ function renderAddrCnt(){const el=$("addrCnt");if(!addrCount||!isIndiv()){el.inn
   el.innerHTML=addrCount===boxes?`✓ בקובץ ${addrCount} כתובות, בדיוק כמו מספר המארזים`
     :`בקובץ ${addrCount} כתובות והזמנתם ${boxes} מארזים. <button type="button" id="syncBoxes">לעדכן ל-${addrCount} מארזים</button>`;
   $("syncBoxes")&&($("syncBoxes").onclick=()=>{boxes=addrCount;renderQty();});}
+// count recipients in the uploaded address file (xlsx read in-browser, no outside library; csv by lines)
+async function zipEntries(buf){const d=new DataView(buf),u=new Uint8Array(buf);let e=-1;
+  for(let i=buf.byteLength-22;i>=Math.max(0,buf.byteLength-66000);i--)if(d.getUint32(i,true)===0x06054b50){e=i;break;}
+  if(e<0)throw 0;const n=d.getUint16(e+10,true);let p=d.getUint32(e+16,true);const out={};
+  for(let k=0;k<n;k++){if(d.getUint32(p,true)!==0x02014b50)break;
+    const m=d.getUint16(p+10,true),cs=d.getUint32(p+20,true),nl=d.getUint16(p+28,true),xl=d.getUint16(p+30,true),cl=d.getUint16(p+32,true),lo=d.getUint32(p+42,true);
+    const name=new TextDecoder().decode(u.subarray(p+46,p+46+nl));out[name]={m,cs,lo};p+=46+nl+xl+cl;}
+  out.read=async name=>{const f=out[name];if(!f)return "";const s=f.lo+30+d.getUint16(f.lo+26,true)+d.getUint16(f.lo+28,true);const raw=u.slice(s,s+f.cs);
+    if(f.m===0)return new TextDecoder().decode(raw);
+    return await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();};
+  return out;}
 async function countAddr(file){
-  try{const X=await import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs");
-    const wb=X.read(await file.arrayBuffer());const ws=wb.Sheets[wb.SheetNames[0]];
-    const rows=X.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
-    const t=v=>String(v??"").trim(),dig=v=>t(v).replace(/\D/g,"");
+  try{const t=v=>String(v??"").trim(),dig=v=>t(v).replace(/\D/g,"");let rows=[];
+    if(/\.csv$/i.test(file.name)){rows=(await file.text()).split(/\r?\n/).map(l=>l.split(/[,;\t]/));}
+    else if(/\.xlsx$/i.test(file.name)){const z=await zipEntries(await file.arrayBuffer()),X=s=>new DOMParser().parseFromString(s,"application/xml");
+      const sst=[...X(await z.read("xl/sharedStrings.xml")).getElementsByTagName("si")].map(x=>x.textContent);
+      const sh=Object.keys(z).filter(k=>/^xl\/worksheets\/sheet\d+\.xml$/.test(k)).sort()[0];if(!sh)return 0;
+      rows=[...X(await z.read(sh)).getElementsByTagName("row")].map(r=>{const a=[];
+        for(const c of r.getElementsByTagName("c")){const col=(c.getAttribute("r")||"").replace(/\d+/g,"").split("").reduce((n,ch)=>n*26+ch.charCodeAt(0)-64,0)-1;
+          const v=c.getElementsByTagName("v")[0],typ=c.getAttribute("t");
+          a[col<0?a.length:col]=typ==="s"&&v?sst[+v.textContent]:typ==="inlineStr"?c.textContent:v?v.textContent:"";}
+        return Array.from(a,x=>x??"");});}
+    else return 0;
     return rows.slice(1).filter(r=>{const c=r.map(t);if(!c.some(Boolean))return false;
-      if(c[0]==="ישראל ישראלי"||dig(c[1])==="0549999999")return false;
+      if(c[0]==="ישראל ישראלי"||dig(c[1])==="0549999999"||dig(c[1])==="549999999")return false;
       return !!(c[0]||c[1]||c[3]);}).length;}catch(e){return 0;}}
 $("addrFiles").addEventListener("click",e=>{const b=e.target.closest("[data-rma]");if(!b)return;addrFiles.splice(+b.dataset.rma,1);if(!addrFiles.length)addrCount=0;renderAddrFiles();renderAddrCnt();});
 $("addrFile").addEventListener("change",e=>{const file=e.target.files[0];e.target.value="";if(!file)return;
