@@ -207,6 +207,11 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .dlv{border:0;padding:0;margin:4px 0 0;display:flex;flex-direction:column;gap:10px;min-width:0}
 .dlv legend{font-family:var(--display);font-weight:500;font-size:19px;color:var(--cocoa);padding:0;margin-bottom:8px}
 .dlv-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dlv-opt.vip:has(input:checked){background:linear-gradient(135deg,#fffaf0,#fbefd6)}
+.addr-cnt{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;color:var(--cocoa);background:#fffaf0;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.addr-cnt:empty{display:none}
+.addr-cnt button{border:1px solid var(--cocoa);background:var(--cocoa);color:#fff;border-radius:999px;padding:5px 12px;font:600 13px var(--body);cursor:pointer}
+.tpl-dl{display:inline-flex;align-items:center;gap:6px;color:var(--cocoa);font-weight:600;font-size:14px}
 .dlv-opt{display:grid!important;grid-template-columns:auto auto minmax(0,1fr);gap:8px!important;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;color:var(--cocoa)!important;font-size:14px!important;flex:none!important;background:#fff}
 .dlv-opt:has(input:checked){border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);background:#fffaf0}
 .dlv-opt input{width:18px;height:18px;margin:0;padding:0;min-height:0!important;accent-color:var(--cocoa)}
@@ -512,7 +517,9 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       <fieldset class="dlv">
         <legend>איך תרצו לקבל את ההזמנה?</legend>
         <div class="dlv-opts">
-          <label class="dlv-opt"><input type="radio" name="dlv" value="ship" checked><span class="di">🚚</span><span><b>משלוח עד הכתובת</b><small id="shipNote"></small></span></label>
+          <label class="dlv-opt"><input type="radio" name="dlv" value="ship" checked><span class="di">🚚</span><span><b>משלוח לכתובת אחת</b><small id="shipNote"></small></span></label>
+          <label class="dlv-opt"><input type="radio" name="dlv" value="indiv"><span class="di">📦</span><span><b>משלוח פרטני לכל מקבל</b><small id="indivNote"></small></span></label>
+          <label class="dlv-opt vip"><input type="radio" name="dlv" value="vip"><span class="di">⭐</span><span><b>משלוח פרטני VIP</b><small id="vipNote"></small></span></label>
           <label class="dlv-opt"><input type="radio" name="dlv" value="pickup"><span class="di">🏬</span><span><b>איסוף עצמי</b><small id="pickNote"></small></span></label>
         </div>
         <div class="dlv-box" id="shipBox">
@@ -523,12 +530,19 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
             </div>
             <label>קומה, כניסה והערות לשליח<input id="fAddrNote"></label>
           </div>
-          <label class="tog"><input type="checkbox" id="multiAddr"> המשלוח לכמה כתובות (תשלחו לנו רשימת כתובות אחרי ההזמנה)</label>
           <label class="tog"><input type="checkbox" id="rcvSame" checked> אני איש הקשר לקבלת המשלוח</label>
           <div class="f2" id="rcvBox" hidden>
             <label>שם מקבל המשלוח *<input id="fRcvName" autocomplete="off"></label>
             <label>טלפון מקבל המשלוח *<input id="fRcvPhone" type="tel" inputmode="tel" placeholder="050-0000000" autocomplete="off"></label>
           </div>
+        </div>
+        <div class="dlv-box" id="indivBox" hidden>
+          <p class="note" id="indivDesc"></p>
+          <a class="tpl-dl" id="tplDl" href="#" download="קובץ-כתובות-נויה-במתנה.xlsx" target="_blank" rel="noopener">⬇️ הורדת קובץ אקסל לכתובות (שורה לכל מקבל)</a>
+          <label class="eng-file">העלאת קובץ הכתובות <span class="opt">(אפשר גם אחרי ההזמנה)</span><input type="file" id="addrFile" accept=".xlsx,.xls,.csv"></label>
+          <div class="eng-files" id="addrFiles"></div>
+          <div class="addr-cnt" id="addrCnt"></div>
+          <p class="note">ממלאים שורה לכל מקבל: שם, טלפון נייד, עיר, רחוב ומספר, דירה, כניסה וקומה. את שורת הדוגמה אפשר להשאיר, אנחנו מדלגים עליה.</p>
         </div>
         <div class="dlv-box pick" id="pickBox" hidden></div>
       </fieldset>
@@ -653,7 +667,7 @@ P.forEach(p=>{Object.assign(p,ROLES[p.id]||{});p.role=p.role||"stand";p.ride=RID
   p.label=LABEL0.has(p.id);p.desc="";p.hidden=false;p.heroBoost=false;});
 const byId={};
 // Settings the business can change in the admin screen
-const CONFIG={orderEmail:"moshe@noyaglobal.com", whatsapp:"972543219070", minOrder:3000, cardPrice:4, shipPerBox:2.36, pickupAddress:"הענבר 1, ברקן", pickupHours:"בתיאום מראש",
+const CONFIG={orderEmail:"moshe@noyaglobal.com", whatsapp:"972543219070", minOrder:3000, cardPrice:4, shipPerBox:2.36, indivPerBox:65, vipPerBox:99, addrTemplate:"https://w4qizitdfylnksov.public.blob.vercel-storage.com/logos/mwgj66lb916zwvr4bsju07qf/%D7%A7%D7%95%D7%91%D7%A5-%D7%9B%D7%AA%D7%95%D7%91%D7%95%D7%AA-%D7%A0%D7%95%D7%99%D7%94-%D7%91%D7%9E%D7%AA%D7%A0%D7%94.xlsx", pickupAddress:"הענבר 1, ברקן", pickupHours:"בתיאום מראש",
   // inspiration lines in the header: one per hour, same for everyone; editable in the admin screen (Settings)
   quotes:["מתנה טובה מתחילה במחשבה על מישהו אחר.", "הדברים הקטנים הם אלה שנזכרים הכי הרבה.", "כל מארז הוא מכתב תודה שאפשר להחזיק ביד.", "נתינה היא הדרך הכי יפה להגיד \"ראיתי אותך\".", "יופי אמיתי נמצא בפרטים.", "מתנה שנבחרה באהבה מרגישים מהרגע הראשון.", "לפעמים הדבר הכי חשוב במתנה הוא הרגע שפותחים אותה.", "הוקרה טובה לא מחכה להזדמנות, היא יוצרת אותה.", "כשנותנים מהלב, זה תמיד מגיע ללב.", "מארז יפה מספר סיפור עוד לפני שפותחים אותו.", "השקעה קטנה במחשבה, הפתעה גדולה בלב.", "טוב לב מתחיל בפעולה קטנה אחת.", "מתנה היא דרך לומר תודה בלי מילים.", "כל פרט שנבחר בקפידה הוא עוד חיוך בדרך.", "העולם נעשה יפה יותר עם כל מתנה שניתנת.", "לשמח מישהו אחר זו אחת ההנאות הגדולות שיש.", "הרגע שלפני הפתיחה שווה את כל ההכנות.", "מתנה מושלמת היא לא היקרה ביותר, היא המדויקת ביותר.", "תודה שנאמרת בזמן שווה פי כמה.", "יצירתיות מתחילה כשמעזים לבחור אחרת.", "גם רגע רגיל יכול להפוך לזיכרון עם הפתעה קטנה.", "ארגון שמוקיר את האנשים שלו, האנשים שלו מוקירים אותו.", "הלב מבין עיצוב יפה עוד לפני העיניים.", "כל מתנה היא גשר קטן בין אנשים.", "מה שנעשה באהבה, מרגישים.", "השמחה של הנותן גדולה לפעמים משמחת המקבל.", "עטיפה יפה היא ההבטחה, והתוכן הוא הקסם.", "אין גיל ואין סיבה לקבל מתנה מרגשת.", "שווה לעצור לרגע ולחשוב מה ישמח את מי שמולך.", "מתנה טובה ממשיכה לשמח גם אחרי שהסרט נפתח.", "כשבוחרים בקפידה, כל פריט מקבל משמעות.", "החג מתחיל ברגע שמתחילים לתכנן מתנה.", "לפעמים \"חשבתי עליך\" הוא המשפט הכי חזק שיש.", "יופי פשוט הוא יופי שנשאר.", "הוקרה היא דלק לאנשים טובים.", "מתנה היא דרך לחגוג את מי שמקבל אותה.", "הדבר הכי אישי במתנה הוא הבחירה.", "קשרים טובים נבנים מרגעים קטנים של תשומת לב.", "מארז אחד יכול להאיר יום שלם.", "נדיבות היא תמיד באופנה.", "כשמשהו נעשה בכוונה, רואים את זה בכל פרט.", "הפתעה קטנה, חיוך גדול.", "מתנה טובה מדברת בשפה של מי שמקבל אותה.", "ההבדל בין טוב למושלם נמצא בתשומת הלב.", "כל צבע, כל מרקם, כל פרט מספר משהו.", "תנו למתנה לומר את מה שקשה לומר במילים.", "אנשים מרגישים כשחושבים עליהם באמת.", "השילוב הנכון הופך פריטים פשוטים לחוויה.", "יצירה מתחילה בבחירה אחת אמיצה.", "מתנות טובות לא נשכחות, הן מקבלות מקום של כבוד.", "הסוד של מארז מושלם הוא איזון.", "כשנותנים בשמחה, מקבלים בחזרה פי כמה.", "תודה גדולה מגיעה לפעמים בקופסה קטנה.", "מה שבוחרים לתת אומר הרבה על מי שנותן.", "עיצוב טוב הוא שקט, מדויק ומרגש.", "כל מקבל ראוי לרגע שכולו שלו.", "אין דבר יפה יותר מהבעת הפנים של מי שהופתע.", "מתנה היא זיכרון שמחכה לקרות.", "להעריך זה לבחור לראות את הטוב.", "גם פרט קטן יכול להיות כל הסיפור.", "שמחה שמשתפים, גדלה.", "הבית מתמלא חום מדברים שנבחרו באהבה.", "לפעמים מתנה היא ההתחלה של מסורת חדשה.", "כל מארז הוא הזדמנות להפתיע.", "כשהלב בוחר, אין טעויות.", "הוקרה אמיתית נראית, נשמעת ומורגשת.", "דברים יפים לוקחים זמן, ושווים כל רגע.", "מתנה שנעשתה בשבילך מרגישה אחרת.", "האווירה הנכונה מתחילה בפרט הנכון.", "נתינה היא שפה שכולם מבינים.", "עיצוב הוא הדרך להפוך רגש לחפץ.", "מה שמשמח אותנו הכי הרבה הוא לשמח אחרים.", "כל עונה היא עונה טובה להודות.", "פשטות ואלגנטיות הן תמיד בחירה בטוחה.", "מתנה מקשרת בין רגע של היום לזיכרון של מחר.", "כשרואים את האדם, מוצאים את המתנה.", "בכל מארז יש קצת מהנותן.", "החיים יפים יותר כשיש למי לתת.", "המתנה הכי טובה היא זו שגורמת למקבל להרגיש מיוחד.", "אל תחכו לחג כדי לומר תודה.", "יופי מתחיל בכוונה.", "כל פריט במקום הנכון יוצר הרמוניה.", "מתנה טובה היא חיבוק שאפשר לשלוח.", "מה שעשוי באכפתיות מחזיק לאורך זמן.", "התרגשות של מקבל מתנה היא תרופה לנותן.", "צוות שמרגיש מוערך, נותן את הלב.", "כל קשר טוב שווה חגיגה קטנה.", "עיצוב מושלם מרגיש טבעי, כאילו תמיד היה שם.", "להעז לבחור אחרת זה להעז להפתיע.", "הרגעים המתוקים נמצאים בין הסרט לנייר העטיפה.", "מתנה נכונה הופכת יום רגיל ליום מיוחד.", "כשמשקיעים במתנה, משקיעים בקשר.", "טעם טוב הוא מתנה בפני עצמו.", "תנו לפרטים לעשות את הקסם.", "כל מארז מתחיל בשאלה: מה ישמח אותו?", "הנתינה הכי יפה היא זו שלא מצפה לכלום.", "גם המילים הכי פשוטות מרגשות כשהן מגיעות עם מתנה.", "מתנה היא דרך לומר \"אתה חשוב לי\".", "כשהעיצוב נכון, המתנה מדברת בעצמה.", "עוד מתנה, עוד חיוך, עוד רגע ששווה לזכור."]};
 // The whole catalogue as one editable object (saved by the admin screen; these are the starting values)
@@ -1258,18 +1272,48 @@ $("engFile").addEventListener("change",e=>{
 // ---- delivery: shipping (per box) or self pickup ----
 const dlvMode=()=>(document.querySelector('input[name="dlv"]:checked')||{}).value||"ship";
 const r2=n=>Math.round(n*100)/100;
-const shipCost=()=>dlvMode()==="ship"?r2((+CONFIG.shipPerBox||0)*boxes):0;
+const isIndiv=()=>["indiv","vip"].includes(dlvMode());
+const dlvRate=()=>({ship:+CONFIG.shipPerBox||0,indiv:+CONFIG.indivPerBox||0,vip:+CONFIG.vipPerBox||0})[dlvMode()]||0;
+const dlvName=()=>({ship:"משלוח לכתובת אחת",indiv:"משלוח פרטני לכל מקבל",vip:"משלוח פרטני VIP"})[dlvMode()]||"איסוף עצמי";
+const shipCost=()=>r2(dlvRate()*boxes);
+let addrFiles=[],addrCount=0;
 const grandTotal=()=>r2(orderPer()*boxes+shipCost());
-function syncDlv(){const ship=dlvMode()==="ship",multi=$("multiAddr").checked;
+function syncDlv(){const m=dlvMode(),ship=m==="ship",ind=isIndiv();
   $("shipNote").textContent=`${ils(CONFIG.shipPerBox)} למארז`;$("pickNote").textContent=`ללא עלות · ${CONFIG.pickupAddress||""}`;
-  $("shipBox").hidden=!ship;$("pickBox").hidden=ship;$("addrBox").hidden=multi;$("rcvBox").hidden=$("rcvSame").checked;
+  $("indivNote").textContent=`${ils(CONFIG.indivPerBox)} למארז · עד הבית של כל מקבל`;$("vipNote").textContent=`${ils(CONFIG.vipPerBox)} למארז · שליח VIP ייעודי, מותאם למשלוח למנכ״לים ולבכירים`;
+  $("indivDesc").innerHTML=m==="vip"?"⭐ <b>משלוח VIP:</b> שליח ייעודי מוסר כל מארז אישית, מותאם למנכ״לים ולבכירים. הורידו את הקובץ, מלאו שורה לכל מקבל והעלו אותו כאן.":"📦 <b>משלוח פרטני:</b> כל מארז נשלח ישירות למקבל שלו. הורידו את הקובץ, מלאו שורה לכל מקבל והעלו אותו כאן.";
+  $("tplDl").href=CONFIG.addrTemplate||"#";$("tplDl").hidden=!CONFIG.addrTemplate;
+  $("shipBox").hidden=!ship;$("indivBox").hidden=!ind;$("pickBox").hidden=m!=="pickup";$("rcvBox").hidden=$("rcvSame").checked;renderAddrCnt();
   $("pickBox").innerHTML=`איסוף מ: <b>${esc(CONFIG.pickupAddress||"")}</b>${CONFIG.pickupHours?` · ${esc(CONFIG.pickupHours)}`:""} · <a href="https://waze.com/ul?q=${encodeURIComponent(CONFIG.pickupAddress||"")}&navigate=yes" target="_blank" rel="noopener">ניווט ב-Waze</a>`;}
 document.querySelectorAll('input[name="dlv"]').forEach(r=>r.addEventListener("change",()=>{syncDlv();renderQty();}));
-["multiAddr","rcvSame"].forEach(i=>$(i).addEventListener("change",syncDlv));
+$("rcvSame").addEventListener("change",syncDlv);
+function renderAddrFiles(){$("addrFiles").innerHTML=addrFiles.map((f,i)=>`<div class="eng-f"><span>📎 ${esc(f.name)}</span><span class="st ${f.url?"ok":f.err?"bad":""}">${f.url?"✓ הועלה":f.err?f.err:"מעלה…"}</span><button type="button" data-rma="${i}" aria-label="הסרת הקובץ">×</button></div>`).join("");}
+function renderAddrCnt(){const el=$("addrCnt");if(!addrCount||!isIndiv()){el.innerHTML="";return;}
+  el.innerHTML=addrCount===boxes?`✓ בקובץ ${addrCount} כתובות, בדיוק כמו מספר המארזים`
+    :`בקובץ ${addrCount} כתובות והזמנתם ${boxes} מארזים. <button type="button" id="syncBoxes">לעדכן ל-${addrCount} מארזים</button>`;
+  $("syncBoxes")&&($("syncBoxes").onclick=()=>{boxes=addrCount;renderQty();});}
+async function countAddr(file){
+  try{const X=await import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs");
+    const wb=X.read(await file.arrayBuffer());const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=X.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+    const t=v=>String(v??"").trim(),dig=v=>t(v).replace(/\D/g,"");
+    return rows.slice(1).filter(r=>{const c=r.map(t);if(!c.some(Boolean))return false;
+      if(c[0]==="ישראל ישראלי"||dig(c[1])==="0549999999")return false;
+      return !!(c[0]||c[1]||c[3]);}).length;}catch(e){return 0;}}
+$("addrFiles").addEventListener("click",e=>{const b=e.target.closest("[data-rma]");if(!b)return;addrFiles.splice(+b.dataset.rma,1);if(!addrFiles.length)addrCount=0;renderAddrFiles();renderAddrCnt();});
+$("addrFile").addEventListener("change",e=>{const file=e.target.files[0];e.target.value="";if(!file)return;
+  const f={name:file.name,url:"",err:""};addrFiles=[f];addrCount=0;renderAddrFiles();renderAddrCnt();
+  countAddr(file).then(n=>{if(addrFiles[0]===f){addrCount=n;f.count=n;renderAddrCnt();}});
+  if(!/\.(xlsx|xls|csv)$/i.test(file.name)){f.err="רק קובץ אקסל או CSV";renderAddrFiles();return;}
+  if(file.size>4*1024*1024){f.err="גדול מ-4MB, אפשר לשלוח אחרי ההזמנה";renderAddrFiles();return;}
+  if(!shareAvailable){f.err="העלאה זמינה באתר";renderAddrFiles();return;}
+  fetch((window.NOYA_LOGO_ENDPOINT||"api/logo"),{method:"POST",headers:{"Content-Type":file.type||"application/octet-stream","x-file-name":encodeURIComponent(file.name)},body:file})
+    .then(r=>r.json().then(j=>{if(!r.ok||!j.url)throw new Error(j.error||r.status);f.url=j.url;}))
+    .catch(()=>{f.err="ההעלאה נכשלה, אפשר לנסות שוב או לשלוח אחרי ההזמנה";}).finally(renderAddrFiles);});
 function renderQty(){
   const per=orderPer(),sum=per*boxes,need=Math.ceil(CONFIG.minOrder/per),ok=sum>=CONFIG.minOrder;
   $("qBoxes").value=boxes;$("grand").textContent=ils(grandTotal());
-  $("shipLine").textContent=dlvMode()==="ship"?`משלוח: ${boxes} מארזים × ${ils(CONFIG.shipPerBox)} = ${ils(shipCost())}`:"איסוף עצמי: ללא עלות משלוח";
+  $("shipLine").textContent=dlvMode()!=="pickup"?`${dlvName()}: ${boxes} מארזים × ${ils(dlvRate())} = ${ils(shipCost())}`:"איסוף עצמי: ללא עלות משלוח";renderAddrCnt();
   $("minFill").style.width=Math.min(100,sum/CONFIG.minOrder*100)+"%";$("minFill").parentElement.classList.toggle("ok",ok);
   $("minMsg").innerHTML=ok?`✓ ההזמנה עומדת במינימום של ${ils(CONFIG.minOrder)}`
     :`חסרים ${ils(CONFIG.minOrder-sum)} להזמנת מינימום של ${ils(CONFIG.minOrder)}. <button type="button" id="toMin">${need} מארזים יעמדו במינימום</button>`;
@@ -1289,7 +1333,7 @@ function validate(){
   const eOk=!email||/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);$("fEmail").classList.toggle("bad",!eOk);if(!eOk)errs.push("כתובת מייל תקינה");
   ["fCity","fStreet","fRcvName","fRcvPhone"].forEach(i=>$(i).classList.remove("bad"));
   if(dlvMode()==="ship"){
-    if(!$("multiAddr").checked){const c=$("fCity").value.trim(),st=$("fStreet").value.trim();
+    {const c=$("fCity").value.trim(),st=$("fStreet").value.trim();
       $("fCity").classList.toggle("bad",!c);$("fStreet").classList.toggle("bad",!st);if(!c||!st)errs.push("כתובת למשלוח");}
     if(!$("rcvSame").checked){const rn=$("fRcvName").value.trim(),rp=$("fRcvPhone").value.replace(/[^\d+]/g,"");
       $("fRcvName").classList.toggle("bad",!rn);if(!rn)errs.push("שם מקבל המשלוח");
@@ -1302,8 +1346,10 @@ function buildOrder(){
   const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
   const lines=[`הזמנת מארז – נויה במתנה (${ref})`,"",
     `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,"",
-    ...(dlvMode()==="ship"?["🚚 אספקה: משלוח",
-      $("multiAddr").checked?"כתובות: משלוח לכמה כתובות, הרשימה תישלח בהמשך":`כתובת: ${f("fStreet")}, ${f("fCity")}${f("fAddrNote")?` · ${f("fAddrNote")}`:""}`,
+    ...(isIndiv()?[dlvMode()==="vip"?`⭐ אספקה: משלוח פרטני VIP לכל מקבל (${ils(CONFIG.vipPerBox)} למארז)`:`📦 אספקה: משלוח פרטני לכל מקבל (${ils(CONFIG.indivPerBox)} למארז)`,
+      `📎 קובץ כתובות: ${addrFiles.filter(x=>x.url).map(x=>`${x.name} – ${x.url}${x.count?` (${x.count} כתובות)`:""}`).join(" | ")||"יישלח בהמשך"}`]
+    :dlvMode()==="ship"?["🚚 אספקה: משלוח לכתובת אחת",
+      `כתובת: ${f("fStreet")}, ${f("fCity")}${f("fAddrNote")?` · ${f("fAddrNote")}`:""}`,
       `איש קשר לקבלה: ${$("rcvSame").checked?`${f("fName")}, ${f("fPhone")}`:`${f("fRcvName")}, ${f("fRcvPhone")}`}`]
       :[`🏬 אספקה: איסוף עצמי מ${CONFIG.pickupAddress||""}`]),
     date?`תאריך אספקה רצוי: ${date}`:null,"",
@@ -1313,7 +1359,7 @@ function buildOrder(){
     ...(needLogo()?[`📎 קובץ לוגו: ${engFiles.filter(f=>f.url).map(f=>f.name+" – "+f.url).join(" | ")||"יישלח בהמשך"}`,""]:[]),
     orderImg.url&&orderImg.src===$("sumImg").src?`📸 תמונת המארז: ${orderImg.url}`:null,orderImg.url&&orderImg.src===$("sumImg").src?"":null,
     `מחיר למארז: ${ils(orderPer())}`,`כמות מארזים: ${boxes}`,
-    dlvMode()==="ship"?`משלוח: ${boxes} × ${ils(CONFIG.shipPerBox)} = ${ils(shipCost())}`:"משלוח: איסוף עצמי (ללא עלות)",
+    dlvMode()!=="pickup"?`${dlvName()}: ${boxes} × ${ils(dlvRate())} = ${ils(shipCost())}`:"משלוח: איסוף עצמי (ללא עלות)",
     `סה"כ: ${ils(grandTotal())} (כולל מע"מ, לאישור נציג)`,
     f("fNotes")?"":null,f("fNotes")?`הערות: ${f("fNotes")}`:null].filter(x=>x!==null);
   return {ref,text:lines.join("\n")};
@@ -1321,6 +1367,7 @@ function buildOrder(){
 function send(kind){
   if(!validate()){$("fErr").scrollIntoView({block:"center",behavior:"smooth"});return;}
   if(needLogo()&&engFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הלוגו עדיין עולה…");return;}
+  if(isIndiv()&&addrFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הכתובות עדיין עולה…");return;}
   const o=buildOrder();orderText=o.text;lastSend=kind;
   let href;
   if(kind==="wa") href=`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(o.text)}`;
@@ -1333,7 +1380,7 @@ function send(kind){
   $("doneImg").src=$("sumImg").src;
   $("doneSum").innerHTML=`<b>${boxes} מארזים · ${ils(grandTotal())}</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
   const logoLater=needLogo()&&!engFiles.some(f=>f.url), cardLater=cardOn&&cardSelf;
-  const toSend=[logoLater?"קובץ הלוגו":null,cardLater?"עיצוב כרטיס הברכה (10×15 ס״מ)":null,dlvMode()==="ship"&&$("multiAddr").checked?"רשימת כתובות המשלוח":null].filter(Boolean);
+  const toSend=[logoLater?"קובץ הלוגו":null,cardLater?"עיצוב כרטיס הברכה (10×15 ס״מ)":null,isIndiv()&&!addrFiles.some(f=>f.url)?"קובץ הכתובות":null].filter(Boolean);
   $("doneLogo").hidden=!toSend.length;
   if(toSend.length)$("doneLogo").innerHTML=`<span>✨ נשאר רק לשלוח לנו את ${toSend.join(" ואת ")}, עם מספר ההזמנה <b>${o.ref}</b>:</span>
     <a class="wa" href="https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(`${toSend.join(" ו")} להזמנה ${o.ref} (מצורף)`)}" target="_blank" rel="noopener" style="text-decoration:none;border-radius:12px">שליחה בוואטסאפ</a>
@@ -1347,7 +1394,7 @@ $("resend").onclick=()=>send(lastSend||"wa");
 $("copyOrder").onclick=async()=>{if(!validate())return;const o=buildOrder();
   try{await navigator.clipboard.writeText(o.text);showToast("פרטי ההזמנה הועתקו. אפשר להדביק במייל או בוואטסאפ ל-054-3219070");}
   catch(e){showToast("ההעתקה נחסמה בדפדפן. שלחו בוואטסאפ ל-054-3219070");}};
-$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];cardOn=false;cardSelf=false;$("orderForm").reset();syncDlv();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
+$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];addrFiles=[];addrCount=0;renderAddrFiles();cardOn=false;cardSelf=false;$("orderForm").reset();syncDlv();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
 ["fName","fPhone","fEmail"].forEach(i=>$(i).addEventListener("blur",()=>{if($("fErr").hidden===false)validate();}));
 // ===================== Stage 3: admin (catalogue editing) =====================
 // Storage: on the website the catalogue is saved by /api/catalog (shared with every customer, protected by the
@@ -1439,6 +1486,9 @@ function renderAdmin(){
       <label>וואטסאפ לקבלת הזמנות (בפורמט בינלאומי, למשל 972543219070)<input data-s="whatsapp" inputmode="tel" value="${esc(s.whatsapp)}"></label>
       <label>מינימום הזמנה (₪)<input data-s="minOrder" type="number" min="0" value="${s.minOrder}"></label>
       <label>משלוח: מחיר למארז ₪<input data-s="shipPerBox" type="number" min="0" step="0.01" value="${s.shipPerBox??2.36}"></label>
+      <label>משלוח פרטני לכל מקבל: מחיר למארז ₪<input data-s="indivPerBox" type="number" min="0" step="0.01" value="${s.indivPerBox??65}"></label>
+      <label>משלוח פרטני VIP: מחיר למארז ₪<input data-s="vipPerBox" type="number" min="0" step="0.01" value="${s.vipPerBox??99}"></label>
+      <label>קובץ האקסל לכתובות שהלקוחות מורידים ${s.addrTemplate?`(<a href="${esc(s.addrTemplate)}" target="_blank" rel="noopener">הקובץ הנוכחי</a>)`:""}<input type="file" id="admTpl" accept=".xlsx,.xls,.csv"></label>
       <label>כתובת לאיסוף עצמי<input data-s="pickupAddress" value="${esc(s.pickupAddress??"")}"></label>
       <label>שעות איסוף עצמי<input data-s="pickupHours" value="${esc(s.pickupHours??"")}"></label>
       <label>כרטיס ברכה ממותג: מחיר למארז ₪ (0 = לא להציע)<input data-s="cardPrice" type="number" min="0" value="${s.cardPrice??4}"></label>
@@ -1448,8 +1498,12 @@ function renderAdmin(){
 }
 $("admTabs").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;admTab=b.dataset.t;renderAdmin();};
 $("admQ").oninput=()=>renderAdmin();
-const NUM=new Set(["price","h","minOrder","engravePrice","cardPrice","shipPerBox"]);
+const NUM=new Set(["price","h","minOrder","engravePrice","cardPrice","shipPerBox","indivPerBox","vipPerBox"]);
 function admEdit(e){
+  if(e.target.id==="admTpl"){const file=e.target.files[0];if(!file||e.type!=="change")return;showToast("מעלה את הקובץ…");
+    fetch((window.NOYA_LOGO_ENDPOINT||"api/logo"),{method:"POST",headers:{"Content-Type":file.type||"application/octet-stream","x-file-name":encodeURIComponent(file.name)},body:file})
+      .then(r=>r.json().then(j=>{if(!r.ok||!j.url)throw 0;draft.settings.addrTemplate=j.url;renderAdmin();showToast("הקובץ הועלה. לחצו שמירת שינויים");}))
+      .catch(()=>showToast("העלאת הקובץ נכשלה"));return;}
   const el=e.target,f=el.dataset.f,s=el.dataset.s;if(!f&&!s)return;
   const v=el.type==="checkbox"?el.checked:NUM.has(f||s)?Math.max(0,+el.value||0):el.value;
   if(s){draft.settings[s]=s==="quotes"?el.value.split("\n").map(x=>x.trim()).filter(Boolean):v;}
