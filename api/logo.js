@@ -1,10 +1,10 @@
-// Logo file for laser engraving, uploaded by the customer while ordering.
+// Files the customer attaches while ordering: logo for engraving / greeting card, or an Excel address list.
 // POST raw file body, header x-file-name: <encoded name> → {url, name}
 // Files are stored under an unguessable path; only the order message carries the link.
 import { put } from "@vercel/blob";
 
 const MAX = Math.floor(4.3 * 1024 * 1024); // Vercel function body limit is 4.5 MB
-const OK_EXT = /\.(png|jpe?g|webp|svg|pdf|ai|eps)$/i;
+const OK_EXT = /\.(png|jpe?g|webp|svg|pdf|ai|eps|xlsx|xls|csv)$/i; // logos, card designs and address lists
 const DAILY_LIMIT = +(process.env.LOGO_DAILY_LIMIT || 300);
 let day = "", count = 0;
 
