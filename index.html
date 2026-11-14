@@ -256,6 +256,9 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .reveal-btn.busy{cursor:progress;opacity:.85}
 .reveal-sub{font-size:13px;color:var(--cocoa-soft);font-style:italic}
 .reveal-more{display:flex;gap:8px;justify-content:center;width:100%}
+.wa-share{border:0;border-radius:10px;padding:8px 14px;font-weight:700;background:#2f6e4b;color:#fff;cursor:pointer}
+.wa-share:hover{background:#285f41}
+.wa-share.wide{width:100%;padding:12px;font-size:15px;margin-top:10px;border-radius:12px}
 /* bottom bar + sheet: phone only */
 .bar,.sheet,.scrim{display:none}
 
@@ -328,6 +331,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   <section class="sum-box">
     <button class="back" id="backBtn">→ חזרה לעריכת המארז</button>
     <div class="sum-img"><img id="sumImg" alt="תמונת המארז שבניתם"></div>
+    <button class="wa-share wide" id="sumShare">שתפו בוואטסאפ להתייעצות לפני ההזמנה</button>
     <h2>המארז שלכם</h2>
     <div class="sum-lines" id="sumLines"></div>
   </section>
@@ -908,16 +912,50 @@ function renderAiBar(){
     b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn" id="aiGo">חשפו את המארז שלכם ✨</button><span class="reveal-sub">רגע של הפתעה. תנו לקסם להתגלות.</span></div>`
       +(editing?`<div class="reveal-more"><button class="ghost small" id="aiView">🖼 הצג את המארז המעוצב</button>${reset}</div>`:"");
   } else {
-    b.innerHTML=`<button class="ai-go" id="aiRe">↻ עצבו מחדש באמצעות AI</button>`
+    b.innerHTML=`<button class="wa-share" id="aiShare">שתפו בוואטסאפ להתייעצות</button><button class="ai-go" id="aiRe">↻ עצבו מחדש באמצעות AI</button>`
       +(aiAvailable&&aiCache.has(aiCurrent)?`<button class="ghost small" id="aiView">${editing?"🖼 הצג את המארז המעוצב":"✋ תיקון ידני"}</button>`:"")+reset;
   }
   q("aiGo")&&(q("aiGo").onclick=()=>generateAi(false));
+  q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
   q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);generateAi(true);});
   q("aiView")&&(q("aiView").onclick=()=>{editing=!editing;
     if(editing){showAi(null);showToast("גררו מוצרים בתמונה כדי לתקן את המיקום, ואז לחצו \"חשפו את המארז שלכם\"");}
     else{aiStale=false;showAi(aiCache.get(aiCurrent));}
     setVeil();renderAiBar();});
   q("aiReset")&&(q("aiReset").onclick=()=>{manual.clear();recompose(true);aiStale=true;renderAiBar();});
+}
+// ===================== Share on WhatsApp (consult before ordering) =====================
+// Phone: the image itself goes into WhatsApp through the system share sheet.
+// Computer (or if the phone can't share files): the image is stored by /api/share and WhatsApp opens with a
+// ready message and a link that shows a large preview of the box.
+const SHARE_ENDPOINT=window.NOYA_SHARE_ENDPOINT||"api/share";
+let shareAvailable=false;
+fetch(SHARE_ENDPOINT+"?ping=1").then(r=>r.ok?r.json():null).then(j=>{shareAvailable=!!(j&&j.ok);}).catch(()=>{});
+function currentBoxImage(){return (!aiImg.hidden&&aiImg.src)?aiImg.src:cv.toDataURL("image/jpeg",.9);}
+function toJpeg(src,max,q){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");
+  c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);const x=c.getContext("2d");x.fillStyle="#f7efe4";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);ok(c.toDataURL("image/jpeg",q));};im.onerror=no;im.src=src;});}
+function shareText(){const t=totals();
+  return `תראו את מארז המתנה שבניתי ב-נויה במתנה ✨\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${pack.name}\nמחיר למארז: ${ils(t.total)}\nמה דעתכם?`;}
+let sharing=false;
+async function shareWhatsApp(src){
+  if(sharing||!cart.size)return;sharing=true;
+  const mobile=matchMedia("(pointer:coarse)").matches, text=shareText();
+  let win=null;
+  try{
+    const jpg=await toJpeg(src,1280,.82);
+    if(mobile&&navigator.canShare){
+      const file=new File([await (await fetch(jpg)).blob()],"noya-gift-box.jpg",{type:"image/jpeg"});
+      if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text});return;}catch(e){if(e.name==="AbortError")return;}}
+    }
+    if(!shareAvailable){showToast("שיתוף התמונה בוואטסאפ פעיל באתר. כאן אפשר להוריד צילום מסך ולשלוח אותו.");return;}
+    showToast("מכין את התמונה לשיתוף…");
+    const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg})});
+    const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw new Error(j.error||r.status);
+    const href="https://wa.me/?text="+encodeURIComponent(text+"\n"+j.url);
+    const a=document.createElement("a");a.href=href;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();
+    showToast("וואטסאפ נפתח עם הודעה מוכנה. בחרו למי לשלוח.");
+  }catch(e){showToast("לא הצלחנו לשתף כרגע ("+e.message+"). אפשר לנסות שוב.");}
+  finally{sharing=false;}
 }
 // ===================== Stage 2: summary, details, send =====================
 // Set these for the business. orderEmail empty = email button asks the customer to use WhatsApp or copy.
@@ -954,6 +992,7 @@ $("qInc").onclick=()=>{boxes++;renderQty();};
 $("qDec").onclick=()=>{boxes=Math.max(1,boxes-1);renderQty();};
 $("qBoxes").oninput=e=>{const v=parseInt(e.target.value,10);if(v>0){boxes=Math.min(10000,v);renderQty();}};
 $("backBtn").onclick=()=>showView("build");
+$("sumShare").onclick=()=>shareWhatsApp($("sumImg").src);
 
 function validate(){
   const name=$("fName").value.trim(),phone=$("fPhone").value.replace(/[^\d+]/g,""),email=$("fEmail").value.trim();
