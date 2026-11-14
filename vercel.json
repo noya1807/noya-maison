@@ -1,5 +1,14 @@
 {
   "functions": {
-    "api/design.js": { "maxDuration": 120, "includeFiles": "img/**" }
-  }
+    "api/design.js": {
+      "maxDuration": 120,
+      "includeFiles": "img/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/s/:id",
+      "destination": "/api/s?id=:id"
+    }
+  ]
 }
