@@ -9,7 +9,7 @@ export default function handler(req, res) {
   const home = `https://${host}/`;
   if (!ok) { res.status(404).setHeader("Content-Type", "text/html; charset=utf-8"); res.end(`<!DOCTYPE html><meta charset="utf-8"><p style="font-family:sans-serif;text-align:center;margin-top:20vh">התמונה לא נמצאה. <a href="${home}">לבניית מארז</a></p>`); return; }
   const title = "המארז שבניתי ב-נויה במתנה ✨";
-  const desc = "מארז מתנה בעיצוב אישי. מה דעתך? בנו גם אתם מארז משלכם.";
+  const desc = "מארז מתנה בעיצוב אישי. בחרו מוצרים, ונויה תעצב לכם מארז משלכם.";
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=3600");
   res.end(`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8">
@@ -22,7 +22,7 @@ export default function handler(req, res) {
 <style>body{margin:0;background:#f7efe4;color:#4a2f22;font-family:Assistant,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px 16px 40px}
 h1{font-family:"Frank Ruhl Libre",Georgia,serif;font-weight:500;font-size:26px;margin:6px 0 0;text-align:center}
 img{width:min(960px,100%);border-radius:18px;box-shadow:0 12px 32px rgba(74,47,34,.18)}
-a{background:#4a2f22;color:#fffaf3;text-decoration:none;border-radius:12px;padding:12px 22px;font-weight:700}
+a{display:block;width:min(480px,100%);box-sizing:border-box;text-align:center;color:#fffaf3;text-decoration:none;border-radius:14px;padding:16px 22px;font-family:"Frank Ruhl Libre",Georgia,serif;font-size:21px;font-weight:500;background:linear-gradient(135deg,#3f271c,#6e4d3b 55%,#b08a4f);box-shadow:0 10px 24px rgba(74,47,34,.28)}
 p{margin:0;color:#7a5a48;text-align:center}</style></head>
-<body><h1>${esc(title)}</h1><p>${esc(desc)}</p><img src="${esc(img)}" alt="תמונת מארז מתנה"><a href="${home}">לבניית מארז משלכם</a></body></html>`);
+<body><h1>${esc(title)}</h1><p>${esc(desc)}</p><img src="${esc(img)}" alt="תמונת מארז מתנה"><a href="${home}">עצבו את המארז שלכם ✨</a></body></html>`);
 }
