@@ -201,6 +201,9 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .card-opt .ci{font-size:26px;text-align:center}
 .card-opt .ct{display:block;font-family:var(--display);font-weight:500;font-size:17px;color:var(--cocoa);white-space:normal}
 .card-opt small{display:block;color:var(--cocoa-soft);font-size:13px}
+.card-who{display:flex;flex-direction:column;gap:6px}
+.card-who label{flex-direction:row!important;align-items:center;gap:8px!important;font-size:14px!important;color:var(--cocoa)!important;min-height:36px}
+.card-who input{width:18px;height:18px;margin:0;accent-color:var(--cocoa);flex:none}
 .done-logo{width:100%;background:#fffaf0;border:1px solid #e9cf9f;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:center;font-size:14px}
 .done-logo .wa{flex:none;padding:10px 18px;font-size:15px}
 .done-box img{width:100%;border-radius:10px;aspect-ratio:4/3;object-fit:cover}
@@ -463,10 +466,15 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       </div>
     </div>
     <div class="card2 eng" id="cardCard" hidden>
-      <label class="eng-item card-opt"><input type="checkbox" id="cardOn"><span class="ci">💌</span><span><b class="ct">הוסיפו כרטיס ברכה ממותג</b><small>כרטיס מעוצב עם הלוגו והברכה שלכם, בתוך כל מארז</small></span><b id="cardPriceTag"></b></label>
+      <label class="eng-item card-opt"><input type="checkbox" id="cardOn"><span class="ci">💌</span><span><b class="ct">הוסיפו כרטיס ברכה ממותג</b><small>כרטיס 10×15 ס״מ עם הלוגו והברכה שלכם, בתוך כל מארז</small></span><b id="cardPriceTag"></b></label>
       <div class="eng-up" id="cardUp" hidden>
-        <label>נוסח הברכה<textarea id="cardText" rows="3" placeholder="למשל: שנה טובה ומתוקה! באהבה, צוות החברה"></textarea></label>
-        <p class="note">אין נוסח עדיין? השאירו ריק ונציע לכם נוסח מתאים.</p>
+        <div class="card-who">
+          <label><input type="radio" name="cardWho" value="us" checked> נעצב עבורכם עם הלוגו והברכה</label>
+          <label><input type="radio" name="cardWho" value="self"> אעצב בעצמי ואשלח בהמשך בוואטסאפ או במייל</label>
+        </div>
+        <div id="cardUs"><label>נוסח הברכה<textarea id="cardText" rows="3" placeholder="למשל: שנה טובה ומתוקה! באהבה, צוות החברה"></textarea></label>
+        <p class="note">אין נוסח עדיין? השאירו ריק ונציע לכם נוסח מתאים.</p></div>
+        <p class="note" id="cardSelfNote" hidden>מעולה. הכינו קובץ בגודל 10×15 ס״מ (PDF או תמונה באיכות גבוהה) ושלחו לנו אחרי ההזמנה בוואטסאפ או במייל, עם מספר ההזמנה.</p>
       </div>
     </div>
     <div class="card2 eng" id="logoCard" hidden>
@@ -1170,10 +1178,10 @@ function prepOrderImage(){const src=$("sumImg").src;if(!src||orderImg.src===src)
 let engSel=new Set(), engFiles=[];
 const engItems=()=>[...cart.keys()].filter(id=>byId[id]&&byId[id].engrave);
 const engCost=()=>[...engSel].reduce((s,id)=>s+(+byId[id]?.engravePrice||0)*(cart.get(id)||0),0);
-let cardOn=false;
+let cardOn=false, cardSelf=false;
 const cardCost=()=>cardOn?(+CONFIG.cardPrice||0):0;
 const orderPer=()=>totals().total+engCost()+cardCost();
-const needLogo=()=>engSel.size>0||cardOn;
+const needLogo=()=>engSel.size>0||(cardOn&&!cardSelf);
 const engNames=()=>[...engSel].map(id=>byId[id].name+((cart.get(id)||1)>1?` × ${cart.get(id)}`:"")).join(", ");
 function renderSumLines(){const t=totals();
   $("sumLines").innerHTML=[...cart].map(([id,q])=>{const p=byId[id];return `<div class="ln"><img src="${p.img}" alt=""><span>${esc(p.name)}${q>1?` × ${q}`:""}</span><span>${ils(p.price*q)}</span></div>`}).join("")
@@ -1194,7 +1202,9 @@ function renderEngFiles(){$("engFiles").innerHTML=engFiles.map((f,i)=>`<div clas
 $("engList").addEventListener("change",e=>{const c=e.target.closest("[data-eng]");if(!c)return;c.checked?engSel.add(c.dataset.eng):engSel.delete(c.dataset.eng);
   $("engUp").hidden=!engSel.size;renderLogoCard();renderSumLines();renderQty();});
 function renderLogoCard(){$("logoCard").hidden=!needLogo();
-  $("logoFor").textContent="העלו את הלוגו עבור: "+[engSel.size?"חריטה":null,cardOn?"כרטיס הברכה":null].filter(Boolean).join(" ו");}
+  $("logoFor").textContent="העלו את הלוגו עבור: "+[engSel.size?"חריטה":null,cardOn&&!cardSelf?"כרטיס הברכה":null].filter(Boolean).join(" ו");}
+document.querySelectorAll('input[name="cardWho"]').forEach(r=>r.addEventListener("change",()=>{cardSelf=document.querySelector('input[name="cardWho"]:checked').value==="self";
+  $("cardUs").hidden=cardSelf;$("cardSelfNote").hidden=!cardSelf;renderLogoCard();}));
 $("cardOn").addEventListener("change",e=>{cardOn=e.target.checked;$("cardUp").hidden=!cardOn;renderLogoCard();renderSumLines();renderQty();});
 $("engFiles").addEventListener("click",e=>{const b=e.target.closest("[data-rmf]");if(!b)return;engFiles.splice(+b.dataset.rmf,1);renderEngFiles();});
 $("engFile").addEventListener("change",e=>{
@@ -1236,7 +1246,7 @@ function buildOrder(){
     `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,date?`תאריך אספקה רצוי: ${date}`:null,"",
     "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""} – ${ils(byId[id].price*q)}`),(pack.none?"• אריזה: ללא":`• אריזה: ${pack.name} – ${ils(pack.price)}`),"",
     ...(engSel.size?[`✨ חריטת לוגו: ${engNames()} (+${ils(engCost())} למארז)`,f("engNotes")?`הערות לחריטה: ${f("engNotes")}`:null]:[]),
-    ...(cardOn?[`💌 כרטיס ברכה ממותג (+${ils(cardCost())} למארז)`,`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[]),
+    ...(cardOn?[`💌 כרטיס ברכה ממותג 10×15 (+${ils(cardCost())} למארז)`,cardSelf?"עיצוב הכרטיס: הלקוח ישלח עיצוב מוכן בהמשך":`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[]),
     ...(needLogo()?[`📎 קובץ לוגו: ${engFiles.filter(f=>f.url).map(f=>f.name+" – "+f.url).join(" | ")||"יישלח בהמשך"}`,""]:[]),
     orderImg.url&&orderImg.src===$("sumImg").src?`📸 תמונת המארז: ${orderImg.url}`:null,orderImg.url&&orderImg.src===$("sumImg").src?"":null,
     `מחיר למארז: ${ils(orderPer())}`,`כמות מארזים: ${boxes}`,`סה"כ: ${ils(orderPer()*boxes)} (כולל מע"מ, לאישור נציג)`,
@@ -1257,9 +1267,11 @@ function send(kind){
     :`פתחנו מייל מוכן אל ${CONFIG.orderEmail} עם כל פרטי ההזמנה. <b>כדי שנקבל אותו, לחצו שליחה בתוכנת המייל.</b> נחזור אליכם תוך יום עסקים.`;
   $("doneImg").src=$("sumImg").src;
   $("doneSum").innerHTML=`<b>${boxes} מארזים · ${ils(orderPer()*boxes)}</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
-  const logoLater=needLogo()&&!engFiles.some(f=>f.url);$("doneLogo").hidden=!logoLater;
-  if(logoLater)$("doneLogo").innerHTML=`<span>✨ בחרתם מיתוג בלוגו. שלחו לנו את קובץ הלוגו עם מספר ההזמנה <b>${o.ref}</b>:</span>
-    <a class="wa" href="https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(`קובץ לוגו להזמנה ${o.ref} (מצורף)`)}" target="_blank" rel="noopener" style="text-decoration:none;border-radius:12px">שליחת הלוגו בוואטסאפ</a>
+  const logoLater=needLogo()&&!engFiles.some(f=>f.url), cardLater=cardOn&&cardSelf;
+  const toSend=[logoLater?"קובץ הלוגו":null,cardLater?"עיצוב כרטיס הברכה (10×15 ס״מ)":null].filter(Boolean);
+  $("doneLogo").hidden=!toSend.length;
+  if(toSend.length)$("doneLogo").innerHTML=`<span>✨ נשאר רק לשלוח לנו את ${toSend.join(" ואת ")}, עם מספר ההזמנה <b>${o.ref}</b>:</span>
+    <a class="wa" href="https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(`${toSend.join(" ו")} להזמנה ${o.ref} (מצורף)`)}" target="_blank" rel="noopener" style="text-decoration:none;border-radius:12px">שליחה בוואטסאפ</a>
     ${CONFIG.orderEmail?`<span class="note">או במייל: ${esc(CONFIG.orderEmail)}</span>`:""}`;
   $("doneRef").textContent="מספר הזמנה: "+o.ref+" · אם ההודעה לא נפתחה, חזרו ולחצו \"העתקת פרטי ההזמנה\".";
   showView("done");
@@ -1270,7 +1282,7 @@ $("resend").onclick=()=>send(lastSend||"wa");
 $("copyOrder").onclick=async()=>{if(!validate())return;const o=buildOrder();
   try{await navigator.clipboard.writeText(o.text);showToast("פרטי ההזמנה הועתקו. אפשר להדביק במייל או בוואטסאפ ל-054-3219070");}
   catch(e){showToast("ההעתקה נחסמה בדפדפן. שלחו בוואטסאפ ל-054-3219070");}};
-$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];cardOn=false;$("orderForm").reset();update(true);showView("build");};
+$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];cardOn=false;cardSelf=false;$("orderForm").reset();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
 ["fName","fPhone","fEmail"].forEach(i=>$(i).addEventListener("blur",()=>{if($("fErr").hidden===false)validate();}));
 // ===================== Stage 3: admin (catalogue editing) =====================
 // Storage: on the website the catalogue is saved by /api/catalog (shared with every customer, protected by the
