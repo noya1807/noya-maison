@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>נויה במתנה · ניהול פנימי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#f7efe4;--paper:#fffaf3;--sand:#e9dccb;--cocoa:#4a2f22;--soft:#7a5a48;--gold:#b08a4f;--line:#e2d3c0;--ok:#3f7a52;--warn:#a5642a;--bad:#a33b2b;
+  --display:"Frank Ruhl Libre",Georgia,serif;--body:"Assistant","Segoe UI",Arial,sans-serif;color-scheme:light}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--cream);color:var(--cocoa);font:15px/1.45 var(--body)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+input,select,textarea{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:-1px}
+.btn{border:1px solid var(--cocoa);background:var(--cocoa);color:var(--paper);border-radius:99px;padding:7px 16px;font-weight:600;white-space:nowrap}
+.btn.ghost{background:transparent;color:var(--cocoa)}.btn.sm{padding:4px 11px;font-size:13px}.btn.gold{background:var(--gold);border-color:var(--gold)}
+.btn.danger{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+header{display:flex;align-items:center;gap:18px;padding:12px 22px;background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:700;font-size:22px}.brand small{font:400 12px var(--body);color:var(--soft);display:block}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{border:1px solid transparent;background:none;border-radius:99px;padding:6px 14px;font-weight:600;color:var(--soft)}
+nav button.on{background:var(--cocoa);color:var(--paper)}
+#saveState{margin-inline-start:auto;font-size:13px;color:var(--soft)}
+main{max-width:1280px;margin:0 auto;padding:22px}
+h1{font-family:var(--display);font-size:26px;margin:0 0 4px}h2{font-family:var(--display);font-size:20px;margin:22px 0 10px}
+.sub{color:var(--soft);margin:0 0 18px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card .k{font-size:13px;color:var(--soft)}.card .v{font-family:var(--display);font-size:26px;font-weight:700}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;background:var(--paper)}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}
+th{font-size:12.5px;color:var(--soft);font-weight:700;background:#fbf4ea;position:sticky;top:0}
+tr.click{cursor:pointer}tr.click:hover td{background:#fbf4ea}
+td.num,th.num{text-align:left;direction:ltr;white-space:nowrap}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:70vh}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:700;background:var(--sand)}
+.st-order{background:#efe6d8}.st-prod{background:#f3e3c4}.st-sea{background:#dbe7f3;color:#24476b}.st-port{background:#f1dcc9;color:#7a3f17}.st-cleared{background:#e3eedd;color:#2e5b3a}.st-wh{background:var(--ok);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 14px}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--soft);font-weight:600}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--soft);background:#fffdf9}
+.drop.over{border-color:var(--gold);background:#fbf2e3}
+.muted{color:var(--soft)}.warn{color:var(--warn)}.bad{color:var(--bad)}.okc{color:var(--ok)}
+.sku{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;direction:ltr;display:inline-block}
+.modal{position:fixed;inset:0;background:rgba(40,25,18,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 14px;z-index:20;overflow:auto}
+.modal>div{background:var(--paper);border-radius:16px;padding:20px;width:min(760px,100%);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center}
+#login .box{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:30px;width:min(380px,92vw);text-align:center}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--cocoa);color:var(--paper);padding:10px 18px;border-radius:99px;font-weight:600;z-index:30;display:none;max-width:90vw}
+.back{background:none;border:none;color:var(--soft);font-weight:600;padding:0;margin-bottom:10px}
+td input,td select{padding:4px 6px}
+[hidden]{display:none!important}
+@media (max-width:700px){main{padding:14px}header{padding:10px 14px}}
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="box">
+    <div class="brand" style="font-size:26px">נויה במתנה<small>ניהול פנימי · גישה למנהל בלבד</small></div>
+    <form id="loginForm" style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
+      <input id="pw" type="password" placeholder="סיסמת מנהל" autocomplete="current-password" required>
+      <button class="btn" type="submit">כניסה</button>
+      <div id="loginErr" class="bad" hidden></div>
+    </form>
+  </div>
+</div>
+
+<div id="app" hidden>
+<header>
+  <div class="brand">נויה במתנה<small>ניהול פנימי</small></div>
+  <nav id="nav">
+    <button data-v="dash" class="on">לוח בקרה</button>
+    <button data-v="ships">מכולות ויבוא</button>
+    <button data-v="prods">מוצרים</button>
+    <button data-v="sups">ספקים</button>
+    <button data-v="settings">הגדרות</button>
+  </nav>
+  <span id="saveState"></span>
+</header>
+<main id="view"></main>
+</div>
+<div id="toast"></div>
+<div id="modal" class="modal" hidden><div id="modalBox"></div></div>
+
+<script>
+"use strict";
+const API="api/office";
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>{const n=parseFloat(String(v??"").replace(/[,₪$€\s]/g,""));return isFinite(n)?n:0;};
+const money=(v,cur="₪")=>v||v===0?(cur==="₪"?"₪":"")+(+v).toLocaleString("he-IL",{maximumFractionDigits:2})+(cur!=="₪"&&cur?" "+cur:""):"";
+const fmtDate=d=>d?new Date(d+"T00:00").toLocaleDateString("he-IL",{day:"numeric",month:"short",year:"numeric"}):"";
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+function toast(t,ms=2600){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",ms);}
+
+const STATUSES=[["order","הוזמן"],["prod","בייצור"],["sea","בים"],["port","בנמל"],["cleared","שוחרר"],["wh","במחסן"]];
+const stName=s=>(STATUSES.find(x=>x[0]===s)||STATUSES[0])[1];
+const DOC_KINDS=["חשבונית פרופורמה","Packing List","שטר מטען (B/L)","רשימון יבוא","חשבונית הובלה","חשבונית עמיל מכס","תעודת מקור","אחר"];
+const COSTS=[["freight","הובלה ימית (₪)"],["customs","מכס ומיסים (₪)"],["clearance","עמיל מכס ושחרור (₪)"],["port","נמל ואחסנה (₪)"],["local","הובלה למחסן (₪)"],["other","אחר (₪)"]];
+const DEFAULT_CATS=[["DB","דבש"],["WN","יין ואלכוהול"],["CH","שוקולד וממתקים"],["DF","פירות יבשים ואגוזים"],["CF","קפה ותה"],["GR","גורמה, ממרחים ורטבים"],["OL","שמן זית"],["KT","כלי מטבח והגשה"],["HM","עיצוב הבית"],["CN","נרות וריחות"],["SP","טיפוח וספא"],["TX","טקסטיל"],["JD","יודאיקה"],["TC","גאדג'טים ואלקטרוניקה"],["BG","תיקים ואביזרים"],["BX","אריזות – קופסאות, סלסלות, מגשים"],["AC","אביזרי אריזה – סרטים, כרטיסים, מילוי"],["OT","אחר"]].map(([code,name])=>({code,name}));
+const emptyDb=()=>({v:1,products:[],shipments:[],suppliers:[],categories:DEFAULT_CATS.map(c=>({...c})),seq:{}});
+
+let db=null,rev="",dirty=false,saving=false,view="dash",sel=null;
+
+async function api(a,opt={}){
+  const r=await fetch(API+"?a="+a+(opt.qs||""),{method:opt.method||"GET",credentials:"same-origin",headers:opt.headers||(opt.body?{"Content-Type":"application/json"}:{}),body:opt.raw||(opt.body?JSON.stringify(opt.body):undefined)});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===401&&a!=="login"){showLogin();throw new Error("צריך להתחבר מחדש");}
+  if(!r.ok)throw Object.assign(new Error(j.error||("שגיאה "+r.status)),{status:r.status});
+  return j;
+}
+function showLogin(){$("#app").hidden=true;$("#login").hidden=false;$("#pw").focus();}
+$("#loginForm").onsubmit=async e=>{e.preventDefault();$("#loginErr").hidden=true;
+  try{await api("login",{method:"POST",body:{password:$("#pw").value}});$("#pw").value="";await boot();}
+  catch(err){$("#loginErr").textContent=err.message;$("#loginErr").hidden=false;}};
+
+async function boot(){
+  const j=await api("data");
+  db=j.db||emptyDb();rev=j.rev||"";
+  db.products??=[];db.shipments??=[];db.suppliers??=[];db.categories??=DEFAULT_CATS.map(c=>({...c}));db.seq??={};
+  $("#login").hidden=true;$("#app").hidden=false;setSave(j.db?"שמור":"מערכת חדשה – הנתונים יישמרו אוטומטית");render();
+}
+(async()=>{try{await api("me");await boot();}catch(e){showLogin();}})();
+
+// ---------- saving (automatic, debounced) ----------
+function setSave(t,cls){const e=$("#saveState");e.textContent=t;e.className=cls||"";}
+function touch(){dirty=true;setSave("שומר…");clearTimeout(touch.t);touch.t=setTimeout(save,900);}
+async function save(){
+  if(saving){touch();return;}if(!dirty)return;saving=true;dirty=false;
+  try{const j=await api("data",{method:"PUT",body:{db,baseRev:rev}});rev=j.rev;setSave("✓ נשמר "+new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"}),"okc");}
+  catch(e){dirty=true;setSave("⚠ לא נשמר: "+e.message,"bad");if(e.status===409)toast("הנתונים עודכנו בחלון אחר. רעננו את הדף.",6000);}
+  finally{saving=false;}
+}
+window.addEventListener("beforeunload",e=>{if(dirty||saving){e.preventDefault();e.returnValue="";}});
+
+// ---------- helpers on the data ----------
+const catByName=n=>db.categories.find(c=>c.name.trim()===String(n||"").trim());
+const catName=code=>(db.categories.find(c=>c.code===code)||{}).name||code||"";
+const prodBySku=s=>db.products.find(p=>p.sku===s);
+function nextSku(code){
+  const max=db.products.filter(p=>p.sku?.startsWith(code+"-")).reduce((m,p)=>Math.max(m,parseInt(p.sku.split("-")[1])||0),0);
+  db.seq[code]=Math.max(db.seq[code]||0,max)+1;return code+"-"+String(db.seq[code]).padStart(4,"0");
+}
+function newCatCode(){const L="ABCDEFGHIJKLMNOPQRSTUVWXYZ";for(const a of "XYZQ")for(const b of L){const c=a+b;if(!db.categories.some(k=>k.code===c))return c;}return "Z"+db.categories.length;}
+const cbm=p=>p.cartonL&&p.cartonW&&p.cartonH?p.cartonL*p.cartonW*p.cartonH/1e6:0;
+const margin=p=>p.salePrice>0&&p.landedCost>0?(p.salePrice-p.landedCost)/p.salePrice:null;
+function shipCalc(s){
+  const fx=num(s.fx)||(s.currency==="ILS"?1:0);
+  const goods=(s.items||[]).reduce((t,i)=>t+num(i.qty)*num(i.unitPrice),0);
+  const goodsIls=goods*fx;
+  const extra=COSTS.reduce((t,[k])=>t+num(s.costs?.[k]),0);
+  const total=goodsIls+extra;
+  const lines=(s.items||[]).map(i=>{const v=num(i.qty)*num(i.unitPrice)*fx;const share=goodsIls>0?extra*v/goodsIls:0;
+    return {...i,valueIls:v,landed:num(i.qty)>0&&fx?(v+share)/num(i.qty):0};});
+  return {fx,goods,goodsIls,extra,total,lines,factor:goodsIls>0?total/goodsIls:0};
+}
+
+// ---------- navigation ----------
+$("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;render();};
+function render(){
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+  ({dash:renderDash,ships:sel?renderShip:renderShips,prods:renderProds,sups:renderSups,settings:renderSettings})[view]();
+  window.scrollTo(0,0);
+}
+
+// ---------- dashboard ----------
+function renderDash(){
+  const open=db.shipments.filter(s=>s.status!=="wh");
+  const sea=open.reduce((t,s)=>t+shipCalc(s).total,0);
+  const next=open.filter(s=>s.eta).sort((a,b)=>a.eta.localeCompare(b.eta))[0];
+  $("#view").innerHTML=`<h1>לוח בקרה</h1><p class="sub">תמונת מצב של היבוא והמוצרים. הנתונים כאן פרטיים ומוצפנים, והלקוחות לא רואים אותם.</p>
+  <div class="cards">
+    <div class="card"><div class="k">מכולות פתוחות</div><div class="v">${open.length}</div></div>
+    <div class="card"><div class="k">עלות משוערת של מה שבדרך</div><div class="v">${money(Math.round(sea))||"₪0"}</div></div>
+    <div class="card"><div class="k">המכולה הבאה מגיעה</div><div class="v" style="font-size:20px">${next?esc(fmtDate(next.eta)):"—"}</div><div class="k">${next?esc(next.name):""}</div></div>
+    <div class="card"><div class="k">מוצרים במערכת</div><div class="v">${db.products.length}</div></div>
+  </div>
+  <div class="row" style="justify-content:space-between"><h2>מכולות בדרך</h2><button class="btn sm" id="dNew">+ מכולה חדשה</button></div>
+  ${open.length?shipTable(open.sort((a,b)=>(a.eta||"9").localeCompare(b.eta||"9"))):`<div class="panel muted">עוד אין מכולות. לחצו "מכולה חדשה" כדי להתחיל ולהעלות מסמכים.</div>`}`;
+  $("#dNew").onclick=newShip;bindShipRows();
+}
+
+// ---------- shipments ----------
+function shipTable(list){
+  return `<div class="tablewrap"><table><thead><tr><th>שם</th><th>ספק</th><th>מס׳ מכולה</th><th>סטטוס</th><th>הגעה משוערת</th><th class="num">עלות כוללת</th><th>מסמכים</th></tr></thead><tbody>
+  ${list.map(s=>{const c=shipCalc(s);return `<tr class="click" data-id="${esc(s.id)}"><td><b>${esc(s.name)}</b></td><td>${esc(s.supplier)}</td><td class="sku">${esc(s.containerNo)}</td>
+  <td><span class="pill st-${esc(s.status)}">${stName(s.status)}</span></td><td>${esc(fmtDate(s.eta))}</td><td class="num">${c.fx?money(Math.round(c.total)):(c.goods?`<span class="warn">חסר שער</span>`:"")}</td><td>${(s.docs||[]).length||""}</td></tr>`}).join("")}
+  </tbody></table></div>`;
+}
+function bindShipRows(){document.querySelectorAll("tr[data-id]").forEach(tr=>tr.onclick=()=>{view="ships";sel=tr.dataset.id;render();});}
+function newShip(){const n=db.shipments.length+1;const s={id:uid(),name:"מכולה "+n,supplier:"",containerNo:"",type:"40HQ",status:"order",etd:"",eta:"",currency:"USD",fx:"",costs:{},items:[],docs:[],notes:"",createdAt:new Date().toISOString()};
+  db.shipments.push(s);touch();view="ships";sel=s.id;render();}
+function renderShips(){
+  const all=[...db.shipments].sort((a,b)=>(a.status==="wh")-(b.status==="wh")||(a.eta||"9").localeCompare(b.eta||"9"));
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>מכולות ויבוא</h1><p class="sub">כל מכולה עם המסמכים, העלויות והמוצרים שלה. עלות הנחיתה מחושבת אוטומטית לכל מוצר.</p></div><button class="btn" id="sNew">+ מכולה חדשה</button></div>
+  ${all.length?shipTable(all):`<div class="panel muted">עוד אין מכולות.</div>`}`;
+  $("#sNew").onclick=newShip;bindShipRows();
+}
+function renderShip(){
+  const s=db.shipments.find(x=>x.id===sel);if(!s){sel=null;return render();}
+  s.costs??={};s.items??=[];s.docs??=[];
+  const supOpts=db.suppliers.map(x=>`<option value="${esc(x.name)}">`).join("");
+  $("#view").innerHTML=`<button class="back" id="back">→ כל המכולות</button>
+  <div class="row" style="justify-content:space-between"><h1 id="sTitle">${esc(s.name)}</h1><button class="btn danger sm" id="sDel">מחיקת מכולה</button></div>
+  <div class="panel"><div class="grid">
+    <label class="f">שם המכולה<input data-k="name" value="${esc(s.name)}"></label>
+    <label class="f">ספק / מפעל<input data-k="supplier" list="supList" value="${esc(s.supplier)}"><datalist id="supList">${supOpts}</datalist></label>
+    <label class="f">מספר מכולה<input data-k="containerNo" value="${esc(s.containerNo)}" dir="ltr"></label>
+    <label class="f">סוג<select data-k="type">${["20GP","40GP","40HQ","LCL","אווירי"].map(t=>`<option ${s.type===t?"selected":""}>${t}</option>`).join("")}</select></label>
+    <label class="f">סטטוס<select data-k="status">${STATUSES.map(([k,v])=>`<option value="${k}" ${s.status===k?"selected":""}>${v}</option>`).join("")}</select></label>
+    <label class="f">יציאה מהנמל (ETD)<input type="date" data-k="etd" value="${esc(s.etd)}"></label>
+    <label class="f">הגעה משוערת (ETA)<input type="date" data-k="eta" value="${esc(s.eta)}"></label>
+    <label class="f">מטבע הספק<select data-k="currency">${["USD","EUR","CNY","TRY","ILS"].map(t=>`<option ${s.currency===t?"selected":""}>${t}</option>`).join("")}</select></label>
+    <label class="f">שער המרה ל-₪<input data-k="fx" inputmode="decimal" value="${esc(s.fx)}" placeholder="למשל 3.65" dir="ltr"></label>
+  </div></div>
+
+  <h2>מסמכים</h2>
+  <div class="panel">
+    <div class="drop" id="drop">גררו לכאן קבצים (PDF, אקסל, תמונות) או <button class="btn sm ghost" id="pick">בחרו קבצים</button>
+      <div class="muted" style="font-size:12.5px;margin-top:6px">עד 4.3MB לקובץ. הקבצים נשמרים מוצפנים ורק אתם יכולים לפתוח אותם.</div>
+      <input type="file" id="files" multiple hidden></div>
+    <div id="docList" style="margin-top:12px"></div>
+  </div>
+
+  <h2>מוצרים במכולה</h2>
+  <div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>מק״ט</th><th>מוצר</th><th class="num">כמות</th><th class="num">מחיר ליחידה (${esc(s.currency)})</th><th class="num">שווי (₪)</th><th class="num">עלות נחיתה ליחידה</th><th></th></tr></thead><tbody id="items"></tbody></table></div>
+    <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="addItem">+ שורת מוצר</button>
+    <button class="btn sm gold" id="applyLanded">עדכון עלות הנחיתה בכרטיסי המוצרים</button></div>
+    <datalist id="prodList">${db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("")}</datalist>
+  </div>
+
+  <h2>עלויות נוספות</h2>
+  <div class="panel"><div class="grid">${COSTS.map(([k,l])=>`<label class="f">${l}<input data-c="${k}" inputmode="decimal" dir="ltr" value="${esc(s.costs[k])}"></label>`).join("")}</div>
+    <div id="sum" style="margin-top:14px"></div></div>
+
+  <h2>הערות</h2><div class="panel"><textarea data-k="notes" rows="3">${esc(s.notes)}</textarea></div>`;
+
+  $("#back").onclick=()=>{sel=null;render();};
+  $("#sDel").onclick=()=>{if(!confirm(`למחוק את "${s.name}"? המסמכים שלה יימחקו גם הם.`))return;
+    (s.docs||[]).forEach(d=>api("delfile",{method:"POST",body:{url:d.url}}).catch(()=>{}));
+    db.shipments=db.shipments.filter(x=>x!==s);touch();sel=null;render();};
+  document.querySelectorAll("[data-k]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{s[el.dataset.k]=el.value;if(el.dataset.k==="name")$("#sTitle").textContent=el.value;touch();if(["fx","currency"].includes(el.dataset.k))drawItems();}));
+  document.querySelectorAll("[data-c]").forEach(el=>el.addEventListener("input",()=>{s.costs[el.dataset.c]=el.value;touch();drawItems();}));
+  const drop=$("#drop");$("#pick").onclick=e=>{e.preventDefault();$("#files").click();};
+  $("#files").onchange=e=>uploadFiles(s,[...e.target.files]);
+  ["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("over");}));
+  ["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("over");}));
+  drop.addEventListener("drop",e=>uploadFiles(s,[...e.dataTransfer.files]));
+  $("#addItem").onclick=()=>{s.items.push({sku:"",name:"",qty:"",unitPrice:""});touch();drawItems();};
+  $("#applyLanded").onclick=()=>{const c=shipCalc(s);if(!c.fx){toast("צריך למלא שער המרה");return;}let n=0;
+    c.lines.forEach(l=>{const p=prodBySku(l.sku);if(p&&l.landed){p.landedCost=Math.round(l.landed*100)/100;p.landedFrom=s.name;n++;}});
+    touch();toast(n?`עודכנה עלות נחיתה ב-${n} מוצרים`:"אין שורות שמקושרות למק״ט של מוצר");};
+  drawDocs(s);drawItems();
+
+  function drawItems(){
+    const c=shipCalc(s);
+    $("#items").innerHTML=s.items.map((it,i)=>{const l=c.lines[i];return `<tr data-i="${i}">
+      <td style="width:110px"><input data-f="sku" list="prodList" value="${esc(it.sku)}" dir="ltr"></td>
+      <td><input data-f="name" value="${esc(it.name||(prodBySku(it.sku)||{}).name||"")}"></td>
+      <td style="width:90px"><input data-f="qty" inputmode="decimal" dir="ltr" value="${esc(it.qty)}"></td>
+      <td style="width:120px"><input data-f="unitPrice" inputmode="decimal" dir="ltr" value="${esc(it.unitPrice)}"></td>
+      <td class="num">${l.valueIls?money(Math.round(l.valueIls)):""}</td>
+      <td class="num"><b>${l.landed?money(Math.round(l.landed*100)/100):""}</b></td>
+      <td><button class="btn sm ghost" data-del="${i}" title="הסרה">✕</button></td></tr>`;}).join("")||`<tr><td colspan="7" class="muted">עוד אין מוצרים. הוסיפו שורות, או שלחו לClaude את הפרופורמה והוא ימלא.</td></tr>`;
+    $("#items").querySelectorAll("input").forEach(el=>el.addEventListener("change",()=>{const it=s.items[+el.closest("tr").dataset.i];it[el.dataset.f]=el.value;
+      if(el.dataset.f==="sku"){const p=prodBySku(el.value.trim());if(p){it.sku=p.sku;it.name=p.name;}}touch();drawItems();}));
+    $("#items").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{s.items.splice(+b.dataset.del,1);touch();drawItems();});
+    drawSum();
+  }
+  function drawSum(){const c=shipCalc(s);
+    $("#sum").innerHTML=`<div class="cards" style="margin:0">
+      <div class="card"><div class="k">סחורה (${esc(s.currency)})</div><div class="v" style="font-size:20px">${money(Math.round(c.goods),s.currency)||"0"}</div></div>
+      <div class="card"><div class="k">סחורה ב-₪</div><div class="v" style="font-size:20px">${c.fx?money(Math.round(c.goodsIls)):`<span class="warn" style="font-size:15px">חסר שער המרה</span>`}</div></div>
+      <div class="card"><div class="k">עלויות נוספות</div><div class="v" style="font-size:20px">${money(Math.round(c.extra))||"₪0"}</div></div>
+      <div class="card"><div class="k">עלות נחיתה כוללת</div><div class="v" style="font-size:20px">${c.fx?money(Math.round(c.total)):"—"}</div><div class="k">${c.factor?`פי ${c.factor.toFixed(2)} ממחיר הסחורה`:""}</div></div></div>`;}
+}
+function drawDocs(s){
+  $("#docList").innerHTML=s.docs.length?`<table><thead><tr><th>קובץ</th><th>סוג מסמך</th><th>הועלה</th><th></th></tr></thead><tbody>${s.docs.map((d,i)=>`<tr>
+    <td>📄 ${esc(d.name)} <span class="muted" style="font-size:12px">${(d.size/1024/1024).toFixed(2)}MB</span></td>
+    <td style="width:190px"><select data-kind="${i}">${DOC_KINDS.map(k=>`<option ${d.kind===k?"selected":""}>${k}</option>`).join("")}</select></td>
+    <td class="muted">${esc(new Date(d.uploadedAt).toLocaleDateString("he-IL"))}</td>
+    <td style="white-space:nowrap"><button class="btn sm ghost" data-open="${i}">פתיחה</button> <button class="btn sm ghost" data-dl="${i}">הורדה</button> <button class="btn sm danger" data-rm="${i}">מחיקה</button></td></tr>`).join("")}</tbody></table>`:`<div class="muted">עוד לא הועלו מסמכים למכולה הזו.</div>`;
+  const link=(d,dl)=>`${API}?a=file&url=${encodeURIComponent(d.url)}&name=${encodeURIComponent(d.name)}&type=${encodeURIComponent(d.type||"")}${dl?"&dl=1":""}`;
+  $("#docList").querySelectorAll("[data-kind]").forEach(el=>el.onchange=()=>{s.docs[+el.dataset.kind].kind=el.value;touch();});
+  $("#docList").querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>window.open(link(s.docs[+b.dataset.open]),"_blank"));
+  $("#docList").querySelectorAll("[data-dl]").forEach(b=>b.onclick=()=>{location.href=link(s.docs[+b.dataset.dl],1);});
+  $("#docList").querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{const d=s.docs[+b.dataset.rm];if(!confirm(`למחוק את "${d.name}"?`))return;
+    try{await api("delfile",{method:"POST",body:{url:d.url}});}catch(e){}s.docs=s.docs.filter(x=>x!==d);touch();drawDocs(s);});
+}
+function guessKind(n){n=n.toLowerCase();if(/proforma|pi[\s_-]|פרופורמה|invoice/.test(n))return DOC_KINDS[0];if(/packing|pl[\s_-]/.test(n))return DOC_KINDS[1];if(/b\/?l|bill|lading|שטר/.test(n))return DOC_KINDS[2];if(/רשימון|customs/.test(n))return DOC_KINDS[3];return "אחר";}
+async function shrinkImage(f){
+  if(!/^image\/(jpeg|png|webp)$/.test(f.type)||f.size<=4e6)return f;
+  const img=await createImageBitmap(f);const sc=Math.min(1,2600/Math.max(img.width,img.height));const c=document.createElement("canvas");
+  c.width=img.width*sc;c.height=img.height*sc;c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  const b=await new Promise(r=>c.toBlob(r,"image/jpeg",.85));return new File([b],f.name.replace(/\.\w+$/,".jpg"),{type:"image/jpeg"});
+}
+async function uploadFiles(s,files){
+  for(const f0 of files){
+    const f=await shrinkImage(f0);
+    if(f.size>4.3*1024*1024){toast(`"${f.name}" גדול מ-4.3MB. אפשר לשלוח אותו לClaude בצ'אט.`,5000);continue;}
+    toast(`מעלה את ${f.name}…`,60000);
+    try{const j=await api("upload",{method:"POST",raw:f,headers:{"Content-Type":f.type||"application/octet-stream","x-file-name":encodeURIComponent(f.name),"x-folder":s.id}});
+      s.docs.push({...j.doc,kind:guessKind(f.name)});touch();drawDocs(s);toast(`✓ ${f.name} הועלה`);}
+    catch(e){toast(`העלאת ${f.name} נכשלה: ${e.message}`,5000);}
+  }
+  $("#files").value="";
+}
+
+// ---------- products ----------
+let pq="",pcat="";
+function renderProds(){
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>מוצרים</h1><p class="sub">כרטיס פנימי לכל מוצר: מק״ט קבוע, עלות, ספק ונפח. המק״ט נקבע אוטומטית ולא משתנה לעולם.</p></div>
+    <div class="row"><button class="btn ghost" id="pImport">ייבוא מאקסל</button><button class="btn ghost" id="pExport">ייצוא לאקסל</button><button class="btn" id="pNew">+ מוצר</button></div></div>
+  <div class="row" style="margin-bottom:12px"><input id="pq" placeholder="חיפוש לפי שם, מק״ט או ספק" value="${esc(pq)}" style="max-width:320px">
+    <select id="pcat" style="max-width:240px"><option value="">כל הקטגוריות</option>${db.categories.map(c=>`<option value="${esc(c.code)}" ${pcat===c.code?"selected":""}>${esc(c.name)}</option>`).join("")}</select>
+    <span class="muted" id="pCount"></span></div>
+  <div class="tablewrap"><table><thead><tr><th>מק״ט</th><th>שם</th><th>קטגוריה</th><th class="num">מחיר מכירה</th><th class="num">עלות נחיתה</th><th class="num">רווח</th><th>ספק</th><th class="num">בקרטון</th><th class="num">CBM</th></tr></thead><tbody id="pRows"></tbody></table></div>
+  <input type="file" id="xlsIn" accept=".xlsx,.xls,.csv" hidden>`;
+  const draw=()=>{const q=pq.trim().toLowerCase();
+    const list=db.products.filter(p=>(!pcat||p.cat===pcat)&&(!q||[p.sku,p.name,p.supplier].some(v=>String(v||"").toLowerCase().includes(q)))).sort((a,b)=>a.sku.localeCompare(b.sku));
+    $("#pCount").textContent=`${list.length} מוצרים`;
+    $("#pRows").innerHTML=list.map(p=>{const m=margin(p);return `<tr class="click" data-sku="${esc(p.sku)}"><td class="sku">${esc(p.sku)}</td><td><b>${esc(p.name)}</b></td><td>${esc(catName(p.cat))}</td>
+      <td class="num">${money(p.salePrice)}</td><td class="num">${money(p.landedCost)}</td><td class="num ${m===null?"":m<.25?"bad":m<.4?"warn":"okc"}">${m===null?"":Math.round(m*100)+"%"}</td>
+      <td>${esc(p.supplier)}</td><td class="num">${esc(p.unitsPerCarton||"")}</td><td class="num">${cbm(p)?cbm(p).toFixed(3):""}</td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">אין מוצרים עדיין. לחצו "ייבוא מאקסל" והעלו את קובץ המוצרים.</td></tr>`;
+    document.querySelectorAll("tr[data-sku]").forEach(tr=>tr.onclick=()=>editProd(prodBySku(tr.dataset.sku)));};
+  $("#pq").oninput=e=>{pq=e.target.value;draw();};$("#pcat").onchange=e=>{pcat=e.target.value;draw();};
+  $("#pNew").onclick=()=>editProd(null);$("#pImport").onclick=()=>$("#xlsIn").click();$("#xlsIn").onchange=e=>importXls(e.target.files[0]);
+  $("#pExport").onclick=exportXls;draw();
+}
+const PFIELDS=[["name","שם מוצר *"],["cat","קטגוריה *"],["desc","תיאור קצר"],["salePrice","מחיר מכירה ללא מע״מ (₪)"],["factoryPrice","מחיר במפעל ליחידה"],["currency","מטבע"],["landedCost","עלות נחיתה ליחידה (₪)"],["supplier","ספק / מפעל"],["origin","מדינת ייצור"],["unitsPerCarton","יחידות בקרטון"],["cartonL","אורך קרטון (ס״מ)"],["cartonW","רוחב קרטון (ס״מ)"],["cartonH","גובה קרטון (ס״מ)"],["cartonKg","משקל קרטון (ק״ג)"],["image","שם קובץ תמונה"],["notes","הערות"]];
+const NUMF=new Set(["salePrice","factoryPrice","landedCost","unitsPerCarton","cartonL","cartonW","cartonH","cartonKg"]);
+function editProd(p){
+  const isNew=!p;p=p?{...p}:{sku:"",cat:db.categories[0]?.code,currency:"USD"};
+  $("#modalBox").innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">${isNew?"מוצר חדש":`<span class="sku">${esc(p.sku)}</span> · ${esc(p.name)}`}</h2><button class="btn sm ghost" id="mX">✕</button></div>
+   ${isNew?`<p class="muted">המק״ט ייקבע אוטומטית לפי הקטגוריה כשתשמרו.</p>`:""}
+   <div class="grid" style="margin-top:12px">${PFIELDS.map(([k,l])=>k==="cat"?`<label class="f">${l}<select data-p="cat">${db.categories.map(c=>`<option value="${esc(c.code)}" ${p.cat===c.code?"selected":""}>${esc(c.name)} (${esc(c.code)})</option>`).join("")}</select></label>`
+     :`<label class="f" ${["desc","notes"].includes(k)?'style="grid-column:1/-1"':""}>${l}<input data-p="${k}" value="${esc(p[k])}" ${NUMF.has(k)?'inputmode="decimal" dir="ltr"':""}></label>`).join("")}</div>
+   ${p.landedFrom?`<p class="muted">עלות הנחיתה עודכנה לאחרונה מ: ${esc(p.landedFrom)}</p>`:""}
+   <div class="row" style="justify-content:space-between;margin-top:16px">${isNew?"<span></span>":`<button class="btn danger sm" id="mDel">מחיקת מוצר</button>`}<button class="btn" id="mSave">שמירה</button></div>`;
+  $("#modal").hidden=false;
+  $("#mX").onclick=()=>$("#modal").hidden=true;
+  $("#mSave").onclick=()=>{const o={...p};document.querySelectorAll("[data-p]").forEach(el=>{o[el.dataset.p]=NUMF.has(el.dataset.p)?(el.value===""?"":num(el.value)):el.value.trim();});
+    if(!o.name){toast("חסר שם מוצר");return;}
+    if(isNew){o.sku=nextSku(o.cat);o.createdAt=new Date().toISOString();db.products.push(o);}else{Object.assign(db.products.find(x=>x.sku===p.sku),o);}
+    touch();$("#modal").hidden=true;renderProds();toast(isNew?`נוצר מוצר ${o.sku}`:"נשמר");};
+  if(!isNew)$("#mDel").onclick=()=>{if(!confirm(`למחוק את ${p.sku}? המק״ט לא יחזור לשימוש.`))return;db.products=db.products.filter(x=>x.sku!==p.sku);touch();$("#modal").hidden=true;renderProds();};
+}
+async function loadXlsx(){if(window.XLSX)return;await new Promise((ok,bad)=>{const s=document.createElement("script");s.src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";s.onload=ok;s.onerror=()=>bad(new Error("טעינת קורא האקסל נכשלה"));document.head.appendChild(s);});}
+async function importXls(file){
+  if(!file)return;
+  try{
+    await loadXlsx();
+    const wb=XLSX.read(await file.arrayBuffer());
+    const ws=wb.Sheets["מוצרים"]||wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+    const norm=s=>String(s).replace(/[*\s"״']/g,"");
+    const hi=rows.findIndex(r=>r.some(c=>norm(c).startsWith("שםמוצר")));
+    if(hi<0)throw new Error("לא נמצאה שורת כותרות (\"שם מוצר\"). השתמשו בקובץ ההעלאה של נויה.");
+    const H=rows[hi].map(norm);
+    const col=label=>H.findIndex(h=>h.startsWith(norm(label).replace(/\(.*$/,"")));
+    const map=Object.fromEntries([["sku","מק״ט"],...PFIELDS].map(([k,l])=>[k,col(l)]));
+    let added=0,updated=0,newCats=[];const fresh=[];
+    for(const r of rows.slice(hi+1)){
+      const get=k=>map[k]>=0?String(r[map[k]]??"").trim():"";
+      const name=get("name");if(!name||/דוגמה\s*[–-]\s*למחוק/.test(get("notes")))continue;
+      const o={};PFIELDS.forEach(([k])=>{if(k==="cat")return;const v=get(k);if(v!=="")o[k]=NUMF.has(k)?num(v):v;});
+      o.name=name;
+      const cn=get("cat")||"אחר";let c=catByName(cn)||db.categories.find(x=>x.code===cn.toUpperCase());
+      if(!c){c={code:newCatCode(),name:cn};db.categories.push(c);newCats.push(c);}
+      o.cat=c.code;
+      const sku=get("sku");const ex=(sku&&prodBySku(sku))||db.products.find(p=>p.name.trim()===name);
+      if(ex){Object.assign(ex,o);updated++;}else fresh.push(o);
+    }
+    // new products get their SKU in category + name order, so sizes of the same product sit next to each other
+    fresh.sort((a,b)=>a.cat.localeCompare(b.cat)||a.name.localeCompare(b.name,"he"));
+    fresh.forEach(o=>{o.sku=nextSku(o.cat);o.createdAt=new Date().toISOString();db.products.push(o);added++;});
+    touch();renderProds();
+    toast(`יובאו ${added} מוצרים חדשים${updated?`, עודכנו ${updated}`:""}${newCats.length?`. נוספו קטגוריות: ${newCats.map(c=>c.name+" ("+c.code+")").join(", ")}`:""}`,7000);
+  }catch(e){toast("הייבוא נכשל: "+e.message,6000);}
+  $("#xlsIn").value="";
+}
+async function exportXls(){
+  try{await loadXlsx();
+    const head=["מק״ט",...PFIELDS.map(f=>f[1].replace(" *","")),"נפח קרטון (CBM)","רווח גולמי %"];
+    const data=[...db.products].sort((a,b)=>a.sku.localeCompare(b.sku)).map(p=>[p.sku,...PFIELDS.map(([k])=>k==="cat"?catName(p.cat):p[k]??""),cbm(p)?+cbm(p).toFixed(3):"",margin(p)===null?"":Math.round(margin(p)*1000)/10]);
+    const ws=XLSX.utils.aoa_to_sheet([head,...data]);ws["!views"]=[{RTL:true}];
+    const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};XLSX.utils.book_append_sheet(wb,ws,"מוצרים");
+    XLSX.writeFile(wb,`noya-products-${new Date().toISOString().slice(0,10)}.xlsx`);
+  }catch(e){toast(e.message);}
+}
+
+// ---------- suppliers ----------
+function renderSups(){
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>ספקים ומפעלים</h1><p class="sub">פרטי קשר והערות לכל מפעל.</p></div><button class="btn" id="supNew">+ ספק</button></div>
+  <div class="tablewrap"><table><thead><tr><th>שם</th><th>מדינה</th><th>איש קשר</th><th>טלפון / וואטסאפ</th><th>מייל</th><th>הערות</th><th class="num">מכולות</th><th></th></tr></thead><tbody>
+  ${db.suppliers.map((x,i)=>`<tr data-i="${i}">${["name","country","contact","phone","email","notes"].map(k=>`<td><input data-s="${k}" value="${esc(x[k])}" ${["phone","email"].includes(k)?'dir="ltr"':""}></td>`).join("")}
+    <td class="num">${db.shipments.filter(s=>s.supplier&&s.supplier===x.name).length||""}</td><td><button class="btn sm ghost" data-rm="${i}">✕</button></td></tr>`).join("")||`<tr><td colspan="8" class="muted">עוד אין ספקים.</td></tr>`}
+  </tbody></table></div>`;
+  $("#supNew").onclick=()=>{db.suppliers.push({id:uid(),name:""});touch();renderSups();};
+  document.querySelectorAll("[data-s]").forEach(el=>el.oninput=()=>{db.suppliers[+el.closest("tr").dataset.i][el.dataset.s]=el.value;touch();});
+  document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{if(!confirm("למחוק את הספק?"))return;db.suppliers.splice(+b.dataset.rm,1);touch();renderSups();});
+}
+
+// ---------- settings ----------
+function renderSettings(){
+  $("#view").innerHTML=`<h1>הגדרות</h1><p class="sub">קטגוריות, גיבוי ויציאה.</p>
+  <h2>קטגוריות וקודי מק״ט</h2><div class="panel"><p class="muted" style="margin-top:0">הקוד הוא החלק הראשון של המק״ט. אחרי שיש מוצרים בקטגוריה, לא כדאי לשנות את הקוד שלה.</p>
+    <table><thead><tr><th style="width:90px">קוד</th><th>קטגוריה</th><th class="num">מוצרים</th></tr></thead><tbody>
+    ${db.categories.map((c,i)=>{const n=db.products.filter(p=>p.cat===c.code).length;return `<tr data-i="${i}"><td><input data-c="code" value="${esc(c.code)}" dir="ltr" maxlength="3" ${n?"disabled":""}></td><td><input data-c="name" value="${esc(c.name)}"></td><td class="num">${n||""}</td></tr>`;}).join("")}
+    </tbody></table><button class="btn sm ghost" id="catNew" style="margin-top:10px">+ קטגוריה</button></div>
+  <h2>גיבוי</h2><div class="panel"><p class="muted" style="margin-top:0">המערכת שומרת אוטומטית 30 גרסאות אחרונות. מומלץ להוריד גם גיבוי למחשב מדי פעם.</p>
+    <div class="row"><button class="btn ghost" id="bkOut">הורדת גיבוי</button><button class="btn ghost" id="bkIn">שחזור מגיבוי</button><input type="file" id="bkFile" accept=".json" hidden></div></div>
+  <h2>חשבון</h2><div class="panel"><button class="btn danger" id="logout">יציאה</button></div>`;
+  document.querySelectorAll("[data-c]").forEach(el=>el.onchange=()=>{const c=db.categories[+el.closest("tr").dataset.i];let v=el.value.trim();
+    if(el.dataset.c==="code"){v=v.toUpperCase().replace(/[^A-Z0-9]/g,"");if(!v||db.categories.some(x=>x!==c&&x.code===v)){toast("קוד ריק או כפול");el.value=c.code;return;}}c[el.dataset.c]=v;touch();});
+  $("#catNew").onclick=()=>{db.categories.push({code:newCatCode(),name:"קטגוריה חדשה"});touch();renderSettings();};
+  $("#bkOut").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,1)],{type:"application/json"}));a.download=`noya-office-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();};
+  $("#bkIn").onclick=()=>$("#bkFile").click();
+  $("#bkFile").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d.products)||!Array.isArray(d.shipments))throw new Error("קובץ לא תקין");
+    if(!confirm("השחזור יחליף את כל הנתונים הנוכחיים. להמשיך?"))return;db=d;touch();toast("שוחזר");render();}catch(err){toast("השחזור נכשל: "+err.message);}};
+  $("#logout").onclick=async()=>{await save();await api("logout",{method:"POST"}).catch(()=>{});location.reload();};
+}
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal")$("#modal").hidden=true;});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#modal").hidden=true;});
+</script>
+</body>
+</html>
