@@ -110,7 +110,7 @@ const DOC_KINDS=["חשבונית פרופורמה","Packing List","שטר מטע
 // each cost: [key, label, default split]. "vol" = by the CBM each line takes in the container, "val" = by the value of each line
 const COSTS=[["originFreight","הובלה בארץ המקור עד הנמל (₪)","vol"],["freight","הובלה ימית (₪)","vol"],["port","נמל ואחסנה (₪)","vol"],["clearance","עמיל מכס ושחרור (₪)","vol"],["local","הובלה למחסן (₪)","vol"],["customs","מכס ומיסים (₪)","val"],["fees","עמלות – Alibaba, בנק וכו׳ (₪)","val"],["other","אחר (₪)","val"]];
 const costMethod=(s,k)=>(s.costMethod&&s.costMethod[k])||COSTS.find(c=>c[0]===k)[2];
-const DEFAULT_CATS=[["DB","דבש"],["WN","יין ואלכוהול"],["CH","שוקולד וממתקים"],["DF","פירות יבשים ואגוזים"],["CF","קפה ותה"],["GR","גורמה, ממרחים ורטבים"],["OL","שמן זית"],["KT","כלי מטבח והגשה"],["HM","עיצוב הבית"],["CN","נרות וריחות"],["SP","טיפוח וספא"],["TX","טקסטיל"],["JD","יודאיקה"],["TC","גאדג'טים ואלקטרוניקה"],["BG","תיקים ואביזרים"],["BX","אריזות – קופסאות, סלסלות, מגשים"],["AC","אביזרי אריזה – סרטים, כרטיסים, מילוי"],["OT","אחר"]].map(([code,name])=>({code,name}));
+const DEFAULT_CATS=[["DB","דבש"],["WN","יין ואלכוהול"],["CH","שוקולד וממתקים"],["DF","פירות יבשים ואגוזים"],["CF","קפה ותה"],["GR","גורמה, ממרחים ורטבים"],["OL","שמן זית"],["KT","כלי מטבח והגשה"],["HM","עיצוב הבית"],["CN","נרות וריחות"],["SP","טיפוח וספא"],["TX","טקסטיל"],["JD","יודאיקה"],["TC","גאדג'טים ואלקטרוניקה"],["BG","תיקים ואביזרים"],["BX","אריזות – קופסאות, סלסלות, מגשים"],["AC","אביזרי אריזה – סרטים, כרטיסים, מילוי"],["EQ","ציוד לעסק (לא למכירה)"],["OT","אחר"]].map(([code,name])=>({code,name}));
 const DEFAULT_SETTINGS={costFiller:0,costLabor:0,costCard:0,costEngrave:0,shipOne:0,shipIndiv:0,shipVip:0,minMargin:30,vatRate:18};
 const emptyDb=()=>({v:1,products:[],shipments:[],suppliers:[],orders:[],stockAdj:[],settings:{...DEFAULT_SETTINGS},categories:DEFAULT_CATS.map(c=>({...c})),seq:{}});
 
@@ -607,16 +607,19 @@ async function exportXls(){
 
 // ---------- products from container lines ----------
 function guessCat(n){n=n.toLowerCase();
-  const m=[[/diffuser|reed|fragrance|scent|aroma|candle|wax|דיפיוזר|נר/,"CN"],[/jute|tote|bag|pouch|יוטה|תיק/,"BG"],[/plate|bowl|cup|mug|tray|dish|saucer|cutlery|spoon|board|צלחת|קערה|ספל|מגש/,"KT"],
+  const m=[[/machine|chair|desk|toilet|washbasin|faucet|mirror|cabinet|shelf|rack|forklift|printer|film|tape|cushion package|ציוד/,"EQ"],[/diffuser|reed|fragrance|scent|aroma|candle|wax|דיפיוזר|נר/,"CN"],[/table ?cloth|table cover|tablecloth|napkin|glove|mat\b|towel|blanket|cushion|textile|apron|מגבת|שמיכה|מפה/,"TX"],[/knife|tableware|shaker|salad|cutlery|bamboo/,"KT"],[/jute|tote|bag|pouch|יוטה|תיק/,"BG"],[/plate|bowl|cup|mug|tray|dish|saucer|cutlery|spoon|board|צלחת|קערה|ספל|מגש/,"KT"],
     [/vase|decor|holder|lantern|frame|figurine|אגרטל|פמוט/,"HM"],[/towel|blanket|cushion|napkin|textile|apron|מגבת|שמיכה/,"TX"],[/box|basket|packag|gift box|tin|קופסה|סלסלה/,"BX"],[/honey|דבש/,"DB"],[/chocolate|שוקולד/,"CH"]];
   return (m.find(([r])=>r.test(n))||[0,"OT"])[1];}
 function prodsFromShips(){
   let made=0,linked=0;
+  if(!db.categories.some(c=>c.code==="EQ"))db.categories.splice(Math.max(0,db.categories.length-1),0,{code:"EQ",name:"ציוד לעסק (לא למכירה)"});
+  const baseName=it=>{const code=String(it.itemNo||"").trim();let n=String(it.name||"").replace(/^סט:\s*/,"").trim();if(code&&n.startsWith(code))n=n.slice(code.length).trim()||n;return n;};
+  const nameCount={};db.shipments.forEach(s=>(s.items||[]).forEach(it=>{const n=baseName(it);nameCount[n]=(nameCount[n]||0)+1;}));
   db.shipments.forEach(s=>{normShip(s);(s.items||[]).forEach(it=>{
     if(it.sku&&prodBySku(it.sku))return;
     const sup=String(it.supplier||s.supplier||"").trim(),code=String(it.itemNo||"").trim();
-    let clean=String(it.name||"").replace(/^סט:\s*/,"").trim();if(code&&clean.startsWith(code))clean=clean.slice(code.length).trim()||clean;if(!clean)return;
-    let p=db.products.find(x=>code&&x.supplierCode===code&&(x.supplier||"")===sup)||db.products.find(x=>x.name===clean);
+    let clean=baseName(it);if(!clean)return;if(code&&nameCount[clean]>1)clean+=` (${code})`;   // colour/size variants with the same name keep their supplier code
+    let p=code?db.products.find(x=>x.supplierCode===code&&(x.supplier||"")===sup):db.products.find(x=>!x.supplierCode&&x.name===clean);
     if(!p){const cat=guessCat(clean);p={sku:nextSku(cat),name:clean,cat,supplier:sup,supplierCode:code,origin:"",factoryPrice:num(it.unitPrice)||"",currency:lineCur(s,it),
       unitsPerCarton:num(it.pcsPerCarton)||"",setInfo:it.isSet?(clean.match(/\(([^)]+)\)\s*$/)||[,"כן"])[1]:"",createdAt:new Date().toISOString()};db.products.push(p);made++;}else linked++;
     it.sku=p.sku;});});
