@@ -181,6 +181,20 @@ function shipCalc(s){
   return {ok:!missing.length,missing,goodsIls,byCur,extra,volCosts,valCosts,totalCbm,missingCbm,byVol,total,lines,bySup,factor:goodsIls>0?total/goodsIls:0};
 }
 
+// ---------- payments: what was paid and what is still due (default due date = container arrival) ----------
+function shipPayments(s){
+  const c=shipCalc(s);s.paid??={};s.due??={};
+  const rows=[];
+  const goodsBy=Object.entries(c.byCur).filter(([,v])=>v).map(([k,v])=>money(Math.round(v*100)/100,k==="ILS"?"₪":k)).join(" + ");
+  if(c.goodsIls)rows.push({k:"goods",label:"סחורה לספקים"+(goodsBy?` (${goodsBy})`:""),amount:c.goodsIls});
+  COSTS.forEach(([k,l])=>{const v=num(s.costs?.[k]);if(v)rows.push({k,label:l.replace(" (₪)",""),amount:v});});
+  const vr=num(s.vatRate??18);if(c.total&&vr)rows.push({k:"vat",label:`מע״מ ${vr}% (חוזר בקיזוז)`,amount:c.total*vr/100});
+  rows.forEach(r=>{r.paid=!!s.paid[r.k];r.due=s.due[r.k]||s.eta||"";});
+  const open=rows.filter(r=>!r.paid);
+  return {rows,open,left:open.reduce((t,r)=>t+r.amount,0),ok:c.ok};
+}
+const daysTo=d=>d?Math.round((new Date(d+"T00:00")-new Date(new Date().toDateString()))/864e5):null;
+
 // ---------- navigation ----------
 $("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;render();};
 function render(){
@@ -194,13 +208,20 @@ function renderDash(){
   const open=db.shipments.filter(s=>s.status!=="wh");
   const sea=open.reduce((t,s)=>t+shipCalc(s).total,0);
   const next=open.filter(s=>s.eta).sort((a,b)=>a.eta.localeCompare(b.eta))[0];
+  const dues=db.shipments.flatMap(s=>shipPayments(s).open.map(r=>({...r,s}))).sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));
+  const left=dues.reduce((t,r)=>t+r.amount,0);
   $("#view").innerHTML=`<h1>לוח בקרה</h1><p class="sub">תמונת מצב של היבוא והמוצרים. הנתונים כאן פרטיים ומוצפנים, והלקוחות לא רואים אותם.</p>
   <div class="cards">
     <div class="card"><div class="k">מכולות פתוחות</div><div class="v">${open.length}</div></div>
     <div class="card"><div class="k">עלות משוערת של מה שבדרך</div><div class="v">${money(Math.round(sea))||"₪0"}</div></div>
     <div class="card"><div class="k">המכולה הבאה מגיעה</div><div class="v" style="font-size:20px">${next?esc(fmtDate(next.eta)):"—"}</div><div class="k">${next?esc(next.name):""}</div></div>
+    <div class="card"><div class="k">נשאר לשלם (כולל מע״מ)</div><div class="v">${money(Math.round(left))||"₪0"}</div><div class="k">${dues.length?`${dues.length} תשלומים פתוחים`:""}</div></div>
     <div class="card"><div class="k">מוצרים במערכת</div><div class="v">${db.products.length}</div></div>
   </div>
+  ${dues.length?`<h2>תשלומים קרובים</h2><div class="tablewrap" style="margin-bottom:18px"><table><thead><tr><th>תאריך</th><th>מכולה</th><th>תשלום</th><th class="num">סכום</th><th></th></tr></thead><tbody>
+  ${dues.map(r=>{const d=daysTo(r.due);return `<tr class="click" data-id="${esc(r.s.id)}"><td>${r.due?esc(fmtDate(r.due)):'<span class="muted">ללא תאריך</span>'}</td><td>${esc(r.s.name)}</td><td>${esc(r.label)}</td><td class="num"><b>${money(Math.round(r.amount))}</b></td>
+    <td class="${d===null?"muted":d<0?"bad":d<=14?"warn":"muted"}">${d===null?"":d<0?`באיחור של ${-d} ימים`:d===0?"היום":`בעוד ${d} ימים`}</td></tr>`;}).join("")}
+  <tr><td colspan="3"><b>סה״כ</b></td><td class="num"><b>${money(Math.round(left))}</b></td><td></td></tr></tbody></table></div>`:""}
   <div class="row" style="justify-content:space-between"><h2>מכולות בדרך</h2><button class="btn sm" id="dNew">+ מכולה חדשה</button></div>
   ${open.length?shipTable(open.sort((a,b)=>(a.eta||"9").localeCompare(b.eta||"9"))):`<div class="panel muted">עוד אין מכולות. לחצו "מכולה חדשה" כדי להתחיל ולהעלות מסמכים.</div>`}`;
   $("#dNew").onclick=newShip;bindShipRows();
@@ -261,13 +282,14 @@ function renderShip(){
       <select data-cm="${k}" style="padding:3px 6px;font-size:12.5px;font-weight:400"><option value="vol" ${costMethod(s,k)==="vol"?"selected":""}>מתחלק לפי נפח (CBM)</option><option value="val" ${costMethod(s,k)==="val"?"selected":""}>מתחלק לפי שווי</option></select></label>`).join("")}</div>
     <div id="sum" style="margin-top:14px"></div></div>
 
+  <h2>תשלומים</h2><div class="panel" id="pay"></div>
   <h2>הערות</h2><div class="panel"><textarea data-k="notes" rows="3">${esc(s.notes)}</textarea></div>`;
 
   $("#back").onclick=()=>{sel=null;render();};
   $("#sDel").onclick=()=>{if(!confirm(`למחוק את "${s.name}"? המסמכים שלה יימחקו גם הם.`))return;
     (s.docs||[]).forEach(d=>api("delfile",{method:"POST",body:{url:d.url}}).catch(()=>{}));
     db.shipments=db.shipments.filter(x=>x!==s);touch();sel=null;render();};
-  document.querySelectorAll("[data-k]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{s[el.dataset.k]=el.value;if(el.dataset.k==="name")$("#sTitle").textContent=el.value;touch();if(["currency","supplier"].includes(el.dataset.k)){drawFx();drawItems();}}));
+  document.querySelectorAll("[data-k]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{s[el.dataset.k]=el.value;if(el.dataset.k==="name")$("#sTitle").textContent=el.value;touch();if(["currency","supplier"].includes(el.dataset.k)){drawFx();drawItems();}if(el.dataset.k==="eta")drawPay();}));
   document.querySelectorAll("[data-c]").forEach(el=>el.addEventListener("input",()=>{s.costs[el.dataset.c]=el.value;touch();drawItems();}));
   document.querySelectorAll("[data-cm]").forEach(el=>el.addEventListener("change",()=>{(s.costMethod??={})[el.dataset.cm]=el.value;touch();drawItems();}));
   const drop=$("#drop");$("#pick").onclick=e=>{e.preventDefault();$("#files").click();};
@@ -305,7 +327,15 @@ function renderShip(){
     $("#items").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{s.items.splice(+b.dataset.del,1);touch();drawItems();});
     drawSum();
   }
-  function drawSum(){const c=shipCalc(s);
+  function drawPay(){const P=shipPayments(s);
+    $("#pay").innerHTML=P.rows.length?`<table><thead><tr><th>תשלום</th><th class="num">סכום</th><th style="width:170px">לתשלום עד</th><th style="width:90px">שולם</th></tr></thead><tbody>
+      ${P.rows.map(r=>`<tr${r.paid?' style="opacity:.6"':""}><td>${esc(r.label)}</td><td class="num">${P.ok?money(Math.round(r.amount)):"—"}</td>
+        <td><input type="date" data-due="${r.k}" value="${esc(r.due)}"></td><td><label class="row" style="gap:6px"><input type="checkbox" data-paid="${r.k}" ${r.paid?"checked":""} style="width:auto"> ${r.paid?'<span class="okc">שולם</span>':""}</label></td></tr>`).join("")}
+      <tr><td><b>נשאר לשלם</b></td><td class="num"><b class="${P.left?"warn":"okc"}">${P.ok?money(Math.round(P.left))||"₪0":"—"}</b></td><td colspan="2" class="muted" style="font-size:12.5px">ברירת המחדל לתאריך היא מועד הגעת המכולה</td></tr></tbody></table>`:`<div class="muted">התשלומים יופיעו כאן אחרי שיהיו מוצרים ועלויות.</div>`;
+    $("#pay").querySelectorAll("[data-paid]").forEach(el=>el.onchange=()=>{s.paid[el.dataset.paid]=el.checked;touch();drawPay();});
+    $("#pay").querySelectorAll("[data-due]").forEach(el=>el.onchange=()=>{s.due[el.dataset.due]=el.value;touch();});
+  }
+  function drawSum(){const c=shipCalc(s);drawPay();
     const curTxt=Object.entries(c.byCur).filter(([,v])=>v).map(([k,v])=>money(Math.round(v),k==="ILS"?"₪":k)).join(" + ")||"0";
     const sups=Object.entries(c.bySup);
     $("#sum").innerHTML=`<div class="cards" style="margin:0">
