@@ -607,8 +607,8 @@ async function exportXls(){
 
 // ---------- products from container lines ----------
 function guessCat(n){n=n.toLowerCase();
-  const m=[[/machine|chair|desk|toilet|washbasin|faucet|mirror|cabinet|shelf|rack|forklift|printer|film|tape|cushion package|ציוד/,"EQ"],[/diffuser|reed|fragrance|scent|aroma|candle|wax|דיפיוזר|נר/,"CN"],[/table ?cloth|table cover|tablecloth|napkin|glove|mat\b|towel|blanket|cushion|textile|apron|מגבת|שמיכה|מפה/,"TX"],[/knife|tableware|shaker|salad|cutlery|bamboo/,"KT"],[/jute|tote|bag|pouch|יוטה|תיק/,"BG"],[/plate|bowl|cup|mug|tray|dish|saucer|cutlery|spoon|board|צלחת|קערה|ספל|מגש/,"KT"],
-    [/vase|decor|holder|lantern|frame|figurine|אגרטל|פמוט/,"HM"],[/towel|blanket|cushion|napkin|textile|apron|מגבת|שמיכה/,"TX"],[/box|basket|packag|gift box|tin|קופסה|סלסלה/,"BX"],[/honey|דבש/,"DB"],[/chocolate|שוקולד/,"CH"]];
+  const m=[[/machine|chair|desk|toilet|washbasin|faucet|mirror|cabinet|shelf|rack|forklift|printer|film|\btape\b|cushion package|ציוד/,"EQ"],[/diffuser|reed|fragrance|scent|aroma|candle|wax|דיפיוזר|נר/,"CN"],[/table ?cloth|table cover|tablecloth|napkin|glove|mat\b|towel|blanket|cushion|textile|apron|מגבת|שמיכה|מפה/,"TX"],[/knife|tableware|shaker|salad|cutlery|bamboo/,"KT"],[/jute|tote|bag|pouch|יוטה|תיק/,"BG"],[/plate|bowl|cup|mug|tray|dish|saucer|cutlery|spoon|board|צלחת|קערה|ספל|מגש/,"KT"],
+    [/vase|double holes|decor|holder|lantern|frame|figurine|אגרטל|פמוט/,"HM"],[/towel|blanket|cushion|napkin|textile|apron|מגבת|שמיכה/,"TX"],[/box|basket|packag|gift box|tin|קופסה|סלסלה/,"BX"],[/honey|דבש/,"DB"],[/chocolate|שוקולד/,"CH"]];
   return (m.find(([r])=>r.test(n))||[0,"OT"])[1];}
 function prodsFromShips(){
   let made=0,linked=0;
