@@ -111,7 +111,7 @@ const DOC_KINDS=["חשבונית פרופורמה","Packing List","שטר מטע
 const COSTS=[["originFreight","הובלה בארץ המקור עד הנמל (₪)","vol"],["freight","הובלה ימית (₪)","vol"],["port","נמל ואחסנה (₪)","vol"],["clearance","עמיל מכס ושחרור (₪)","vol"],["local","הובלה למחסן (₪)","vol"],["customs","מכס ומיסים (₪)","val"],["fees","עמלות – Alibaba, בנק וכו׳ (₪)","val"],["other","אחר (₪)","val"]];
 const costMethod=(s,k)=>(s.costMethod&&s.costMethod[k])||COSTS.find(c=>c[0]===k)[2];
 const DEFAULT_CATS=[["DB","דבש"],["WN","יין ואלכוהול"],["CH","שוקולד וממתקים"],["DF","פירות יבשים ואגוזים"],["CF","קפה ותה"],["GR","גורמה, ממרחים ורטבים"],["OL","שמן זית"],["KT","כלי מטבח והגשה"],["HM","עיצוב הבית"],["CN","נרות וריחות"],["SP","טיפוח וספא"],["TX","טקסטיל"],["JD","יודאיקה"],["TC","גאדג'טים ואלקטרוניקה"],["BG","תיקים ואביזרים"],["BX","אריזות – קופסאות, סלסלות, מגשים"],["AC","אביזרי אריזה – סרטים, כרטיסים, מילוי"],["EQ","ציוד לעסק (לא למכירה)"],["OT","אחר"]].map(([code,name])=>({code,name}));
-const DEFAULT_SETTINGS={costFiller:0,costLabor:0,costCard:0,costEngrave:0,shipOne:0,shipIndiv:0,shipVip:0,minMargin:30,vatRate:18};
+const DEFAULT_SETTINGS={markup:3,costFiller:0,costLabor:0,costCard:0,costEngrave:0,shipOne:0,shipIndiv:0,shipVip:0,minMargin:30,vatRate:18};
 const emptyDb=()=>({v:1,products:[],shipments:[],suppliers:[],orders:[],stockAdj:[],settings:{...DEFAULT_SETTINGS},categories:DEFAULT_CATS.map(c=>({...c})),seq:{}});
 
 let db=null,rev="",dirty=false,saving=false,view="dash",sel=null,selOrder=null;
@@ -526,22 +526,22 @@ async function uploadFiles(s,files){
 let pq="",pcat="";
 function renderProds(){
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>מוצרים</h1><p class="sub">כרטיס פנימי לכל מוצר: מק״ט קבוע, עלות, ספק ונפח. המק״ט נקבע אוטומטית ולא משתנה לעולם.</p></div>
-    <div class="row"><button class="btn gold" id="pFromShips">יצירת כרטיסים משורות המכולות</button><button class="btn ghost" id="pImport">ייבוא מאקסל</button><button class="btn ghost" id="pExport">ייצוא לאקסל</button><button class="btn" id="pNew">+ מוצר</button></div></div>
+    <div class="row"><button class="btn gold" id="pFromShips">יצירת כרטיסים משורות המכולות</button><button class="btn ghost" id="pPrice">מילוי מחירי מכירה (×${esc(db.settings.markup)})</button><button class="btn ghost" id="pImport">ייבוא מאקסל</button><button class="btn ghost" id="pExport">ייצוא לאקסל</button><button class="btn" id="pNew">+ מוצר</button></div></div>
   <div class="row" style="margin-bottom:12px"><input id="pq" placeholder="חיפוש לפי שם, מק״ט או ספק" value="${esc(pq)}" style="max-width:320px">
     <select id="pcat" style="max-width:240px"><option value="">כל הקטגוריות</option>${db.categories.map(c=>`<option value="${esc(c.code)}" ${pcat===c.code?"selected":""}>${esc(c.name)}</option>`).join("")}</select>
     <span class="muted" id="pCount"></span></div>
-  <div class="tablewrap"><table><thead><tr><th>מק״ט</th><th>שם</th><th>קטגוריה</th><th class="num">מחיר מכירה</th><th class="num">עלות (ממוצע)</th><th class="num">רווח</th><th>ספק</th><th class="num">בקרטון</th><th class="num">CBM</th></tr></thead><tbody id="pRows"></tbody></table></div>
+  <div class="tablewrap"><table><thead><tr><th>מק״ט</th><th>שם</th><th>קטגוריה</th><th class="num">מחיר מכירה (לפני מע״מ)</th><th class="num">עלות (ממוצע)</th><th class="num">רווח</th><th>ספק</th><th class="num">בקרטון</th><th class="num">CBM</th></tr></thead><tbody id="pRows"></tbody></table></div>
   <input type="file" id="xlsIn" accept=".xlsx,.xls,.csv" hidden>`;
   const draw=()=>{const q=pq.trim().toLowerCase();
     const list=db.products.filter(p=>(!pcat||p.cat===pcat)&&(!q||[p.sku,p.name,p.supplier].some(v=>String(v||"").toLowerCase().includes(q)))).sort((a,b)=>a.sku.localeCompare(b.sku));
     $("#pCount").textContent=`${list.length} מוצרים`;
     $("#pRows").innerHTML=list.map(p=>{const m=margin(p);return `<tr class="click" data-sku="${esc(p.sku)}"><td class="sku">${esc(p.sku)}</td><td><b>${esc(p.name)}</b></td><td>${esc(catName(p.cat))}</td>
-      <td class="num">${money(p.salePrice)}</td><td class="num">${money(Math.round(costOf(p.sku)*100)/100)}</td><td class="num ${m===null?"":m<.25?"bad":m<.4?"warn":"okc"}">${m===null?"":Math.round(m*100)+"%"}</td>
+      <td class="num">${p.salePrice?money(p.salePrice):p.cat!=="EQ"&&costOf(p.sku)?`<span class="muted" title="מומלץ: עלות × ${esc(db.settings.markup)}">${money(suggestPrice(p))} ?</span>`:""}</td><td class="num">${money(Math.round(costOf(p.sku)*100)/100)}</td><td class="num ${m===null?"":m<.25?"bad":m<.4?"warn":"okc"}">${m===null?"":Math.round(m*100)+"%"}</td>
       <td>${esc(p.supplier)}</td><td class="num">${esc(p.unitsPerCarton||"")}</td><td class="num">${cbm(p)?cbm(p).toFixed(3):""}</td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">אין מוצרים עדיין. לחצו "ייבוא מאקסל" והעלו את קובץ המוצרים.</td></tr>`;
     document.querySelectorAll("tr[data-sku]").forEach(tr=>tr.onclick=()=>editProd(prodBySku(tr.dataset.sku)));};
   $("#pq").oninput=e=>{pq=e.target.value;draw();};$("#pcat").onchange=e=>{pcat=e.target.value;draw();};
   $("#pNew").onclick=()=>editProd(null);$("#pImport").onclick=()=>$("#xlsIn").click();$("#xlsIn").onchange=e=>importXls(e.target.files[0]);
-  $("#pExport").onclick=exportXls;$("#pFromShips").onclick=prodsFromShips;draw();
+  $("#pExport").onclick=exportXls;$("#pFromShips").onclick=prodsFromShips;$("#pPrice").onclick=fillPrices;draw();
 }
 const PFIELDS=[["name","שם מוצר *"],["cat","קטגוריה *"],["desc","תיאור קצר"],["salePrice","מחיר מכירה ללא מע״מ (₪)"],["factoryPrice","מחיר במפעל ליחידה"],["currency","מטבע"],["landedCost","עלות נחיתה ליחידה (₪)"],["supplier","ספק / מפעל"],["origin","מדינת ייצור"],["unitsPerCarton","יחידות בקרטון"],["cartonL","אורך קרטון (ס״מ)"],["cartonW","רוחב קרטון (ס״מ)"],["cartonH","גובה קרטון (ס״מ)"],["cartonKg","משקל קרטון (ק״ג)"],["setInfo","נמכר כסט? הרכב הסט"],["supplierCode","מק״ט אצל הספק"],["minStock","מלאי מינימום (התראה)"],["image","שם קובץ תמונה"],["notes","הערות"]];
 const NUMF=new Set(["salePrice","factoryPrice","landedCost","unitsPerCarton","cartonL","cartonW","cartonH","cartonKg","minStock"]);
@@ -603,6 +603,15 @@ async function exportXls(){
     const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};XLSX.utils.book_append_sheet(wb,ws,"מוצרים");
     XLSX.writeFile(wb,`noya-products-${new Date().toISOString().slice(0,10)}.xlsx`);
   }catch(e){toast(e.message);}
+}
+
+// ---------- selling price = landed cost × markup (default 3), rounded up to a whole shekel ----------
+const suggestPrice=p=>Math.ceil(costOf(p.sku)*num(db.settings.markup||3));
+function fillPrices(){
+  const todo=db.products.filter(p=>!p.salePrice&&p.cat!=="EQ"&&costOf(p.sku)>0);
+  if(!todo.length){toast("לכל המוצרים כבר יש מחיר מכירה (או שחסרה להם עלות)");return;}
+  if(!confirm(`למלא מחיר מכירה ל-${todo.length} מוצרים בלי מחיר, לפי עלות × ${db.settings.markup}? מוצרים שכבר יש להם מחיר לא ישתנו.`))return;
+  todo.forEach(p=>{p.salePrice=suggestPrice(p);p.priceAuto=true;});touch();renderProds();toast(`מולאו מחירים ל-${todo.length} מוצרים`);
 }
 
 // ---------- products from container lines ----------
@@ -794,7 +803,7 @@ function renderSettings(){
     ${db.categories.map((c,i)=>{const n=db.products.filter(p=>p.cat===c.code).length;return `<tr data-i="${i}"><td><input data-c="code" value="${esc(c.code)}" dir="ltr" maxlength="3" ${n?"disabled":""}></td><td><input data-c="name" value="${esc(c.name)}"></td><td class="num">${n||""}</td></tr>`;}).join("")}
     </tbody></table><button class="btn sm ghost" id="catNew" style="margin-top:10px">+ קטגוריה</button></div>
   <h2>עלויות קבועות להזמנות</h2><div class="panel"><p class="muted" style="margin-top:0">נכנסות לעלות של כל הזמנה כשמחשבים רווח גולמי. אפשר להשאיר 0 ולמלא בהמשך.</p><div class="grid">
-    ${[["costFiller","מילוי וסרט לכל מארז (₪)"],["costLabor","עבודת אריזה לכל מארז (₪)"],["costCard","כרטיס ברכה לכל מארז (₪)"],["costEngrave","חריטה לכל מארז (₪)"],["shipOne","משלוח לכתובת אחת, להזמנה (₪)"],["shipIndiv","משלוח פרטני לכל נמען (₪)"],["shipVip","משלוח VIP לכל נמען (₪)"],["minMargin","התראה מתחת לאחוז רווח (%)"],["vatRate","מע״מ (%)"]].map(([k,l])=>`<label class="f">${l}<input data-st="${k}" inputmode="decimal" dir="ltr" value="${esc(db.settings[k])}"></label>`).join("")}</div></div>
+    ${[["markup","מקדם מחיר מכירה (עלות × ...)"],["costFiller","מילוי וסרט לכל מארז (₪)"],["costLabor","עבודת אריזה לכל מארז (₪)"],["costCard","כרטיס ברכה לכל מארז (₪)"],["costEngrave","חריטה לכל מארז (₪)"],["shipOne","משלוח לכתובת אחת, להזמנה (₪)"],["shipIndiv","משלוח פרטני לכל נמען (₪)"],["shipVip","משלוח VIP לכל נמען (₪)"],["minMargin","התראה מתחת לאחוז רווח (%)"],["vatRate","מע״מ (%)"]].map(([k,l])=>`<label class="f">${l}<input data-st="${k}" inputmode="decimal" dir="ltr" value="${esc(db.settings[k])}"></label>`).join("")}</div></div>
   <h2>גיבוי</h2><div class="panel"><p class="muted" style="margin-top:0">המערכת שומרת אוטומטית 30 גרסאות אחרונות. מומלץ להוריד גם גיבוי למחשב מדי פעם.</p>
     <div class="row"><button class="btn ghost" id="bkOut">הורדת גיבוי</button><button class="btn ghost" id="bkIn">שחזור מגיבוי</button><input type="file" id="bkFile" accept=".json" hidden></div></div>
   <h2>חשבון</h2><div class="panel"><button class="btn danger" id="logout">יציאה</button></div>`;
