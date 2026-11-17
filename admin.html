@@ -80,7 +80,9 @@ td input,td select{padding:4px 6px}
     <button data-v="dash" class="on">לוח בקרה</button>
     <button data-v="ships">מכולות ויבוא</button>
     <button data-v="cash">תזרים</button>
+    <button data-v="orders">הזמנות</button>
     <button data-v="prods">מוצרים</button>
+    <button data-v="stock">מלאי</button>
     <button data-v="sups">ספקים</button>
     <button data-v="settings">הגדרות</button>
   </nav>
@@ -109,9 +111,10 @@ const DOC_KINDS=["חשבונית פרופורמה","Packing List","שטר מטע
 const COSTS=[["originFreight","הובלה בארץ המקור עד הנמל (₪)","vol"],["freight","הובלה ימית (₪)","vol"],["port","נמל ואחסנה (₪)","vol"],["clearance","עמיל מכס ושחרור (₪)","vol"],["local","הובלה למחסן (₪)","vol"],["customs","מכס ומיסים (₪)","val"],["fees","עמלות – Alibaba, בנק וכו׳ (₪)","val"],["other","אחר (₪)","val"]];
 const costMethod=(s,k)=>(s.costMethod&&s.costMethod[k])||COSTS.find(c=>c[0]===k)[2];
 const DEFAULT_CATS=[["DB","דבש"],["WN","יין ואלכוהול"],["CH","שוקולד וממתקים"],["DF","פירות יבשים ואגוזים"],["CF","קפה ותה"],["GR","גורמה, ממרחים ורטבים"],["OL","שמן זית"],["KT","כלי מטבח והגשה"],["HM","עיצוב הבית"],["CN","נרות וריחות"],["SP","טיפוח וספא"],["TX","טקסטיל"],["JD","יודאיקה"],["TC","גאדג'טים ואלקטרוניקה"],["BG","תיקים ואביזרים"],["BX","אריזות – קופסאות, סלסלות, מגשים"],["AC","אביזרי אריזה – סרטים, כרטיסים, מילוי"],["OT","אחר"]].map(([code,name])=>({code,name}));
-const emptyDb=()=>({v:1,products:[],shipments:[],suppliers:[],categories:DEFAULT_CATS.map(c=>({...c})),seq:{}});
+const DEFAULT_SETTINGS={costFiller:0,costLabor:0,costCard:0,costEngrave:0,shipOne:0,shipIndiv:0,shipVip:0,minMargin:30,vatRate:18};
+const emptyDb=()=>({v:1,products:[],shipments:[],suppliers:[],orders:[],stockAdj:[],settings:{...DEFAULT_SETTINGS},categories:DEFAULT_CATS.map(c=>({...c})),seq:{}});
 
-let db=null,rev="",dirty=false,saving=false,view="dash",sel=null;
+let db=null,rev="",dirty=false,saving=false,view="dash",sel=null,selOrder=null;
 
 async function api(a,opt={}){
   const r=await fetch(API+"?a="+a+(opt.qs||""),{method:opt.method||"GET",credentials:"same-origin",headers:opt.headers||(opt.body?{"Content-Type":"application/json"}:{}),body:opt.raw||(opt.body?JSON.stringify(opt.body):undefined)});
@@ -128,14 +131,14 @@ $("#loginForm").onsubmit=async e=>{e.preventDefault();$("#loginErr").hidden=true
 async function boot(){
   const j=await api("data");
   db=j.db||emptyDb();rev=j.rev||"";
-  db.products??=[];db.shipments??=[];db.suppliers??=[];db.categories??=DEFAULT_CATS.map(c=>({...c}));db.seq??={};
-  $("#login").hidden=true;$("#app").hidden=false;setSave(j.db?"שמור":"מערכת חדשה – הנתונים יישמרו אוטומטית");render();
+  db.products??=[];db.shipments??=[];db.suppliers??=[];db.categories??=DEFAULT_CATS.map(c=>({...c}));db.seq??={};db.orders??=[];db.stockAdj??=[];db.settings={...DEFAULT_SETTINGS,...(db.settings||{})};
+  $("#login").hidden=true;$("#app").hidden=false;setSave(j.db?"שמור":"מערכת חדשה – הנתונים יישמרו אוטומטית");render();pullInbox();
 }
 (async()=>{try{await api("me");await boot();}catch(e){showLogin();}})();
 
 // ---------- saving (automatic, debounced) ----------
 function setSave(t,cls){const e=$("#saveState");e.textContent=t;e.className=cls||"";}
-function touch(){dirty=true;setSave("שומר…");clearTimeout(touch.t);touch.t=setTimeout(save,900);}
+function touch(){_costs=null;dirty=true;setSave("שומר…");clearTimeout(touch.t);touch.t=setTimeout(save,900);}
 async function save(){
   if(saving){touch();return;}if(!dirty)return;saving=true;dirty=false;
   try{const j=await api("data",{method:"PUT",body:{db,baseRev:rev}});rev=j.rev;setSave("✓ נשמר "+new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"}),"okc");}
@@ -154,7 +157,14 @@ function nextSku(code){
 }
 function newCatCode(){const L="ABCDEFGHIJKLMNOPQRSTUVWXYZ";for(const a of "XYZQ")for(const b of L){const c=a+b;if(!db.categories.some(k=>k.code===c))return c;}return "Z"+db.categories.length;}
 const cbm=p=>p.cartonL&&p.cartonW&&p.cartonH?p.cartonL*p.cartonW*p.cartonH/1e6:0;
-const margin=p=>p.salePrice>0&&p.landedCost>0?(p.salePrice-p.landedCost)/p.salePrice:null;
+// cost of a product = weighted average landed cost over every container line linked to its SKU; otherwise the cost typed in its card
+function skuCosts(){
+  const acc={};
+  db.shipments.forEach(s=>{const c=shipCalc(s);if(!c.ok)return;c.lines.forEach(l=>{if(!l.sku||!l.landed)return;const o=acc[l.sku]??={q:0,v:0};o.q+=num(l.qty);o.v+=l.landed*num(l.qty);});});
+  return Object.fromEntries(Object.entries(acc).map(([k,o])=>[k,o.q?o.v/o.q:0]));
+}
+let _costs=null;const costOf=sku=>{_costs??=skuCosts();const p=prodBySku(sku);return _costs[sku]||num(p?.landedCost)||0;};
+const margin=p=>{const c=costOf(p.sku);return p.salePrice>0&&c>0?(p.salePrice-c)/p.salePrice:null;};
 const CURS=["USD","EUR","CNY","TRY","ILS"];
 function normShip(s){
   s.costs??={};s.items??=[];s.docs??=[];s.fxRates??={};
@@ -198,10 +208,10 @@ function shipPayments(s){
 const daysTo=d=>d?Math.round((new Date(d+"T00:00")-new Date(new Date().toDateString()))/864e5):null;
 
 // ---------- navigation ----------
-$("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;render();};
+$("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;selOrder=null;render();};
 function render(){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
-  ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,sups:renderSups,settings:renderSettings})[view]();
+  ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
   window.scrollTo(0,0);
 }
 
@@ -212,6 +222,11 @@ function renderDash(){
   const next=open.filter(s=>s.eta).sort((a,b)=>a.eta.localeCompare(b.eta))[0];
   const dues=db.shipments.flatMap(s=>shipPayments(s).open.map(r=>({...r,s}))).sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));
   const left=dues.reduce((t,r)=>t+r.amount,0);
+  const mon=new Date().toISOString().slice(0,7);
+  const appr=db.orders.filter(o=>o.status==="approved"&&(o.approvedAt||"").slice(0,7)===mon).map(orderCalc);
+  const salesNet=appr.reduce((t,c)=>t+c.net,0),costM=appr.reduce((t,c)=>t+c.cost,0),profM=salesNet-costM;
+  const pend=db.orders.filter(o=>o.status==="pending");const pendSum=pend.reduce((t,o)=>t+num(o.gross),0);
+  const S=stockAll();const low=db.products.filter(p=>num(p.minStock)>0&&(S[p.sku]?.available||0)<num(p.minStock));
   $("#view").innerHTML=`<h1>לוח בקרה</h1><p class="sub">תמונת מצב של היבוא והמוצרים. הנתונים כאן פרטיים ומוצפנים, והלקוחות לא רואים אותם.</p>
   <div class="cards">
     <div class="card"><div class="k">מכולות פתוחות</div><div class="v">${open.length}</div></div>
@@ -224,10 +239,20 @@ function renderDash(){
   ${dues.map(r=>{const d=daysTo(r.due);return `<tr class="click" data-id="${esc(r.s.id)}"><td>${r.due?esc(fmtDate(r.due)):'<span class="muted">ללא תאריך</span>'}</td><td>${esc(r.s.name)}</td><td>${esc(r.label)}</td><td class="num"><b>${money(Math.round(r.amount))}</b></td>
     <td class="${d===null?"muted":d<0?"bad":d<=14?"warn":"muted"}">${d===null?"":d<0?`באיחור של ${-d} ימים`:d===0?"היום":`בעוד ${d} ימים`}</td></tr>`;}).join("")}
   <tr><td colspan="3"><b>סה״כ</b></td><td class="num"><b>${money(Math.round(left))}</b></td><td></td></tr></tbody></table></div>`:""}
+  <h2 style="margin-top:4px">${esc(new Date().toLocaleDateString("he-IL",{month:"long",year:"numeric"}))}: הזמנות מאושרות בלבד</h2>
+  <div class="cards">
+    <div class="card"><div class="k">מחזור (לפני מע״מ)</div><div class="v">${money(Math.round(salesNet))||"₪0"}</div><div class="k">${appr.length} הזמנות מאושרות</div></div>
+    <div class="card"><div class="k">עלות</div><div class="v">${money(Math.round(costM))||"₪0"}</div></div>
+    <div class="card"><div class="k">רווח גולמי</div><div class="v ${salesNet&&profM/salesNet*100<num(db.settings.minMargin)?"bad":"okc"}">${money(Math.round(profM))||"₪0"}</div><div class="k">${salesNet?Math.round(profM/salesNet*100)+"%":""}</div></div>
+    <div class="card"><div class="k">ממתינות לאישור (צפי, לא נספר)</div><div class="v">${pend.length}</div><div class="k">${pendSum?money(Math.round(pendSum))+" כולל מע״מ":""}</div></div>
+  </div>
+  ${pend.length?`<div class="panel"><b>הזמנות שממתינות לאישור</b><table style="margin-top:6px"><tbody>${pend.slice(0,8).map(o=>`<tr class="click" data-oid="${esc(o.id)}"><td>${esc(new Date(o.createdAt).toLocaleDateString("he-IL"))}</td><td>${esc(o.customer?.org||o.customer?.name||o.ref)}</td><td class="num">${esc(o.boxes)} מארזים</td><td class="num">${money(Math.round(num(o.gross)))}</td></tr>`).join("")}</tbody></table></div>`:""}
+  ${low.length?`<div class="panel"><b class="bad">מלאי נמוך: להזמין שוב</b><table style="margin-top:6px"><tbody>${low.map(p=>`<tr><td class="sku">${esc(p.sku)}</td><td>${esc(p.name)}</td><td class="num">זמין ${(S[p.sku]?.available||0).toLocaleString("he-IL")} / מינימום ${esc(p.minStock)}</td><td>${S[p.sku]?.transit?`בדרך ${S[p.sku].transit.toLocaleString("he-IL")}${S[p.sku].eta?" · "+esc(fmtDate(S[p.sku].eta)):""}`:""}</td></tr>`).join("")}</tbody></table></div>`:""}
   <div class="row" style="margin-bottom:6px"><button class="btn gold" id="dCash">📅 חישוב תזרים: כמה כסף צריך ומתי</button></div>
   <div class="row" style="justify-content:space-between"><h2>מכולות בדרך</h2><button class="btn sm" id="dNew">+ מכולה חדשה</button></div>
   ${open.length?shipTable(open.sort((a,b)=>(a.eta||"9").localeCompare(b.eta||"9"))):`<div class="panel muted">עוד אין מכולות. לחצו "מכולה חדשה" כדי להתחיל ולהעלות מסמכים.</div>`}`;
   $("#dNew").onclick=newShip;$("#dCash").onclick=()=>{view="cash";render();};bindShipRows();
+  document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=()=>{view="orders";selOrder=tr.dataset.oid;render();});
 }
 
 // ---------- cash plan: all open payments grouped by date and month ----------
@@ -501,32 +526,32 @@ async function uploadFiles(s,files){
 let pq="",pcat="";
 function renderProds(){
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>מוצרים</h1><p class="sub">כרטיס פנימי לכל מוצר: מק״ט קבוע, עלות, ספק ונפח. המק״ט נקבע אוטומטית ולא משתנה לעולם.</p></div>
-    <div class="row"><button class="btn ghost" id="pImport">ייבוא מאקסל</button><button class="btn ghost" id="pExport">ייצוא לאקסל</button><button class="btn" id="pNew">+ מוצר</button></div></div>
+    <div class="row"><button class="btn gold" id="pFromShips">יצירת כרטיסים משורות המכולות</button><button class="btn ghost" id="pImport">ייבוא מאקסל</button><button class="btn ghost" id="pExport">ייצוא לאקסל</button><button class="btn" id="pNew">+ מוצר</button></div></div>
   <div class="row" style="margin-bottom:12px"><input id="pq" placeholder="חיפוש לפי שם, מק״ט או ספק" value="${esc(pq)}" style="max-width:320px">
     <select id="pcat" style="max-width:240px"><option value="">כל הקטגוריות</option>${db.categories.map(c=>`<option value="${esc(c.code)}" ${pcat===c.code?"selected":""}>${esc(c.name)}</option>`).join("")}</select>
     <span class="muted" id="pCount"></span></div>
-  <div class="tablewrap"><table><thead><tr><th>מק״ט</th><th>שם</th><th>קטגוריה</th><th class="num">מחיר מכירה</th><th class="num">עלות נחיתה</th><th class="num">רווח</th><th>ספק</th><th class="num">בקרטון</th><th class="num">CBM</th></tr></thead><tbody id="pRows"></tbody></table></div>
+  <div class="tablewrap"><table><thead><tr><th>מק״ט</th><th>שם</th><th>קטגוריה</th><th class="num">מחיר מכירה</th><th class="num">עלות (ממוצע)</th><th class="num">רווח</th><th>ספק</th><th class="num">בקרטון</th><th class="num">CBM</th></tr></thead><tbody id="pRows"></tbody></table></div>
   <input type="file" id="xlsIn" accept=".xlsx,.xls,.csv" hidden>`;
   const draw=()=>{const q=pq.trim().toLowerCase();
     const list=db.products.filter(p=>(!pcat||p.cat===pcat)&&(!q||[p.sku,p.name,p.supplier].some(v=>String(v||"").toLowerCase().includes(q)))).sort((a,b)=>a.sku.localeCompare(b.sku));
     $("#pCount").textContent=`${list.length} מוצרים`;
     $("#pRows").innerHTML=list.map(p=>{const m=margin(p);return `<tr class="click" data-sku="${esc(p.sku)}"><td class="sku">${esc(p.sku)}</td><td><b>${esc(p.name)}</b></td><td>${esc(catName(p.cat))}</td>
-      <td class="num">${money(p.salePrice)}</td><td class="num">${money(p.landedCost)}</td><td class="num ${m===null?"":m<.25?"bad":m<.4?"warn":"okc"}">${m===null?"":Math.round(m*100)+"%"}</td>
+      <td class="num">${money(p.salePrice)}</td><td class="num">${money(Math.round(costOf(p.sku)*100)/100)}</td><td class="num ${m===null?"":m<.25?"bad":m<.4?"warn":"okc"}">${m===null?"":Math.round(m*100)+"%"}</td>
       <td>${esc(p.supplier)}</td><td class="num">${esc(p.unitsPerCarton||"")}</td><td class="num">${cbm(p)?cbm(p).toFixed(3):""}</td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">אין מוצרים עדיין. לחצו "ייבוא מאקסל" והעלו את קובץ המוצרים.</td></tr>`;
     document.querySelectorAll("tr[data-sku]").forEach(tr=>tr.onclick=()=>editProd(prodBySku(tr.dataset.sku)));};
   $("#pq").oninput=e=>{pq=e.target.value;draw();};$("#pcat").onchange=e=>{pcat=e.target.value;draw();};
   $("#pNew").onclick=()=>editProd(null);$("#pImport").onclick=()=>$("#xlsIn").click();$("#xlsIn").onchange=e=>importXls(e.target.files[0]);
-  $("#pExport").onclick=exportXls;draw();
+  $("#pExport").onclick=exportXls;$("#pFromShips").onclick=prodsFromShips;draw();
 }
-const PFIELDS=[["name","שם מוצר *"],["cat","קטגוריה *"],["desc","תיאור קצר"],["salePrice","מחיר מכירה ללא מע״מ (₪)"],["factoryPrice","מחיר במפעל ליחידה"],["currency","מטבע"],["landedCost","עלות נחיתה ליחידה (₪)"],["supplier","ספק / מפעל"],["origin","מדינת ייצור"],["unitsPerCarton","יחידות בקרטון"],["cartonL","אורך קרטון (ס״מ)"],["cartonW","רוחב קרטון (ס״מ)"],["cartonH","גובה קרטון (ס״מ)"],["cartonKg","משקל קרטון (ק״ג)"],["setInfo","נמכר כסט? הרכב הסט"],["image","שם קובץ תמונה"],["notes","הערות"]];
-const NUMF=new Set(["salePrice","factoryPrice","landedCost","unitsPerCarton","cartonL","cartonW","cartonH","cartonKg"]);
+const PFIELDS=[["name","שם מוצר *"],["cat","קטגוריה *"],["desc","תיאור קצר"],["salePrice","מחיר מכירה ללא מע״מ (₪)"],["factoryPrice","מחיר במפעל ליחידה"],["currency","מטבע"],["landedCost","עלות נחיתה ליחידה (₪)"],["supplier","ספק / מפעל"],["origin","מדינת ייצור"],["unitsPerCarton","יחידות בקרטון"],["cartonL","אורך קרטון (ס״מ)"],["cartonW","רוחב קרטון (ס״מ)"],["cartonH","גובה קרטון (ס״מ)"],["cartonKg","משקל קרטון (ק״ג)"],["setInfo","נמכר כסט? הרכב הסט"],["supplierCode","מק״ט אצל הספק"],["minStock","מלאי מינימום (התראה)"],["image","שם קובץ תמונה"],["notes","הערות"]];
+const NUMF=new Set(["salePrice","factoryPrice","landedCost","unitsPerCarton","cartonL","cartonW","cartonH","cartonKg","minStock"]);
 function editProd(p){
   const isNew=!p;p=p?{...p}:{sku:"",cat:db.categories[0]?.code,currency:"USD"};
   $("#modalBox").innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">${isNew?"מוצר חדש":`<span class="sku">${esc(p.sku)}</span> · ${esc(p.name)}`}</h2><button class="btn sm ghost" id="mX">✕</button></div>
    ${isNew?`<p class="muted">המק״ט ייקבע אוטומטית לפי הקטגוריה כשתשמרו.</p>`:""}
    <div class="grid" style="margin-top:12px">${PFIELDS.map(([k,l])=>k==="cat"?`<label class="f">${l}<select data-p="cat">${db.categories.map(c=>`<option value="${esc(c.code)}" ${p.cat===c.code?"selected":""}>${esc(c.name)} (${esc(c.code)})</option>`).join("")}</select></label>`
      :`<label class="f" ${["desc","notes"].includes(k)?'style="grid-column:1/-1"':""}>${l}<input data-p="${k}" value="${esc(p[k])}" ${NUMF.has(k)?'inputmode="decimal" dir="ltr"':""}></label>`).join("")}</div>
-   ${p.landedFrom?`<p class="muted">עלות הנחיתה עודכנה לאחרונה מ: ${esc(p.landedFrom)}</p>`:""}
+   ${!isNew?`<p class="muted">עלות לחישוב רווח: <b>${money(Math.round(costOf(p.sku)*100)/100)||"—"}</b> ${_costs?.[p.sku]?"(ממוצע משוקלל מהמכולות)":"(מהשדה ׳עלות נחיתה׳ בכרטיס)"} · במלאי: <b>${stockOf(p.sku).stock}</b>${p.builderIds?.length?` · מקושר לבונה: ${esc(p.builderIds.join(", "))}`:""}</p>`:""}
    <div class="row" style="justify-content:space-between;margin-top:16px">${isNew?"<span></span>":`<button class="btn danger sm" id="mDel">מחיקת מוצר</button>`}<button class="btn" id="mSave">שמירה</button></div>`;
   $("#modal").hidden=false;
   $("#mX").onclick=()=>$("#modal").hidden=true;
@@ -580,6 +605,172 @@ async function exportXls(){
   }catch(e){toast(e.message);}
 }
 
+// ---------- products from container lines ----------
+function guessCat(n){n=n.toLowerCase();
+  const m=[[/diffuser|reed|fragrance|scent|aroma|candle|wax|דיפיוזר|נר/,"CN"],[/jute|tote|bag|pouch|יוטה|תיק/,"BG"],[/plate|bowl|cup|mug|tray|dish|saucer|cutlery|spoon|board|צלחת|קערה|ספל|מגש/,"KT"],
+    [/vase|decor|holder|lantern|frame|figurine|אגרטל|פמוט/,"HM"],[/towel|blanket|cushion|napkin|textile|apron|מגבת|שמיכה/,"TX"],[/box|basket|packag|gift box|tin|קופסה|סלסלה/,"BX"],[/honey|דבש/,"DB"],[/chocolate|שוקולד/,"CH"]];
+  return (m.find(([r])=>r.test(n))||[0,"OT"])[1];}
+function prodsFromShips(){
+  let made=0,linked=0;
+  db.shipments.forEach(s=>{normShip(s);(s.items||[]).forEach(it=>{
+    if(it.sku&&prodBySku(it.sku))return;
+    const sup=String(it.supplier||s.supplier||"").trim(),code=String(it.itemNo||"").trim();
+    let clean=String(it.name||"").replace(/^סט:\s*/,"").trim();if(code&&clean.startsWith(code))clean=clean.slice(code.length).trim()||clean;if(!clean)return;
+    let p=db.products.find(x=>code&&x.supplierCode===code&&(x.supplier||"")===sup)||db.products.find(x=>x.name===clean);
+    if(!p){const cat=guessCat(clean);p={sku:nextSku(cat),name:clean,cat,supplier:sup,supplierCode:code,origin:"",factoryPrice:num(it.unitPrice)||"",currency:lineCur(s,it),
+      unitsPerCarton:num(it.pcsPerCarton)||"",setInfo:it.isSet?(clean.match(/\(([^)]+)\)\s*$/)||[,"כן"])[1]:"",createdAt:new Date().toISOString()};db.products.push(p);made++;}else linked++;
+    it.sku=p.sku;});});
+  touch();renderProds();toast(made||linked?`נוצרו ${made} כרטיסי מוצרים${linked?`, ${linked} שורות קושרו למוצרים קיימים`:""}. כדאי לעבור על הקטגוריות ולהוסיף מחירי מכירה.`:"כל השורות במכולות כבר מקושרות למוצרים",7000);
+}
+
+// ---------- stock: in = containers marked "במחסן", out = approved orders, ± manual corrections ----------
+function stockAll(){
+  const m={};const o=k=>m[k]??={received:0,consumed:0,reserved:0,adj:0,transit:0,eta:""};
+  db.shipments.forEach(s=>(s.items||[]).forEach(it=>{if(!it.sku)return;const x=o(it.sku);if(s.status==="wh")x.received+=num(it.qty);else{x.transit+=num(it.qty);if(s.eta&&(!x.eta||s.eta<x.eta))x.eta=s.eta;}}));
+  db.orders.forEach(ord=>{if(ord.status==="cancelled")return;(ord.lines||[]).forEach(l=>{if(!l.sku)return;const x=o(l.sku);if(ord.status==="approved")x.consumed+=num(l.qty);else x.reserved+=num(l.qty);});});
+  db.stockAdj.forEach(a=>{o(a.sku).adj+=num(a.qty);});
+  Object.values(m).forEach(x=>{x.stock=x.received+x.adj-x.consumed;x.available=x.stock-x.reserved;});
+  return m;
+}
+const stockOf=sku=>stockAll()[sku]||{received:0,consumed:0,reserved:0,adj:0,transit:0,eta:"",stock:0,available:0};
+let stockMode="",stockQ="";
+function renderStock(){
+  const S=stockAll();const q=stockQ.trim().toLowerCase();
+  const list=[...db.products].filter(p=>!q||[p.sku,p.name].some(v=>String(v||"").toLowerCase().includes(q))).sort((a,b)=>a.sku.localeCompare(b.sku));
+  const low=db.products.filter(p=>num(p.minStock)>0&&(S[p.sku]?.available||0)<num(p.minStock));
+  const value=db.products.reduce((t,p)=>t+Math.max(0,S[p.sku]?.stock||0)*costOf(p.sku),0);
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>מלאי</h1><p class="sub">המלאי מתעדכן לבד: מכולה שסומנה "במחסן" מוסיפה, הזמנה שאושרה מורידה. כאן אפשר לתקן ולספור.</p></div>
+    <div class="row">${stockMode==="count"?`<button class="btn ghost" id="cCancel">ביטול</button><button class="btn" id="cSave">שמירת הספירה</button>`:`<button class="btn ghost" id="sCount">ספירת מלאי</button>`}</div></div>
+  <div class="cards"><div class="card"><div class="k">מוצרים במלאי</div><div class="v">${db.products.filter(p=>(S[p.sku]?.stock||0)>0).length}</div></div>
+    <div class="card"><div class="k">שווי המלאי (לפי עלות)</div><div class="v">${money(Math.round(value))||"₪0"}</div></div>
+    <div class="card"><div class="k">מתחת למינימום</div><div class="v ${low.length?"bad":""}">${low.length}</div></div></div>
+  ${stockMode==="count"?`<p class="warn">מצב ספירה: הקלידו כמה ספרתם בפועל. שדה ריק = לא נספר. בשמירה המערכת רושמת את ההפרש כתיקון מלאי.</p>`:""}
+  <div class="row" style="margin-bottom:10px"><input id="stQ" placeholder="חיפוש לפי שם או מק״ט" value="${esc(stockQ)}" style="max-width:320px"></div>
+  <div class="tablewrap"><table><thead><tr><th>מק״ט</th><th>מוצר</th><th class="num">במלאי</th><th class="num">שמור</th><th class="num">זמין</th><th class="num">בדרך</th><th>מגיע</th><th class="num">מינימום</th><th>${stockMode==="count"?"נספר בפועל":""}</th></tr></thead><tbody>
+  ${list.map(p=>{const x=S[p.sku]||{stock:0,reserved:0,available:0,transit:0,eta:""};const isLow=num(p.minStock)>0&&x.available<num(p.minStock);
+    return `<tr><td class="sku">${esc(p.sku)}</td><td><b>${esc(p.name)}</b>${p.setInfo?' <span class="pill" style="background:var(--gold);color:#fff">סט</span>':""}</td><td class="num"><b>${x.stock.toLocaleString("he-IL")}</b></td>
+      <td class="num">${x.reserved?x.reserved.toLocaleString("he-IL"):""}</td><td class="num ${x.available<0||isLow?"bad":""}">${x.available.toLocaleString("he-IL")}</td>
+      <td class="num">${x.transit?x.transit.toLocaleString("he-IL"):""}</td><td>${x.eta?esc(fmtDate(x.eta)):""}</td><td class="num">${esc(p.minStock||"")}</td>
+      <td>${stockMode==="count"?`<input data-cnt="${esc(p.sku)}" inputmode="numeric" dir="ltr" style="width:100px">`:`<button class="btn sm ghost" data-adj="${esc(p.sku)}">תיקון</button>`}</td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">אין מוצרים. צרו כרטיסים מהמכולות בלשונית "מוצרים".</td></tr>`}
+  </tbody></table></div>
+  ${db.stockAdj.length?`<h2>תיקונים אחרונים</h2><div class="tablewrap" style="max-height:300px"><table><thead><tr><th>תאריך</th><th>מק״ט</th><th class="num">כמות</th><th>סיבה</th></tr></thead><tbody>${[...db.stockAdj].reverse().slice(0,50).map(a=>`<tr><td>${esc(new Date(a.at).toLocaleDateString("he-IL"))}</td><td class="sku">${esc(a.sku)}</td><td class="num ${a.qty<0?"bad":"okc"}">${a.qty>0?"+":""}${esc(a.qty)}</td><td>${esc(a.reason)}</td></tr>`).join("")}</tbody></table></div>`:""}`;
+  $("#stQ").oninput=e=>{stockQ=e.target.value;const pos=e.target.selectionStart;renderStock();const el=$("#stQ");el.focus();el.setSelectionRange(pos,pos);};
+  if(stockMode==="count"){$("#cCancel").onclick=()=>{stockMode="";renderStock();};
+    $("#cSave").onclick=()=>{let n=0;document.querySelectorAll("[data-cnt]").forEach(el=>{if(el.value.trim()==="")return;const sku=el.dataset.cnt,d=num(el.value)-(S[sku]?.stock||0);
+      if(d){db.stockAdj.push({sku,qty:d,reason:"ספירת מלאי",at:new Date().toISOString()});n++;}});stockMode="";touch();renderStock();toast(n?`נרשמו ${n} תיקונים מהספירה`:"אין הפרשים");};}
+  else{$("#sCount").onclick=()=>{stockMode="count";renderStock();};
+    document.querySelectorAll("[data-adj]").forEach(b=>b.onclick=()=>{const sku=b.dataset.adj;const v=prompt(`תיקון מלאי ל-${sku}\nכמה להוסיף? (מספר שלילי כדי להוריד, למשל -5)`);if(v===null||!num(v))return;
+      const r=prompt("סיבה (שבר, דוגמה ללקוח, מתנה, טעות...)","")??"";db.stockAdj.push({sku,qty:num(v),reason:r||"תיקון ידני",at:new Date().toISOString()});touch();renderStock();});}
+}
+
+// ---------- orders: pending → approved (cost frozen, counts in dashboard and stock) or cancelled ----------
+const VATR=()=>num(db.settings.vatRate)/100;
+async function pullInbox(){
+  try{const {orders}=await api("inbox");if(!orders?.length)return;let n=0;const urls=[];
+    orders.forEach(o=>{urls.push(o._url);const ex=db.orders.find(x=>x.ref===o.ref);if(ex&&ex.status!=="pending")return;const ord=orderFromBuilder(o);
+      if(ex)Object.assign(ex,ord,{id:ex.id,notes:ex.notes||ord.notes});else{db.orders.push(ord);n++;}});
+    db.orders.sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+    await new Promise(r=>{touch();setTimeout(r,1200);});await save();
+    if(!dirty)await api("inboxdone",{method:"POST",body:{urls}}).catch(()=>{});
+    if(n)toast(`התקבלו ${n} הזמנות חדשות מהבונה`,5000);if(view==="dash"||view==="orders")render();
+  }catch(e){}
+}
+function orderFromBuilder(o){
+  const boxes=Math.max(1,num(o.boxes)||1);
+  const lines=(o.items||[]).map(([bid,name,q,price])=>{const p=db.products.find(x=>(x.builderIds||[]).includes(String(bid)));return {bid:String(bid),sku:p?.sku||"",name:String(name||""),perBox:num(q)||1,qty:(num(q)||1)*boxes,price:num(price)};});
+  if(o.pack){const pid="pack:"+o.pack.id;const p=db.products.find(x=>(x.builderIds||[]).includes(pid));lines.push({bid:pid,sku:p?.sku||"",name:"אריזה: "+o.pack.name,perBox:1,qty:boxes,price:num(o.pack.price),isPack:true});}
+  const mode=o.dlv?.mode||"ship";
+  return {id:uid(),ref:o.ref,source:"בונה",createdAt:o.receivedAt||new Date().toISOString(),status:"pending",customer:o.customer||{},boxes,lines,
+    engrave:num(o.engrave)>0,card:num(o.card)>0,dlvMode:mode,dlvName:o.dlv?.name||"",shipCharge:num(o.dlv?.total),gross:num(o.total),date:o.date||"",notes:o.notes||"",text:o.text||""};
+}
+function orderCalc(o){
+  if(o.status==="approved"&&o.frozen)return o.frozen;
+  const st=db.settings,b=num(o.boxes)||0;
+  const lines=(o.lines||[]).map(l=>{const uc=l.unitCost!==undefined&&l.unitCost!==""?num(l.unitCost):(l.sku?costOf(l.sku):0);return {...l,uc,cost:uc*num(l.qty)};});
+  const missing=lines.filter(l=>!l.uc).length;
+  const fixed={filler:b*num(st.costFiller),labor:b*num(st.costLabor),card:o.card?b*num(st.costCard):0,engrave:o.engrave?b*num(st.costEngrave):0,
+    ship:o.dlvMode==="vip"?b*num(st.shipVip):o.dlvMode==="indiv"?b*num(st.shipIndiv):o.dlvMode==="ship"?num(st.shipOne):0};
+  const fixedT=Object.values(fixed).reduce((t,v)=>t+v,0);
+  const goodsCost=lines.reduce((t,l)=>t+l.cost,0),cost=goodsCost+fixedT;
+  const net=num(o.gross)/(1+VATR());
+  const profit=net-cost;
+  return {lines,missing,fixed,fixedT,goodsCost,cost,net,profit,margin:net>0?profit/net:0};
+}
+let ordFilter="pending";
+const ORD_ST={pending:["ממתינה לאישור","st-port"],approved:["מאושרת","st-wh"],cancelled:["בוטלה","st-order"]};
+function renderOrders(){
+  const list=db.orders.filter(o=>ordFilter==="all"||o.status===ordFilter);
+  const cnt=k=>db.orders.filter(o=>o.status===k).length;
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>הזמנות</h1><p class="sub">כל הזמנה מהבונה נכנסת לכאן לבד כ"ממתינה". רק הזמנות שאישרת נספרות ברווח ובמלאי.</p></div>
+    <div class="row"><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
+  <div class="row" style="margin-bottom:12px">${[["pending","ממתינות"],["approved","מאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
+  <div class="tablewrap"><table><thead><tr><th>תאריך</th><th>מס׳</th><th>לקוח</th><th class="num">מארזים</th><th class="num">סה״כ כולל מע״מ</th><th class="num">רווח גולמי</th><th>מצב</th></tr></thead><tbody>
+  ${list.map(o=>{const c=orderCalc(o);return `<tr class="click" data-oid="${esc(o.id)}"><td>${esc(new Date(o.createdAt).toLocaleDateString("he-IL"))}</td><td class="sku">${esc(o.ref||"")}</td>
+    <td><b>${esc(o.customer?.org||o.customer?.name||"")}</b>${o.customer?.org&&o.customer?.name?` <span class="muted">${esc(o.customer.name)}</span>`:""}</td><td class="num">${esc(o.boxes)}</td><td class="num">${money(Math.round(num(o.gross)))}</td>
+    <td class="num ${c.margin*100<num(db.settings.minMargin)?"bad":"okc"}">${money(Math.round(c.profit))} (${Math.round(c.margin*100)}%)${c.missing?' <span class="warn" title="חסרה עלות לחלק מהמוצרים">⚠</span>':""}</td>
+    <td><span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span></td></tr>`;}).join("")||`<tr><td colspan="7" class="muted">אין הזמנות כאן.</td></tr>`}
+  </tbody></table></div>`;
+  document.querySelectorAll("[data-of]").forEach(b=>b.onclick=()=>{ordFilter=b.dataset.of;renderOrders();});
+  document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=()=>{selOrder=tr.dataset.oid;view="orders";render();});
+  $("#oPull").onclick=async()=>{toast("בודק…");await pullInbox();renderOrders();};
+  $("#oNew").onclick=()=>{const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:"ידני",createdAt:new Date().toISOString(),status:"pending",customer:{},boxes:1,lines:[],engrave:false,card:false,dlvMode:"ship",gross:0,notes:""};
+    db.orders.unshift(o);touch();selOrder=o.id;render();};
+}
+function renderOrder(){
+  const o=db.orders.find(x=>x.id===selOrder);if(!o){selOrder=null;return render();}
+  const locked=o.status!=="pending";const c=orderCalc(o);const S=stockAll();const dis=locked?"disabled":"";
+  const prodOpts=db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("");
+  $("#view").innerHTML=`<button class="back" id="oBack">→ כל ההזמנות</button>
+  <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span></p></div>
+    <div class="row">${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
+  ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:"ההזמנה בוטלה ולא נספרת."}</p>`:""}
+  <div class="cards">
+    <div class="card"><div class="k">סה״כ ללקוח (כולל מע״מ)</div><div class="v" style="font-size:22px">${money(Math.round(num(o.gross)))}</div><div class="k">לפני מע״מ: ${money(Math.round(c.net))}</div></div>
+    <div class="card"><div class="k">עלות</div><div class="v" style="font-size:22px">${money(Math.round(c.cost))}</div><div class="k">מוצרים ${money(Math.round(c.goodsCost))} · קבועות ${money(Math.round(c.fixedT))||"₪0"}</div></div>
+    <div class="card"><div class="k">רווח גולמי</div><div class="v ${c.margin*100<num(db.settings.minMargin)?"bad":"okc"}" style="font-size:22px">${money(Math.round(c.profit))}</div><div class="k">${Math.round(c.margin*100)}% מהמכירה לפני מע״מ</div></div>
+  </div>
+  ${c.missing?`<p class="warn">⚠ ל-${c.missing} שורות אין עלות: צריך לקשר אותן למוצר, או להקליד עלות ידנית בשורה. עד אז הרווח גבוה מהאמת.</p>`:""}
+  <h2>לקוח</h2><div class="panel"><div class="grid">
+    ${[["name","שם"],["org","ארגון"],["phone","טלפון"],["email","מייל"]].map(([k,l])=>`<label class="f">${l}<input data-cu="${k}" value="${esc(o.customer?.[k]||"")}" ${dis} ${["phone","email"].includes(k)?'dir="ltr"':""}></label>`).join("")}
+    <label class="f">כמות מארזים<input data-o="boxes" inputmode="numeric" dir="ltr" value="${esc(o.boxes)}" ${dis}></label>
+    <label class="f">סה״כ לתשלום כולל מע״מ (₪)<input data-o="gross" inputmode="decimal" dir="ltr" value="${esc(o.gross)}" ${dis}></label>
+    <label class="f">אספקה<select data-o="dlvMode" ${dis}>${[["ship","משלוח לכתובת אחת"],["indiv","משלוח פרטני לכל מקבל"],["vip","משלוח VIP לכל מקבל"],["pickup","איסוף עצמי"]].map(([k,l])=>`<option value="${k}" ${o.dlvMode===k?"selected":""}>${l}</option>`).join("")}</select></label>
+    <label class="f">תוספות<span class="row" style="font-weight:400;color:var(--cocoa)"><label class="row" style="gap:4px"><input type="checkbox" data-ob="card" ${o.card?"checked":""} ${dis} style="width:auto"> כרטיס ברכה</label><label class="row" style="gap:4px"><input type="checkbox" data-ob="engrave" ${o.engrave?"checked":""} ${dis} style="width:auto"> חריטה</label></span></label>
+  </div></div>
+  <h2>מוצרים בהזמנה (כמות כוללת לכל המארזים)</h2>
+  <div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>פריט</th><th style="width:220px">מוצר במערכת (מק״ט)</th><th class="num">כמות</th><th class="num">זמין</th><th class="num">עלות ליחידה</th><th class="num">עלות</th><th></th></tr></thead><tbody>
+  ${c.lines.map((l,i)=>{const av=l.sku?(S[l.sku]?.available??0)+(o.status==="pending"?num(l.qty):0):null;return `<tr data-li="${i}"><td>${esc(l.name)}${l.bid?` <span class="muted" style="font-size:12px">(בונה ${esc(l.bid)})</span>`:""}</td>
+    <td><input data-l="sku" list="ordProds" value="${esc(l.sku)}" placeholder="בחרו מוצר" dir="ltr" ${dis}></td>
+    <td class="num"><input data-l="qty" inputmode="numeric" dir="ltr" value="${esc(l.qty)}" style="width:80px" ${dis}></td>
+    <td class="num ${av!==null&&av<num(l.qty)?"bad":""}">${av===null?"":av.toLocaleString("he-IL")}</td>
+    <td class="num"><input data-l="unitCost" inputmode="decimal" dir="ltr" value="${esc(l.unitCost??"")}" placeholder="${l.sku&&costOf(l.sku)?(Math.round(costOf(l.sku)*100)/100):"עלות"}" style="width:90px" ${dis}></td>
+    <td class="num">${l.cost?money(Math.round(l.cost)):'<span class="warn">חסר</span>'}</td><td>${locked?"":`<button class="btn sm ghost" data-ldel="${i}">✕</button>`}</td></tr>`;}).join("")||`<tr><td colspan="7" class="muted">אין שורות.</td></tr>`}
+  </tbody></table></div><datalist id="ordProds">${prodOpts}</datalist>
+  ${locked?"":`<button class="btn sm ghost" id="oAddLine" style="margin-top:10px">+ שורה</button>`}
+  <p class="muted" style="font-size:12.5px;margin-bottom:0">עלות ריקה = העלות הממוצעת של המוצר מהמכולות. כשבוחרים מוצר לשורה שהגיעה מהבונה, המערכת זוכרת את הקישור להזמנות הבאות.</p></div>
+  <h2>עלויות קבועות בהזמנה</h2><div class="panel">${[["filler","מילוי וסרט"],["labor","עבודת אריזה"],["card","כרטיסי ברכה"],["engrave","חריטה"],["ship","משלוח (עלות בפועל)"]].map(([k,l])=>`<span style="display:inline-block;margin:0 0 6px 18px">${l}: <b>${money(Math.round(c.fixed[k]))||"₪0"}</b></span>`).join("")}
+    <p class="muted" style="font-size:12.5px;margin:4px 0 0">הסכומים לכל מארז נקבעים פעם אחת ב"הגדרות".</p></div>
+  <h2>הערות</h2><div class="panel"><textarea data-o="notes" rows="3" ${dis}>${esc(o.notes)}</textarea>${o.text?`<details style="margin-top:8px"><summary class="muted">ההודעה המקורית מהבונה</summary><pre style="white-space:pre-wrap;font:inherit;font-size:13px">${esc(o.text)}</pre></details>`:""}</div>`;
+  $("#oBack").onclick=()=>{selOrder=null;render();};
+  const re=()=>{touch();renderOrder();};
+  document.querySelectorAll("[data-cu]").forEach(el=>el.onchange=()=>{(o.customer??={})[el.dataset.cu]=el.value.trim();touch();});
+  document.querySelectorAll("[data-o]").forEach(el=>el.onchange=()=>{const k=el.dataset.o;o[k]=["boxes","gross"].includes(k)?num(el.value):el.value;
+    if(k==="boxes")(o.lines||[]).forEach(l=>{if(l.perBox)l.qty=l.perBox*num(el.value);});re();});
+  document.querySelectorAll("[data-ob]").forEach(el=>el.onchange=()=>{o[el.dataset.ob]=el.checked;re();});
+  document.querySelectorAll("[data-l]").forEach(el=>el.onchange=()=>{const l=o.lines[+el.closest("tr").dataset.li],k=el.dataset.l;
+    if(k==="sku"){const v=el.value.trim();const p=prodBySku(v)||db.products.find(x=>x.name===v);l.sku=p?p.sku:"";if(p&&l.bid){p.builderIds=[...new Set([...(p.builderIds||[]),l.bid])];}}
+    else if(k==="qty"){l.qty=num(el.value);l.perBox=0;}else l.unitCost=el.value.trim()===""?undefined:num(el.value);re();});
+  document.querySelectorAll("[data-ldel]").forEach(b=>b.onclick=()=>{o.lines.splice(+b.dataset.ldel,1);re();});
+  if($("#oAddLine"))$("#oAddLine").onclick=()=>{(o.lines??=[]).push({sku:"",name:"",qty:num(o.boxes)||1,perBox:1});re();};
+  const setSt=(st,msg)=>{o.status=st;if(st==="approved"){o.frozen=JSON.parse(JSON.stringify(orderCalc({...o,status:"pending"})));o.approvedAt=new Date().toISOString();}else{delete o.frozen;delete o.approvedAt;}touch();renderOrder();toast(msg);};
+  if($("#oApprove"))$("#oApprove").onclick=()=>{const short=c.lines.filter(l=>l.sku&&(S[l.sku]?.available??0)<0);
+    if(c.missing&&!confirm(`ל-${c.missing} שורות אין עלות, ולכן הרווח שיוקפא יהיה גבוה מהאמת. לאשר בכל זאת?`))return;
+    if(!confirm("לאשר סופית? העלות תוקפא, ההזמנה תיספר ברווח והמוצרים יירדו מהמלאי."))return;setSt("approved","ההזמנה אושרה ✓");};
+  if($("#oCancel"))$("#oCancel").onclick=()=>{if(confirm("לסמן את ההזמנה כבוטלה?"))setSt("cancelled","ההזמנה סומנה כבוטלה");};
+  if($("#oUnapprove"))$("#oUnapprove").onclick=()=>{if(confirm("לבטל את האישור? ההזמנה תחזור ל'ממתינה', המוצרים יחזרו למלאי והעלות תחושב מחדש."))setSt("pending","האישור בוטל");};
+  if($("#oRestore"))$("#oRestore").onclick=()=>setSt("pending","ההזמנה חזרה לממתינה");
+}
+
 // ---------- suppliers ----------
 function renderSups(){
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>ספקים ומפעלים</h1><p class="sub">פרטי קשר והערות לכל מפעל.</p></div><button class="btn" id="supNew">+ ספק</button></div>
@@ -599,11 +790,14 @@ function renderSettings(){
     <table><thead><tr><th style="width:90px">קוד</th><th>קטגוריה</th><th class="num">מוצרים</th></tr></thead><tbody>
     ${db.categories.map((c,i)=>{const n=db.products.filter(p=>p.cat===c.code).length;return `<tr data-i="${i}"><td><input data-c="code" value="${esc(c.code)}" dir="ltr" maxlength="3" ${n?"disabled":""}></td><td><input data-c="name" value="${esc(c.name)}"></td><td class="num">${n||""}</td></tr>`;}).join("")}
     </tbody></table><button class="btn sm ghost" id="catNew" style="margin-top:10px">+ קטגוריה</button></div>
+  <h2>עלויות קבועות להזמנות</h2><div class="panel"><p class="muted" style="margin-top:0">נכנסות לעלות של כל הזמנה כשמחשבים רווח גולמי. אפשר להשאיר 0 ולמלא בהמשך.</p><div class="grid">
+    ${[["costFiller","מילוי וסרט לכל מארז (₪)"],["costLabor","עבודת אריזה לכל מארז (₪)"],["costCard","כרטיס ברכה לכל מארז (₪)"],["costEngrave","חריטה לכל מארז (₪)"],["shipOne","משלוח לכתובת אחת, להזמנה (₪)"],["shipIndiv","משלוח פרטני לכל נמען (₪)"],["shipVip","משלוח VIP לכל נמען (₪)"],["minMargin","התראה מתחת לאחוז רווח (%)"],["vatRate","מע״מ (%)"]].map(([k,l])=>`<label class="f">${l}<input data-st="${k}" inputmode="decimal" dir="ltr" value="${esc(db.settings[k])}"></label>`).join("")}</div></div>
   <h2>גיבוי</h2><div class="panel"><p class="muted" style="margin-top:0">המערכת שומרת אוטומטית 30 גרסאות אחרונות. מומלץ להוריד גם גיבוי למחשב מדי פעם.</p>
     <div class="row"><button class="btn ghost" id="bkOut">הורדת גיבוי</button><button class="btn ghost" id="bkIn">שחזור מגיבוי</button><input type="file" id="bkFile" accept=".json" hidden></div></div>
   <h2>חשבון</h2><div class="panel"><button class="btn danger" id="logout">יציאה</button></div>`;
   document.querySelectorAll("[data-c]").forEach(el=>el.onchange=()=>{const c=db.categories[+el.closest("tr").dataset.i];let v=el.value.trim();
     if(el.dataset.c==="code"){v=v.toUpperCase().replace(/[^A-Z0-9]/g,"");if(!v||db.categories.some(x=>x!==c&&x.code===v)){toast("קוד ריק או כפול");el.value=c.code;return;}}c[el.dataset.c]=v;touch();});
+  document.querySelectorAll("[data-st]").forEach(el=>el.onchange=()=>{db.settings[el.dataset.st]=num(el.value);touch();});
   $("#catNew").onclick=()=>{db.categories.push({code:newCatCode(),name:"קטגוריה חדשה"});touch();renderSettings();};
   $("#bkOut").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,1)],{type:"application/json"}));a.download=`noya-office-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();};
   $("#bkIn").onclick=()=>$("#bkFile").click();

@@ -1366,6 +1366,11 @@ function send(kind){
   if(needLogo()&&engFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הלוגו עדיין עולה…");return;}
   if(isIndiv()&&addrFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הכתובות עדיין עולה…");return;}
   const o=buildOrder();orderText=o.text;lastSend=kind;
+  // copy of the order for the private back office (profit, stock). Fire-and-forget: never blocks or changes the customer flow.
+  try{const g=id=>($(id)&&$(id).value||"").trim();fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({ref:o.ref,via:kind,
+    customer:{name:g("fName"),phone:g("fPhone"),email:g("fEmail"),org:g("fOrg")},items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),
+    pack:pack.none?null:{id:pack.id,name:pack.name,price:+pack.price||0},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
+    dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:shipCost()},total:grandTotal(),date:g("fDate"),notes:g("fNotes"),text:o.text})}).catch(()=>{});}catch(e){}
   let href;
   if(kind==="wa") href=`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(o.text)}`;
   else if(CONFIG.orderEmail) href=`mailto:${CONFIG.orderEmail}?subject=${encodeURIComponent("הזמנת מארז "+o.ref)}&body=${encodeURIComponent(o.text)}`;

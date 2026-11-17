@@ -10,6 +10,9 @@
 // POST ?a=upload (raw file body, headers x-file-name, x-folder) → {doc:{url,name,size,type}}
 // GET  ?a=file&url=...&name=...      → the decrypted file
 // POST ?a=delfile {url}              → deletes an uploaded document
+// POST ?a=inbox  {order}             → PUBLIC: the gift-box builder drops a new order here (stored encrypted)
+// GET  ?a=inbox                      → orders waiting to be pulled into the back office
+// POST ?a=inboxdone {urls}           → removes inbox orders after the back office saved them
 // POST ?a=extract {url,type} | {text,name} → AI reads a proforma / packing list / invoice and returns structured lines
 //
 // Encryption key: OFFICE_KEY if set, otherwise derived from the store's BLOB_READ_WRITE_TOKEN.
@@ -19,6 +22,9 @@ import crypto from "node:crypto";
 
 const DB_PREFIX = "office/db/";
 const DOC_PREFIX = "office/docs/";
+const INBOX_PREFIX = "office/inbox/";
+const INBOX_DAILY = +(process.env.INBOX_DAILY_LIMIT || 500);
+let inboxDay = "", inboxCount = 0;
 const KEEP_VERSIONS = 30;                         // older database versions are pruned (they double as history)
 const MAX_FILE = Math.floor(4.3 * 1024 * 1024);   // Vercel function body limit is 4.5 MB
 const SESSION_HOURS = 12;
@@ -165,6 +171,17 @@ export default async function handler(req, res) {
       fails = []; setCookie(res, makeToken(), SESSION_HOURS * 3600);
       res.status(200).json({ ok: true }); return;
     }
+    if (a === "inbox" && req.method === "POST") {   // public: called by the builder when a customer sends an order
+      const today = new Date().toISOString().slice(0, 10);
+      if (today !== inboxDay) { inboxDay = today; inboxCount = 0; }
+      if (++inboxCount > INBOX_DAILY) { res.status(429).json({ error: "limit" }); return; }
+      const o = await readBody(req);
+      const raw = JSON.stringify(o || {});
+      if (raw.length > 40000 || !/^NOYA-[A-Z0-9-]{4,24}$/i.test(String(o?.ref || ""))) { res.status(400).json({ error: "bad order" }); return; }
+      o.receivedAt = new Date().toISOString();
+      await put(`${INBOX_PREFIX}${String(o.ref).replace(/[^A-Z0-9-]/gi, "")}.bin`, encrypt(Buffer.from(JSON.stringify(o))), { access: "public", contentType: "application/octet-stream", addRandomSuffix: true });
+      res.status(200).json({ ok: true }); return;
+    }
     if (a === "logout") { setCookie(res, "", 0); res.status(200).json({ ok: true }); return; }
     if (!authed(req)) { res.status(401).json({ error: "צריך להתחבר" }); return; }
     if (a === "me") { res.status(200).json({ ok: true }); return; }
@@ -221,6 +238,20 @@ export default async function handler(req, res) {
         else { res.status(400).json({ error: "אפשר לשלוף מ-PDF, מתמונה או מאקסל" }); return; }
       }
       res.status(200).json({ result: await extractWithAI(content) }); return;
+    }
+    if (a === "inbox" && req.method === "GET") {
+      const { blobs } = await list({ prefix: INBOX_PREFIX, limit: 300 });
+      const orders = [];
+      for (const b of blobs) {
+        try { const r = await fetch(b.url, { cache: "no-store" }); if (r.ok) orders.push({ ...JSON.parse(decrypt(Buffer.from(await r.arrayBuffer())).toString()), _url: b.url }); } catch (e) {}
+      }
+      res.status(200).json({ orders }); return;
+    }
+    if (a === "inboxdone" && req.method === "POST") {
+      const { urls } = await readBody(req);
+      const ok = (Array.isArray(urls) ? urls : []).filter(u => { try { const x = new URL(u); return x.hostname.endsWith(".blob.vercel-storage.com") && x.pathname.startsWith("/" + INBOX_PREFIX); } catch (e) { return false; } });
+      if (ok.length) await del(ok);
+      res.status(200).json({ ok: true, removed: ok.length }); return;
     }
     if (a === "delfile" && req.method === "POST") {
       const { url } = await readBody(req);
