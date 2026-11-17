@@ -325,7 +325,7 @@ function drawDocs(s){
 }
 // ---------- AI extraction ----------
 async function extractDoc(s,d,btn){
-  const t0=btn.textContent;btn.disabled=true;btn.textContent="קורא את המסמך… (עד דקה)";
+  const t0=btn.textContent;btn.disabled=true;btn.textContent="קורא את המסמך… (עד 2 דקות)";
   try{
     let body={url:d.url,type:d.type};
     if(/\.(xlsx?|csv)$/i.test(d.name)||/sheet|excel|csv/i.test(d.type)){
@@ -357,10 +357,10 @@ function showExtract(s,d,R){
   </div>
   ${warn.map(w=>`<p class="warn" style="margin:4px 0">⚠ ${esc(w)}</p>`).join("")}
   ${(R.notes||[]).map(n=>`<p class="muted" style="margin:4px 0">• ${esc(n)}</p>`).join("")}
-  <div class="tablewrap" style="max-height:46vh;margin-top:10px"><table><thead><tr><th><input type="checkbox" id="exAll" checked style="width:auto"></th><th>פריט</th><th class="num">כמות</th><th class="num">מחיר</th><th class="num">סה״כ</th><th></th></tr></thead><tbody>
+  <div class="tablewrap" style="max-height:46vh;margin-top:10px"><table><thead><tr><th><input type="checkbox" id="exAll" checked style="width:auto"></th><th>פריט</th><th class="num">כמות</th><th class="num">מחיר</th><th class="num">סה״כ</th><th>סט?</th><th></th></tr></thead><tbody>
   ${items.map((i,k)=>{const ok=i.amount==null||near(num(i.qty)*num(i.unitPrice),num(i.amount));return `<tr><td><input type="checkbox" data-x="${k}" checked style="width:auto"></td>
     <td>${i.isSet?'<span class="pill" style="background:var(--gold);color:#fff">סט</span> ':""}<b>${esc(i.itemNo||"")}</b> ${esc(i.name)}${i.isSet&&i.setParts?.length?`<div class="muted" style="font-size:12.5px">${esc(i.setParts.join(" + "))}</div>`:""}${i.size&&!i.isSet?` <span class="muted" style="font-size:12.5px">${esc(i.size)}</span>`:""}</td>
-    <td class="num">${esc(num(i.qty).toLocaleString("he-IL"))}</td><td class="num">${esc(i.unitPrice??"")}</td><td class="num">${i.amount!=null?money(i.amount,cur):""}</td><td>${ok?'<span class="okc">✓</span>':'<span class="warn" title="כמות × מחיר לא שווה לסה״כ בשורה">⚠</span>'}</td></tr>`;}).join("")||`<tr><td colspan="6" class="muted">לא נמצאו שורות מוצרים במסמך.</td></tr>`}
+    <td class="num">${esc(num(i.qty).toLocaleString("he-IL"))}</td><td class="num">${esc(i.unitPrice??"")}</td><td class="num">${i.amount!=null?money(i.amount,cur):""}</td><td><input type="checkbox" data-set="${k}" ${i.isSet?"checked":""} style="width:auto" title="נמכר כסט"></td><td>${ok?'<span class="okc">✓</span>':'<span class="warn" title="כמות × מחיר לא שווה לסה״כ בשורה">⚠</span>'}</td></tr>`;}).join("")||`<tr><td colspan="7" class="muted">לא נמצאו שורות מוצרים במסמך.</td></tr>`}
   </tbody></table></div>
   <p style="margin:8px 0"><b>סה״כ סחורה:</b> ${money(Math.round(sum*100)/100,cur)}${R.totalCartons?` · ${esc(R.totalCartons)} קרטונים`:""}${R.totalCbm?` · ${esc(R.totalCbm)} CBM`:""}${R.deposit?` · מקדמה ששולמה: ${money(R.deposit,cur)}`:""}</p>
   ${(R.extraCosts||[]).length?`<div class="panel" style="margin:10px 0"><b>עלויות נוספות במסמך</b> <span class="muted">(יתווספו ל"אחר" במכולה, בשקלים)</span>
@@ -370,6 +370,7 @@ function showExtract(s,d,R){
   <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost" id="mCancel">ביטול</button><button class="btn" id="exGo">הוספה למכולה</button></div>`;
   $("#modal").hidden=false;
   const close=()=>$("#modal").hidden=true;$("#mX").onclick=close;$("#mCancel").onclick=close;
+  document.querySelectorAll("[data-set]").forEach(c=>c.onchange=()=>{items[+c.dataset.set].isSet=c.checked;});
   $("#exAll").onchange=e=>document.querySelectorAll("[data-x]").forEach(c=>c.checked=e.target.checked);
   $("#exGo").onclick=()=>{
     normShip(s);
