@@ -43,6 +43,7 @@ ${noPack ? "No packaging: arrange the products freely on the surface as an open 
 FIDELITY
 Reproduce each product as photographed: same shape, proportions, colours, materials, and any logo or label text that is physically printed on it. Keep true relative sizes from the heights given. Do not add, duplicate or remove products, and do not invent brands.
 STRICT PRODUCT FIDELITY: the products are real items for sale and must look identical to their photos and to the layout sketch. Do not restyle, redesign, recolour, reshape, simplify or "improve" any product; keep every ridge, groove, pattern, speckle, texture, finish and proportion exactly as shown. When in doubt, copy the product more literally, not more creatively.
+CLEAN LIGHTING ON PRODUCTS: the product photos were shot in other light and may contain baked-in shadows, dark patches, grey shading or reflections from that shoot. These are NOT part of the product: remove them and relight every product evenly with this scene's soft light, so each surface shows its true clean colour (a white piece stays clean white all over). Keep only natural soft scene shading and a gentle contact shadow on the surface beneath each item.
 NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
 
 ART DIRECTION
