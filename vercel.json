@@ -3,6 +3,9 @@
     "api/design.js": {
       "maxDuration": 120,
       "includeFiles": "img/**"
+    },
+    "api/office.js": {
+      "maxDuration": 120
     }
   },
   "rewrites": [

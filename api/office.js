@@ -10,6 +10,7 @@
 // POST ?a=upload (raw file body, headers x-file-name, x-folder) → {doc:{url,name,size,type}}
 // GET  ?a=file&url=...&name=...      → the decrypted file
 // POST ?a=delfile {url}              → deletes an uploaded document
+// POST ?a=extract {url,type} | {text,name} → AI reads a proforma / packing list / invoice and returns structured lines
 //
 // Encryption key: OFFICE_KEY if set, otherwise derived from the store's BLOB_READ_WRITE_TOKEN.
 // (If you ever rotate the blob token, set OFFICE_KEY to the OLD token first, or export a backup before.)
@@ -90,6 +91,60 @@ async function readDb() {
 }
 const blobUrlOk = u => { try { const x = new URL(u); return x.protocol === "https:" && x.hostname.endsWith(".blob.vercel-storage.com") && x.pathname.startsWith("/" + DOC_PREFIX); } catch (e) { return false; } };
 
+// ---------- AI extraction of import documents (uses the OPENAI_API_KEY already set for the designer) ----------
+export const config = { maxDuration: 120 };
+const EXTRACT_MODELS = [...new Set([process.env.OPENAI_EXTRACT_MODEL, "gpt-5-mini", "gpt-4.1"].filter(Boolean))];
+const nn = t => ({ type: [t, "null"] });
+const SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["docType", "supplier", "orderNo", "date", "currency", "incoterm", "items", "extraCosts", "goodsTotal", "grandTotal", "deposit", "totalCartons", "totalCbm", "notes"],
+  properties: {
+    docType: { type: "string", description: "proforma | commercial_invoice | packing_list | bill_of_lading | customs | freight_invoice | other" },
+    supplier: nn("string"), orderNo: nn("string"), date: { ...nn("string"), description: "YYYY-MM-DD" },
+    currency: { ...nn("string"), description: "ISO code of the prices, e.g. USD, CNY, EUR, ILS" },
+    incoterm: nn("string"),
+    items: { type: "array", items: { type: "object", additionalProperties: false,
+      required: ["itemNo", "name", "size", "qty", "unitPrice", "amount", "isSet", "setParts", "pcsPerCarton", "cartons", "cbm", "packing"],
+      properties: {
+        itemNo: nn("string"), name: { type: "string" }, size: nn("string"),
+        qty: { ...nn("number"), description: "quantity of priced units (for a set: number of sets)" },
+        unitPrice: nn("number"), amount: nn("number"),
+        isSet: { type: "boolean", description: "true when several items share ONE unit price/amount (sold together as a set)" },
+        setParts: { type: "array", items: { type: "string" }, description: "the parts of the set, e.g. ['small 19cm','big 25cm']" },
+        pcsPerCarton: nn("number"), cartons: nn("number"), cbm: nn("number"), packing: nn("string") } } },
+    extraCosts: { type: "array", items: { type: "object", additionalProperties: false, required: ["label", "amount", "currency"],
+      properties: { label: { type: "string" }, amount: { type: "number" }, currency: nn("string") } },
+      description: "charges outside the goods lines: freight to port, service fees, bank fees, etc. NOT deposits" },
+    goodsTotal: nn("number"), grandTotal: nn("number"), deposit: nn("number"),
+    totalCartons: nn("number"), totalCbm: nn("number"),
+    notes: { type: "array", items: { type: "string" }, description: "short Hebrew notes about anything unusual or unclear" } } };
+const EXTRACT_PROMPT = `You read import documents for an Israeli gift company (proforma invoices, commercial invoices, packing lists, customs and freight papers).
+Extract every goods line exactly as written. Rules:
+- When one unit price and amount cover two or more rows (e.g. a small and a big size priced together), return ONE item with isSet=true, the shared qty/unitPrice/amount, and the parts in setParts. Sum their cartons and CBM.
+- Numbers as plain numbers (no currency symbols or thousands separators). Use null when a value is missing.
+- Keep the supplier's own item number in itemNo and a clear English or Hebrew product name in name.
+- extraCosts: freight, service/platform fees, bank charges and similar listed outside the goods lines. Never include the deposit there; put it in deposit.
+- notes: short Hebrew remarks, e.g. totals that do not add up or anything you were unsure about.`;
+async function extractWithAI(content) {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error("OPENAI_API_KEY לא מוגדר בשרת");
+  let last;
+  for (const model of EXTRACT_MODELS) {
+    const r = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, input: [{ role: "user", content: [...content, { type: "input_text", text: EXTRACT_PROMPT }] }],
+        text: { format: { type: "json_schema", name: "import_document", strict: true, schema: SCHEMA } } }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) {
+      const txt = j.output_text || (j.output || []).flatMap(o => o.content || []).find(c => c.type === "output_text")?.text;
+      if (!txt) throw new Error("ה-AI לא החזיר תשובה");
+      return { ...JSON.parse(txt), model };
+    }
+    last = j?.error?.message || `OpenAI ${r.status}`;
+    if (!(r.status === 404 || /model/i.test(last))) break;   // only fall back to the next model when the model itself is the problem
+  }
+  throw new Error(last);
+}
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Robots-Tag", "noindex");
@@ -150,6 +205,22 @@ export default async function handler(req, res) {
       res.setHeader("Content-Type", type);
       res.setHeader("Content-Disposition", `${req.query.dl ? "attachment" : "inline"}; filename="file"; filename*=UTF-8''${encodeURIComponent(name)}`);
       res.status(200).send(buf); return;
+    }
+    if (a === "extract" && req.method === "POST") {
+      const body = await readBody(req);
+      let content;
+      if (body.text) content = [{ type: "input_text", text: `Document "${String(body.name || "sheet").slice(0, 100)}" as CSV:\n` + String(body.text).slice(0, 120000) }];
+      else {
+        if (!blobUrlOk(body.url)) { res.status(400).json({ error: "bad url" }); return; }
+        const r = await fetch(body.url, { cache: "no-store" });
+        if (!r.ok) { res.status(404).json({ error: "הקובץ לא נמצא" }); return; }
+        const buf = decrypt(Buffer.from(await r.arrayBuffer()));
+        const type = String(body.type || "");
+        if (/pdf/.test(type) || buf.subarray(0, 4).toString() === "%PDF") content = [{ type: "input_file", filename: "document.pdf", file_data: "data:application/pdf;base64," + buf.toString("base64") }];
+        else if (/^image\/(jpeg|png|webp|gif)$/.test(type)) content = [{ type: "input_image", image_url: `data:${type};base64,` + buf.toString("base64") }];
+        else { res.status(400).json({ error: "אפשר לשלוף מ-PDF, מתמונה או מאקסל" }); return; }
+      }
+      res.status(200).json({ result: await extractWithAI(content) }); return;
     }
     if (a === "delfile" && req.method === "POST") {
       const { url } = await readBody(req);
