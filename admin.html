@@ -151,15 +151,27 @@ function nextSku(code){
 function newCatCode(){const L="ABCDEFGHIJKLMNOPQRSTUVWXYZ";for(const a of "XYZQ")for(const b of L){const c=a+b;if(!db.categories.some(k=>k.code===c))return c;}return "Z"+db.categories.length;}
 const cbm=p=>p.cartonL&&p.cartonW&&p.cartonH?p.cartonL*p.cartonW*p.cartonH/1e6:0;
 const margin=p=>p.salePrice>0&&p.landedCost>0?(p.salePrice-p.landedCost)/p.salePrice:null;
+const CURS=["USD","EUR","CNY","TRY","ILS"];
+function normShip(s){
+  s.costs??={};s.items??=[];s.docs??=[];s.fxRates??={};
+  if(s.fx&&!s.fxRates[s.currency]){s.fxRates[s.currency]=s.fx;}delete s.fx;   // older single-rate containers
+  return s;
+}
+const lineCur=(s,i)=>i.currency||s.currency||"USD";
+const rateOf=(s,cur)=>cur==="ILS"?1:num(s.fxRates?.[cur]);
+const shipSuppliers=s=>[...new Set([s.supplier,...(s.items||[]).map(i=>i.supplier)].map(x=>String(x||"").trim()).filter(Boolean))];
+const shipCurs=s=>[...new Set([s.currency||"USD",...(s.items||[]).map(i=>lineCur(s,i))])];
 function shipCalc(s){
-  const fx=num(s.fx)||(s.currency==="ILS"?1:0);
-  const goods=(s.items||[]).reduce((t,i)=>t+num(i.qty)*num(i.unitPrice),0);
-  const goodsIls=goods*fx;
+  normShip(s);
+  const missing=shipCurs(s).filter(c=>(s.items||[]).some(i=>lineCur(s,i)===c&&num(i.qty)*num(i.unitPrice))&&!rateOf(s,c));
+  const lines0=s.items.map(i=>{const cur=lineCur(s,i),r=rateOf(s,cur),v=num(i.qty)*num(i.unitPrice);return {...i,cur,orig:v,valueIls:v*r};});
+  const goodsIls=lines0.reduce((t,l)=>t+l.valueIls,0);
+  const byCur={};lines0.forEach(l=>{byCur[l.cur]=(byCur[l.cur]||0)+l.orig;});
   const extra=COSTS.reduce((t,[k])=>t+num(s.costs?.[k]),0);
   const total=goodsIls+extra;
-  const lines=(s.items||[]).map(i=>{const v=num(i.qty)*num(i.unitPrice)*fx;const share=goodsIls>0?extra*v/goodsIls:0;
-    return {...i,valueIls:v,landed:num(i.qty)>0&&fx?(v+share)/num(i.qty):0};});
-  return {fx,goods,goodsIls,extra,total,lines,factor:goodsIls>0?total/goodsIls:0};
+  const lines=lines0.map(l=>{const share=goodsIls>0?extra*l.valueIls/goodsIls:0;return {...l,landed:num(l.qty)>0&&l.valueIls?(l.valueIls+share)/num(l.qty):0};});
+  const bySup={};lines.forEach(l=>{const k=String(l.supplier||s.supplier||"ללא ספק").trim()||"ללא ספק";const o=bySup[k]??={goodsIls:0,landed:0,lines:0};o.goodsIls+=l.valueIls;o.landed+=l.landed*num(l.qty);o.lines++;});
+  return {ok:!missing.length,missing,goodsIls,byCur,extra,total,lines,bySup,factor:goodsIls>0?total/goodsIls:0};
 }
 
 // ---------- navigation ----------
@@ -189,13 +201,13 @@ function renderDash(){
 
 // ---------- shipments ----------
 function shipTable(list){
-  return `<div class="tablewrap"><table><thead><tr><th>שם</th><th>ספק</th><th>מס׳ מכולה</th><th>סטטוס</th><th>הגעה משוערת</th><th class="num">עלות כוללת</th><th>מסמכים</th></tr></thead><tbody>
-  ${list.map(s=>{const c=shipCalc(s);return `<tr class="click" data-id="${esc(s.id)}"><td><b>${esc(s.name)}</b></td><td>${esc(s.supplier)}</td><td class="sku">${esc(s.containerNo)}</td>
-  <td><span class="pill st-${esc(s.status)}">${stName(s.status)}</span></td><td>${esc(fmtDate(s.eta))}</td><td class="num">${c.fx?money(Math.round(c.total)):(c.goods?`<span class="warn">חסר שער</span>`:"")}</td><td>${(s.docs||[]).length||""}</td></tr>`}).join("")}
+  return `<div class="tablewrap"><table><thead><tr><th>שם</th><th>ספקים</th><th>מס׳ מכולה</th><th>סטטוס</th><th>הגעה משוערת</th><th class="num">עלות כוללת</th><th>מסמכים</th></tr></thead><tbody>
+  ${list.map(s=>{const c=shipCalc(s);return `<tr class="click" data-id="${esc(s.id)}"><td><b>${esc(s.name)}</b></td><td>${esc(shipSuppliers(s).join(", "))}</td><td class="sku">${esc(s.containerNo)}</td>
+  <td><span class="pill st-${esc(s.status)}">${stName(s.status)}</span></td><td>${esc(fmtDate(s.eta))}</td><td class="num">${c.ok?(c.total?money(Math.round(c.total)):""):`<span class="warn">חסר שער</span>`}</td><td>${(s.docs||[]).length||""}</td></tr>`}).join("")}
   </tbody></table></div>`;
 }
 function bindShipRows(){document.querySelectorAll("tr[data-id]").forEach(tr=>tr.onclick=()=>{view="ships";sel=tr.dataset.id;render();});}
-function newShip(){const n=db.shipments.length+1;const s={id:uid(),name:"מכולה "+n,supplier:"",containerNo:"",type:"40HQ",status:"order",etd:"",eta:"",currency:"USD",fx:"",costs:{},items:[],docs:[],notes:"",createdAt:new Date().toISOString()};
+function newShip(){const n=db.shipments.length+1;const s={id:uid(),name:"מכולה "+n,supplier:"",containerNo:"",type:"40HQ",status:"order",etd:"",eta:"",currency:"USD",fxRates:{},costs:{},items:[],docs:[],notes:"",createdAt:new Date().toISOString()};
   db.shipments.push(s);touch();view="ships";sel=s.id;render();}
 function renderShips(){
   const all=[...db.shipments].sort((a,b)=>(a.status==="wh")-(b.status==="wh")||(a.eta||"9").localeCompare(b.eta||"9"));
@@ -205,21 +217,22 @@ function renderShips(){
 }
 function renderShip(){
   const s=db.shipments.find(x=>x.id===sel);if(!s){sel=null;return render();}
-  s.costs??={};s.items??=[];s.docs??=[];
-  const supOpts=db.suppliers.map(x=>`<option value="${esc(x.name)}">`).join("");
+  normShip(s);
+  const supOpts=[...new Set([...db.suppliers.map(x=>x.name),...db.shipments.flatMap(shipSuppliers)].filter(Boolean))].map(n=>`<option value="${esc(n)}">`).join("");
   $("#view").innerHTML=`<button class="back" id="back">→ כל המכולות</button>
   <div class="row" style="justify-content:space-between"><h1 id="sTitle">${esc(s.name)}</h1><button class="btn danger sm" id="sDel">מחיקת מכולה</button></div>
   <div class="panel"><div class="grid">
     <label class="f">שם המכולה<input data-k="name" value="${esc(s.name)}"></label>
-    <label class="f">ספק / מפעל<input data-k="supplier" list="supList" value="${esc(s.supplier)}"><datalist id="supList">${supOpts}</datalist></label>
+    <label class="f">ספק ראשי (ברירת מחדל לשורות)<input data-k="supplier" list="supList" value="${esc(s.supplier)}"><datalist id="supList">${supOpts}</datalist></label>
     <label class="f">מספר מכולה<input data-k="containerNo" value="${esc(s.containerNo)}" dir="ltr"></label>
     <label class="f">סוג<select data-k="type">${["20GP","40GP","40HQ","LCL","אווירי"].map(t=>`<option ${s.type===t?"selected":""}>${t}</option>`).join("")}</select></label>
     <label class="f">סטטוס<select data-k="status">${STATUSES.map(([k,v])=>`<option value="${k}" ${s.status===k?"selected":""}>${v}</option>`).join("")}</select></label>
     <label class="f">יציאה מהנמל (ETD)<input type="date" data-k="etd" value="${esc(s.etd)}"></label>
     <label class="f">הגעה משוערת (ETA)<input type="date" data-k="eta" value="${esc(s.eta)}"></label>
-    <label class="f">מטבע הספק<select data-k="currency">${["USD","EUR","CNY","TRY","ILS"].map(t=>`<option ${s.currency===t?"selected":""}>${t}</option>`).join("")}</select></label>
-    <label class="f">שער המרה ל-₪<input data-k="fx" inputmode="decimal" value="${esc(s.fx)}" placeholder="למשל 3.65" dir="ltr"></label>
-  </div></div>
+    <label class="f">מטבע ברירת מחדל<select data-k="currency">${CURS.map(t=>`<option ${s.currency===t?"selected":""}>${t}</option>`).join("")}</select></label>
+  </div>
+  <div class="row" id="fxRow" style="margin-top:12px"></div>
+  <div class="muted" style="font-size:12.5px;margin-top:6px">במכולה משותפת לכמה ספקים: בוחרים ספק (ומטבע אם שונה) בכל שורת מוצר. העלויות הנוספות מתחלקות לפי שווי הסחורה של כל שורה.</div></div>
 
   <h2>מסמכים</h2>
   <div class="panel">
@@ -230,7 +243,7 @@ function renderShip(){
   </div>
 
   <h2>מוצרים במכולה</h2>
-  <div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>מק״ט</th><th>מוצר</th><th class="num">כמות</th><th class="num">מחיר ליחידה (${esc(s.currency)})</th><th class="num">שווי (₪)</th><th class="num">עלות נחיתה ליחידה</th><th></th></tr></thead><tbody id="items"></tbody></table></div>
+  <div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>מק״ט</th><th>מוצר</th><th>ספק</th><th class="num">כמות</th><th>מטבע</th><th class="num">מחיר ליחידה</th><th class="num">שווי (₪)</th><th class="num">עלות נחיתה ליחידה</th><th></th></tr></thead><tbody id="items"></tbody></table></div>
     <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="addItem">+ שורת מוצר</button>
     <button class="btn sm gold" id="applyLanded">עדכון עלות הנחיתה בכרטיסי המוצרים</button></div>
     <datalist id="prodList">${db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("")}</datalist>
@@ -246,49 +259,64 @@ function renderShip(){
   $("#sDel").onclick=()=>{if(!confirm(`למחוק את "${s.name}"? המסמכים שלה יימחקו גם הם.`))return;
     (s.docs||[]).forEach(d=>api("delfile",{method:"POST",body:{url:d.url}}).catch(()=>{}));
     db.shipments=db.shipments.filter(x=>x!==s);touch();sel=null;render();};
-  document.querySelectorAll("[data-k]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{s[el.dataset.k]=el.value;if(el.dataset.k==="name")$("#sTitle").textContent=el.value;touch();if(["fx","currency"].includes(el.dataset.k))drawItems();}));
+  document.querySelectorAll("[data-k]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{s[el.dataset.k]=el.value;if(el.dataset.k==="name")$("#sTitle").textContent=el.value;touch();if(["currency","supplier"].includes(el.dataset.k)){drawFx();drawItems();}}));
   document.querySelectorAll("[data-c]").forEach(el=>el.addEventListener("input",()=>{s.costs[el.dataset.c]=el.value;touch();drawItems();}));
   const drop=$("#drop");$("#pick").onclick=e=>{e.preventDefault();$("#files").click();};
   $("#files").onchange=e=>uploadFiles(s,[...e.target.files]);
   ["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("over");}));
   ["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("over");}));
   drop.addEventListener("drop",e=>uploadFiles(s,[...e.dataTransfer.files]));
-  $("#addItem").onclick=()=>{s.items.push({sku:"",name:"",qty:"",unitPrice:""});touch();drawItems();};
-  $("#applyLanded").onclick=()=>{const c=shipCalc(s);if(!c.fx){toast("צריך למלא שער המרה");return;}let n=0;
+  $("#addItem").onclick=()=>{const last=s.items[s.items.length-1];s.items.push({sku:"",name:"",supplier:last?.supplier||"",currency:last?.currency||"",qty:"",unitPrice:""});touch();drawItems();};
+  $("#applyLanded").onclick=()=>{const c=shipCalc(s);if(!c.ok){toast("חסר שער המרה ל-"+c.missing.join(", "));return;}let n=0;
     c.lines.forEach(l=>{const p=prodBySku(l.sku);if(p&&l.landed){p.landedCost=Math.round(l.landed*100)/100;p.landedFrom=s.name;n++;}});
     touch();toast(n?`עודכנה עלות נחיתה ב-${n} מוצרים`:"אין שורות שמקושרות למק״ט של מוצר");};
-  drawDocs(s);drawItems();
+  drawDocs(s);drawFx();drawItems();
+  function drawFx(){
+    $("#fxRow").innerHTML=shipCurs(s).filter(c=>c!=="ILS").map(c=>`<label class="f" style="width:170px">שער ${c} ל-₪<input data-fx="${c}" inputmode="decimal" dir="ltr" placeholder="למשל 3.65" value="${esc(s.fxRates[c]||"")}"></label>`).join("")||`<span class="muted">כל המחירים בשקלים, אין צורך בשער המרה.</span>`;
+    $("#fxRow").querySelectorAll("[data-fx]").forEach(el=>el.addEventListener("input",()=>{s.fxRates[el.dataset.fx]=el.value;touch();drawItems();}));
+  }
 
   function drawItems(){
     const c=shipCalc(s);
     $("#items").innerHTML=s.items.map((it,i)=>{const l=c.lines[i];return `<tr data-i="${i}">
-      <td style="width:110px"><input data-f="sku" list="prodList" value="${esc(it.sku)}" dir="ltr"></td>
+      <td style="width:105px"><input data-f="sku" list="prodList" value="${esc(it.sku)}" dir="ltr"></td>
       <td><input data-f="name" value="${esc(it.name||(prodBySku(it.sku)||{}).name||"")}"></td>
-      <td style="width:90px"><input data-f="qty" inputmode="decimal" dir="ltr" value="${esc(it.qty)}"></td>
-      <td style="width:120px"><input data-f="unitPrice" inputmode="decimal" dir="ltr" value="${esc(it.unitPrice)}"></td>
-      <td class="num">${l.valueIls?money(Math.round(l.valueIls)):""}</td>
-      <td class="num"><b>${l.landed?money(Math.round(l.landed*100)/100):""}</b></td>
-      <td><button class="btn sm ghost" data-del="${i}" title="הסרה">✕</button></td></tr>`;}).join("")||`<tr><td colspan="7" class="muted">עוד אין מוצרים. הוסיפו שורות, או שלחו לClaude את הפרופורמה והוא ימלא.</td></tr>`;
-    $("#items").querySelectorAll("input").forEach(el=>el.addEventListener("change",()=>{const it=s.items[+el.closest("tr").dataset.i];it[el.dataset.f]=el.value;
-      if(el.dataset.f==="sku"){const p=prodBySku(el.value.trim());if(p){it.sku=p.sku;it.name=p.name;}}touch();drawItems();}));
+      <td style="width:180px"><input data-f="supplier" list="supList" placeholder="${esc(s.supplier||"ספק")}" value="${esc(it.supplier)}"></td>
+      <td style="width:85px"><input data-f="qty" inputmode="decimal" dir="ltr" value="${esc(it.qty)}"></td>
+      <td style="width:82px"><select data-f="currency">${CURS.map(cu=>`<option ${lineCur(s,it)===cu?"selected":""}>${cu}</option>`).join("")}</select></td>
+      <td style="width:105px"><input data-f="unitPrice" inputmode="decimal" dir="ltr" value="${esc(it.unitPrice)}"></td>
+      <td class="num">${l.valueIls?money(Math.round(l.valueIls)):(l.orig&&!rateOf(s,l.cur)?`<span class="warn">חסר שער</span>`:"")}</td>
+      <td class="num"><b>${l.landed&&c.ok?money(Math.round(l.landed*100)/100):""}</b></td>
+      <td><button class="btn sm ghost" data-del="${i}" title="הסרה">✕</button></td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">עוד אין מוצרים. הוסיפו שורות, או שלחו לClaude את הפרופורמות והוא ימלא.</td></tr>`;
+    $("#items").querySelectorAll("input,select").forEach(el=>el.addEventListener("change",()=>{const it=s.items[+el.closest("tr").dataset.i];it[el.dataset.f]=el.value.trim();
+      if(el.dataset.f==="currency"&&el.value===s.currency)it.currency="";
+      if(el.dataset.f==="sku"){const p=prodBySku(el.value.trim());if(p){it.sku=p.sku;it.name=p.name;if(!it.supplier&&p.supplier)it.supplier=p.supplier;}}
+      touch();if(el.dataset.f==="currency")drawFx();drawItems();}));
     $("#items").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{s.items.splice(+b.dataset.del,1);touch();drawItems();});
     drawSum();
   }
   function drawSum(){const c=shipCalc(s);
+    const curTxt=Object.entries(c.byCur).filter(([,v])=>v).map(([k,v])=>money(Math.round(v),k==="ILS"?"₪":k)).join(" + ")||"0";
+    const sups=Object.entries(c.bySup);
     $("#sum").innerHTML=`<div class="cards" style="margin:0">
-      <div class="card"><div class="k">סחורה (${esc(s.currency)})</div><div class="v" style="font-size:20px">${money(Math.round(c.goods),s.currency)||"0"}</div></div>
-      <div class="card"><div class="k">סחורה ב-₪</div><div class="v" style="font-size:20px">${c.fx?money(Math.round(c.goodsIls)):`<span class="warn" style="font-size:15px">חסר שער המרה</span>`}</div></div>
+      <div class="card"><div class="k">סחורה במטבע הספקים</div><div class="v" style="font-size:18px">${curTxt}</div></div>
+      <div class="card"><div class="k">סחורה ב-₪</div><div class="v" style="font-size:20px">${c.ok?money(Math.round(c.goodsIls))||"₪0":`<span class="warn" style="font-size:15px">חסר שער ל-${esc(c.missing.join(", "))}</span>`}</div></div>
       <div class="card"><div class="k">עלויות נוספות</div><div class="v" style="font-size:20px">${money(Math.round(c.extra))||"₪0"}</div></div>
-      <div class="card"><div class="k">עלות נחיתה כוללת</div><div class="v" style="font-size:20px">${c.fx?money(Math.round(c.total)):"—"}</div><div class="k">${c.factor?`פי ${c.factor.toFixed(2)} ממחיר הסחורה`:""}</div></div></div>`;}
+      <div class="card"><div class="k">עלות נחיתה כוללת</div><div class="v" style="font-size:20px">${c.ok?money(Math.round(c.total)):"—"}</div><div class="k">${c.factor&&c.ok?`פי ${c.factor.toFixed(2)} ממחיר הסחורה`:""}</div></div></div>
+      ${sups.length>1?`<h3 style="margin:16px 0 6px;font-size:15px">חלוקה לפי ספק</h3><table><thead><tr><th>ספק</th><th class="num">שורות</th><th class="num">סחורה (₪)</th><th class="num">חלק מהמכולה</th><th class="num">עלות נחיתה (₪)</th></tr></thead><tbody>
+      ${sups.map(([k,o])=>`<tr><td><b>${esc(k)}</b></td><td class="num">${o.lines}</td><td class="num">${c.ok?money(Math.round(o.goodsIls)):""}</td><td class="num">${c.ok&&c.goodsIls?Math.round(o.goodsIls/c.goodsIls*100)+"%":""}</td><td class="num">${c.ok?money(Math.round(o.landed)):""}</td></tr>`).join("")}</tbody></table>`:""}`;}
+
 }
 function drawDocs(s){
-  $("#docList").innerHTML=s.docs.length?`<table><thead><tr><th>קובץ</th><th>סוג מסמך</th><th>הועלה</th><th></th></tr></thead><tbody>${s.docs.map((d,i)=>`<tr>
+  $("#docList").innerHTML=s.docs.length?`<table><thead><tr><th>קובץ</th><th>סוג מסמך</th><th>ספק</th><th>הועלה</th><th></th></tr></thead><tbody>${s.docs.map((d,i)=>`<tr>
     <td>📄 ${esc(d.name)} <span class="muted" style="font-size:12px">${(d.size/1024/1024).toFixed(2)}MB</span></td>
     <td style="width:190px"><select data-kind="${i}">${DOC_KINDS.map(k=>`<option ${d.kind===k?"selected":""}>${k}</option>`).join("")}</select></td>
+    <td style="width:160px"><input data-dsup="${i}" list="supList" value="${esc(d.supplier||"")}" placeholder="ספק"></td>
     <td class="muted">${esc(new Date(d.uploadedAt).toLocaleDateString("he-IL"))}</td>
     <td style="white-space:nowrap"><button class="btn sm ghost" data-open="${i}">פתיחה</button> <button class="btn sm ghost" data-dl="${i}">הורדה</button> <button class="btn sm danger" data-rm="${i}">מחיקה</button></td></tr>`).join("")}</tbody></table>`:`<div class="muted">עוד לא הועלו מסמכים למכולה הזו.</div>`;
   const link=(d,dl)=>`${API}?a=file&url=${encodeURIComponent(d.url)}&name=${encodeURIComponent(d.name)}&type=${encodeURIComponent(d.type||"")}${dl?"&dl=1":""}`;
   $("#docList").querySelectorAll("[data-kind]").forEach(el=>el.onchange=()=>{s.docs[+el.dataset.kind].kind=el.value;touch();});
+  $("#docList").querySelectorAll("[data-dsup]").forEach(el=>el.onchange=()=>{s.docs[+el.dataset.dsup].supplier=el.value.trim();touch();});
   $("#docList").querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>window.open(link(s.docs[+b.dataset.open]),"_blank"));
   $("#docList").querySelectorAll("[data-dl]").forEach(b=>b.onclick=()=>{location.href=link(s.docs[+b.dataset.dl],1);});
   $("#docList").querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{const d=s.docs[+b.dataset.rm];if(!confirm(`למחוק את "${d.name}"?`))return;
@@ -401,7 +429,7 @@ function renderSups(){
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>ספקים ומפעלים</h1><p class="sub">פרטי קשר והערות לכל מפעל.</p></div><button class="btn" id="supNew">+ ספק</button></div>
   <div class="tablewrap"><table><thead><tr><th>שם</th><th>מדינה</th><th>איש קשר</th><th>טלפון / וואטסאפ</th><th>מייל</th><th>הערות</th><th class="num">מכולות</th><th></th></tr></thead><tbody>
   ${db.suppliers.map((x,i)=>`<tr data-i="${i}">${["name","country","contact","phone","email","notes"].map(k=>`<td><input data-s="${k}" value="${esc(x[k])}" ${["phone","email"].includes(k)?'dir="ltr"':""}></td>`).join("")}
-    <td class="num">${db.shipments.filter(s=>s.supplier&&s.supplier===x.name).length||""}</td><td><button class="btn sm ghost" data-rm="${i}">✕</button></td></tr>`).join("")||`<tr><td colspan="8" class="muted">עוד אין ספקים.</td></tr>`}
+    <td class="num">${db.shipments.filter(s=>x.name&&shipSuppliers(s).includes(x.name)).length||""}</td><td><button class="btn sm ghost" data-rm="${i}">✕</button></td></tr>`).join("")||`<tr><td colspan="8" class="muted">עוד אין ספקים.</td></tr>`}
   </tbody></table></div>`;
   $("#supNew").onclick=()=>{db.suppliers.push({id:uid(),name:""});touch();renderSups();};
   document.querySelectorAll("[data-s]").forEach(el=>el.oninput=()=>{db.suppliers[+el.closest("tr").dataset.i][el.dataset.s]=el.value;touch();});
