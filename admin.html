@@ -57,6 +57,7 @@ label.f{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--
 .back{background:none;border:none;color:var(--soft);font-weight:600;padding:0;margin-bottom:10px}
 td input,td select{padding:4px 6px}
 [hidden]{display:none!important}
+@media print{header,#toast,.btn{display:none!important}body{background:#fff}.panel,.card,table{break-inside:avoid}}
 @media (max-width:700px){main{padding:14px}header{padding:10px 14px}}
 </style>
 </head>
@@ -78,6 +79,7 @@ td input,td select{padding:4px 6px}
   <nav id="nav">
     <button data-v="dash" class="on">לוח בקרה</button>
     <button data-v="ships">מכולות ויבוא</button>
+    <button data-v="cash">תזרים</button>
     <button data-v="prods">מוצרים</button>
     <button data-v="sups">ספקים</button>
     <button data-v="settings">הגדרות</button>
@@ -199,7 +201,7 @@ const daysTo=d=>d?Math.round((new Date(d+"T00:00")-new Date(new Date().toDateStr
 $("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;render();};
 function render(){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
-  ({dash:renderDash,ships:sel?renderShip:renderShips,prods:renderProds,sups:renderSups,settings:renderSettings})[view]();
+  ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,sups:renderSups,settings:renderSettings})[view]();
   window.scrollTo(0,0);
 }
 
@@ -222,9 +224,42 @@ function renderDash(){
   ${dues.map(r=>{const d=daysTo(r.due);return `<tr class="click" data-id="${esc(r.s.id)}"><td>${r.due?esc(fmtDate(r.due)):'<span class="muted">ללא תאריך</span>'}</td><td>${esc(r.s.name)}</td><td>${esc(r.label)}</td><td class="num"><b>${money(Math.round(r.amount))}</b></td>
     <td class="${d===null?"muted":d<0?"bad":d<=14?"warn":"muted"}">${d===null?"":d<0?`באיחור של ${-d} ימים`:d===0?"היום":`בעוד ${d} ימים`}</td></tr>`;}).join("")}
   <tr><td colspan="3"><b>סה״כ</b></td><td class="num"><b>${money(Math.round(left))}</b></td><td></td></tr></tbody></table></div>`:""}
+  <div class="row" style="margin-bottom:6px"><button class="btn gold" id="dCash">📅 חישוב תזרים: כמה כסף צריך ומתי</button></div>
   <div class="row" style="justify-content:space-between"><h2>מכולות בדרך</h2><button class="btn sm" id="dNew">+ מכולה חדשה</button></div>
   ${open.length?shipTable(open.sort((a,b)=>(a.eta||"9").localeCompare(b.eta||"9"))):`<div class="panel muted">עוד אין מכולות. לחצו "מכולה חדשה" כדי להתחיל ולהעלות מסמכים.</div>`}`;
-  $("#dNew").onclick=newShip;bindShipRows();
+  $("#dNew").onclick=newShip;$("#dCash").onclick=()=>{view="cash";render();};bindShipRows();
+}
+
+// ---------- cash plan: all open payments grouped by date and month ----------
+let cashVat=true;
+function renderCash(){
+  const all=db.shipments.flatMap(s=>{const P=shipPayments(s);return P.open.map(r=>({...r,s,ok:P.ok}));}).filter(r=>cashVat||r.k!=="vat");
+  const noDate=all.filter(r=>!r.due),dated=all.filter(r=>r.due).sort((a,b)=>a.due.localeCompare(b.due));
+  const byDate={};dated.forEach(r=>(byDate[r.due]??=[]).push(r));
+  const byMonth={};dated.forEach(r=>{const m=r.due.slice(0,7);const o=byMonth[m]??={net:0,vat:0};if(r.k==="vat")o.vat+=r.amount;else o.net+=r.amount;});
+  const total=all.reduce((t,r)=>t+r.amount,0),vatT=all.filter(r=>r.k==="vat").reduce((t,r)=>t+r.amount,0);
+  const missing=db.shipments.filter(s=>!shipCalc(s).ok).map(s=>s.name);
+  const mName=m=>new Date(m+"-01T00:00").toLocaleDateString("he-IL",{month:"long",year:"numeric"});
+  let run=0;
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>תזרים: כמה כסף צריך ומתי</h1><p class="sub">כל התשלומים שעוד לא שולמו, לפי התאריך שבו צריך לשלם אותם. ברירת המחדל לתאריך היא מועד הגעת המכולה.</p></div>
+    <div class="row"><label class="row" style="gap:6px;font-weight:600"><input type="checkbox" id="cVat" ${cashVat?"checked":""} style="width:auto"> כולל מע״מ</label><button class="btn ghost sm" onclick="window.print()">הדפסה</button></div></div>
+  ${missing.length?`<p class="warn">⚠ חסר שער המרה ב: ${esc(missing.join(", "))}. הסכומים שלהן לא מדויקים.</p>`:""}
+  <div class="cards">
+    <div class="card"><div class="k">סה״כ להיערך${cashVat?" (כולל מע״מ)":" (בלי מע״מ)"}</div><div class="v">${money(Math.round(total))||"₪0"}</div></div>
+    ${cashVat?`<div class="card"><div class="k">מתוכו מע״מ (חוזר בקיזוז)</div><div class="v">${money(Math.round(vatT))||"₪0"}</div></div>
+    <div class="card"><div class="k">בלי מע״מ</div><div class="v">${money(Math.round(total-vatT))||"₪0"}</div></div>`:""}
+    <div class="card"><div class="k">התשלום הקרוב</div><div class="v" style="font-size:20px">${dated[0]?esc(fmtDate(dated[0].due)):"—"}</div><div class="k">${dated[0]?`בעוד ${daysTo(dated[0].due)} ימים`:""}</div></div>
+  </div>
+  ${Object.keys(byMonth).length?`<h2>לפי חודש</h2><div class="tablewrap" style="margin-bottom:18px"><table><thead><tr><th>חודש</th><th class="num">תשלומים בלי מע״מ</th>${cashVat?'<th class="num">מע״מ</th>':""}<th class="num">סה״כ לחודש</th><th class="num">מצטבר</th></tr></thead><tbody>
+    ${(()=>{let acc=0;return Object.entries(byMonth).map(([m,o])=>{acc+=o.net+o.vat;return `<tr><td><b>${esc(mName(m))}</b></td><td class="num">${money(Math.round(o.net))}</td>${cashVat?`<td class="num">${money(Math.round(o.vat))||"₪0"}</td>`:""}<td class="num"><b>${money(Math.round(o.net+o.vat))}</b></td><td class="num">${money(Math.round(acc))}</td></tr>`;}).join("");})()}
+  </tbody></table></div>`:""}
+  <h2>לפי תאריך</h2>
+  ${Object.entries(byDate).map(([d,rows])=>{const sub=rows.reduce((t,r)=>t+r.amount,0);run+=sub;const dd=daysTo(d);const ships=[...new Set(rows.map(r=>r.s.name))];
+    return `<div class="panel"><div class="row" style="justify-content:space-between"><div><b style="font-size:17px">${esc(fmtDate(d))}</b> <span class="${dd<0?"bad":dd<=14?"warn":"muted"}">${dd<0?`באיחור של ${-dd} ימים`:dd===0?"היום":`בעוד ${dd} ימים`}</span>
+      <div class="muted" style="font-size:13px">${esc(ships.join(" · "))}</div></div><div style="text-align:left"><div class="v" style="font-family:var(--display);font-size:22px;font-weight:700">${money(Math.round(sub))}</div><div class="muted" style="font-size:12.5px">מצטבר: ${money(Math.round(run))}</div></div></div>
+      <table style="margin-top:8px"><tbody>${rows.map(r=>`<tr class="click" data-id="${esc(r.s.id)}"><td>${esc(r.s.name)}</td><td>${esc(r.label)}</td><td class="num">${money(Math.round(r.amount))}</td></tr>`).join("")}</tbody></table></div>`;}).join("")||`<div class="panel muted">אין תשלומים פתוחים עם תאריך.</div>`}
+  ${noDate.length?`<h2>בלי תאריך</h2><div class="panel"><p class="warn" style="margin-top:0">למכולות האלה אין מועד הגעה ולכן אין תאריך לתשלום. כדאי להשלים.</p><table><tbody>${noDate.map(r=>`<tr class="click" data-id="${esc(r.s.id)}"><td>${esc(r.s.name)}</td><td>${esc(r.label)}</td><td class="num">${money(Math.round(r.amount))}</td></tr>`).join("")}</tbody></table></div>`:""}`;
+  $("#cVat").onchange=e=>{cashVat=e.target.checked;renderCash();};bindShipRows();
 }
 
 // ---------- shipments ----------
