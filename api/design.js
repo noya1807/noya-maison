@@ -50,6 +50,7 @@ ART DIRECTION
 - Balanced colours: spread dark items, keep one accent colour per side. Rich and abundant but never cluttered; generous negative space above.
 - Neutral styling props allowed (travertine risers, a soft linen drape, a few dried botanicals) — they must not look like products.
 - Set: ${moods[variant % moods.length]}.
+- Camera: slightly elevated three-quarter view, about 25–30° above the set, looking gently down so the top surfaces, the riser tops and some of the floor in front are visible; keep every product upright, true to shape and undistorted.
 - Lighting: soft directional daylight, realistic contact shadows, gentle depth of field, high-end commercial catalogue quality.`;
 }
 
