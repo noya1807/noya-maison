@@ -103,7 +103,9 @@ function toast(t,ms=2600){const e=$("#toast");e.textContent=t;e.style.display="b
 const STATUSES=[["order","הוזמן"],["prod","בייצור"],["sea","בים"],["port","בנמל"],["cleared","שוחרר"],["wh","במחסן"]];
 const stName=s=>(STATUSES.find(x=>x[0]===s)||STATUSES[0])[1];
 const DOC_KINDS=["חשבונית פרופורמה","Packing List","שטר מטען (B/L)","רשימון יבוא","חשבונית הובלה","חשבונית עמיל מכס","תעודת מקור","אחר"];
-const COSTS=[["freight","הובלה ימית (₪)"],["customs","מכס ומיסים (₪)"],["clearance","עמיל מכס ושחרור (₪)"],["port","נמל ואחסנה (₪)"],["local","הובלה למחסן (₪)"],["other","אחר (₪)"]];
+// each cost: [key, label, default split]. "vol" = by the CBM each line takes in the container, "val" = by the value of each line
+const COSTS=[["originFreight","הובלה בארץ המקור עד הנמל (₪)","vol"],["freight","הובלה ימית (₪)","vol"],["port","נמל ואחסנה (₪)","vol"],["clearance","עמיל מכס ושחרור (₪)","vol"],["local","הובלה למחסן (₪)","vol"],["customs","מכס ומיסים (₪)","val"],["fees","עמלות – Alibaba, בנק וכו׳ (₪)","val"],["other","אחר (₪)","val"]];
+const costMethod=(s,k)=>(s.costMethod&&s.costMethod[k])||COSTS.find(c=>c[0]===k)[2];
 const DEFAULT_CATS=[["DB","דבש"],["WN","יין ואלכוהול"],["CH","שוקולד וממתקים"],["DF","פירות יבשים ואגוזים"],["CF","קפה ותה"],["GR","גורמה, ממרחים ורטבים"],["OL","שמן זית"],["KT","כלי מטבח והגשה"],["HM","עיצוב הבית"],["CN","נרות וריחות"],["SP","טיפוח וספא"],["TX","טקסטיל"],["JD","יודאיקה"],["TC","גאדג'טים ואלקטרוניקה"],["BG","תיקים ואביזרים"],["BX","אריזות – קופסאות, סלסלות, מגשים"],["AC","אביזרי אריזה – סרטים, כרטיסים, מילוי"],["OT","אחר"]].map(([code,name])=>({code,name}));
 const emptyDb=()=>({v:1,products:[],shipments:[],suppliers:[],categories:DEFAULT_CATS.map(c=>({...c})),seq:{}});
 
@@ -168,10 +170,15 @@ function shipCalc(s){
   const goodsIls=lines0.reduce((t,l)=>t+l.valueIls,0);
   const byCur={};lines0.forEach(l=>{byCur[l.cur]=(byCur[l.cur]||0)+l.orig;});
   const extra=COSTS.reduce((t,[k])=>t+num(s.costs?.[k]),0);
+  const volCosts=COSTS.reduce((t,[k])=>t+(costMethod(s,k)==="vol"?num(s.costs?.[k]):0),0),valCosts=extra-volCosts;
+  const totalCbm=lines0.reduce((t,l)=>t+num(l.cbm),0);
+  const missingCbm=lines0.filter(l=>l.valueIls&&!(num(l.cbm)>0)).length;
+  const byVol=volCosts>0&&totalCbm>0&&!missingCbm;            // volume split only when every line has its CBM
   const total=goodsIls+extra;
-  const lines=lines0.map(l=>{const share=goodsIls>0?extra*l.valueIls/goodsIls:0;return {...l,landed:num(l.qty)>0&&l.valueIls?(l.valueIls+share)/num(l.qty):0};});
+  const lines=lines0.map(l=>{const sv=goodsIls>0?l.valueIls/goodsIls:0,sc=byVol?num(l.cbm)/totalCbm:sv;
+    const share=valCosts*sv+volCosts*sc;return {...l,share,landed:num(l.qty)>0&&l.valueIls?(l.valueIls+share)/num(l.qty):0};});
   const bySup={};lines.forEach(l=>{const k=String(l.supplier||s.supplier||"ללא ספק").trim()||"ללא ספק";const o=bySup[k]??={goodsIls:0,landed:0,lines:0};o.goodsIls+=l.valueIls;o.landed+=l.landed*num(l.qty);o.lines++;});
-  return {ok:!missing.length,missing,goodsIls,byCur,extra,total,lines,bySup,factor:goodsIls>0?total/goodsIls:0};
+  return {ok:!missing.length,missing,goodsIls,byCur,extra,volCosts,valCosts,totalCbm,missingCbm,byVol,total,lines,bySup,factor:goodsIls>0?total/goodsIls:0};
 }
 
 // ---------- navigation ----------
@@ -243,14 +250,15 @@ function renderShip(){
   </div>
 
   <h2>מוצרים במכולה</h2>
-  <div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>מק״ט</th><th>מוצר</th><th>ספק</th><th class="num">כמות</th><th>מטבע</th><th class="num">מחיר ליחידה</th><th class="num">שווי (₪)</th><th class="num">עלות נחיתה ליחידה</th><th></th></tr></thead><tbody id="items"></tbody></table></div>
+  <div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>מק״ט</th><th>מוצר</th><th>ספק</th><th class="num">כמות</th><th>מטבע</th><th class="num">מחיר ליחידה</th><th class="num">CBM</th><th class="num">שווי (₪)</th><th class="num">עלות נחיתה ליחידה</th><th></th></tr></thead><tbody id="items"></tbody></table></div>
     <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="addItem">+ שורת מוצר</button>
     <button class="btn sm gold" id="applyLanded">עדכון עלות הנחיתה בכרטיסי המוצרים</button></div>
     <datalist id="prodList">${db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("")}</datalist>
   </div>
 
   <h2>עלויות נוספות</h2>
-  <div class="panel"><div class="grid">${COSTS.map(([k,l])=>`<label class="f">${l}<input data-c="${k}" inputmode="decimal" dir="ltr" value="${esc(s.costs[k])}"></label>`).join("")}</div>
+  <div class="panel"><div class="grid">${COSTS.map(([k,l])=>`<label class="f">${l}<input data-c="${k}" inputmode="decimal" dir="ltr" value="${esc(s.costs[k])}">
+      <select data-cm="${k}" style="padding:3px 6px;font-size:12.5px;font-weight:400"><option value="vol" ${costMethod(s,k)==="vol"?"selected":""}>מתחלק לפי נפח (CBM)</option><option value="val" ${costMethod(s,k)==="val"?"selected":""}>מתחלק לפי שווי</option></select></label>`).join("")}</div>
     <div id="sum" style="margin-top:14px"></div></div>
 
   <h2>הערות</h2><div class="panel"><textarea data-k="notes" rows="3">${esc(s.notes)}</textarea></div>`;
@@ -261,6 +269,7 @@ function renderShip(){
     db.shipments=db.shipments.filter(x=>x!==s);touch();sel=null;render();};
   document.querySelectorAll("[data-k]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{s[el.dataset.k]=el.value;if(el.dataset.k==="name")$("#sTitle").textContent=el.value;touch();if(["currency","supplier"].includes(el.dataset.k)){drawFx();drawItems();}}));
   document.querySelectorAll("[data-c]").forEach(el=>el.addEventListener("input",()=>{s.costs[el.dataset.c]=el.value;touch();drawItems();}));
+  document.querySelectorAll("[data-cm]").forEach(el=>el.addEventListener("change",()=>{(s.costMethod??={})[el.dataset.cm]=el.value;touch();drawItems();}));
   const drop=$("#drop");$("#pick").onclick=e=>{e.preventDefault();$("#files").click();};
   $("#files").onchange=e=>uploadFiles(s,[...e.target.files]);
   ["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("over");}));
@@ -285,9 +294,10 @@ function renderShip(){
       <td style="width:85px"><input data-f="qty" inputmode="decimal" dir="ltr" value="${esc(it.qty)}"></td>
       <td style="width:82px"><select data-f="currency">${CURS.map(cu=>`<option ${lineCur(s,it)===cu?"selected":""}>${cu}</option>`).join("")}</select></td>
       <td style="width:105px"><input data-f="unitPrice" inputmode="decimal" dir="ltr" value="${esc(it.unitPrice)}"></td>
+      <td style="width:80px"><input data-f="cbm" inputmode="decimal" dir="ltr" value="${esc(it.cbm)}" title="נפח השורה במכולה (מה-Packing List / פרופורמה)"></td>
       <td class="num">${l.valueIls?money(Math.round(l.valueIls)):(l.orig&&!rateOf(s,l.cur)?`<span class="warn">חסר שער</span>`:"")}</td>
       <td class="num"><b>${l.landed&&c.ok?money(Math.round(l.landed*100)/100):""}</b></td>
-      <td><button class="btn sm ghost" data-del="${i}" title="הסרה">✕</button></td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">עוד אין מוצרים. הוסיפו שורות, או שלחו לClaude את הפרופורמות והוא ימלא.</td></tr>`;
+      <td><button class="btn sm ghost" data-del="${i}" title="הסרה">✕</button></td></tr>`;}).join("")||`<tr><td colspan="10" class="muted">עוד אין מוצרים. הוסיפו שורות, או שלחו לClaude את הפרופורמות והוא ימלא.</td></tr>`;
     $("#items").querySelectorAll("input,select").forEach(el=>el.addEventListener("change",()=>{const it=s.items[+el.closest("tr").dataset.i];it[el.dataset.f]=el.value.trim();
       if(el.dataset.f==="currency"&&el.value===s.currency)it.currency="";
       if(el.dataset.f==="sku"){const p=prodBySku(el.value.trim());if(p){it.sku=p.sku;it.name=p.name;if(!it.supplier&&p.supplier)it.supplier=p.supplier;}}
@@ -301,8 +311,9 @@ function renderShip(){
     $("#sum").innerHTML=`<div class="cards" style="margin:0">
       <div class="card"><div class="k">סחורה במטבע הספקים</div><div class="v" style="font-size:18px">${curTxt}</div></div>
       <div class="card"><div class="k">סחורה ב-₪</div><div class="v" style="font-size:20px">${c.ok?money(Math.round(c.goodsIls))||"₪0":`<span class="warn" style="font-size:15px">חסר שער ל-${esc(c.missing.join(", "))}</span>`}</div></div>
-      <div class="card"><div class="k">עלויות נוספות</div><div class="v" style="font-size:20px">${money(Math.round(c.extra))||"₪0"}</div></div>
+      <div class="card"><div class="k">עלויות נוספות</div><div class="v" style="font-size:20px">${money(Math.round(c.extra))||"₪0"}</div><div class="k">${c.volCosts?`${money(Math.round(c.volCosts))} לפי נפח${c.totalCbm?` (${Math.round(c.totalCbm*100)/100} CBM)`:""} · ${money(Math.round(c.valCosts))||"₪0"} לפי שווי`:""}</div></div>
       <div class="card"><div class="k">עלות נחיתה כוללת</div><div class="v" style="font-size:20px">${c.ok?money(Math.round(c.total)):"—"}</div><div class="k">${c.factor&&c.ok?`פי ${c.factor.toFixed(2)} ממחיר הסחורה`:""}</div></div></div>
+      ${c.volCosts&&!c.byVol?`<p class="warn" style="margin:10px 0 0">⚠ ${c.missingCbm?`ל-${c.missingCbm} שורות חסר נפח (CBM)`:"אין נפח בשורות"}, ולכן כרגע גם עלויות ההובלה מתחלקות לפי שווי. מלאו CBM בכל שורה כדי לחלק לפי נפח.</p>`:""}
       ${sups.length>1?`<h3 style="margin:16px 0 6px;font-size:15px">חלוקה לפי ספק</h3><table><thead><tr><th>ספק</th><th class="num">שורות</th><th class="num">סחורה (₪)</th><th class="num">חלק מהמכולה</th><th class="num">עלות נחיתה (₪)</th></tr></thead><tbody>
       ${sups.map(([k,o])=>`<tr><td><b>${esc(k)}</b></td><td class="num">${o.lines}</td><td class="num">${c.ok?money(Math.round(o.goodsIls)):""}</td><td class="num">${c.ok&&c.goodsIls?Math.round(o.goodsIls/c.goodsIls*100)+"%":""}</td><td class="num">${c.ok?money(Math.round(o.landed)):""}</td></tr>`).join("")}</tbody></table>`:""}`;}
 
@@ -363,7 +374,7 @@ function showExtract(s,d,R){
     <td class="num">${esc(num(i.qty).toLocaleString("he-IL"))}</td><td class="num">${esc(i.unitPrice??"")}</td><td class="num">${i.amount!=null?money(i.amount,cur):""}</td><td><input type="checkbox" data-set="${k}" ${i.isSet?"checked":""} style="width:auto" title="נמכר כסט"></td><td>${ok?'<span class="okc">✓</span>':'<span class="warn" title="כמות × מחיר לא שווה לסה״כ בשורה">⚠</span>'}</td></tr>`;}).join("")||`<tr><td colspan="7" class="muted">לא נמצאו שורות מוצרים במסמך.</td></tr>`}
   </tbody></table></div>
   <p style="margin:8px 0"><b>סה״כ סחורה:</b> ${money(Math.round(sum*100)/100,cur)}${R.totalCartons?` · ${esc(R.totalCartons)} קרטונים`:""}${R.totalCbm?` · ${esc(R.totalCbm)} CBM`:""}${R.deposit?` · מקדמה ששולמה: ${money(R.deposit,cur)}`:""}</p>
-  ${(R.extraCosts||[]).length?`<div class="panel" style="margin:10px 0"><b>עלויות נוספות במסמך</b> <span class="muted">(יתווספו ל"אחר" במכולה, בשקלים)</span>
+  ${(R.extraCosts||[]).length?`<div class="panel" style="margin:10px 0"><b>עלויות נוספות במסמך</b> <span class="muted">(יתווספו לעלויות המכולה בשקלים: הובלה לפי נפח, עמלות לפי שווי)</span>
     <ul style="margin:6px 0">${R.extraCosts.map(x=>`<li>${esc(x.label)}: ${money(x.amount,(x.currency||cur).toUpperCase())}</li>`).join("")}</ul>
     <div class="row">${extraCurs.map(c=>`<label class="f" style="width:170px">שער ${c} ל-₪<input data-exfx="${c}" inputmode="decimal" dir="ltr" value="${esc(s.fxRates?.[c]||"")}" placeholder="למשל 3.65"></label>`).join("")}</div>
     <label class="row" style="margin-top:8px;font-size:14px"><input type="checkbox" id="exAddCosts" checked style="width:auto"> להוסיף אותן לעלויות המכולה</label></div>`:""}
@@ -385,10 +396,14 @@ function showExtract(s,d,R){
         pcsPerCarton:i.pcsPerCarton??"",cartons:i.cartons??"",cbm:i.cbm??"",fromDoc:order||d.name});});
     const noteBits=[];
     if((R.extraCosts||[]).length&&$("#exAddCosts")?.checked){
-      let ils=0,missing=[];
-      R.extraCosts.forEach(x=>{const c=(x.currency||cur).toUpperCase();const r=c==="ILS"?1:num(s.fxRates[c]);if(!r)missing.push(c);ils+=num(x.amount)*r;});
+      let ils=0,missing=[];const add={};
+      R.extraCosts.forEach(x=>{const c=(x.currency||cur).toUpperCase();const r=c==="ILS"?1:num(s.fxRates[c]);if(!r)missing.push(c);
+        const k=/freight|shipping|truck|inland|transport|delivery|port|הובלה|משלוח/i.test(x.label)?"originFreight":/fee|commission|service|bank|alibaba|עמלה/i.test(x.label)?"fees":"other";
+        add[k]=(add[k]||0)+num(x.amount)*r;ils+=num(x.amount)*r;});
+      const lbl={originFreight:"הובלה בארץ המקור",fees:"עמלות",other:"אחר"};
       if(missing.length){toast("חסר שער המרה ל-"+[...new Set(missing)].join(", ")+". העלויות הנוספות לא נוספו.",6000);}
-      else{s.costs.other=String(Math.round((num(s.costs.other)+ils)*100)/100);noteBits.push(`${R.extraCosts.map(x=>`${x.label} ${money(x.amount,(x.currency||cur).toUpperCase())}`).join(", ")} → נוספו ל"אחר" (${money(Math.round(ils))})`);}
+      else{Object.entries(add).forEach(([k,v])=>{s.costs[k]=String(Math.round((num(s.costs[k])+v)*100)/100);});
+        noteBits.push(`${R.extraCosts.map(x=>`${x.label} ${money(x.amount,(x.currency||cur).toUpperCase())}`).join(", ")} → נוספו ל${Object.entries(add).map(([k,v])=>`"${lbl[k]}" (${money(Math.round(v))})`).join(" ו")}`);}
     }
     if(R.deposit)noteBits.push(`מקדמה ששולמה: ${money(R.deposit,cur)}${R.grandTotal?`, יתרה לתשלום: ${money(Math.round((R.grandTotal-R.deposit)*100)/100,cur)}`:""}`);
     if(noteBits.length)s.notes=((s.notes||"")+(s.notes?"\n":"")+`[${order||d.name}] `+noteBits.join(" · ")).trim();
