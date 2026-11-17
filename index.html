@@ -622,7 +622,12 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 // h = approximate real height in cm, used to keep items in proportion; ar = image width/height.
 const CATS={scent:"נרות וריח",decor:"אגרטלים ועיצוב",serve:"הגשה ומטבח",textile:"טקסטיל"};
 const P=[
- // the catalogue was cleared on 17.11.2026; new products are added in the admin screen or here
+ ["a01","אגרטל קרמי כדורי",14,8.5,1.224,"decor"],["a02","סט שבת אהבת השם",75,8.7,1.926,"scent"],
+ ["a03","פמוט קרמי קלאסי גדול",20,25.1,0.306,"scent"],["a04","פמוט קרמי קלאסי קטן",20,20,0.344,"scent"],
+ ["a05","פמוט קרמי מודרני גדול",20,25.5,0.312,"scent"],["a06","פמוט מודרני קטן",20,19.4,0.423,"scent"],
+ ["a07","אגרטל גלים קרמי",18,16.5,0.632,"decor"],["a08","אגרטל מסובב קרמי",13,11,0.77,"decor"],
+ ["a09","אגרטל רבדים שחור",15,21.4,0.344,"decor"],["a10","אגרטל רבדים לבן",15,21.4,0.327,"decor"],
+ ["a11","אגרטל רבדים קטן לבן",13,17,0.403,"decor"]
 ].map(([id,name,price,h,ar,cat])=>({id,name,price,h,ar,cat,img:`img/p/${id}.webp`}));
 const PACKS=[];
 const BGS=[
@@ -673,7 +678,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 // ---- Catalogue ----
 const chipsEl=document.getElementById("chips"), gridEl=document.getElementById("grid");
 function renderChips(){
-  chipsEl.innerHTML=[["all","הכול"],...Object.entries(CATS)].map(([k,v])=>`<button class="chip" aria-pressed="${k===cat}" data-c="${k}">${v}</button>`).join("");
+  chipsEl.innerHTML=[["all","הכול"],...Object.entries(CATS).filter(([k])=>P.some(p=>p.cat===k&&!p.hidden))].map(([k,v])=>`<button class="chip" aria-pressed="${k===cat}" data-c="${k}">${v}</button>`).join("");
 }
 chipsEl.onclick=e=>{const b=e.target.closest(".chip");if(!b)return;cat=b.dataset.c;renderChips();renderGrid();};
 function renderGrid(){
