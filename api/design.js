@@ -42,6 +42,7 @@ ${noPack ? "No packaging: arrange the products freely on the surface as an open 
 
 FIDELITY
 Reproduce each product as photographed: same shape, proportions, colours, materials, and any logo or label text that is physically printed on it. Keep true relative sizes from the heights given. Do not add, duplicate or remove products, and do not invent brands.
+STRICT PRODUCT FIDELITY: the products are real items for sale and must look identical to their photos and to the layout sketch. Do not restyle, redesign, recolour, reshape, simplify or "improve" any product; keep every ridge, groove, pattern, speckle, texture, finish and proportion exactly as shown. When in doubt, copy the product more literally, not more creatively.
 NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
 
 ART DIRECTION
@@ -51,7 +52,7 @@ ART DIRECTION
 - Balanced colours: spread dark items, keep one accent colour per side. Rich and abundant but never cluttered; some negative space above.
 - Neutral styling props allowed (travertine risers, a soft linen drape, a few dried botanicals) — they must not look like products.
 - Set: ${moods[variant % moods.length]}.
-- Camera: elevated three-quarter view, about 35–40° above the set, looking down onto it so the top surfaces, the riser tops and the surface in front are clearly visible; keep every product upright, true to shape and undistorted.
+- Camera: elevated three-quarter view, about 45–50° above the set, looking clearly down onto it so the top surfaces, the riser tops and the surface in front are clearly visible; keep every product upright, true to shape and undistorted.
 - Framing: a closer shot — the product group fills about 75–85% of the frame width, with only a modest margin of backdrop around it; do not crop any product.
 - Lighting: soft directional daylight, realistic contact shadows, gentle depth of field, high-end commercial catalogue quality.`;
 }
