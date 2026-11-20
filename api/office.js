@@ -255,7 +255,7 @@ export default async function handler(req, res) {
     }
     if (a === "retouch" && req.method === "POST") {   // GPT Image: place the exact product on a neutral studio background
       const key = process.env.OPENAI_API_KEY; if (!key) { res.status(500).json({ error: "OPENAI_API_KEY לא מוגדר" }); return; }
-      const { image, prompt, quality } = await readBody(req);
+      const { image, prompt, quality, ref } = await readBody(req);
       const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(image || "");
       if (!m) { res.status(400).json({ error: "bad image" }); return; }
       const form = new FormData();
@@ -263,6 +263,8 @@ export default async function handler(req, res) {
       form.append("prompt", String(prompt || "").slice(0, 4000));
       form.append("quality", ["low","medium","high"].includes(quality) ? quality : "high"); form.append("size", "1024x1024"); form.append("output_format", "png");
       form.append("image[]", new Blob([Buffer.from(m[2], "base64")], { type: `image/${m[1]}` }), `product.${m[1] === "jpeg" ? "jpg" : m[1]}`);
+      const rm = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(ref || "");   // optional style reference (second image)
+      if (rm) form.append("image[]", new Blob([Buffer.from(rm[2], "base64")], { type: `image/${rm[1]}` }), `style.${rm[1] === "jpeg" ? "jpg" : rm[1]}`);
       const r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { res.status(502).json({ error: j?.error?.message || `OpenAI ${r.status}` }); return; }
