@@ -98,7 +98,7 @@ async function readDb() {
 const blobUrlOk = u => { try { const x = new URL(u); return x.protocol === "https:" && x.hostname.endsWith(".blob.vercel-storage.com") && x.pathname.startsWith("/" + DOC_PREFIX); } catch (e) { return false; } };
 
 // ---------- AI extraction of import documents (uses the OPENAI_API_KEY already set for the designer) ----------
-export const config = { maxDuration: 120 };
+export const config = { maxDuration: 300 };
 const EXTRACT_MODELS = [...new Set([process.env.OPENAI_EXTRACT_MODEL, "gpt-5-mini", "gpt-4.1"].filter(Boolean))];
 const nn = t => ({ type: [t, "null"] });
 const SCHEMA = {
@@ -255,13 +255,13 @@ export default async function handler(req, res) {
     }
     if (a === "retouch" && req.method === "POST") {   // GPT Image: place the exact product on a neutral studio background
       const key = process.env.OPENAI_API_KEY; if (!key) { res.status(500).json({ error: "OPENAI_API_KEY לא מוגדר" }); return; }
-      const { image, prompt } = await readBody(req);
+      const { image, prompt, quality } = await readBody(req);
       const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(image || "");
       if (!m) { res.status(400).json({ error: "bad image" }); return; }
       const form = new FormData();
       form.append("model", process.env.OPENAI_IMAGE_MODEL || "gpt-image-2");
       form.append("prompt", String(prompt || "").slice(0, 4000));
-      form.append("quality", "high"); form.append("size", "1024x1024"); form.append("output_format", "png");
+      form.append("quality", ["low","medium","high"].includes(quality) ? quality : "high"); form.append("size", "1024x1024"); form.append("output_format", "png");
       form.append("image[]", new Blob([Buffer.from(m[2], "base64")], { type: `image/${m[1]}` }), `product.${m[1] === "jpeg" ? "jpg" : m[1]}`);
       const r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
       const j = await r.json().catch(() => ({}));
