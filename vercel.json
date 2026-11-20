@@ -2,7 +2,7 @@
   "functions": {
     "api/design.js": {
       "maxDuration": 120,
-      "includeFiles": "img/**"
+      "includeFiles": "img/{orig,pack,style}/**"
     },
     "api/office.js": {
       "maxDuration": 300

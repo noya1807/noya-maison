@@ -88,7 +88,10 @@ export default async function handler(req, res) {
     if (m) add(Buffer.from(m[2], "base64"), `layout.${m[1] === "jpeg" ? "jpg" : m[1]}`, `image/${m[1]}`);
     let cat = null;
     for (const it of items) {
-      if (/^\d{2}$/.test(it.id)) { add(await readFile(path.join(ROOT, "img", "orig", `${it.id}.jpg`)), `product_${it.id}.jpg`, "image/jpeg"); continue; }
+      if (/^[a-z0-9]{1,12}$/i.test(it.id)) {   // catalogue products: clean product photo shipped with the site
+        const buf = await readFile(path.join(ROOT, "img", "orig", `${it.id}.jpg`)).catch(() => null);
+        if (buf) { add(buf, `product_${it.id}.jpg`, "image/jpeg"); continue; }
+      }
       // products added in the admin screen: original photo lives in Blob storage
       cat = cat || await readCatalog().catch(() => null);
       const url = cat?.products?.find(p => p.id === it.id)?.origUrl;
