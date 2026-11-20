@@ -253,6 +253,23 @@ export default async function handler(req, res) {
       if (ok.length) await del(ok);
       res.status(200).json({ ok: true, removed: ok.length }); return;
     }
+    if (a === "retouch" && req.method === "POST") {   // GPT Image: place the exact product on a neutral studio background
+      const key = process.env.OPENAI_API_KEY; if (!key) { res.status(500).json({ error: "OPENAI_API_KEY לא מוגדר" }); return; }
+      const { image, prompt } = await readBody(req);
+      const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(image || "");
+      if (!m) { res.status(400).json({ error: "bad image" }); return; }
+      const form = new FormData();
+      form.append("model", process.env.OPENAI_IMAGE_MODEL || "gpt-image-2");
+      form.append("prompt", String(prompt || "").slice(0, 4000));
+      form.append("quality", "high"); form.append("size", "1024x1024"); form.append("output_format", "png");
+      form.append("image[]", new Blob([Buffer.from(m[2], "base64")], { type: `image/${m[1]}` }), `product.${m[1] === "jpeg" ? "jpg" : m[1]}`);
+      const r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { res.status(502).json({ error: j?.error?.message || `OpenAI ${r.status}` }); return; }
+      const b64 = j?.data?.[0]?.b64_json; if (!b64) { res.status(502).json({ error: "no image returned" }); return; }
+      const blob = await put(`office/retouch/${crypto.randomBytes(9).toString("hex")}.png`, Buffer.from(b64, "base64"), { access: "public", contentType: "image/png", addRandomSuffix: true });
+      res.status(200).json({ url: blob.url }); return;
+    }
     if (a === "delfile" && req.method === "POST") {
       const { url } = await readBody(req);
       if (!blobUrlOk(url)) { res.status(400).json({ error: "bad url" }); return; }
