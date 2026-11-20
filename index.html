@@ -86,22 +86,22 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .empty{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);background:rgba(255,250,243,.88);padding:8px 16px;border-radius:99px;font-size:14px;white-space:nowrap}
 .bgs{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--cocoa-soft)}
 /* showcase: recent boxes built with us, shown while the customer's box is still empty */
-.show{position:absolute;inset:0;z-index:6;background:var(--sand)}
+.show{position:absolute;inset:0;z-index:6;background:var(--paper);display:flex;flex-direction:column}
+.show-media{position:relative;flex:1;min-height:0;overflow:hidden;background:var(--sand)}
 .show-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.1s ease}
 .show-img.on{opacity:1}
-.show::after{content:"";position:absolute;inset:auto 0 0 0;height:46%;background:linear-gradient(to top,rgba(40,24,14,.62),transparent);pointer-events:none}
-.show-cap{position:absolute;z-index:2;inset-inline-start:18px;bottom:16px;display:flex;flex-direction:column;gap:2px;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.35);max-width:60%}
-.show-k{font-size:12px;letter-spacing:.4px;opacity:.95}
-.show-cap b{font-family:var(--display);font-weight:500;font-size:clamp(17px,2.2vw,24px);line-height:1.2}
-.show-cap small{font-size:11px;opacity:.8}
-.show-go{position:absolute;z-index:2;inset-inline-end:16px;bottom:18px;border:0;border-radius:99px;background:rgba(255,250,243,.95);color:var(--cocoa);font-weight:700;font-size:14px;padding:10px 16px;box-shadow:0 6px 18px rgba(0,0,0,.18);cursor:pointer}
-.show-go:hover{background:#fff}
-.show-dots{position:absolute;z-index:2;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px}
-.show-dots button{all:unset;cursor:pointer;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,0,0,.08)}
-.show-dots button.on{background:#fff;width:20px;border-radius:99px}
+.show-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--paper);border-top:1px solid var(--line)}
+.show-cap{display:flex;flex-direction:column;gap:1px;color:var(--cocoa);min-width:0}
+.show-k{font-size:11.5px;color:var(--cocoa-soft);letter-spacing:.2px}
+.show-cap b{font-family:var(--display);font-weight:500;font-size:clamp(15px,1.9vw,19px);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.show-go{flex:0 0 auto;border:0;border-radius:99px;background:var(--cocoa);color:var(--paper);font-weight:700;font-size:14px;padding:9px 16px;cursor:pointer}
+.show-go:hover{background:#5d3c2c}
+.show-dots{position:absolute;z-index:2;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;background:rgba(40,24,14,.25);padding:5px 8px;border-radius:99px}
+.show-dots button{all:unset;cursor:pointer;width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.6)}
+.show-dots button.on{background:#fff;width:18px;border-radius:99px}
 .show-adm{position:absolute;z-index:3;top:10px;inset-inline-end:10px;display:flex;gap:6px}
 .show-adm button{border:0;border-radius:8px;background:rgba(74,47,34,.85);color:#fff;font-size:12px;padding:5px 9px;cursor:pointer}
-@media (max-width:560px){.show-cap{max-width:100%;bottom:62px}.show-go{inset-inline:16px;text-align:center}}
+@media (max-width:560px){.show-bar{padding:8px 12px}.show-go{font-size:13px;padding:8px 12px}}
 .sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--paper);box-shadow:0 0 0 1px var(--line);background-size:cover}
 .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--cocoa)}
 
@@ -456,10 +456,9 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       <canvas id="cv" aria-hidden="true"></canvas><div class="empty" id="emptyMsg" hidden>בחרו מוצרים והם יסתדרו כאן</div>
       <img id="aiImg" class="ai-img" alt="עיצוב המארז שנוצר על ידי מעצב ה-AI" hidden>
       <div class="show" id="show" hidden aria-label="מארזים שנבנו לאחרונה אצלנו">
-        <img class="show-img" id="showA" alt=""><img class="show-img" id="showB" alt="">
-        <div class="show-cap"><span class="show-k">✦ מארזים שנבנו לאחרונה אצלנו</span><b id="showT"></b><small>התמונה להמחשה</small></div>
-        <button class="show-go" id="showGo">בנו מארז דומה ←</button>
-        <div class="show-dots" id="showDots"></div>
+        <div class="show-media"><img class="show-img" id="showA" alt=""><img class="show-img" id="showB" alt=""><div class="show-dots" id="showDots"></div></div>
+        <div class="show-bar"><div class="show-cap"><span class="show-k">✦ מארזים שנבנו לאחרונה אצלנו · התמונה להמחשה</span><b id="showT"></b></div>
+        <button class="show-go" id="showGo">בנו מארז דומה ←</button></div>
         <div class="show-adm" id="showAdm" hidden><button data-sa="prev" title="הזזה קדימה בתור">→</button><button data-sa="next" title="הזזה אחורה בתור">←</button><button data-sa="del" title="הסרה מחלון הראווה">✕ הסרה</button></div>
       </div>
       <div class="ai-load" id="aiLoad" hidden><div class="ai-orb"></div><b id="aiStep">נויה עובדת על העיצוב…</b><span id="aiTime"></span></div>
