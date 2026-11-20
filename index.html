@@ -1146,17 +1146,21 @@ function onCartChanged(){
   setVeil();renderAiBar();
 }
 function playReveal(){scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);}
-function finishReveal(key,src){
+function finishReveal(key,src){sceneToTop();
   aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();
   showAi(src);setVeil();playReveal();renderAiBar();
 }
 const STEPS=["נויה בוחרת את המוצר המוביל…","נויה בונה שכבות ועומק…","נויה מאזנת צבעים וצורות…","נויה מעמידה את המוצרים על הבמה…","נויה מכוונת אור וצללים…","נויה מלטשת לצילום קטלוגי…"];
+// bring the whole box picture into view so the reveal is seen (the button sits below it, often off-screen on phones)
+function sceneToTop(){const st=scene.closest(".stage")||scene,y=st.getBoundingClientRect().top+window.scrollY-8;
+  if(Math.abs(window.scrollY-y)>4)window.scrollTo({top:Math.max(0,y),behavior:"smooth"});}
 async function generateAi(force){
   if(aiBusy||cart.size<1)return;                       // one run at a time, from the first product
   const key=comboKey();
   if(!aiAvailable){revealed=true;editing=false;aiStale=false;revealedKey=contentKey();setVeil();playReveal();renderAiBar();return;}
   if(!force&&aiCache.has(key)){finishReveal(key,aiCache.get(key));return;}
   aiBusy=true;scene.classList.add("busy");renderAiBar();
+  sceneToTop();
   const t0=Date.now();let si=0;
   aiLoad.hidden=false;const tick=setInterval(()=>{const s=Math.round((Date.now()-t0)/1000);document.getElementById("aiTime").textContent=s+" שניות · בדרך כלל 20–60 שניות";
     if(s%5===0)document.getElementById("aiStep").textContent=STEPS[(si++)%STEPS.length];},1000);
