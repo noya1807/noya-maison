@@ -1171,8 +1171,10 @@ autoRes.onclick=e=>{if(!autoSt)return;
   const t=e.target.closest("button[data-t]");
   if(t){autoSt.seed++;const x=composeBox(autoSt.budget,t.dataset.t,autoSt.seed);if(x)applyAuto(x);return;}
   if(e.target.closest("#autoAgain")){
-    for(let k=0;k<6;k++){autoSt.seed++;const x=composeBox(autoSt.budget,autoSt.theme,autoSt.seed,autoSt.hero);
-      if(x&&(x.hero!==autoSt.hero||k===5)){applyAuto(x);return;}}
+    let fb=null;
+    for(let k=0;k<12;k++){autoSt.seed++;const avoid=k<6?autoSt.hero:null,x=composeBox(autoSt.budget,autoSt.theme,autoSt.seed,avoid);
+      if(!x)continue;if(x.fill>=0.85&&(x.hero!==autoSt.hero||k>=6)){applyAuto(x);return;}if(!fb||x.fill>fb.fill)fb=x;}
+    if(fb)applyAuto(fb);
   }};
 
 // ---- Showcase: up to 12 recent boxes the owner chose to show; rotates while the customer's box is empty ----
