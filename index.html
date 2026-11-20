@@ -85,6 +85,23 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .pkg img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 18px rgba(60,35,20,.25))}
 .empty{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);background:rgba(255,250,243,.88);padding:8px 16px;border-radius:99px;font-size:14px;white-space:nowrap}
 .bgs{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--cocoa-soft)}
+/* showcase: recent boxes built with us, shown while the customer's box is still empty */
+.show{position:absolute;inset:0;z-index:6;background:var(--sand)}
+.show-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.1s ease}
+.show-img.on{opacity:1}
+.show::after{content:"";position:absolute;inset:auto 0 0 0;height:46%;background:linear-gradient(to top,rgba(40,24,14,.62),transparent);pointer-events:none}
+.show-cap{position:absolute;z-index:2;inset-inline-start:18px;bottom:16px;display:flex;flex-direction:column;gap:2px;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.35);max-width:60%}
+.show-k{font-size:12px;letter-spacing:.4px;opacity:.95}
+.show-cap b{font-family:var(--display);font-weight:500;font-size:clamp(17px,2.2vw,24px);line-height:1.2}
+.show-cap small{font-size:11px;opacity:.8}
+.show-go{position:absolute;z-index:2;inset-inline-end:16px;bottom:18px;border:0;border-radius:99px;background:rgba(255,250,243,.95);color:var(--cocoa);font-weight:700;font-size:14px;padding:10px 16px;box-shadow:0 6px 18px rgba(0,0,0,.18);cursor:pointer}
+.show-go:hover{background:#fff}
+.show-dots{position:absolute;z-index:2;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px}
+.show-dots button{all:unset;cursor:pointer;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+.show-dots button.on{background:#fff;width:20px;border-radius:99px}
+.show-adm{position:absolute;z-index:3;top:10px;inset-inline-end:10px;display:flex;gap:6px}
+.show-adm button{border:0;border-radius:8px;background:rgba(74,47,34,.85);color:#fff;font-size:12px;padding:5px 9px;cursor:pointer}
+@media (max-width:560px){.show-cap{max-width:100%;bottom:62px}.show-go{inset-inline:16px;text-align:center}}
 .sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--paper);box-shadow:0 0 0 1px var(--line);background-size:cover}
 .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--cocoa)}
 
@@ -438,6 +455,13 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
     <div class="scene" id="scene" aria-label="תצוגת המארז">
       <canvas id="cv" aria-hidden="true"></canvas><div class="empty" id="emptyMsg" hidden>בחרו מוצרים והם יסתדרו כאן</div>
       <img id="aiImg" class="ai-img" alt="עיצוב המארז שנוצר על ידי מעצב ה-AI" hidden>
+      <div class="show" id="show" hidden aria-label="מארזים שנבנו לאחרונה אצלנו">
+        <img class="show-img" id="showA" alt=""><img class="show-img" id="showB" alt="">
+        <div class="show-cap"><span class="show-k">✦ מארזים שנבנו לאחרונה אצלנו</span><b id="showT"></b><small>התמונה להמחשה</small></div>
+        <button class="show-go" id="showGo">בנו מארז דומה ←</button>
+        <div class="show-dots" id="showDots"></div>
+        <div class="show-adm" id="showAdm" hidden><button data-sa="prev" title="הזזה קדימה בתור">→</button><button data-sa="next" title="הזזה אחורה בתור">←</button><button data-sa="del" title="הסרה מחלון הראווה">✕ הסרה</button></div>
+      </div>
       <div class="ai-load" id="aiLoad" hidden><div class="ai-orb"></div><b id="aiStep">נויה עובדת על העיצוב…</b><span id="aiTime"></span></div>
       <span class="ai-tag" id="aiTag" hidden>✨ עוצב ע"י AI</span>
       <div class="veil" id="veil" hidden><div class="veil-in"><span class="veil-mark">✦</span><b>המארז שלכם מחכה לחשיפה</b><em class="veil-quote">"אין גבול למה שאפשר ליצור כשמעזים לחשוב אחרת." ✨</em><small id="veilCount"></small></div></div>
@@ -1031,6 +1055,7 @@ function update(flash){
   if(flash) document.querySelectorAll("#bigP,#barP").forEach(el=>{el.classList.remove("priceflash");void el.offsetWidth;el.classList.add("priceflash");});
   layout();
   onCartChanged();
+  try{renderShow();}catch(e){}
 }
 
 // ---- Inspiration boxes & styling tip ----
@@ -1042,6 +1067,57 @@ setsEl.onclick=e=>{const b=e.target.closest(".set");if(!b)return;const x=SETS[+b
   pack=PACKS.find(k=>k.id===x.pack)||NO_PACK;manual.clear();renderPacks();update(true);
   lastRemoved=null;undoSet=prev;showToast(`נטען מארז השראה "${x.name}"`,true);};
 let undoSet=null;
+// ---- Showcase: up to 12 recent boxes the owner chose to show; rotates while the customer's box is empty ----
+const SHOW_EP=window.NOYA_OFFICE_ENDPOINT||"api/office";
+var SHOW=[],showI=0,showTimer=null,showFlip=false,isOwner=false;
+const showEl=document.getElementById("show"),showA=document.getElementById("showA"),showB=document.getElementById("showB");
+function showBoxes(){return SHOW.filter(b=>b.items.some(([id])=>byId[id]));}
+function showSlide(i,instant){
+  const L=showBoxes();if(!L.length)return;showI=(i+L.length)%L.length;const b=L[showI];
+  const nxt=showFlip?showA:showB,cur=showFlip?showB:showA;showFlip=!showFlip;
+  nxt.src=b.img;nxt.alt=b.title||"מארז שנבנה אצלנו";
+  const go=()=>{nxt.classList.add("on");cur.classList.remove("on");};
+  if(instant||nxt.complete)go();else nxt.onload=go;
+  document.getElementById("showT").textContent=b.title||showTitle(b);
+  document.getElementById("showDots").innerHTML=L.length>1?L.map((_,k)=>`<button class="${k===showI?"on":""}" data-k="${k}" aria-label="מארז ${k+1}"></button>`).join(""):"";
+  L.forEach((x,k)=>{if(k!==showI){const im=new Image();im.src=x.img;}});
+}
+function showTitle(b){const ids=b.items.map(([id])=>id).filter(id=>byId[id]);const fams=[...new Set(ids.map(id=>CATS[byId[id].cat]).filter(Boolean))];return fams.slice(0,3).join(" · ")||"מארז מתנה";}
+function renderShow(){
+  const on=cart.size===0&&showBoxes().length>0&&!aiBusy;
+  showEl.hidden=!on;document.getElementById("emptyMsg").classList.toggle("under-show",on);
+  document.getElementById("showAdm").hidden=!(on&&isOwner);
+  clearInterval(showTimer);showTimer=null;
+  if(on){if(!showA.classList.contains("on")&&!showB.classList.contains("on"))showSlide(showI,true);
+    if(showBoxes().length>1)showTimer=setInterval(()=>showSlide(showI+1),5000);}
+}
+document.getElementById("showDots").onclick=e=>{const b=e.target.closest("button[data-k]");if(b){showSlide(+b.dataset.k);renderShow();}};
+document.getElementById("showGo").onclick=()=>{const b=showBoxes()[showI];if(!b)return;
+  cart=new Map(b.items.filter(([id])=>byId[id]));[...cart.keys()].forEach(id=>fresh.add(id));
+  pack=PACKS.find(k=>k.id===b.pack)||NO_PACK;manual.clear();renderPacks();update(true);
+  showToast("המוצרים מהמארז נטענו. עכשיו אפשר להוסיף, להסיר ולשנות כרצונכם ✨");};
+async function saveShow(list){
+  const r=await fetch(SHOW_EP+"?a=showcase",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({list})});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||r.status);SHOW=j.list;return SHOW;}
+document.getElementById("showAdm").onclick=async e=>{const b=e.target.closest("button[data-sa]");if(!b)return;
+  const L=showBoxes(),cur=L[showI],i=SHOW.indexOf(cur);if(i<0)return;const list=[...SHOW];
+  if(b.dataset.sa==="del"){list.splice(i,1);}
+  else{const j=b.dataset.sa==="prev"?i-1:i+1;if(j<0||j>=list.length)return;[list[i],list[j]]=[list[j],list[i]];showI=j;}
+  try{await saveShow(list);if(b.dataset.sa==="del")showI=Math.min(showI,Math.max(0,showBoxes().length-1));showSlide(showI,true);renderShow();showToast(b.dataset.sa==="del"?"המארז הוסר מחלון הראווה":"הסדר עודכן");}
+  catch(err){showToast("לא נשמר ("+err.message+")");}};
+async function addToShow(){
+  if(!(!aiImg.hidden&&aiImg.src)){showToast("קודם חושפים את המארז, ואז מוסיפים אותו לחלון הראווה");return;}
+  const im=new Image();im.src=aiImg.src;await im.decode().catch(()=>{});
+  const W=1400,H=Math.round(W*im.naturalHeight/im.naturalWidth),c=document.createElement("canvas");c.width=W;c.height=H;c.getContext("2d").drawImage(im,0,0,W,H);
+  try{
+    const r=await fetch(SHOW_EP+"?a=showcaseimg",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:c.toDataURL("image/jpeg",.86)})});
+    const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw new Error(j.error||r.status);
+    const box={title:"",img:j.url,items:[...cart],pack:pack.none?"none":pack.id};
+    await saveShow([box,...SHOW].slice(0,12));showI=0;showToast("נוסף לחלון הראווה ✓ הוא יופיע ראשון בבונה");
+  }catch(err){showToast("לא נשמר בחלון הראווה ("+err.message+")");}
+}
+fetch(SHOW_EP+"?a=showcase").then(r=>r.json()).then(j=>{SHOW=(j.list||[]);showSlide(0,true);renderShow();}).catch(()=>{});
+fetch(SHOW_EP+"?a=me").then(r=>{isOwner=r.ok;renderShow();renderAiBar&&renderAiBar();}).catch(()=>{});
 document.getElementById("tip").onclick=e=>{const b=e.target.closest("button[data-add]");if(b)add(b.dataset.add);};
 // ===================== AI Designer (GPT Image) — reveal experience =====================
 // The design engine itself is unchanged: same live sketch, same payload, same /api/design call, same prompt.
@@ -1117,6 +1193,8 @@ function renderAiBar(){
     b.innerHTML=`<div class="after-reveal"><div class="ar-row"><button class="wa-share" id="aiShare">שתפו בוואטסאפ להתייעצות</button><button class="ai-go" id="aiRe">↻ עצבו מחדש באמצעות AI</button>${reset}</div>
       <button class="reveal-btn order-btn" id="aiOrder">המשך להזמנה ←</button><span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
   }
+  if(isOwner&&revealed&&!aiBusy&&!(editing&&aiStale)&&!aiImg.hidden)b.insertAdjacentHTML("beforeend",`<div class="reveal-more"><button class="ghost small" id="aiShow">⭐ הוספה לחלון הראווה (רק אתה רואה את הכפתור)</button></div>`);
+  q("aiShow")&&(q("aiShow").onclick=()=>{q("aiShow").disabled=true;q("aiShow").textContent="שומר…";addToShow();});
   q("aiGo")&&(q("aiGo").onclick=()=>generateAi(false));
   q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
   q("aiOrder")&&(q("aiOrder").onclick=()=>openSummary());

@@ -14,6 +14,9 @@
 // GET  ?a=inbox                      → orders waiting to be pulled into the back office
 // POST ?a=inboxdone {urls}           → removes inbox orders after the back office saved them
 // POST ?a=extract {url,type} | {text,name} → AI reads a proforma / packing list / invoice and returns structured lines
+// GET  ?a=showcase                   → PUBLIC: the builder's rotating "boxes built with us" (not secret, stored plain)
+// PUT  ?a=showcase {list}            → saves that list (owner only)
+// POST ?a=showcaseimg {image}        → stores one showcase photo (dataURL, JPEG) → {url}
 //
 // Encryption key: OFFICE_KEY if set, otherwise derived from the store's BLOB_READ_WRITE_TOKEN.
 // (If you ever rotate the blob token, set OFFICE_KEY to the OLD token first, or export a backup before.)
@@ -23,6 +26,7 @@ import crypto from "node:crypto";
 const DB_PREFIX = "office/db/";
 const DOC_PREFIX = "office/docs/";
 const INBOX_PREFIX = "office/inbox/";
+const SHOW_PREFIX = "public/showcase/";
 const INBOX_DAILY = +(process.env.INBOX_DAILY_LIMIT || 500);
 let inboxDay = "", inboxCount = 0;
 const KEEP_VERSIONS = 30;                         // older database versions are pruned (they double as history)
@@ -151,6 +155,20 @@ async function extractWithAI(content) {
   throw new Error(last);
 }
 
+async function readShowcase() {
+  const { blobs } = await list({ prefix: SHOW_PREFIX + "list-" });
+  if (!blobs.length) return [];
+  blobs.sort((a, b) => b.uploadedAt - a.uploadedAt || (b.pathname > a.pathname ? 1 : -1));
+  const r = await fetch(blobs[0].url + "?t=" + Date.now(), { cache: "no-store" });
+  return r.ok ? (await r.json()).list || [] : [];
+}
+const cleanShow = l => (Array.isArray(l) ? l : []).slice(0, 12).map(b => ({
+  title: String(b.title || "").slice(0, 60),
+  img: /^https:\/\/[a-z0-9.-]+\.public\.blob\.vercel-storage\.com\//i.test(b.img || "") ? b.img : "",
+  items: (Array.isArray(b.items) ? b.items : []).slice(0, 20).map(([id, q]) => [String(id).replace(/[^a-z0-9]/gi, "").slice(0, 20), Math.max(1, Math.min(50, +q || 1))]),
+  pack: String(b.pack || "none").replace(/[^a-z0-9]/gi, "").slice(0, 20),
+})).filter(b => b.img);
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Robots-Tag", "noindex");
@@ -182,10 +200,31 @@ export default async function handler(req, res) {
       await put(`${INBOX_PREFIX}${String(o.ref).replace(/[^A-Z0-9-]/gi, "")}.bin`, encrypt(Buffer.from(JSON.stringify(o))), { access: "public", contentType: "application/octet-stream", addRandomSuffix: true });
       res.status(200).json({ ok: true }); return;
     }
+    if (a === "showcase" && req.method === "GET") {   // public, read by every builder visit
+      res.status(200).json({ list: await readShowcase() }); return;
+    }
     if (a === "logout") { setCookie(res, "", 0); res.status(200).json({ ok: true }); return; }
     if (!authed(req)) { res.status(401).json({ error: "צריך להתחבר" }); return; }
     if (a === "me") { res.status(200).json({ ok: true }); return; }
 
+    if (a === "showcase" && req.method === "PUT") {
+      const { list: l } = await readBody(req);
+      const clean = cleanShow(l);
+      await put(`${SHOW_PREFIX}list-${Date.now()}.json`, JSON.stringify({ list: clean, savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: true });
+      const { blobs } = await list({ prefix: SHOW_PREFIX + "list-" });
+      blobs.sort((x, y) => y.uploadedAt - x.uploadedAt);
+      const old = blobs.slice(10).map(b => b.url); if (old.length) await del(old);
+      res.status(200).json({ ok: true, list: clean }); return;
+    }
+    if (a === "showcaseimg" && req.method === "POST") {
+      const { image } = await readBody(req);
+      const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(image || "");
+      if (!m) { res.status(400).json({ error: "bad image" }); return; }
+      const buf = Buffer.from(m[2], "base64");
+      if (buf.length > MAX_FILE) { res.status(413).json({ error: "too big" }); return; }
+      const b = await put(`${SHOW_PREFIX}img-${crypto.randomBytes(6).toString("hex")}.${m[1] === "jpeg" ? "jpg" : m[1]}`, buf, { access: "public", contentType: `image/${m[1]}`, addRandomSuffix: false });
+      res.status(200).json({ url: b.url }); return;
+    }
     if (a === "data" && req.method === "GET") { res.status(200).json(await readDb()); return; }
     if (a === "data" && req.method === "PUT") {
       const { db, baseRev } = await readBody(req);

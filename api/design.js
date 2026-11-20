@@ -99,6 +99,10 @@ export default async function handler(req, res) {
     }
     const pf = PACK_FILES[pack.id];
     if (pf) add(await readFile(path.join(ROOT, "img", pf)), `packaging.${pf.split(".").pop()}`, pf.endsWith("webp") ? "image/webp" : "image/jpeg");
+    else if (pack.id && pack.id !== "none") {   // catalogue packaging: clean photo shipped with the site
+      const pb = await readFile(path.join(ROOT, "img", "orig", `${pack.id.replace(/[^a-z0-9]/gi, "")}.jpg`)).catch(() => null);
+      if (pb) add(pb, "packaging.jpg", "image/jpeg");
+    }
     add(await readFile(path.join(ROOT, "img", "style", `s${(variant % 5) + 1}.jpg`)), "style_reference.jpg", "image/jpeg");
 
     const r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
