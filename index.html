@@ -22,7 +22,7 @@
 <link rel="apple-touch-icon" href="img/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600;700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{
   /* Noya brand world: cream paper, chocolate ink, soft gold. Layout: catalogue on the right, live gift scene + running price on the left. */
@@ -747,6 +747,23 @@ h1.brand{margin:0;line-height:1.2}
 .noya-art.carry .noya{animation:nyWalk .42s ease-in-out infinite}
 @keyframes nyWalk{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
 @media (prefers-reduced-motion:reduce){.scene.stg-flash::before{animation:none;opacity:0}}
+/* NOYA MAISON gold foil on the gift box + monogram + light beam + gold trail */
+.ub-front::before{display:none}
+.ub-front{display:flex;align-items:center;justify-content:center}
+.ub-logo{font-family:"Cormorant Garamond","Frank Ruhl Libre",Georgia,serif;font-weight:600;font-size:calc(var(--w)*.088);letter-spacing:.24em;padding-left:.24em;white-space:nowrap;
+  background:linear-gradient(100deg,#9c763c 0%,#d9bb7c 30%,#fff3cf 45%,#d9bb7c 60%,#9c763c 100%);background-size:250% 100%;background-position:100% 0;
+  -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(255,255,255,.55)) drop-shadow(0 -1px 0 rgba(120,88,40,.35));
+  animation:ubFoil 2.9s ease-in-out forwards}
+.ub-logo::after{content:"";display:block;height:1px;margin:calc(var(--w)*.025) auto 0;width:70%;background:linear-gradient(90deg,transparent,#c9a465,transparent)}
+@keyframes ubFoil{0%,12%{background-position:100% 0}45%{background-position:0 0}100%{background-position:0 0}}
+.ub-mono{position:absolute;right:9%;bottom:9%;width:18%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;z-index:3;
+  font-family:"Cormorant Garamond","Frank Ruhl Libre",Georgia,serif;font-weight:600;font-size:calc(var(--w)*.1);color:#fffaf1;
+  background:radial-gradient(circle at 35% 30%,#f3dfa8,#c9a465 55%,#9c763c);box-shadow:inset 0 0 0 1.5px rgba(255,250,240,.6)}
+.ub-beam{position:absolute;left:50%;top:50%;width:clamp(120px,30vw,240px);height:70%;transform:translate(-50%,-92%) scaleY(0);transform-origin:50% 100%;pointer-events:none;
+  background:linear-gradient(0deg,rgba(255,232,170,.85),rgba(255,232,170,.25) 45%,rgba(255,232,170,0));clip-path:polygon(32% 100%,68% 100%,100% 0,0 0);filter:blur(6px);opacity:0;
+  animation:ubBeam 2.9s ease-out forwards}
+@keyframes ubBeam{0%,44%{opacity:0;transform:translate(-50%,-92%) scaleY(0)}60%{opacity:1;transform:translate(-50%,-92%) scaleY(1)}85%{opacity:.8}100%{opacity:0;transform:translate(-50%,-92%) scaleY(1.15)}}
+.ub-trail{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 </style>
 </head>
 <body>
@@ -1590,8 +1607,23 @@ function playUnbox(){
   const u=document.createElement("div");u.className="unbox";u.setAttribute("aria-hidden","true");
   const sparks=Array.from({length:14},(_,i)=>{const a=i/14*Math.PI*2,r=90+Math.random()*80;
     return `<i class="ub-spark" style="--dx:${Math.round(Math.cos(a)*r)}px;--dy:${Math.round(Math.sin(a)*r-30)}px;animation-delay:${(Math.random()*.25).toFixed(2)}s"></i>`;}).join("");
-  u.innerHTML=`<div class="ub-wrap" style="transform-style:preserve-3d;perspective:1100px"><div class="ub-box"><div class="ub-f ub-bottom"></div><div class="ub-f ub-back"></div><div class="ub-f ub-left"></div><div class="ub-f ub-right"></div><div class="ub-f ub-front"></div><div class="ub-lid"><div class="ub-bow"></div></div></div></div>${sparks}`;
+  u.innerHTML=`<div class="ub-wrap" style="transform-style:preserve-3d;perspective:1100px"><div class="ub-box"><div class="ub-f ub-bottom"></div><div class="ub-f ub-back"></div><div class="ub-f ub-left"></div><div class="ub-f ub-right"></div><div class="ub-f ub-front"><span class="ub-logo">NOYA MAISON</span></div><div class="ub-lid"><span class="ub-mono">N</span><div class="ub-bow"></div></div></div></div><div class="ub-beam"></div><canvas class="ub-trail"></canvas>${sparks}`;
   scene.appendChild(u);scene.classList.add("unboxing");
+  // gold trail behind the flying lid
+  const tc=u.querySelector(".ub-trail"),lid=u.querySelector(".ub-lid"),tx=tc.getContext("2d"),d=Math.min(2,devicePixelRatio||1);
+  const fit=()=>{const r=u.getBoundingClientRect();tc.width=r.width*d;tc.height=r.height*d;};fit();
+  const parts=[],t0=performance.now();let last=null;
+  (function tick(now){const t=now-t0,ur=u.getBoundingClientRect();
+    if(t>1150&&t<2450){const r=lid.getBoundingClientRect(),x=(r.left+r.width/2-ur.left)*d,y=(r.top+r.height/2-ur.top)*d;
+      const n=last?Math.max(2,Math.round(Math.hypot(x-last.x,y-last.y)/(3*d))):4;
+      for(let i=0;i<n;i++){const k=last?i/n:0,px=last?last.x+(x-last.x)*k:x,py=last?last.y+(y-last.y)*k:y;
+        parts.push({x:px+(Math.random()-.5)*14*d,y:py+(Math.random()-.5)*10*d,vx:(Math.random()-.5)*.5*d,vy:(Math.random()*.6+.2)*d,r:(Math.random()*1.8+.7)*d,life:1,dec:.012+Math.random()*.014});}
+      last={x,y};}
+    tx.clearRect(0,0,tc.width,tc.height);tx.globalCompositeOperation="lighter";
+    for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.01*d;p.life-=p.dec;if(p.life<=0){parts.splice(i,1);continue;}
+      const g=tx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);g.addColorStop(0,`rgba(255,236,180,${p.life})`);g.addColorStop(.4,`rgba(214,172,96,${p.life*.7})`);g.addColorStop(1,"rgba(214,172,96,0)");
+      tx.fillStyle=g;tx.beginPath();tx.arc(p.x,p.y,p.r*3,0,7);tx.fill();}
+    if(t<3000&&u.isConnected)requestAnimationFrame(tick);})(t0);
   setTimeout(()=>{u.remove();scene.classList.remove("unboxing");},3000);
 }
 // tilt toward the mouse (computers only)
