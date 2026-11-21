@@ -3,7 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>בונה מארזים נויה במתנה</title>
+<title>נויה במתנה | בונה המארזים – מארזי מתנה לארגונים ולעסקים</title>
+<meta name="description" content="בונים מארז מתנה לעובדים, ללקוחות ולשותפים עסקיים: בוחרים מוצרים, רואים את המארז מיד ומקבלים הצעת מחיר. מיתוג ולוגו, משלוח אישי לכל נמען.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="נויה במתנה">
+<meta property="og:title" content="נויה במתנה | בונה המארזים">
+<meta property="og:description" content="מארזי מתנה לארגונים ולעסקים, בהתאמה אישית. בוחרים מוצרים, רואים את המארז ומקבלים הצעת מחיר.">
+<meta property="og:url" content="https://noya-maison-cz4l.vercel.app/">
+<meta property="og:image" content="https://noya-maison-cz4l.vercel.app/img/og.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#fffaf3">
+<link rel="icon" type="image/png" sizes="64x64" href="img/icon-64.png">
+<link rel="apple-touch-icon" href="img/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
@@ -571,11 +584,34 @@ header{border-bottom:1px solid var(--gold-light)}
 .reveal-btn,.fab-reveal,.show-go,.bar>#barBtn{background:linear-gradient(135deg,#ead6a6,#cfab6c 50%,#b08a4f)!important;color:var(--cocoa)!important;border:0;box-shadow:inset 0 0 0 1px rgba(140,106,51,.45),0 10px 22px -8px rgba(140,106,51,.55)!important;text-shadow:0 1px 0 rgba(255,245,225,.5)}
 .reveal-btn:hover,.fab-reveal:hover,.show-go:hover,.bar>#barBtn:hover{box-shadow:inset 0 0 0 1.5px #8c6a33,0 14px 28px -8px rgba(140,106,51,.6)!important}
 .reveal-btn::after{background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.55) 50%,transparent 60%)}
+/* contact footer + WhatsApp */
+.contact-foot{display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 16px 120px;border-top:1px solid var(--gold-light);margin-top:20px;font-size:14px;color:var(--cocoa)}
+.contact-foot a{color:var(--cocoa);text-decoration:none;font-weight:600}
+.contact-foot a:hover{color:var(--gold-deep);text-decoration:underline}
+.cf-brand{font-family:var(--display);font-size:20px;font-weight:700}
+.cf-row{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px}
+.cf-row span{color:var(--gold)}
+.cf-row.muted{color:var(--cocoa-soft);font-size:13px}
+.cf-copy{font-size:12px;color:var(--cocoa-soft);margin-top:4px}
+.wa-fab{position:fixed;right:20px;bottom:20px;z-index:34;display:flex;align-items:center;gap:8px;background:#25d366;color:#fff;text-decoration:none;border-radius:99px;padding:10px 16px 10px 12px;font-weight:700;font-size:14px;box-shadow:0 8px 20px -6px rgba(0,0,0,.35)}
+.wa-fab:hover{filter:brightness(1.05)}
+@media (max-width:760px){.wa-fab{right:12px;bottom:calc(86px + env(safe-area-inset-bottom));padding:11px}.wa-lbl{display:none}}
+h1.brand{margin:0;line-height:1.2}
+/* readable sizes (min ~12-13px for customer text) */
+.note,.quote-sub,.tools .exvat,.card .ds,.tog .muted,.dlv-opt small,.bud-meter span{font-size:13px}
+.clients h3,.clients.mini h3{font-size:12.5px}
+.cl-item,.clients.mini .cl-item{font-size:12px;height:26px}
+.show-ill{font-size:12px}
+.card.over .pr::after{font-size:12px}
+@media (max-width:640px){.cl-item{font-size:12px;height:26px}.bud-meter span{font-size:12.5px}}
+/* one button rule: gold = the main action on each screen, outline = secondary */
+.go{background:linear-gradient(135deg,#ead6a6,#cfab6c 50%,#b08a4f)!important;color:var(--cocoa)!important;box-shadow:inset 0 0 0 1px rgba(140,106,51,.45),0 8px 18px -8px rgba(140,106,51,.55)!important}
+.go:hover{box-shadow:inset 0 0 0 1.5px #8c6a33,0 12px 24px -8px rgba(140,106,51,.6)!important}
 </style>
 </head>
 <body>
 <header>
-  <div class="brand">נויה במתנה<span class="brand-sep" aria-hidden="true">|</span><span class="brand-tool">בונה המארזים</span></div>
+  <h1 class="brand">נויה במתנה<span class="brand-sep" aria-hidden="true">|</span><span class="brand-tool">בונה המארזים</span></h1>
   <p class="hq" id="hq" hidden></p>
   <div class="steps" aria-label="שלבי ההזמנה" id="steps"><span class="on">1. בניית המארז</span><span>2. סיכום ופרטים</span><span>3. שליחה</span></div>
 </header>
@@ -820,7 +856,14 @@ header{border-bottom:1px solid var(--gold-light)}
   <div class="modal-in narrow"><h3>כניסה לניהול</h3><label>סיסמת מנהל<input id="pwIn" type="password" autocomplete="current-password"></label>
   <p class="err" id="pwErr" hidden></p><div class="send"><button class="ghost" id="pwCancel">ביטול</button><button class="go" id="pwOk">כניסה</button></div></div>
 </div>
-<footer class="foot">© נויה במתנה · <a href="#admin" id="admLink">ניהול</a></footer>
+<footer class="foot contact-foot">
+  <div class="cf-brand">נויה במתנה</div>
+  <div class="cf-row"><a href="tel:0543219070">054-3219070</a><span>·</span><a href="tel:0537784388">053-7784388</a><span>·</span><a href="tel:0533460081">053-3460081</a></div>
+  <div class="cf-row"><a href="mailto:moshe@noyaglobal.com">moshe@noyaglobal.com</a><span>·</span><a href="https://noyaglobal.com" target="_blank" rel="noopener">NOYAGLOBAL.COM</a></div>
+  <div class="cf-row muted">הענבר 1, ברקן · איסוף עצמי או משלוח</div>
+  <div class="cf-copy">© נויה במתנה</div>
+</footer>
+<a class="wa-fab" id="waFab" href="https://wa.me/972543219070?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%9E%D7%90%D7%A8%D7%96%D7%99%20%D7%94%D7%9E%D7%AA%D7%A0%D7%94" target="_blank" rel="noopener" aria-label="שאלה? כתבו לנו בוואטסאפ"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg><span class="wa-lbl">שאלה? וואטסאפ</span></a>
 <div class="qv" id="qv" hidden role="dialog" aria-modal="true" aria-label="פרטי מוצר"><div class="qv-scrim" data-qclose></div><div class="qv-card"><button class="qv-x" id="qvClose" data-qclose aria-label="סגירה">✕</button><div id="qvBody"></div></div></div>
 <div class="bar" id="bar"><div><div class="p" id="barP"></div><div class="c" id="barC"></div></div><button id="barBtn">פרטי המארז</button></div>
 <div class="scrim" id="scrim"></div>
@@ -2030,7 +2073,6 @@ $("addOk").onclick=()=>{
     img:addCut.toDataURL("image/webp",.85),role:"stand",ride:h<=24,lie:null,soft:false,label:false,hidden:false,heroBoost:false});
   $("addModal").hidden=true;admTab="p";renderAdmin();showToast(`"${name}" נוסף. לחצו "שמירת שינויים" כדי לפרסם.`);
 };
-$("admLink").onclick=e=>{e.preventDefault();location.hash="admin";};
 window.addEventListener("hashchange",()=>{if(location.hash==="#admin")openAdmin();});
 // ---- Header inspiration line: changes every hour (same line for everyone at the same hour) ----
 const hqEl=document.getElementById("hq");
