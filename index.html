@@ -690,7 +690,7 @@ h1.brand{margin:0;line-height:1.2}
   <section class="sum-box">
     <button class="back" id="backBtn">→ חזרה לעריכת המארז</button>
     <div class="sum-img"><img id="sumImg" alt="תמונת המארז שבניתם"></div>
-    <button class="wa-share wide" id="sumShare">שתפו בוואטסאפ להתייעצות לפני ההזמנה</button>
+    <button class="wa-share wide" id="sumShare">שתפו עם הצוות לאישור לפני ההזמנה</button>
     <h2>המארז שלכם</h2>
     <div class="sum-lines" id="sumLines"></div>
   </section>
@@ -1494,15 +1494,13 @@ function renderAiBar(){
     b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn" id="aiGo">חשפו את המארז שלכם ✨</button><span class="reveal-sub">רגע של הפתעה. תנו לקסם להתגלות.</span></div>`
       +(editing?`<div class="reveal-more"><button class="ghost small" id="aiView">🖼 הצג את המארז המעוצב</button>${reset}</div>`:"");
   } else {
-    b.innerHTML=`<div class="after-reveal"><div class="ar-row"><button class="wa-share" id="aiShare">שתפו בוואטסאפ להתייעצות</button><button class="ai-go" id="aiRe">↻ עצבו מחדש באמצעות AI</button>${reset}</div>
-      <button class="reveal-btn order-btn" id="aiOrder">המשך להזמנה ←</button><span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span>
-      <button class="share-gold" id="aiSpread">שתפו את המארז שעיצבתם ✨</button></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
+    b.innerHTML=`<div class="after-reveal"><div class="ar-row"><button class="wa-share" id="aiShare">שתפו עם הצוות לאישור</button><button class="ai-go" id="aiRe">↻ עצבו מחדש באמצעות AI</button>${reset}</div>
+      <button class="reveal-btn order-btn" id="aiOrder">המשך להזמנה ←</button><span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
   }
   if(isOwner&&revealed&&!aiBusy&&!(editing&&aiStale)&&!aiImg.hidden)b.insertAdjacentHTML("beforeend",`<div class="reveal-more"><button class="ghost small" id="aiShow">⭐ הוספה לחלון הראווה (רק אתה רואה את הכפתור)</button></div>`);
   q("aiShow")&&(q("aiShow").onclick=()=>{q("aiShow").disabled=true;q("aiShow").textContent="שומר…";addToShow();});
   q("aiGo")&&(q("aiGo").onclick=()=>generateAi(false));
   q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
-  q("aiSpread")&&(q("aiSpread").onclick=()=>shareWhatsApp(currentBoxImage(),"spread"));
   q("aiOrder")&&(q("aiOrder").onclick=()=>openSummary());
   q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);generateAi(true);});
   q("aiView")&&(q("aiView").onclick=()=>{editing=!editing;
