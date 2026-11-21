@@ -509,6 +509,9 @@ details.more>summary .opt{font-weight:400}
 details.more[open]{padding-bottom:10px}
 .fld-err{display:block;color:#b5523b;font-size:12.5px;margin-top:3px}
 /* downloadable quote (PDF) */
+.qm-send{display:flex;flex-direction:column;gap:8px}
+.qm-send button{width:100%;padding:12px;border-radius:12px;font-weight:700;font-size:15px}
+#quoteModal .fld-err{margin-top:2px}
 .quote-btn{display:block;width:100%;margin-top:12px;padding:11px 14px;border:1.5px solid var(--cocoa);border-radius:12px;background:var(--paper);color:var(--cocoa);font-weight:700;font-size:15px}
 .quote-btn:hover{background:var(--cocoa);color:var(--paper)}
 .quote-btn[disabled]{opacity:.6;cursor:wait}
@@ -754,6 +757,29 @@ details.more[open]{padding-bottom:10px}
     <label>תיאור קצר<input id="addDesc"></label>
     <p class="err" id="addErr" hidden></p>
     <div class="send"><button class="ghost" id="addCancel">ביטול</button><button class="go" id="addOk">הוספה לקטלוג</button></div>
+  </div>
+</div>
+<div class="modal" id="quoteModal" hidden role="dialog" aria-modal="true" aria-labelledby="qmH">
+  <div class="modal-in narrow">
+    <div id="qmForm">
+      <h3 id="qmH">פרטים להצעת המחיר</h3>
+      <p class="note" style="margin:4px 0 8px">הפרטים יופיעו על גבי ההצעה.</p>
+      <label>שם החברה / הארגון *<input id="qOrg" autocomplete="organization"></label>
+      <label>איש קשר *<input id="qName" autocomplete="name"></label>
+      <label>טלפון *<input id="qPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="050-0000000"></label>
+      <label>אימייל <span class="opt">(לא חובה)</span><input id="qEmail" type="email" autocomplete="email"></label>
+      <div class="send" style="margin-top:6px"><button type="button" class="ghost" id="qmCancel">ביטול</button><button type="button" class="go" id="qmMake">⬇ הפקת הצעת מחיר</button></div>
+    </div>
+    <div id="qmDone" hidden>
+      <h3>✓ הצעת המחיר ירדה למכשיר שלכם</h3>
+      <p class="note" style="margin:4px 0 10px" id="qmDoneTxt">רוצים לשלוח אותה עכשיו למנהל או לצוות?</p>
+      <div class="qm-send">
+        <button type="button" class="wa" id="qmWa">שליחה בוואטסאפ</button>
+        <button type="button" class="go" id="qmMail">✉ שליחה במייל</button>
+        <button type="button" class="ghost" id="qmShare" hidden>📎 שיתוף הקובץ עצמו</button>
+      </div>
+      <button type="button" class="ghost small" id="qmClose" style="margin-top:10px">סגירה</button>
+    </div>
   </div>
 </div>
 <div class="modal" id="pwModal" hidden role="dialog" aria-label="כניסת מנהל">
@@ -1692,7 +1718,7 @@ function quoteHTML(q,img){
   if(engSel.size)rows.push(`<tr><td>חריטת לוגו: ${esc(engNames())}</td><td class="n"></td><td class="n"></td><td class="n">${ils(engCost())}</td></tr>`);
   if(cardOn)rows.push(`<tr><td>כרטיס ברכה ממותג 10×15</td><td class="n">1</td><td class="n">${ils(cardCost())}</td><td class="n">${ils(cardCost())}</td></tr>`);
   rows.push(`<tr class="sub"><td colspan="3">מחיר למארז</td><td class="n">${money(orderPer())}</td></tr>`);
-  const total=grandTotal(),beforeVat=total/1.18,to=[f("fOrg"),f("fName")].filter(Boolean).join(" · ");
+  const total=grandTotal(),beforeVat=total/1.18,c=q.client||{},to=c.org||f("fOrg"),who=[c.name||f("fName"),c.phone||f("fPhone"),c.email||f("fEmail")].filter(Boolean).join(" · ");
   const ship=dlvMode()==="pickup"?`<div><span>איסוף עצמי</span><span>ללא עלות</span></div>`:`<div><span>${esc(dlvName())}: ${boxes} × ${ils(dlvRate())}</span><span>${ils(shipCost())}</span></div>`;
   const tot=noP?`<div class="g"><span>סה"כ</span><span>יימסר ע"י נציג</span></div>`
     :`<div><span>${boxes} מארזים × ${ils(orderPer())}</span><span>${ils(r2(orderPer()*boxes))}</span></div>${ship}
@@ -1700,7 +1726,7 @@ function quoteHTML(q,img){
       <div class="g"><span>סה"כ לתשלום</span><span>${ils(total)}</span></div>`;
   return `<div class="qh"><div class="qbrand">נויה במתנה<small>עולם של מתנות לארגונים ולעסקים. מארזי חג, מתנות לעובדים, ללקוחות ולשותפים עסקיים, בהתאמה אישית.</small></div>
     <div class="qmeta"><b>הצעת מחיר</b>מס' ${q.ref}<br>תאריך: ${q.date}<br>בתוקף עד: ${q.until}</div></div>
-    ${to?`<div class="qto"><b>לכבוד:</b> ${esc(to)}</div>`:""}
+    ${to?`<div class="qto"><b>לכבוד:</b> ${esc(to)}${who?`<br><b>איש קשר:</b> ${esc(who)}`:""}</div>`:""}
     <div class="qbody">${img?`<div class="qimg"><img src="${img}" alt=""></div>`:""}
       <table><thead><tr><th>פריט במארז</th><th class="n">כמות</th><th class="n">מחיר</th><th class="n">סה"כ</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
     <div class="qtot">${tot}</div>
@@ -1709,14 +1735,27 @@ function quoteHTML(q,img){
       <div>• ההצעה בתוקף ל-${QUOTE_DAYS} ימים, בכפוף למלאי.</div></div>
     <div class="qfoot"><span>054-3219070 · 053-7784388 · 053-3460081</span><span>${esc(CONFIG.orderEmail||"")} · NOYAGLOBAL.COM</span></div>`;
 }
-$("quoteBtn").onclick=async()=>{
-  const btn=$("quoteBtn"),old=btn.textContent;btn.disabled=true;btn.textContent="מכינים את הצעת המחיר…";
-  let box=null;
+// Quote: 1) details form (company, contact, phone) → 2) PDF downloads → 3) send it by WhatsApp / email / share the file
+const qm=$("quoteModal"),QF={qOrg:"fOrg",qName:"fName",qPhone:"fPhone",qEmail:"fEmail"};
+const QCHECK={qOrg:v=>v.trim()?"":"נא למלא את שם החברה",qName:v=>v.trim()?"":"נא למלא איש קשר",
+  qPhone:v=>/^(\+?972|0)\d{8,9}$/.test(v.replace(/[^\d+]/g,""))?"":"נא למלא מספר טלפון תקין",
+  qEmail:v=>!v.trim()||/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.trim())?"":"כתובת המייל לא תקינה"};
+function qCheck(id){const el=$(id),msg=QCHECK[id](el.value);el.classList.toggle("bad",!!msg);
+  let m=el.parentElement.querySelector(".fld-err");if(msg){if(!m){m=document.createElement("span");m.className="fld-err";el.insertAdjacentElement("afterend",m);}m.textContent=msg;}else if(m)m.remove();return !msg;}
+Object.keys(QCHECK).forEach(id=>{$(id).addEventListener("blur",()=>{if($(id).value||$(id).classList.contains("bad"))qCheck(id);});$(id).addEventListener("input",()=>{if($(id).classList.contains("bad"))qCheck(id);});});
+let lastQuote=null;
+function closeQm(){qm.hidden=true;}
+$("quoteBtn").onclick=()=>{Object.entries(QF).forEach(([q,f])=>{if(!$(q).value)$(q).value=$(f).value;});
+  $("qmForm").hidden=false;$("qmDone").hidden=true;qm.hidden=false;setTimeout(()=>$(["qOrg","qName","qPhone"].find(i=>!$(i).value.trim())||"qOrg").focus(),50);};
+$("qmCancel").onclick=$("qmClose").onclick=closeQm;
+qm.addEventListener("click",e=>{if(e.target===qm)closeQm();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!qm.hidden)closeQm();});
+async function makeQuotePdf(client){
+  await Promise.all([loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"),loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js")]);
+  const d=new Date(),u=new Date(d.getTime()+QUOTE_DAYS*864e5),fmt=x=>x.toLocaleDateString("he-IL");
+  const q={client,ref:"Q-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase(),date:fmt(d),until:fmt(u)};
+  const img=await imgAsData($("sumImg").src);let box;
   try{
-    await Promise.all([loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"),loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js")]);
-    const d=new Date(),u=new Date(d.getTime()+QUOTE_DAYS*864e5),fmt=x=>x.toLocaleDateString("he-IL");
-    const q={ref:"Q-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase(),date:fmt(d),until:fmt(u)};
-    const img=await imgAsData($("sumImg").src);
     box=document.createElement("div");box.className="qdoc";box.innerHTML=quoteHTML(q,img);document.body.appendChild(box);
     await document.fonts?.ready;if(img)await new Promise(r=>{const i=box.querySelector("img");if(!i||i.complete)r();else{i.onload=i.onerror=r;}});
     const cv=await html2canvas(box,{scale:2,backgroundColor:"#fffaf3",useCORS:true,logging:false});
@@ -1724,12 +1763,34 @@ $("quoteBtn").onclick=async()=>{
     for(let y=0,pg=0;y<cv.height;y+=pxPerPage,pg++){
       const h=Math.min(pxPerPage,cv.height-y),c=document.createElement("canvas");c.width=cv.width;c.height=h;
       const g=c.getContext("2d");g.fillStyle="#fffaf3";g.fillRect(0,0,c.width,h);g.drawImage(cv,0,y,cv.width,h,0,0,cv.width,h);
-      if(pg)pdf.addPage();pdf.addImage(c.toDataURL("image/jpeg",.92),"JPEG",0,0,W,h*W/cv.width);}
-    pdf.save(`הצעת-מחיר-נויה-במתנה-${q.ref}.pdf`);
-    showToast("הצעת המחיר ירדה למכשיר שלכם ✓");
+      if(pg)pdf.addPage();pdf.addImage(c.toDataURL("image/jpeg",.9),"JPEG",0,0,W,h*W/cv.width);}
+    q.name=`הצעת-מחיר-נויה-במתנה-${q.ref}.pdf`;q.pdf=pdf;q.blob=pdf.output("blob");return q;
+  }finally{box&&box.remove();}
+}
+$("qmMake").onclick=async()=>{
+  if(!Object.keys(QCHECK).map(qCheck).every(Boolean))return;
+  Object.entries(QF).forEach(([q,f])=>{$(f).value=$(q).value.trim();});   // the order form is filled too
+  const btn=$("qmMake"),old=btn.textContent;btn.disabled=true;btn.textContent="מכינים את הצעת המחיר…";
+  try{
+    const q=await makeQuotePdf({org:$("qOrg").value.trim(),name:$("qName").value.trim(),phone:$("qPhone").value.trim(),email:$("qEmail").value.trim()});
+    q.pdf.save(q.name);lastQuote=q;q.url="";
+    const file=new File([q.blob],q.name,{type:"application/pdf"});q.file=file;
+    $("qmShare").hidden=!(navigator.canShare&&navigator.canShare({files:[file]}));
+    $("qmForm").hidden=true;$("qmDone").hidden=false;
+    $("qmDoneTxt").textContent="רוצים לשלוח אותה עכשיו למנהל או לצוות?";
+    // a link to the PDF, so WhatsApp / email can carry it (the file itself can't be attached from a website)
+    q.upload=fetch(window.NOYA_LOGO_ENDPOINT||"api/logo",{method:"POST",headers:{"Content-Type":"application/pdf","x-file-name":encodeURIComponent(q.name)},body:q.blob})
+      .then(r=>r.json().then(j=>{if(r.ok&&j.url)q.url=j.url;})).catch(()=>{});
   }catch(e){showToast("לא הצלחנו להכין את הקובץ. נסו שוב, או שלחו לנו את ההזמנה ונשלח הצעת מחיר.");}
-  finally{box&&box.remove();btn.disabled=false;btn.textContent=old;}
+  finally{btn.disabled=false;btn.textContent=old;}
 };
+async function quoteMsg(){const q=lastQuote;if(!q)return "";
+  if(q.upload)await Promise.race([q.upload,new Promise(r=>setTimeout(r,8000))]);
+  return [`הצעת מחיר ${q.ref} – נויה במתנה`,`עבור: ${q.client.org}`,`${boxes} מארזים · ${money(orderPer())} למארז`,`סה"כ: ${money(grandTotal())} (כולל מע"מ)`,`בתוקף עד ${q.until}`,"",
+    q.url?`לצפייה והורדה של ההצעה:\n${q.url}`:"(קובץ ההצעה מצורף)"].join("\n");}
+$("qmWa").onclick=async()=>{const w=window.open("","_blank");const t=await quoteMsg();const u=`https://wa.me/?text=${encodeURIComponent(t)}`;if(w)w.location.href=u;else location.href=u;};
+$("qmMail").onclick=async()=>{const t=await quoteMsg();location.href=`mailto:?subject=${encodeURIComponent(`הצעת מחיר ${lastQuote.ref} – נויה במתנה`)}&body=${encodeURIComponent(t)}`;};
+$("qmShare").onclick=async()=>{const q=lastQuote;if(!q)return;try{await navigator.share({files:[q.file],title:`הצעת מחיר ${q.ref}`,text:`הצעת מחיר ${q.ref} – נויה במתנה`});}catch(e){}};
 // ===================== Stage 3: admin (catalogue editing) =====================
 // Storage: on the website the catalogue is saved by /api/catalog (shared with every customer, protected by the
 // admin password). Where there is no server (e.g. inside Claude) it is saved in this browser only.
