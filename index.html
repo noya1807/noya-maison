@@ -725,7 +725,7 @@ h1.brand{margin:0;line-height:1.2}
 /* Noya v3 staging: the picture stays clear, Noya stands at the side, the step text sits at the bottom */
 .scene.staging .ai-load{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;justify-content:flex-start;pointer-events:none;padding-top:12px}
 .scene.staging .ai-load b,.scene.staging .ai-load span{background:rgba(255,250,243,.88);padding:3px 12px;border-radius:99px;box-shadow:0 2px 8px rgba(74,47,34,.12)}
-.scene.staging #noyaHost{position:absolute;left:1.5%;bottom:4%;width:26%;max-width:190px;min-width:92px}
+.scene.staging #noyaHost{display:none}
 .scene.staging .noya-art{width:100%;height:auto;max-width:none}
 #noyaHost .noya-art{width:150px;height:auto}
 .noya-art .arm{transform-box:view-box;transform-origin:128px 112px}
@@ -1402,6 +1402,9 @@ function draw(){
     ctx.save();ctx.globalAlpha=e.alpha;
     if(e.cast){ctx.save();ctx.translate(e.cx,e.base);ctx.transform(1,0,-.6,.24,0,0);ctx.filter=`blur(${Math.max(3,e.h*.03)}px)`;ctx.globalAlpha=e.alpha*e.cast*1.6;
       ctx.drawImage(A.sil,-e.w/2,-e.h,e.w,e.h);ctx.restore();}
+    if(e._glow!=null){const gw=(e.lie?e.foot:e.w)*1.3,g=ctx.createRadialGradient(e.cx,e.base,0,e.cx,e.base,gw*.5);
+      g.addColorStop(0,`rgba(232,200,130,${.55*e._glow})`);g.addColorStop(1,"rgba(232,200,130,0)");
+      ctx.save();ctx.translate(e.cx,e.base);ctx.scale(1,.28);ctx.translate(-e.cx,-e.base);ctx.fillStyle=g;ctx.fillRect(e.cx-gw/2,e.base-gw/2,gw,gw);ctx.restore();}
     if(!e._fly)contact(e.cx,e.base-(e.lie?2:0),(e.lie?e.foot:e.w)*.95,e.alpha);
     ctx.shadowColor="rgba(45,28,18,.24)";ctx.shadowBlur=Math.max(8,e.h*.08);ctx.shadowOffsetX=Math.max(3,e.h*.025);ctx.shadowOffsetY=2;
     if(e.lie){ctx.translate(e.cx,e.base-e.bh/2);ctx.rotate(e.rot*Math.PI/180);ctx.drawImage(A.im,-e.w/2,-e.h/2,e.w,e.h);}
@@ -1664,11 +1667,9 @@ function stageHand(){const h=document.querySelector(".noya-art .ny-hand"),r=cv.g
   if(!h||!r.width)return {x:W*.14,y:H*.62};const b=h.getBoundingClientRect();return {x:b.left+b.width/2-r.left,y:b.top+b.height/2-r.top};}
 function stageView(e){
   const now=performance.now();
-  if(STG.cur&&STG.cur.key===e.key){const c=STG.cur,t=(now-c.t0)/c.dur;
-    if(t<c.walk){const h=stageHand();c.hold=h;return {...e,cx:h.x,base:h.y+e.h*.34,w:e.w*.94,h:e.h*.94,rot:(e.rot||0)-3,alpha:Math.min(1,t/.12),cast:0,_fly:true};}
-    const u=Math.min(1,(t-c.walk)/(1-c.walk)),q=1-Math.pow(1-u,3),s=c.hold||stageHand(),y0=s.y+e.h*.34;
-    return {...e,cx:s.x+(e.cx-s.x)*q,base:y0+(e.base-y0)*q,w:e.w*(.94+.06*q),h:e.h*(.94+.06*q),rot:(e.rot||0)-3*(1-q),alpha:1,cast:0,_fly:u<.98};}
-  if(STG.land&&STG.land.key===e.key){const t=(now-STG.land.t0)/300;if(t<1){const sq=1-.07*Math.sin(Math.PI*t);return {...e,h:e.h*sq,w:e.w*(2-sq),cast:(e.cast||0)*t};}}
+  if(STG.cur&&STG.cur.key===e.key){const u=Math.min(1,(now-STG.cur.t0)/STG.cur.dur),q=1-Math.pow(1-u,3);
+    return {...e,base:e.base-H*.1*(1-q),w:e.w*(.96+.04*q),h:e.h*(.96+.04*q),alpha:Math.min(1,u*2.2),cast:(e.cast||0)*q,_fly:u<.97,_glow:u>.55?(u-.55)/.45:null};}
+  if(STG.land&&STG.land.key===e.key){const t=(now-STG.land.t0)/700;if(t<1)return {...e,_glow:1-t};}
   if(STG.nudge&&STG.nudge.key===e.key){const t=(now-STG.nudge.t0)/800;if(t<1){const k=Math.sin(Math.PI*t);return {...e,cx:e.cx+STG.nudge.dx*k,rot:(e.rot||0)+STG.nudge.dr*k};}}
   return e;}
 // Noya walks along the picture so her hand is right above the spot (null = back to her corner)
@@ -1689,23 +1690,15 @@ function stageStart(){
   STG.on=true;STG.placed=new Set();STG.flashed=false;scene.classList.add("staging");setVeil();
   const T=(ms,f)=>STG.timers.push(setTimeout(f,ms));
   let t=700;
-  els.forEach(({k})=>{T(t,()=>{const e=anim[k]&&anim[k].to;if(!e)return;
-      noyaWalkTo(e.cx);noyaPose("carry");STG.cur={key:k,t0:performance.now(),dur:2000,walk:.42};
-      T(840,()=>noyaPose("place"));
-      T(2000,()=>{STG.placed.add(k);STG.land={key:k,t0:performance.now()};if(STG.cur&&STG.cur.key===k)STG.cur=null;noyaPose("");});});t+=2500;});
-  T(t,()=>noyaWalkTo(null));
-  // when everything is in place: small stylist touches (nudge an item, straighten it)
-  const touch=()=>{const keys=[...STG.placed].filter(k=>anim[k]&&anim[k].to.p);if(keys.length){const k=keys[Math.floor(Math.random()*keys.length)];
-      noyaToss();STG.nudge={key:k,t0:performance.now(),dx:(Math.random()<.5?-1:1)*Math.max(3,W*.008),dr:(Math.random()<.5?-1:1)*2.5};}
-    T(2600,touch);};
-  T(t+600,touch);
+  els.forEach(({k})=>{T(t,()=>{if(!anim[k])return;STG.cur={key:k,t0:performance.now(),dur:1300};
+      T(1300,()=>{STG.placed.add(k);STG.land={key:k,t0:performance.now()};if(STG.cur&&STG.cur.key===k)STG.cur=null;});});t+=1700;});
   STG.raf=requestAnimationFrame(stageTick);
 }
 function stageEnd(silent){STG.timers.forEach(clearTimeout);const nh=document.getElementById("noyaHost");if(nh)nh.style.left="";STG.timers=[];cancelAnimationFrame(STG.raf);
   const was=STG.on;STG.on=false;STG.cur=STG.land=STG.nudge=null;scene.classList.remove("staging","stg-warm");
   if(was&&!silent){setVeil();draw();}}
 function noyaStop(){noyaTimers.forEach(clearTimeout);noyaTimers=[];stageEnd();}
-function noyaSetup(){noyaStop();const host=document.getElementById("noyaHost");if(!host)return;host.innerHTML=NOYA_SVG;stageStart();}
+function noyaSetup(){noyaStop();const host=document.getElementById("noyaHost");if(!host)return;host.innerHTML=`<div class="ai-orb"></div>`;stageStart();}
 const STEPS=["נויה בוחרת את המוצר המוביל…","נויה בונה שכבות ועומק…","נויה מאזנת צבעים וצורות…","נויה מעמידה את המוצרים על הבמה…","נויה מכוונת אור וצללים…","נויה מלטשת לצילום קטלוגי…"];
 // bring the whole box picture into view so the reveal is seen (the button sits below it, often off-screen on phones)
 function sceneToTop(){const st=scene.closest(".stage")||scene,y=st.getBoundingClientRect().top+window.scrollY-8;
