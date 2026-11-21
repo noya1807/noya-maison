@@ -716,10 +716,10 @@ h1.brand{margin:0;line-height:1.2}
 .noya-art .boxwrap{transition:transform .6s ease}
 .noya-art[data-step="3"] .boxwrap{transform:translateY(-6px)}
 .noya-art .hat{transform-box:view-box;transform-origin:99px 58px;animation:nyHat 5s ease-in-out infinite}
-.noya-art .braid{transform-box:view-box;transform-origin:114px 82px;animation:nyBraid 3s ease-in-out infinite}
+.noya-art .braid{transform-box:view-box;transform-origin:85px 82px;animation:nyBraid 3s ease-in-out infinite}
 .noya-art[data-step="0"] .arm{animation:nyWave 2.4s ease-in-out infinite}
 @keyframes nyHold{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-4px) rotate(3deg)}}
-@keyframes nyHat{0%,100%{transform:rotate(0)}50%{transform:rotate(-2deg)}}
+@keyframes nyHat{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(-11deg)}}
 @keyframes nyBraid{0%,100%{transform:rotate(0)}50%{transform:rotate(4deg)}}
 @media (prefers-reduced-motion:reduce){.noya-art *{animation:none!important}.noya-art .ny-prod{transition:none}}
 /* Noya v3 staging: the picture stays clear, Noya stands at the side, the step text sits at the bottom */
@@ -739,6 +739,12 @@ h1.brand{margin:0;line-height:1.2}
 @keyframes stgIn{from{opacity:0}to{opacity:1}}
 @keyframes stgFlash{0%{opacity:0}12%{opacity:.95}100%{opacity:0}}
 .scene.staging.busy{opacity:1}
+.scene.staging canvas{filter:blur(7px) saturate(.9) brightness(1.04);transform:scale(1.02);transition:filter .6s}
+.scene.staging #noyaHost{transition:left .8s cubic-bezier(.45,.05,.3,1)}
+.noya-art.carry .arm{transform:rotate(-26deg)!important;animation:none!important;transition:transform .5s ease}
+.noya-art.place .arm{transform:rotate(6deg)!important;animation:none!important;transition:transform 1s cubic-bezier(.2,.8,.3,1)}
+.noya-art.carry .noya{animation:nyWalk .42s ease-in-out infinite}
+@keyframes nyWalk{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
 @media (prefers-reduced-motion:reduce){.scene.stg-flash::before{animation:none;opacity:0}}
 </style>
 </head>
@@ -1624,12 +1630,13 @@ const NOYA_SVG=`<svg class="noya-art" data-step="0" viewBox="46 26 112 150" role
 <rect x="94.5" y="86" width="9" height="12" rx="4" fill="#efcfb2" stroke="#4a2f22" stroke-width="1.3"/>
 <path d="M99 97 Q90 95 86 98 Q85 103 90 104 Q96 104 99 99 Q102 104 108 104 Q113 103 112 98 Q108 95 99 97 Z" fill="#fbf5ea" stroke="#22325c" stroke-width="1.4" stroke-linejoin="round"/>
 <path d="M99 100 l-5 -3 v6z M99 100 l5 -3 v6z" fill="#22325c"/><path d="M98 101 l-3 9 M100 101 l3 9" stroke="#22325c" stroke-width="1.8" stroke-linecap="round"/><circle cx="99" cy="100" r="1.4" fill="#2c3e6e"/>
-<g class="head">
+<g class="head" transform="translate(99 86) scale(1.14) translate(-99 -86)">
 <path d="M81 66 Q81 54 99 54 Q117 54 117 66 L117 84 Q113 77 111 70 L87 70 Q85 77 81 84 Z" fill="#3e2418"/>
-<g class="braid"><ellipse cx="113" cy="88" rx="4" ry="4.8" fill="#3e2418"/><ellipse cx="115" cy="95.5" rx="3.7" ry="4.4" fill="#4b2c1e"/><ellipse cx="116" cy="103" rx="3.3" ry="4" fill="#3e2418"/><ellipse cx="116.5" cy="109.5" rx="2.5" ry="3.2" fill="#4b2c1e"/><circle cx="116.5" cy="113.5" r="1.6" fill="#22325c"/></g>
+<path d="M82 70 q-3 5 0 9 q-2 4 1 7 M116 70 q3 5 0 9 q2 4 -1 7" stroke="#3e2418" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<g class="braid"><ellipse cx="85" cy="88" rx="4" ry="4.8" fill="#3e2418"/><ellipse cx="83" cy="95.5" rx="3.7" ry="4.4" fill="#4b2c1e"/><ellipse cx="82" cy="103" rx="3.3" ry="4" fill="#3e2418"/><ellipse cx="81.5" cy="109.5" rx="2.5" ry="3.2" fill="#4b2c1e"/><circle cx="81.5" cy="113.5" r="1.6" fill="#3e2418"/></g>
 <circle cx="99" cy="71" r="15.5" fill="#efcfb2" stroke="#4a2f22" stroke-width="1.7"/>
 <path d="M84 67 Q88 59.5 99 59.5 Q110 59.5 114 67 Q106 63 99 63.6 Q92 63 84 67 Z" fill="#3e2418"/>
-<g class="eyes"><ellipse cx="93" cy="71.5" rx="3" ry="3.5" fill="#fff"/><ellipse cx="105" cy="71.5" rx="3" ry="3.5" fill="#fff"/><circle class="iris" cx="94.2" cy="70.6" r="2.3" fill="#5a3420"/><circle class="iris" cx="106.2" cy="70.6" r="2.3" fill="#5a3420"/><circle cx="94.8" cy="69.8" r=".8" fill="#fff"/><circle cx="106.8" cy="69.8" r=".8" fill="#fff"/>
+<g class="eyes"><ellipse cx="93" cy="71.5" rx="3" ry="3.5" fill="#fff"/><ellipse cx="105" cy="71.5" rx="3" ry="3.5" fill="#fff"/><circle class="iris" cx="94.8" cy="69.9" r="2.4" fill="#5a3420"/><circle class="iris" cx="106.8" cy="69.9" r="2.4" fill="#5a3420"/><circle cx="95.5" cy="69" r=".85" fill="#fff"/><circle cx="107.5" cy="69" r=".85" fill="#fff"/>
 <path d="M89.8 68.4 q3.2 -2.2 6.4 -.6 M101.8 67.8 q3.2 -1.6 6.4 .6" stroke="#2a170e" stroke-width="1.1" fill="none" stroke-linecap="round"/></g>
 <path d="M89.6 65.2 q3 -1.4 6 -.2 M102.4 65 q3 -1.2 6 .2" stroke="#3e2418" stroke-width="1" fill="none" stroke-linecap="round"/>
 <path d="M99.6 74 q-1 2.2 .5 2.6" stroke="#c99b80" stroke-width=".9" fill="none" stroke-linecap="round"/>
@@ -1657,12 +1664,20 @@ function stageHand(){const h=document.querySelector(".noya-art .ny-hand"),r=cv.g
   if(!h||!r.width)return {x:W*.14,y:H*.62};const b=h.getBoundingClientRect();return {x:b.left+b.width/2-r.left,y:b.top+b.height/2-r.top};}
 function stageView(e){
   const now=performance.now();
-  if(STG.cur&&STG.cur.key===e.key){const t=Math.min(1,(now-STG.cur.t0)/STG.cur.dur),q=ease(t),s=STG.cur.from;
-    const x=s.x+(e.cx-s.x)*q,y=s.y+(e.base-s.y)*q-Math.sin(Math.PI*q)*H*.2,sc=.42+.58*q;
-    return {...e,cx:x,base:y,w:e.w*sc,h:e.h*sc,rot:(e.rot||0)+(1-q)*-16,alpha:Math.min(1,t*4),cast:0,_fly:true};}
+  if(STG.cur&&STG.cur.key===e.key){const c=STG.cur,t=(now-c.t0)/c.dur;
+    if(t<c.walk){const h=stageHand();c.hold=h;return {...e,cx:h.x,base:h.y+e.h*.34,w:e.w*.94,h:e.h*.94,rot:(e.rot||0)-3,alpha:Math.min(1,t/.12),cast:0,_fly:true};}
+    const u=Math.min(1,(t-c.walk)/(1-c.walk)),q=1-Math.pow(1-u,3),s=c.hold||stageHand(),y0=s.y+e.h*.34;
+    return {...e,cx:s.x+(e.cx-s.x)*q,base:y0+(e.base-y0)*q,w:e.w*(.94+.06*q),h:e.h*(.94+.06*q),rot:(e.rot||0)-3*(1-q),alpha:1,cast:0,_fly:u<.98};}
   if(STG.land&&STG.land.key===e.key){const t=(now-STG.land.t0)/300;if(t<1){const sq=1-.07*Math.sin(Math.PI*t);return {...e,h:e.h*sq,w:e.w*(2-sq),cast:(e.cast||0)*t};}}
   if(STG.nudge&&STG.nudge.key===e.key){const t=(now-STG.nudge.t0)/800;if(t<1){const k=Math.sin(Math.PI*t);return {...e,cx:e.cx+STG.nudge.dx*k,rot:(e.rot||0)+STG.nudge.dr*k};}}
   return e;}
+// Noya walks along the picture so her hand is right above the spot (null = back to her corner)
+function noyaWalkTo(cx){const host=document.getElementById("noyaHost"),h=document.querySelector(".noya-art .ny-hand");if(!host)return;
+  if(cx==null){host.style.left="";return;}
+  const hr=host.getBoundingClientRect(),sr=scene.getBoundingClientRect(),hb=h?h.getBoundingClientRect():null;
+  const off=hb?hb.left+hb.width/2-hr.left:hr.width*.85,left=Math.max(0,Math.min(sr.width-hr.width,cx-off));
+  host.style.left=(left/sr.width*100).toFixed(2)+"%";}
+function noyaPose(p){const a=document.querySelector(".noya-art");if(!a)return;a.classList.toggle("carry",p==="carry");a.classList.toggle("place",p==="place");}
 function stageTick(){draw();if(STG.on)STG.raf=requestAnimationFrame(stageTick);}
 function stageStart(){
   stageEnd(true);if(matchMedia("(prefers-reduced-motion:reduce)").matches||!cart.size)return;
@@ -1674,8 +1689,11 @@ function stageStart(){
   STG.on=true;STG.placed=new Set();STG.flashed=false;scene.classList.add("staging");setVeil();
   const T=(ms,f)=>STG.timers.push(setTimeout(f,ms));
   let t=700;
-  els.forEach(({k})=>{T(t,()=>{noyaToss();STG.cur={key:k,t0:performance.now(),dur:1000,from:stageHand()};
-      T(1000,()=>{STG.placed.add(k);STG.land={key:k,t0:performance.now()};if(STG.cur&&STG.cur.key===k)STG.cur=null;});});t+=1500;});
+  els.forEach(({k})=>{T(t,()=>{const e=anim[k]&&anim[k].to;if(!e)return;
+      noyaWalkTo(e.cx);noyaPose("carry");STG.cur={key:k,t0:performance.now(),dur:2000,walk:.42};
+      T(840,()=>noyaPose("place"));
+      T(2000,()=>{STG.placed.add(k);STG.land={key:k,t0:performance.now()};if(STG.cur&&STG.cur.key===k)STG.cur=null;noyaPose("");});});t+=2500;});
+  T(t,()=>noyaWalkTo(null));
   // when everything is in place: small stylist touches (nudge an item, straighten it)
   const touch=()=>{const keys=[...STG.placed].filter(k=>anim[k]&&anim[k].to.p);if(keys.length){const k=keys[Math.floor(Math.random()*keys.length)];
       noyaToss();STG.nudge={key:k,t0:performance.now(),dx:(Math.random()<.5?-1:1)*Math.max(3,W*.008),dr:(Math.random()<.5?-1:1)*2.5};}
@@ -1683,7 +1701,7 @@ function stageStart(){
   T(t+600,touch);
   STG.raf=requestAnimationFrame(stageTick);
 }
-function stageEnd(silent){STG.timers.forEach(clearTimeout);STG.timers=[];cancelAnimationFrame(STG.raf);
+function stageEnd(silent){STG.timers.forEach(clearTimeout);const nh=document.getElementById("noyaHost");if(nh)nh.style.left="";STG.timers=[];cancelAnimationFrame(STG.raf);
   const was=STG.on;STG.on=false;STG.cur=STG.land=STG.nudge=null;scene.classList.remove("staging","stg-warm");
   if(was&&!silent){setVeil();draw();}}
 function noyaStop(){noyaTimers.forEach(clearTimeout);noyaTimers=[];stageEnd();}
