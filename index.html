@@ -477,6 +477,31 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .clients.mini h3{font-size:10px}
 .clients.mini .cl-item{height:22px;min-width:0;font-size:10px;padding:0 7px}
 @media (max-width:640px){.cl-item{height:22px;min-width:0;padding:0 7px;font-size:10px}}
+/* catalogue tools: sort + budget meter */
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:2px 0 14px;font-size:14px}
+.tools select,.tools input{font:inherit;color:inherit;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:6px 10px}
+.tools .sort{display:flex;align-items:center;gap:6px}
+.budget{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;flex:1;min-width:240px}
+.budget label{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.budget input{width:96px}
+.bud-meter{display:flex;align-items:center;gap:10px;flex:1;min-width:200px}
+.bud-bar{flex:1;height:8px;border-radius:99px;background:var(--sand);overflow:hidden;min-width:80px}
+.bud-bar i{display:block;height:100%;width:0;background:var(--ok);border-radius:99px;transition:width .3s,background .3s}
+.bud-meter.over .bud-bar i{background:#b5523b}
+.bud-meter span{font-size:13px;color:var(--cocoa-soft);white-space:nowrap}
+.bud-meter.over span{color:#b5523b;font-weight:600}
+.card.over{opacity:.5}
+.card.over .pr::after{content:" · מעל התקציב";font-size:11.5px;font-weight:400;color:#b5523b}
+@media (max-width:640px){.tools{font-size:13px;gap:8px 10px}.budget{min-width:0}.bud-meter{min-width:100%}}
+/* short order form: optional details folded */
+details.more{border:1px solid var(--line);border-radius:12px;padding:0 12px;margin:6px 0 12px;background:var(--paper)}
+details.more>summary{cursor:pointer;padding:11px 0;font-weight:700;list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"+";display:inline-block;width:18px;font-weight:700;color:var(--gold)}
+details.more[open]>summary::before{content:"−"}
+details.more>summary .opt{font-weight:400}
+details.more[open]{padding-bottom:10px}
+.fld-err{display:block;color:#b5523b;font-size:12.5px;margin-top:3px}
 /* downloadable quote (PDF) */
 .quote-btn{display:block;width:100%;margin-top:12px;padding:11px 14px;border:1.5px solid var(--cocoa);border-radius:12px;background:var(--paper);color:var(--cocoa);font-weight:700;font-size:15px}
 .quote-btn:hover{background:var(--cocoa);color:var(--paper)}
@@ -522,6 +547,11 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
     <h2 id="cat-h">בחרו מוצרים למארז</h2>
     <p class="hint">כל מוצר שתוסיפו יסתדר מיד בתמונת המארז. אין מגבלת פריטים.</p>
     <div class="chips" id="chips"></div>
+    <div class="tools" id="tools">
+      <label class="sort">מיון:<select id="sortSel" aria-label="מיון מוצרים"><option value="">מומלץ</option><option value="asc">מהזול ליקר</option><option value="desc">מהיקר לזול</option></select></label>
+      <div class="budget"><label>התקציב שלי למארז ₪<input id="budIn" type="number" min="0" step="10" inputmode="numeric" placeholder="למשל 150" aria-label="תקציב למארז בשקלים"></label>
+        <div class="bud-meter" id="budMeter" hidden><div class="bud-bar"><i id="budFill"></i></div><span id="budTxt"></span></div></div>
+    </div>
     <div class="grid" id="grid"></div>
     <div class="pack-sec" id="packSec">
       <h2>רוצים להוסיף אריזה? <span class="opt">(לא חובה)</span></h2>
@@ -620,8 +650,10 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       </div>
       <div class="f2">
         <label>אימייל<input id="fEmail" type="email" autocomplete="email"></label>
-        <label>ארגון / חברה<input id="fOrg" autocomplete="organization"></label>
+        <label>ארגון / חברה *<input id="fOrg" required autocomplete="organization"></label>
       </div>
+      <p class="note" style="margin:0 0 8px">רק שם, טלפון וארגון. את כל השאר אפשר להשלים מול הנציג שלנו.</p>
+      <details class="more" id="moreDet"><summary>פרטים נוספים: למי המתנות, משלוח, תאריך והערות <span class="opt">(לא חובה)</span></summary>
       <fieldset class="for">
         <legend>למי המתנות? <span class="opt">(לא חובה)</span></legend>
         <div class="for-opts" id="forOpts"><button type="button" data-for="עובדים">עובדים</button><button type="button" data-for="לקוחות">לקוחות</button><button type="button" data-for="שותפים עסקיים">שותפים עסקיים</button><button type="button" data-for="אחר">אחר</button></div>
@@ -637,15 +669,15 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
         <div class="dlv-box" id="shipBox">
           <div id="addrBox">
             <div class="f2">
-              <label>עיר *<input id="fCity" autocomplete="address-level2"></label>
-              <label>רחוב ומספר *<input id="fStreet" autocomplete="address-line1"></label>
+              <label>עיר<input id="fCity" autocomplete="address-level2"></label>
+              <label>רחוב ומספר<input id="fStreet" autocomplete="address-line1"></label>
             </div>
             <label>קומה, כניסה והערות לשליח<input id="fAddrNote"></label>
           </div>
           <label class="tog"><input type="checkbox" id="rcvSame" checked> אני איש הקשר לקבלת המשלוח</label>
           <div class="f2" id="rcvBox" hidden>
-            <label>שם מקבל המשלוח *<input id="fRcvName" autocomplete="off"></label>
-            <label>טלפון מקבל המשלוח *<input id="fRcvPhone" type="tel" inputmode="tel" placeholder="050-0000000" autocomplete="off"></label>
+            <label>שם מקבל המשלוח<input id="fRcvName" autocomplete="off"></label>
+            <label>טלפון מקבל המשלוח<input id="fRcvPhone" type="tel" inputmode="tel" placeholder="050-0000000" autocomplete="off"></label>
           </div>
         </div>
         <div class="dlv-box" id="indivBox" hidden>
@@ -660,6 +692,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       </fieldset>
       <label>תאריך אספקה רצוי<input id="fDate" type="date"></label>
       <label>הערות נוספות<textarea id="fNotes" rows="3"></textarea></label>
+      </details>
       <section class="clients mini" id="clientsSum" aria-label="בין לקוחותינו"><h3>בין לקוחותינו</h3><div class="cl-view"><div class="cl-track"></div></div></section>
       <p class="err" id="fErr" hidden></p>
       <div class="send">
@@ -793,16 +826,32 @@ function renderChips(){
   chipsEl.innerHTML=[["all","הכול"],...Object.entries(CATS).filter(([k])=>P.some(p=>p.cat===k&&!p.hidden))].map(([k,v])=>`<button class="chip" aria-pressed="${k===cat}" data-c="${k}">${v}</button>`).join("");
 }
 chipsEl.onclick=e=>{const b=e.target.closest(".chip");if(!b)return;cat=b.dataset.c;renderChips();renderGrid();};
+let sortBy="",budget=0;
+try{budget=+localStorage.getItem("noya_budget")||0;}catch(e){}
+function renderBudget(){
+  const m=document.getElementById("budMeter");if(!m)return;
+  if(!(budget>0)){m.hidden=true;return;}
+  const used=totals().total,left=budget-used;m.hidden=false;m.classList.toggle("over",left<0);
+  document.getElementById("budFill").style.width=Math.min(100,used/budget*100)+"%";
+  document.getElementById("budTxt").textContent=left>=0?`במארז ${ils(used)} · נשארו ${ils(Math.round(left*100)/100)}`:`חריגה של ${ils(Math.round(-left*100)/100)} מהתקציב`;
+}
 function renderGrid(){
-  gridEl.innerHTML=P.filter(p=>!p.hidden&&(cat==="all"||p.cat===cat)).map(p=>{
-    const q=cart.get(p.id)||0;
-    return `<article class="card ${q?"sel":""}" data-id="${p.id}">
+  let list=P.filter(p=>!p.hidden&&(cat==="all"||p.cat===cat));
+  if(sortBy){const k=p=>+p.price||0;list=list.slice().sort((a,b)=>(!k(a))-(!k(b))||(sortBy==="asc"?k(a)-k(b):k(b)-k(a)));}
+  const left=budget>0?budget-totals().total:Infinity;
+  renderBudget();
+  gridEl.innerHTML=list.map(p=>{
+    const q=cart.get(p.id)||0,over=!q&&+p.price>0&&+p.price>left;
+    return `<article class="card ${q?"sel":""}${over?" over":""}" data-id="${p.id}">
       <div class="ph${p.photo?" photo":""}" data-qv role="button" tabindex="0" aria-label="פרטים על ${esc(p.name)}"><img src="${p.photo||p.img}" alt="${esc(p.name)}" loading="lazy">
         ${q?`<span class="tick">✓ במארז</span><div class="qty" role="group" aria-label="כמות"><button data-a="dec" aria-label="הסרת יחידה">−</button><output>${q}</output><button data-a="inc" aria-label="הוספת יחידה">+</button></div>`
            :`<button class="addc" data-a="inc" aria-label="הוספת ${esc(p.name)} למארז">+</button>`}</div>
       <div class="nm">${esc(p.name)}</div>${p.desc?`<div class="ds">${esc(p.desc)}</div>`:""}${p.price?`<div class="pr">${ils(p.price)}</div>`:""}
     </article>`}).join("");
 }
+document.getElementById("sortSel").onchange=e=>{sortBy=e.target.value;renderGrid();};
+{const bi=document.getElementById("budIn");if(budget>0)bi.value=budget;
+  bi.oninput=()=>{budget=Math.max(0,+bi.value||0);try{budget?localStorage.setItem("noya_budget",budget):localStorage.removeItem("noya_budget");}catch(e){}renderGrid();};}
 gridEl.onclick=e=>{const card=e.target.closest(".card");if(!card)return;const id=card.dataset.id,b=e.target.closest("button[data-a]");
   if(b){if(b.dataset.a==="inc"){if(!cart.has(id))flyToBox(card.querySelector(".ph img"));add(id);}else dec(id);return;}
   if(e.target.closest("[data-qv]"))openQv(id);};
@@ -1522,21 +1571,25 @@ $("qBoxes").oninput=e=>{const v=parseInt(e.target.value,10);if(v>0){boxes=Math.m
 $("backBtn").onclick=()=>showView("build");
 $("sumShare").onclick=()=>shareWhatsApp($("sumImg").src);
 
+// Short form: only name, phone and organisation are required. Each field shows its own message as soon as it is left.
+const FCHECK={
+  fName:v=>v.trim()?"":"נא למלא שם מלא",
+  fPhone:v=>/^(\+?972|0)\d{8,9}$/.test(v.replace(/[^\d+]/g,""))?"":"נא למלא מספר טלפון תקין",
+  fOrg:v=>v.trim()?"":"נא למלא את שם הארגון או החברה",
+  fEmail:v=>!v.trim()||/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.trim())?"":"כתובת המייל לא תקינה"};
+function checkField(id){
+  const el=$(id),msg=FCHECK[id](el.value);el.classList.toggle("bad",!!msg);el.setAttribute("aria-invalid",msg?"true":"false");
+  let m=el.parentElement.querySelector(".fld-err");
+  if(msg){if(!m){m=document.createElement("span");m.className="fld-err";el.insertAdjacentElement("afterend",m);}m.textContent=msg;}else if(m)m.remove();
+  return !msg;}
 function validate(){
-  const name=$("fName").value.trim(),phone=$("fPhone").value.replace(/[^\d+]/g,""),email=$("fEmail").value.trim();
-  const errs=[];$("fName").classList.toggle("bad",!name);if(!name)errs.push("שם מלא");
-  const pOk=/^(\+?972|0)\d{8,9}$/.test(phone);$("fPhone").classList.toggle("bad",!pOk);if(!pOk)errs.push("מספר טלפון תקין");
-  const eOk=!email||/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);$("fEmail").classList.toggle("bad",!eOk);if(!eOk)errs.push("כתובת מייל תקינה");
+  const bad=Object.keys(FCHECK).filter(id=>!checkField(id));
   ["fCity","fStreet","fRcvName","fRcvPhone"].forEach(i=>$(i).classList.remove("bad"));
-  if(dlvMode()==="ship"){
-    {const c=$("fCity").value.trim(),st=$("fStreet").value.trim();
-      $("fCity").classList.toggle("bad",!c);$("fStreet").classList.toggle("bad",!st);if(!c||!st)errs.push("כתובת למשלוח");}
-    if(!$("rcvSame").checked){const rn=$("fRcvName").value.trim(),rp=$("fRcvPhone").value.replace(/[^\d+]/g,"");
-      $("fRcvName").classList.toggle("bad",!rn);if(!rn)errs.push("שם מקבל המשלוח");
-      const rOk=/^(\+?972|0)\d{8,9}$/.test(rp);$("fRcvPhone").classList.toggle("bad",!rOk);if(!rOk)errs.push("טלפון מקבל המשלוח");}}
-  $("fErr").hidden=!errs.length;$("fErr").textContent=errs.length?"חסר או לא תקין: "+errs.join(", "):"";
-  return !errs.length;
+  $("fErr").hidden=!bad.length;$("fErr").textContent=bad.length?"יש להשלים את השדות המסומנים":"";
+  return !bad.length;
 }
+Object.keys(FCHECK).forEach(id=>{$(id).addEventListener("blur",()=>{if($(id).value||$(id).classList.contains("bad"))checkField(id);});
+  $(id).addEventListener("input",()=>{if($(id).classList.contains("bad"))checkField(id);});});
 let giftFor="";
 document.getElementById("forOpts").onclick=e=>{const b=e.target.closest("button[data-for]");if(!b)return;giftFor=giftFor===b.dataset.for?"":b.dataset.for;
   document.querySelectorAll("#forOpts button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.for===giftFor));};
@@ -1548,7 +1601,7 @@ function buildOrder(){
     ...(isIndiv()?[dlvMode()==="vip"?`⭐ אספקה: משלוח פרטני VIP לכל מקבל (${ils(CONFIG.vipPerBox)} למארז)`:`📦 אספקה: משלוח פרטני לכל מקבל (${ils(CONFIG.indivPerBox)} למארז)`,
       `📎 קובץ כתובות: ${addrFiles.filter(x=>x.url).map(x=>`${x.name} – ${x.url}${x.count?` (${x.count} כתובות)`:""}`).join(" | ")||"יישלח בהמשך"}`]
     :dlvMode()==="ship"?["🚚 אספקה: משלוח לכתובת אחת",
-      `כתובת: ${f("fStreet")}, ${f("fCity")}${f("fAddrNote")?` · ${f("fAddrNote")}`:""}`,
+      (f("fStreet")||f("fCity"))?`כתובת: ${[f("fStreet"),f("fCity")].filter(Boolean).join(", ")}${f("fAddrNote")?` · ${f("fAddrNote")}`:""}`:"כתובת: תושלם מול הנציג",
       `איש קשר לקבלה: ${$("rcvSame").checked?`${f("fName")}, ${f("fPhone")}`:`${f("fRcvName")}, ${f("fRcvPhone")}`}`]
       :[`🏬 אספקה: איסוף עצמי מ${CONFIG.pickupAddress||""}`]),
     date?`תאריך אספקה רצוי: ${date}`:null,"",
@@ -1599,7 +1652,7 @@ $("copyOrder").onclick=async()=>{if(!validate())return;const o=buildOrder();
   try{await navigator.clipboard.writeText(o.text);showToast("פרטי ההזמנה הועתקו. אפשר להדביק במייל או בוואטסאפ ל-054-3219070");}
   catch(e){showToast("ההעתקה נחסמה בדפדפן. שלחו בוואטסאפ ל-054-3219070");}};
 $("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];addrFiles=[];addrCount=0;renderAddrFiles();cardOn=false;cardSelf=false;$("orderForm").reset();syncDlv();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
-["fName","fPhone","fEmail"].forEach(i=>$(i).addEventListener("blur",()=>{if($("fErr").hidden===false)validate();}));
+
 
 // ===================== "בין לקוחותינו" (fixed, all names shown) + downloadable quote (PDF) =====================
 // Organisations that ordered from us. To show a real logo, put the file in img/clients/ and set logo:"img/clients/<file>".
