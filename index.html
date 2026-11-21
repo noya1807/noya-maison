@@ -503,7 +503,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .qdoc .qtot div{display:flex;justify-content:space-between;padding:5px 2px;border-bottom:1px solid #e2d3c0}
 .qdoc .qtot .g{border:0;margin-top:6px;padding:10px 12px;background:#4a2f22;color:#fffaf3;border-radius:10px;font-size:17px;font-weight:700}
 .qdoc .qnotes{margin-top:24px;font-size:12.5px;color:#7a5a48}
-.qdoc .qnotes li{margin-bottom:3px}
+.qdoc .qnotes div{margin-bottom:3px}
 .qdoc .qfoot{margin-top:26px;padding-top:12px;border-top:1px solid #e2d3c0;display:flex;justify-content:space-between;font-size:12.5px;color:#7a5a48}
 </style>
 </head>
@@ -1627,7 +1627,7 @@ async function imgAsData(src){
     return await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r("");fr.readAsDataURL(b);});}catch(e){return "";}
 }
 function quoteHTML(q,img){
-  const f=id=>($(id)&&$(id).value||"").trim(),noP=unpriced(),pr=n=>noP&&!(+n)?"—":ils(n);
+  const f=id=>($(id)&&$(id).value||"").trim(),noP=unpriced(),ils=n=>"₪"+(+n||0).toLocaleString("he-IL",{minimumFractionDigits:2,maximumFractionDigits:2}),money=n=>noP?"בהצעת מחיר":ils(n),pr=n=>noP&&!(+n)?"—":ils(n);
   const rows=[...cart].map(([id,n])=>{const p=byId[id];return `<tr><td>${esc(p.name)}</td><td class="n">${n}</td><td class="n">${pr(p.price)}</td><td class="n">${p.price?ils(p.price*n):"—"}</td></tr>`;});
   if(!pack.none)rows.push(`<tr><td>אריזה: ${esc(pack.name)}</td><td class="n">1</td><td class="n">${pr(pack.price)}</td><td class="n">${pr(pack.price)}</td></tr>`);
   if(engSel.size)rows.push(`<tr><td>חריטת לוגו: ${esc(engNames())}</td><td class="n"></td><td class="n"></td><td class="n">${ils(engCost())}</td></tr>`);
@@ -1645,9 +1645,9 @@ function quoteHTML(q,img){
     <div class="qbody">${img?`<div class="qimg"><img src="${img}" alt=""></div>`:""}
       <table><thead><tr><th>פריט במארז</th><th class="n">כמות</th><th class="n">מחיר</th><th class="n">סה"כ</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
     <div class="qtot">${tot}</div>
-    <ul class="qnotes"><li>המחירים כוללים מע"מ. ההצעה כפופה לאישור סופי של נציג נויה במתנה.</li>
-      <li>מינימום הזמנה: ${ils(CONFIG.minOrder)}. מיתוג ולוגו בתוספת, לפי הבחירה.</li>
-      <li>ההצעה בתוקף ל-${QUOTE_DAYS} יום, בכפוף למלאי.</li></ul>
+    <div class="qnotes"><div>• המחירים כוללים מע"מ. ההצעה כפופה לאישור סופי של נציג נויה במתנה.</div>
+      <div>• מינימום הזמנה: ${ils(CONFIG.minOrder)}. מיתוג ולוגו בתוספת, לפי הבחירה.</div>
+      <div>• ההצעה בתוקף ל-${QUOTE_DAYS} יום, בכפוף למלאי.</div></div>
     <div class="qfoot"><span>054-3219070 · 053-7784388 · 053-3460081</span><span>${esc(CONFIG.orderEmail||"")} · NOYAGLOBAL.COM</span></div>`;
 }
 $("quoteBtn").onclick=async()=>{
