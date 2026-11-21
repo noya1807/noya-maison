@@ -493,6 +493,12 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .card.over{opacity:.5}
 .card.over .pr::after{content:" · מעל התקציב";font-size:11.5px;font-weight:400;color:#b5523b}
 @media (max-width:640px){.tools{font-size:13px;gap:8px 10px}.budget{min-width:0}.bud-meter{min-width:100%}}
+/* families + sort + budget stay pinned at the top while scrolling the products */
+.catbar{position:sticky;top:0;z-index:20;background:var(--cream,#fbf6ef);padding:8px 0 4px;margin:-8px 0 10px;box-shadow:0 6px 10px -8px rgba(60,35,20,.25)}
+.catbar .chips{position:static;margin:0 0 8px;padding:0;background:none}
+.catbar .tools{margin:0}
+@media (max-width:640px){.catbar .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-bottom:6px}.catbar .chips::-webkit-scrollbar{display:none}.catbar .chip{flex:0 0 auto;padding:5px 12px;font-size:13px}
+  .tools .sort select,.budget input{padding:4px 8px}.bud-meter span{font-size:12px}}
 /* short order form: optional details folded */
 details.more{border:1px solid var(--line);border-radius:12px;padding:0 12px;margin:6px 0 12px;background:var(--paper)}
 details.more>summary{cursor:pointer;padding:11px 0;font-weight:700;list-style:none}
@@ -546,11 +552,13 @@ details.more[open]{padding-bottom:10px}
   <section class="cat" aria-labelledby="cat-h">
     <h2 id="cat-h">בחרו מוצרים למארז</h2>
     <p class="hint">כל מוצר שתוסיפו יסתדר מיד בתמונת המארז. אין מגבלת פריטים.</p>
+    <div class="catbar" id="catbar">
     <div class="chips" id="chips"></div>
     <div class="tools" id="tools">
       <label class="sort">מיון:<select id="sortSel" aria-label="מיון מוצרים"><option value="">מומלץ</option><option value="asc">מהזול ליקר</option><option value="desc">מהיקר לזול</option></select></label>
       <div class="budget"><label>התקציב שלי למארז ₪<input id="budIn" type="number" min="0" step="10" inputmode="numeric" placeholder="למשל 150" aria-label="תקציב למארז בשקלים"></label>
         <div class="bud-meter" id="budMeter" hidden><div class="bud-bar"><i id="budFill"></i></div><span id="budTxt"></span></div></div>
+    </div>
     </div>
     <div class="grid" id="grid"></div>
     <div class="pack-sec" id="packSec">
