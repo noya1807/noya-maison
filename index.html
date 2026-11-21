@@ -1613,7 +1613,7 @@ const CLIENTS=[
 function renderClients(){
   const one=c=>`<span class="cl-item">${c.logo?`<img src="${esc(c.logo)}" alt="${esc(c.name)}" loading="lazy">`:esc(c.name)}</span>`;
   const row=CLIENTS.map(one).join(""),dup=CLIENTS.map(c=>one(c).replace('class="cl-item"','class="cl-item cl-dup" aria-hidden="true"')).join("");
-  document.querySelectorAll(".clients .cl-track").forEach(t=>{t.innerHTML=row+dup;t.style.setProperty("--cl-dur",Math.max(30,CLIENTS.length*4.5)+"s");});
+  document.querySelectorAll(".clients .cl-track").forEach(t=>{t.innerHTML=row+dup;t.style.setProperty("--cl-dur",Math.max(20,CLIENTS.length*2.2)+"s");});
 }
 renderClients();
 
