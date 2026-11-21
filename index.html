@@ -592,7 +592,7 @@ details.more[open]{padding-bottom:10px}
         <div class="show-media"><img class="show-img" id="showA" alt=""><img class="show-img" id="showB" alt=""><div class="show-dots" id="showDots"></div></div>
         <span class="show-ill">להמחשה</span>
         <div class="show-bar"><div class="show-cap" hidden><b id="showT"></b></div>
-        <button class="show-go" id="showGo">בנו מארז דומה ←</button></div>
+        <button class="show-go" id="showGo">בנו את המארז שלכם ←</button></div>
         <div class="show-adm" id="showAdm" hidden><button data-sa="prev" title="הזזה קדימה בתור">→</button><button data-sa="next" title="הזזה אחורה בתור">←</button><button data-sa="del" title="הסרה מחלון הראווה">✕ הסרה</button></div>
       </div>
       <div class="ai-load" id="aiLoad" hidden><div class="ai-orb"></div><b id="aiStep">נויה עובדת על העיצוב…</b><span id="aiTime"></span></div>
@@ -1302,10 +1302,9 @@ function renderShow(){
     if(showBoxes().length>1)showTimer=setInterval(()=>showSlide(showI+1),5000);}
 }
 document.getElementById("showDots").onclick=e=>{const b=e.target.closest("button[data-k]");if(b){showSlide(+b.dataset.k);renderShow();}};
-document.getElementById("showGo").onclick=()=>{const b=showBoxes()[showI];if(!b)return;
-  cart=new Map(b.items.filter(([id])=>byId[id]));[...cart.keys()].forEach(id=>fresh.add(id));
-  pack=PACKS.find(k=>k.id===b.pack)||NO_PACK;manual.clear();renderPacks();update(true);
-  showToast("המוצרים מהמארז נטענו. עכשיו אפשר להוסיף, להסיר ולשנות כרצונכם ✨");};
+// "בנו את המארז שלכם": takes the customer straight to the products to start their own box
+document.getElementById("showGo").onclick=()=>{const h=document.getElementById("cat-h");
+  window.scrollTo({top:h.getBoundingClientRect().top+scrollY-8,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});};
 async function saveShow(list){
   const r=await fetch(SHOW_EP+"?a=showcase",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({list})});
   const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||r.status);SHOW=j.list;return SHOW;}
