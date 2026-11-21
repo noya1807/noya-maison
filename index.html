@@ -1731,7 +1731,7 @@ function quoteHTML(q,img){
   const tot=noP?`<div class="g"><span>סה"כ</span><span>יימסר ע"י נציג</span></div>`
     :`<div><span>${boxes} מארזים × ${ils(orderPer())}</span><span>${ils(r2(orderPer()*boxes))}</span></div>${ship}
       <div><span>סה"כ לפני מע"מ</span><span>${ils(r2(beforeVat))}</span></div><div><span>מע"מ 18%</span><span>${ils(r2(total-beforeVat))}</span></div>
-      <div class="g"><span>סה"כ לתשלום</span><span>${ils(total)}</span></div>`;
+      <div class="g"><span>סה"כ לתשלום כולל מע"מ</span><span>${ils(total)}</span></div>`;
   return `<div class="qh"><div class="qbrand">נויה במתנה<small>עולם של מתנות לארגונים ולעסקים. מארזי חג, מתנות לעובדים, ללקוחות ולשותפים עסקיים, בהתאמה אישית.</small></div>
     <div class="qmeta"><b>הצעת מחיר</b>מס' ${q.ref}<br>תאריך: ${q.date}<br>בתוקף עד: ${q.until}</div></div>
     ${to?`<div class="qto"><b>לכבוד:</b> ${esc(to)}${who?`<br><b>איש קשר:</b> ${esc(who)}`:""}</div>`:""}
