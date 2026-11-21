@@ -541,6 +541,14 @@ details.more[open]{padding-bottom:10px}
 .qdoc .qnotes{margin-top:24px;font-size:12.5px;color:#7a5a48}
 .qdoc .qnotes div{margin-bottom:3px}
 .qdoc .qfoot{margin-top:26px;padding-top:12px;border-top:1px solid #e2d3c0;display:flex;justify-content:space-between;font-size:12.5px;color:#7a5a48}
+/* calmer first screen (Nov 2026): one slim steps line, no hourly quote, clean showcase */
+.hq{display:none!important}
+.intro{justify-content:center;padding:7px 16px}
+.howto{gap:8px;flex-wrap:nowrap;align-items:center}
+.howto .arr{color:var(--gold);font-size:12px}
+.show-bar{justify-content:center}
+.show-ill{position:absolute;top:10px;inset-inline-start:10px;z-index:3;font-size:10.5px;color:var(--cocoa-soft);background:rgba(255,250,243,.82);padding:2px 8px;border-radius:99px;pointer-events:none}
+@media (max-width:640px){.howto{gap:5px;font-size:12px}.howto i{width:18px;height:18px;font-size:11px}.howto .arr{font-size:10px}}
 </style>
 </head>
 <body>
@@ -551,14 +559,11 @@ details.more[open]{padding-bottom:10px}
 </header>
 
 <div class="intro" id="intro">
-  <div class="howto"><span><i>1</i> בוחרים מוצרים</span><span><i>2</i> בוחרים אריזה</span><span><i>3</i> חושפים את המארז ✨</span></div>
-  <div class="trust">משלוח אישי לכל נמען: עובדים, לקוחות ושותפים עסקיים · מיתוג ולוגו · מינימום הזמנה ₪3,000</div>
+  <div class="howto"><span><i>1</i> בוחרים מוצרים</span><span class="arr">←</span><span><i>2</i> בוחרים אריזה</span><span class="arr">←</span><span><i>3</i> חושפים ✨</span></div>
 </div>
-<section class="clients" id="clientsTop" aria-label="בין לקוחותינו"><h3>בין לקוחותינו</h3><div class="cl-view"><div class="cl-track"></div></div></section>
 <div class="layout" id="buildView">
   <section class="cat" aria-labelledby="cat-h">
     <h2 id="cat-h">בחרו מוצרים למארז</h2>
-    <p class="hint">כל מוצר שתוסיפו יסתדר מיד בתמונת המארז. אין מגבלת פריטים.</p>
     <div class="catbar" id="catbar">
     <div class="chips" id="chips"></div>
     <div class="tools" id="tools">
@@ -585,7 +590,8 @@ details.more[open]{padding-bottom:10px}
       <img id="aiImg" class="ai-img" alt="עיצוב המארז שנוצר על ידי מעצב ה-AI" hidden>
       <div class="show" id="show" hidden aria-label="מארזים שנבנו לאחרונה אצלנו">
         <div class="show-media"><img class="show-img" id="showA" alt=""><img class="show-img" id="showB" alt=""><div class="show-dots" id="showDots"></div></div>
-        <div class="show-bar"><div class="show-cap"><span class="show-k">✦ מארזים שנבנו לאחרונה אצלנו · התמונה להמחשה</span><b id="showT"></b></div>
+        <span class="show-ill">להמחשה</span>
+        <div class="show-bar"><div class="show-cap" hidden><b id="showT"></b></div>
         <button class="show-go" id="showGo">בנו מארז דומה ←</button></div>
         <div class="show-adm" id="showAdm" hidden><button data-sa="prev" title="הזזה קדימה בתור">→</button><button data-sa="next" title="הזזה אחורה בתור">←</button><button data-sa="del" title="הסרה מחלון הראווה">✕ הסרה</button></div>
       </div>
@@ -1394,7 +1400,7 @@ async function generateAi(force){
 }
 function renderAiBar(){
   const b=document.getElementById("aibar"),q=id=>document.getElementById(id);
-  if(!cart.size){b.innerHTML=`<span class="ai-note">בחרו מוצר ראשון, והמארז שלכם יחכה לחשיפה ✨</span>`;return;}
+  if(!cart.size){b.innerHTML="";return;}
   if(aiBusy){b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn busy" disabled>נויה עובדת על העיצוב…</button><span class="reveal-sub">עוד רגע הקסם מתגלה</span></div>`;return;}
   const reset=manual.size?`<button class="ghost small" id="aiReset">איפוס סידור</button>`:"";
   if(!revealed||(editing&&aiStale)){
@@ -1476,7 +1482,7 @@ let boxes=1, orderText="", lastSend=null;
 const $=id=>document.getElementById(id);
 function setStep(n){[...$("steps").children].forEach((s,i)=>s.classList.toggle("on",i===n));}
 function showView(v){
-  $("buildView").hidden=v!=="build";$("intro").hidden=v!=="build";$("clientsTop").hidden=v!=="build";$("sumView").hidden=v!=="sum";$("doneView").hidden=v!=="done";$("admView").hidden=v!=="admin";
+  $("buildView").hidden=v!=="build";$("intro").hidden=v!=="build";$("sumView").hidden=v!=="sum";$("doneView").hidden=v!=="done";$("admView").hidden=v!=="admin";
   $("bar").style.display=v==="build"?"":"none";$("steps").style.visibility=v==="admin"?"hidden":"";setStep(v==="build"?0:v==="sum"?1:2);
   sheet.classList.remove("open");scrim.classList.remove("open");window.scrollTo(0,0);
   if(v==="build")requestAnimationFrame(()=>recompose(false));
