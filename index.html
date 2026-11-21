@@ -1643,12 +1643,12 @@ function noyaSetup(){
   noyaStop();const host=document.getElementById("noyaHost");if(!host)return;host.innerHTML=NOYA_SVG;
   const svg=host.firstElementChild,items=svg.querySelector(".items"),held=svg.querySelector(".held");
   const list=[...cart.keys()].map(id=>byId[id]).filter(Boolean).sort((a,b)=>(+b.price||0)-(+a.price||0)).slice(0,4);
-  const slots=[[188,118,40,46],[160,124,30,40],[214,124,26,40],[174,132,22,30]];  // x,y,w,h inside the box
+  const slots=[[190,90,46,60],[163,102,34,48],[216,102,32,48],[178,112,26,38]];  // x,y,w,h inside the box
   const NS="http://www.w3.org/2000/svg";
   const img=(p,x,y,w,h,cls)=>{const i=document.createElementNS(NS,"image");i.setAttribute("href",p.img);i.setAttribute("x",x-w/2);i.setAttribute("y",y);i.setAttribute("width",w);i.setAttribute("height",h);
     i.setAttribute("preserveAspectRatio","xMidYMax meet");i.setAttribute("class",cls);return i;};
   list.forEach((p,i)=>{const [x,y,w,h]=slots[i];items.appendChild(img(p,x,y,w,h,"ny-prod"));});
-  if(list[0]){held.appendChild(img(list[0],150,92,34,42,"ny-held"));}
+  if(list[0]){held.appendChild(img(list[0],152,82,44,56,"ny-held"));}
   const prods=[...items.querySelectorAll(".ny-prod")];
   const T=(ms,f)=>noyaTimers.push(setTimeout(f,ms));
   T(150,()=>svg.classList.add("holding"));
