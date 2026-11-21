@@ -551,6 +551,22 @@ details.more[open]{padding-bottom:10px}
 .show-bar{justify-content:center}
 .show-ill{position:absolute;top:10px;inset-inline-start:10px;z-index:3;font-size:10.5px;color:var(--cocoa-soft);background:rgba(255,250,243,.82);padding:2px 8px;border-radius:99px;pointer-events:none}
 @media (max-width:640px){.tools .budget{flex:1 1 100%}.budget label{flex:1}.budget input{width:auto;flex:1;min-width:70px}.howto{gap:5px;font-size:12px}.howto i{width:18px;height:18px;font-size:11px}.howto .arr{font-size:10px}}
+/* gold accents (Nov 2026): brown stays for text, gold leads the eye */
+:root{--gold-deep:#8c6a33;--gold-light:#d9bf8c;--gold-grad:linear-gradient(135deg,#e3cc97,#c9a465 55%,#b08a4f)}
+header{border-bottom:1px solid var(--gold-light)}
+.intro{border-bottom:1px solid rgba(176,138,79,.35)}
+.howto i{background:var(--gold-grad);color:var(--cocoa);box-shadow:inset 0 0 0 1px rgba(140,106,51,.35)}
+.card .pr{color:var(--gold-deep);font-weight:700}
+.card.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 6px 16px -8px rgba(176,138,79,.55)}
+.chip[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.go,.show-go,.bar button{background:linear-gradient(135deg,#5a3a29,var(--cocoa) 60%);box-shadow:inset 0 0 0 1px rgba(217,191,140,.55),0 4px 12px -6px rgba(74,47,34,.45)}
+.go:hover,.show-go:hover,.bar button:hover{box-shadow:inset 0 0 0 1.5px var(--gold-light),0 6px 14px -6px rgba(74,47,34,.5)}
+.quote-btn{border-color:var(--gold)}
+.quote-btn:hover{background:var(--cocoa);border-color:var(--gold-light)}
+.addc{box-shadow:0 3px 10px rgba(60,35,20,.22),inset 0 0 0 1px var(--gold-light)}
+.bud-bar i{background:var(--gold-grad)}
+.grand b{color:var(--cocoa)}
+.grand{border-top:1px solid var(--gold-light)}
 </style>
 </head>
 <body>
