@@ -767,7 +767,7 @@ details.more[open]{padding-bottom:10px}
       <label>שם החברה / הארגון *<input id="qOrg" autocomplete="organization"></label>
       <label>איש קשר *<input id="qName" autocomplete="name"></label>
       <label>טלפון *<input id="qPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="050-0000000"></label>
-      <label>אימייל <span class="opt">(לא חובה)</span><input id="qEmail" type="email" autocomplete="email"></label>
+      <label><span>אימייל <span class="opt">(לא חובה)</span></span><input id="qEmail" type="email" autocomplete="email"></label>
       <div class="send" style="margin-top:6px"><button type="button" class="ghost" id="qmCancel">ביטול</button><button type="button" class="go" id="qmMake">⬇ הפקת הצעת מחיר</button></div>
     </div>
     <div id="qmDone" hidden>
@@ -1770,7 +1770,7 @@ async function makeQuotePdf(client){
 $("qmMake").onclick=async()=>{
   if(!Object.keys(QCHECK).map(qCheck).every(Boolean))return;
   Object.entries(QF).forEach(([q,f])=>{$(f).value=$(q).value.trim();});   // the order form is filled too
-  const btn=$("qmMake"),old=btn.textContent;btn.disabled=true;btn.textContent="מכינים את הצעת המחיר…";
+  const btn=$("qmMake"),old=btn.textContent;btn.disabled=true;btn.textContent="מכינים את ההצעה, כמה שניות…";
   try{
     const q=await makeQuotePdf({org:$("qOrg").value.trim(),name:$("qName").value.trim(),phone:$("qPhone").value.trim(),email:$("qEmail").value.trim()});
     q.pdf.save(q.name);lastQuote=q;q.url="";
