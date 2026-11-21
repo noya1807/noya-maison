@@ -610,6 +610,16 @@ h1.brand{margin:0;line-height:1.2}
 /* one button rule: gold = the main action on each screen, outline = secondary */
 .go{background:linear-gradient(135deg,#ead6a6,#cfab6c 50%,#b08a4f)!important;color:var(--cocoa)!important;box-shadow:inset 0 0 0 1px rgba(140,106,51,.45),0 8px 18px -8px rgba(140,106,51,.55)!important}
 .go:hover{box-shadow:inset 0 0 0 1.5px #8c6a33,0 12px 24px -8px rgba(140,106,51,.6)!important}
+/* share for spreading */
+.share-gold{margin-top:6px;border:1.5px solid var(--gold);background:var(--paper);color:var(--cocoa);border-radius:99px;padding:9px 18px;font-weight:700;font-size:14px;cursor:pointer}
+.share-gold:hover{background:linear-gradient(135deg,#ead6a6,#cfab6c 50%,#b08a4f);border-color:#8c6a33}
+.tell{margin-top:18px;width:100%;border:1px solid var(--gold-light);border-radius:16px;padding:16px;background:var(--paper);display:flex;flex-direction:column;gap:6px;align-items:center}
+.tell b{font-size:16px}
+.tell span{font-size:13px;color:var(--cocoa-soft)}
+.tell-btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+.tell-btns button{border-radius:12px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer}
+.tell-share{border:0;background:linear-gradient(135deg,#ead6a6,#cfab6c 50%,#b08a4f);color:var(--cocoa);min-width:200px}
+.tell-wa{border:0;background:#25d366;color:#fff}
 </style>
 </head>
 <body>
@@ -797,6 +807,16 @@ h1.brand{margin:0;line-height:1.2}
     <div class="done-logo" id="doneLogo" hidden></div>
     <p class="note" id="doneRef"></p>
     <div class="send"><button class="ghost" id="resend">פתיחת ההודעה שוב</button><button class="go" id="newBox">בניית מארז נוסף</button></div>
+    <div class="tell">
+      <b>מכירים עוד מישהו שמחפש מתנות לעובדים או ללקוחות? 🎁</b>
+      <span>שתפו אותו בלחיצה אחת</span>
+      <div class="tell-btns">
+        <button type="button" class="tell-share" id="tellShare" hidden>שיתוף עם חברים</button>
+        <button type="button" class="tell-wa" id="tellWa">וואטסאפ</button>
+        <button type="button" class="ghost" id="tellCopy">העתקת קישור</button>
+        <button type="button" class="ghost" id="tellMail">מייל</button>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -1475,12 +1495,14 @@ function renderAiBar(){
       +(editing?`<div class="reveal-more"><button class="ghost small" id="aiView">🖼 הצג את המארז המעוצב</button>${reset}</div>`:"");
   } else {
     b.innerHTML=`<div class="after-reveal"><div class="ar-row"><button class="wa-share" id="aiShare">שתפו בוואטסאפ להתייעצות</button><button class="ai-go" id="aiRe">↻ עצבו מחדש באמצעות AI</button>${reset}</div>
-      <button class="reveal-btn order-btn" id="aiOrder">המשך להזמנה ←</button><span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
+      <button class="reveal-btn order-btn" id="aiOrder">המשך להזמנה ←</button><span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span>
+      <button class="share-gold" id="aiSpread">שתפו את המארז שעיצבתם ✨</button></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
   }
   if(isOwner&&revealed&&!aiBusy&&!(editing&&aiStale)&&!aiImg.hidden)b.insertAdjacentHTML("beforeend",`<div class="reveal-more"><button class="ghost small" id="aiShow">⭐ הוספה לחלון הראווה (רק אתה רואה את הכפתור)</button></div>`);
   q("aiShow")&&(q("aiShow").onclick=()=>{q("aiShow").disabled=true;q("aiShow").textContent="שומר…";addToShow();});
   q("aiGo")&&(q("aiGo").onclick=()=>generateAi(false));
   q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
+  q("aiSpread")&&(q("aiSpread").onclick=()=>shareWhatsApp(currentBoxImage(),"spread"));
   q("aiOrder")&&(q("aiOrder").onclick=()=>openSummary());
   q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);generateAi(true);});
   q("aiView")&&(q("aiView").onclick=()=>{editing=!editing;
@@ -1489,6 +1511,15 @@ function renderAiBar(){
     setVeil();renderAiBar();});
   q("aiReset")&&(q("aiReset").onclick=()=>{manual.clear();recompose(true);aiStale=true;renderAiBar();});
 }
+// ===================== Tell a friend (after ordering) =====================
+const SITE_LINK=location.origin+"/?v=2";
+const TELL_TEXT="מצאתי אתר שבו בונים מארזי מתנה לעובדים וללקוחות ורואים את המארז מיד. שווה לך להציץ 🎁";
+{const canNative=!!navigator.share&&matchMedia("(pointer:coarse)").matches;
+  if(canNative){document.getElementById("tellShare").hidden=false;document.getElementById("tellWa").hidden=true;document.getElementById("tellMail").hidden=true;}
+  document.getElementById("tellShare").onclick=async()=>{try{await navigator.share({title:"נויה במתנה | בונה המארזים",text:TELL_TEXT,url:SITE_LINK});}catch(e){}};
+  document.getElementById("tellWa").onclick=()=>{window.open("https://wa.me/?text="+encodeURIComponent(TELL_TEXT+"\n"+SITE_LINK),"_blank","noopener");};
+  document.getElementById("tellMail").onclick=()=>{location.href=`mailto:?subject=${encodeURIComponent("מארזי מתנה לעובדים וללקוחות – נויה במתנה")}&body=${encodeURIComponent(TELL_TEXT+"\n"+SITE_LINK)}`;};
+  document.getElementById("tellCopy").onclick=async()=>{try{await navigator.clipboard.writeText(TELL_TEXT+"\n"+SITE_LINK);showToast("הקישור הועתק ✓ אפשר להדביק בכל מקום");}catch(e){prompt("העתיקו את הקישור:",SITE_LINK);}};}
 // ===================== Share on WhatsApp (consult before ordering) =====================
 // Phone: the image itself goes into WhatsApp through the system share sheet.
 // Computer (or if the phone can't share files): the image is stored by /api/share and WhatsApp opens with a
@@ -1510,7 +1541,10 @@ async function shareLink(jpg){ // page with the designed image and one button to
   if(!shareAvailable)return location.origin+"/";
   const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:{items:[...cart],pack:pack.id,bg:bg.id,variant}})});
   const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw new Error(j.error||r.status);return j.url;}
-async function shareWhatsApp(src){
+let shareMode="consult";
+function spreadText(){return "עיצבתי מארז מתנה ב-נויה במתנה ✨\nבוחרים מוצרים, רואים את המארז מיד ומקבלים הצעת מחיר. שווה להציץ 🎁";}
+const msgText=()=>shareMode==="spread"?spreadText():shareText();
+async function shareWhatsApp(src,mode){shareMode=mode||"consult";
   if(sharing||!cart.size)return;
   const mobile=matchMedia("(pointer:coarse)").matches;
   if(mobile&&shareReady&&shareReady.src===src){const d=shareReady.data; // second tap: share straight away
@@ -1526,7 +1560,7 @@ async function shareWhatsApp(src){
       const file=new File([await (await fetch(jpg)).blob()],"noya-gift-box.jpg",{type:"image/jpeg"});
       if(navigator.canShare({files:[file]})){
         showToast("מכין את התמונה לשיתוף…");
-        const data={files:[file],text:shareText()+"\n\n"+CTA_LINE+"\n"+await shareLink(jpg)};
+        const data={files:[file],text:msgText()+"\n\n"+CTA_LINE+"\n"+await shareLink(jpg)};
         try{await navigator.share(data);}
         catch(e){if(e.name==="NotAllowedError"){shareReady={src,data};showToast("התמונה מוכנה. לחצו שוב על כפתור השיתוף כדי לשלוח.");}
           else if(e.name!=="AbortError")throw e;}
@@ -1535,7 +1569,7 @@ async function shareWhatsApp(src){
     }
     if(!shareAvailable){showToast("שיתוף התמונה בוואטסאפ פעיל באתר. כאן אפשר להוריד צילום מסך ולשלוח אותו.");return;}
     showToast("מכין את התמונה לשיתוף…");
-    const href="https://wa.me/?text="+encodeURIComponent(shareText()+"\n\n"+CTA_LINE+"\n"+await shareLink(jpg));
+    const href="https://wa.me/?text="+encodeURIComponent(msgText()+"\n\n"+CTA_LINE+"\n"+await shareLink(jpg));
     const a=document.createElement("a");a.href=href;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();
     if(copied&&await copied){showToast(`התמונה הועתקה ✓ בחרו צ'אט בוואטסאפ והדביקו אותה עם ${/Mac|iPhone|iPad/.test(navigator.platform)?"⌘+V":"Ctrl+V"}`);
       clearTimeout(toastT);toastT=setTimeout(()=>document.getElementById("toast").classList.remove("show"),10000);}
