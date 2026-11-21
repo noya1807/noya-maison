@@ -465,18 +465,18 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 @media (max-width:760px){.fab-reveal{display:block}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 /* "בין לקוחותינו": rotating strip of organisations that ordered from us (logo image if we have one, otherwise the name) */
-.clients{background:var(--paper);border-bottom:1px solid var(--line);padding:12px 0 14px;overflow:hidden}
-.clients h3{margin:0 0 9px;text-align:center;font-family:var(--display);font-size:15px;font-weight:700;color:var(--cocoa);letter-spacing:.3px}
-.clients h3::before,.clients h3::after{content:"✦";color:var(--gold);font-size:11px;margin:0 9px;vertical-align:2px}
+.clients{background:var(--paper);border-bottom:1px solid var(--line);padding:7px 0 8px;overflow:hidden}
+.clients h3{margin:0 0 5px;text-align:center;font-family:var(--display);font-size:10px;font-weight:700;color:var(--cocoa);letter-spacing:.3px}
+.clients h3::before,.clients h3::after{content:"✦";color:var(--gold);font-size:7px;margin:0 5px;vertical-align:1px}
 .cl-view{padding:0 16px}
-.cl-track{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:1100px;margin:0 auto}
-.cl-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;height:40px;min-width:110px;margin:0;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:#fff;direction:rtl;font-size:14px;font-weight:600;color:var(--cocoa-soft);white-space:nowrap}
-.cl-item img{max-height:30px;max-width:120px;object-fit:contain;filter:grayscale(1);opacity:.8;transition:filter .3s,opacity .3s}
+.cl-track{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:700px;margin:0 auto}
+.cl-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;height:24px;min-width:66px;margin:0;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#fff;direction:rtl;font-size:10px;font-weight:600;color:var(--cocoa-soft);white-space:nowrap}
+.cl-item img{max-height:18px;max-width:72px;object-fit:contain;filter:grayscale(1);opacity:.8;transition:filter .3s,opacity .3s}
 .cl-item:hover img{filter:none;opacity:1}
-.clients.mini{background:transparent;border:0;padding:4px 0 2px;margin:4px 0 12px}
-.clients.mini h3{font-size:13.5px}
-.clients.mini .cl-item{height:32px;min-width:0;font-size:12.5px;padding:0 11px}
-@media (max-width:640px){.cl-item{height:34px;min-width:0;padding:0 11px;font-size:12.5px}}
+.clients.mini{background:transparent;border:0;padding:2px 0 1px;margin:2px 0 8px}
+.clients.mini h3{font-size:10px}
+.clients.mini .cl-item{height:22px;min-width:0;font-size:10px;padding:0 7px}
+@media (max-width:640px){.cl-item{height:22px;min-width:0;padding:0 7px;font-size:10px}}
 /* downloadable quote (PDF) */
 .quote-btn{display:block;width:100%;margin-top:12px;padding:11px 14px;border:1.5px solid var(--cocoa);border-radius:12px;background:var(--paper);color:var(--cocoa);font-weight:700;font-size:15px}
 .quote-btn:hover{background:var(--cocoa);color:var(--paper)}
