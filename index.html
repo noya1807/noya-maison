@@ -464,6 +464,47 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .fab-reveal{display:none}
 @media (max-width:760px){.fab-reveal{display:block}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* "בין לקוחותינו": rotating strip of organisations that ordered from us (logo image if we have one, otherwise the name) */
+.clients{background:var(--paper);border-bottom:1px solid var(--line);padding:12px 0 14px;overflow:hidden}
+.clients h3{margin:0 0 9px;text-align:center;font-family:var(--display);font-size:15px;font-weight:700;color:var(--cocoa);letter-spacing:.3px}
+.clients h3::before,.clients h3::after{content:"✦";color:var(--gold);font-size:11px;margin:0 9px;vertical-align:2px}
+.cl-view{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.cl-track{display:flex;width:max-content;direction:ltr;animation:clRoll var(--cl-dur,55s) linear infinite}
+.clients:hover .cl-track{animation-play-state:paused}
+.cl-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;height:44px;min-width:120px;margin:0 9px;padding:0 18px;border:1px solid var(--line);border-radius:12px;background:#fff;direction:rtl;font-size:14px;font-weight:600;color:var(--cocoa-soft);white-space:nowrap}
+.cl-item img{max-height:30px;max-width:120px;object-fit:contain;filter:grayscale(1);opacity:.8;transition:filter .3s,opacity .3s}
+.cl-item:hover img{filter:none;opacity:1}
+@keyframes clRoll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.clients.mini{background:transparent;border:0;padding:4px 0 2px;margin:4px 0 12px}
+.clients.mini h3{font-size:13.5px}
+.clients.mini .cl-item{height:36px;min-width:96px;font-size:12.5px;padding:0 12px}
+@media (prefers-reduced-motion:reduce){.cl-track{animation:none;flex-wrap:wrap;justify-content:center;width:auto}.cl-track .cl-dup{display:none}}
+/* downloadable quote (PDF) */
+.quote-btn{display:block;width:100%;margin-top:12px;padding:11px 14px;border:1.5px solid var(--cocoa);border-radius:12px;background:var(--paper);color:var(--cocoa);font-weight:700;font-size:15px}
+.quote-btn:hover{background:var(--cocoa);color:var(--paper)}
+.quote-btn[disabled]{opacity:.6;cursor:wait}
+.quote-sub{display:block;text-align:center;font-size:12px;color:var(--cocoa-soft);margin-top:5px}
+.qdoc{position:fixed;left:-10000px;top:0;width:794px;background:#fffaf3;color:#4a2f22;font-family:var(--body);direction:rtl;padding:46px 52px;font-size:14px;line-height:1.5}
+.qdoc .qh{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #b08a4f;padding-bottom:16px}
+.qdoc .qbrand{font-family:var(--display);font-size:34px;font-weight:700;line-height:1.1}
+.qdoc .qbrand small{display:block;font-family:var(--body);font-size:12.5px;font-weight:400;color:#7a5a48;margin-top:6px;max-width:360px}
+.qdoc .qmeta{text-align:left;font-size:13px;color:#7a5a48}
+.qdoc .qmeta b{display:block;font-family:var(--display);font-size:26px;color:#4a2f22;margin-bottom:4px}
+.qdoc .qto{margin:18px 0 6px;font-size:14.5px}
+.qdoc .qbody{display:flex;gap:22px;align-items:flex-start;margin-top:12px}
+.qdoc .qimg{flex:0 0 250px}
+.qdoc .qimg img{width:250px;border-radius:14px;display:block}
+.qdoc table{flex:1;border-collapse:collapse;font-size:13.5px}
+.qdoc th{text-align:right;background:#efe3d3;padding:8px 10px;font-weight:700}
+.qdoc td{padding:7px 10px;border-bottom:1px solid #e2d3c0;vertical-align:top}
+.qdoc td.n,.qdoc th.n{text-align:left;white-space:nowrap}
+.qdoc tr.sub td{font-weight:700;background:#f8efe3}
+.qdoc .qtot{margin:22px 0 0 auto;width:340px;font-size:14.5px}
+.qdoc .qtot div{display:flex;justify-content:space-between;padding:5px 2px;border-bottom:1px solid #e2d3c0}
+.qdoc .qtot .g{border:0;margin-top:6px;padding:10px 12px;background:#4a2f22;color:#fffaf3;border-radius:10px;font-size:17px;font-weight:700}
+.qdoc .qnotes{margin-top:24px;font-size:12.5px;color:#7a5a48}
+.qdoc .qnotes li{margin-bottom:3px}
+.qdoc .qfoot{margin-top:26px;padding-top:12px;border-top:1px solid #e2d3c0;display:flex;justify-content:space-between;font-size:12.5px;color:#7a5a48}
 </style>
 </head>
 <body>
@@ -477,6 +518,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   <div class="howto"><span><i>1</i> בוחרים מוצרים</span><span><i>2</i> בוחרים אריזה</span><span><i>3</i> חושפים את המארז ✨</span></div>
   <div class="trust">משלוח אישי לכל נמען: עובדים, לקוחות ושותפים עסקיים · מיתוג ולוגו · מינימום הזמנה ₪3,000</div>
 </div>
+<section class="clients" id="clientsTop" aria-label="בין לקוחותינו"><h3>בין לקוחותינו</h3><div class="cl-view"><div class="cl-track"></div></div></section>
 <div class="layout" id="buildView">
   <section class="cat" aria-labelledby="cat-h">
     <h2 id="cat-h">בחרו מוצרים למארז</h2>
@@ -543,6 +585,8 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       <p class="ship-line" id="shipLine"></p>
       <div class="grand"><span>סה"כ להזמנה</span><b id="grand"></b></div>
       <p class="note">מחירים כולל מע"מ. המחיר הסופי, משלוח ומיתוג יאושרו מול נציג.</p>
+      <button type="button" class="quote-btn" id="quoteBtn">⬇ הורדת הצעת מחיר (PDF)</button>
+      <span class="quote-sub">מסמך מסודר להעברה לאישור בארגון</span>
     </div>
     <div class="card2 eng" id="engCard" hidden>
       <h3>✨ הוסיפו חריטת לוגו <span class="opt">(לא חובה)</span></h3>
@@ -618,6 +662,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
       </fieldset>
       <label>תאריך אספקה רצוי<input id="fDate" type="date"></label>
       <label>הערות נוספות<textarea id="fNotes" rows="3"></textarea></label>
+      <section class="clients mini" id="clientsSum" aria-label="בין לקוחותינו"><h3>בין לקוחותינו</h3><div class="cl-view"><div class="cl-track"></div></div></section>
       <p class="err" id="fErr" hidden></p>
       <div class="send">
         <button type="button" class="go" id="sendMail">✉ שליחה במייל</button>
@@ -1344,7 +1389,7 @@ let boxes=1, orderText="", lastSend=null;
 const $=id=>document.getElementById(id);
 function setStep(n){[...$("steps").children].forEach((s,i)=>s.classList.toggle("on",i===n));}
 function showView(v){
-  $("buildView").hidden=v!=="build";$("intro").hidden=v!=="build";$("sumView").hidden=v!=="sum";$("doneView").hidden=v!=="done";$("admView").hidden=v!=="admin";
+  $("buildView").hidden=v!=="build";$("intro").hidden=v!=="build";$("clientsTop").hidden=v!=="build";$("sumView").hidden=v!=="sum";$("doneView").hidden=v!=="done";$("admView").hidden=v!=="admin";
   $("bar").style.display=v==="build"?"":"none";$("steps").style.visibility=v==="admin"?"hidden":"";setStep(v==="build"?0:v==="sum"?1:2);
   sheet.classList.remove("open");scrim.classList.remove("open");window.scrollTo(0,0);
   if(v==="build")requestAnimationFrame(()=>recompose(false));
@@ -1557,6 +1602,75 @@ $("copyOrder").onclick=async()=>{if(!validate())return;const o=buildOrder();
   catch(e){showToast("ההעתקה נחסמה בדפדפן. שלחו בוואטסאפ ל-054-3219070");}};
 $("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];addrFiles=[];addrCount=0;renderAddrFiles();cardOn=false;cardSelf=false;$("orderForm").reset();syncDlv();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
 ["fName","fPhone","fEmail"].forEach(i=>$(i).addEventListener("blur",()=>{if($("fErr").hidden===false)validate();}));
+
+// ===================== "בין לקוחותינו" + downloadable quote (PDF) =====================
+// Organisations that ordered from us. To show a real logo, put the file in img/clients/ and set logo:"img/clients/<file>".
+// Without a logo the name is shown in the site's own font.
+const CLIENTS=[
+  {name:"בנק מזרחי טפחות"},{name:"בנק דיסקונט"},{name:"המשרד להגנת הסביבה"},{name:"כללית"},
+  {name:"פמי פרימיום"},{name:'צה"ל'},{name:"משטרת ישראל"},{name:"עיריית תל אביב-יפו"},
+  {name:"עיריית הרצליה"},{name:"אלביט"},{name:"מדטרוניק"},{name:"כנסת ישראל"},
+  {name:"בנק הפועלים"},{name:"בנק יהב"}];
+function renderClients(){
+  const one=c=>`<span class="cl-item">${c.logo?`<img src="${esc(c.logo)}" alt="${esc(c.name)}" loading="lazy">`:esc(c.name)}</span>`;
+  const row=CLIENTS.map(one).join(""),dup=CLIENTS.map(c=>one(c).replace('class="cl-item"','class="cl-item cl-dup" aria-hidden="true"')).join("");
+  document.querySelectorAll(".clients .cl-track").forEach(t=>{t.innerHTML=row+dup;t.style.setProperty("--cl-dur",Math.max(30,CLIENTS.length*4.5)+"s");});
+}
+renderClients();
+
+const QUOTE_DAYS=14;
+function loadScript(src){return new Promise((ok,bad)=>{if(document.querySelector(`script[src="${src}"]`)){ok();return;}
+  const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>bad(new Error("load"));document.head.appendChild(s);});}
+async function imgAsData(src){
+  if(!src)return "";if(src.startsWith("data:"))return src;
+  try{const b=await (await fetch(src,{mode:"cors"})).blob();
+    return await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r("");fr.readAsDataURL(b);});}catch(e){return "";}
+}
+function quoteHTML(q,img){
+  const f=id=>($(id)&&$(id).value||"").trim(),noP=unpriced(),pr=n=>noP&&!(+n)?"—":ils(n);
+  const rows=[...cart].map(([id,n])=>{const p=byId[id];return `<tr><td>${esc(p.name)}</td><td class="n">${n}</td><td class="n">${pr(p.price)}</td><td class="n">${p.price?ils(p.price*n):"—"}</td></tr>`;});
+  if(!pack.none)rows.push(`<tr><td>אריזה: ${esc(pack.name)}</td><td class="n">1</td><td class="n">${pr(pack.price)}</td><td class="n">${pr(pack.price)}</td></tr>`);
+  if(engSel.size)rows.push(`<tr><td>חריטת לוגו: ${esc(engNames())}</td><td class="n"></td><td class="n"></td><td class="n">${ils(engCost())}</td></tr>`);
+  if(cardOn)rows.push(`<tr><td>כרטיס ברכה ממותג 10×15</td><td class="n">1</td><td class="n">${ils(cardCost())}</td><td class="n">${ils(cardCost())}</td></tr>`);
+  rows.push(`<tr class="sub"><td colspan="3">מחיר למארז</td><td class="n">${money(orderPer())}</td></tr>`);
+  const total=grandTotal(),beforeVat=total/1.18,to=[f("fOrg"),f("fName")].filter(Boolean).join(" · ");
+  const ship=dlvMode()==="pickup"?`<div><span>איסוף עצמי</span><span>ללא עלות</span></div>`:`<div><span>${esc(dlvName())}: ${boxes} × ${ils(dlvRate())}</span><span>${ils(shipCost())}</span></div>`;
+  const tot=noP?`<div class="g"><span>סה"כ</span><span>יימסר ע"י נציג</span></div>`
+    :`<div><span>${boxes} מארזים × ${ils(orderPer())}</span><span>${ils(r2(orderPer()*boxes))}</span></div>${ship}
+      <div><span>סה"כ לפני מע"מ</span><span>${ils(r2(beforeVat))}</span></div><div><span>מע"מ 18%</span><span>${ils(r2(total-beforeVat))}</span></div>
+      <div class="g"><span>סה"כ לתשלום</span><span>${ils(total)}</span></div>`;
+  return `<div class="qh"><div class="qbrand">נויה במתנה<small>עולם של מתנות לארגונים ולעסקים. מארזי חג, מתנות לעובדים, ללקוחות ולשותפים עסקיים, בהתאמה אישית.</small></div>
+    <div class="qmeta"><b>הצעת מחיר</b>מס' ${q.ref}<br>תאריך: ${q.date}<br>בתוקף עד: ${q.until}</div></div>
+    ${to?`<div class="qto"><b>לכבוד:</b> ${esc(to)}</div>`:""}
+    <div class="qbody">${img?`<div class="qimg"><img src="${img}" alt=""></div>`:""}
+      <table><thead><tr><th>פריט במארז</th><th class="n">כמות</th><th class="n">מחיר</th><th class="n">סה"כ</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
+    <div class="qtot">${tot}</div>
+    <ul class="qnotes"><li>המחירים כוללים מע"מ. ההצעה כפופה לאישור סופי של נציג נויה במתנה.</li>
+      <li>מינימום הזמנה: ${ils(CONFIG.minOrder)}. מיתוג ולוגו בתוספת, לפי הבחירה.</li>
+      <li>ההצעה בתוקף ל-${QUOTE_DAYS} יום, בכפוף למלאי.</li></ul>
+    <div class="qfoot"><span>054-3219070 · 053-7784388 · 053-3460081</span><span>${esc(CONFIG.orderEmail||"")} · NOYAGLOBAL.COM</span></div>`;
+}
+$("quoteBtn").onclick=async()=>{
+  const btn=$("quoteBtn"),old=btn.textContent;btn.disabled=true;btn.textContent="מכינים את הצעת המחיר…";
+  let box=null;
+  try{
+    await Promise.all([loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"),loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js")]);
+    const d=new Date(),u=new Date(d.getTime()+QUOTE_DAYS*864e5),fmt=x=>x.toLocaleDateString("he-IL");
+    const q={ref:"Q-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase(),date:fmt(d),until:fmt(u)};
+    const img=await imgAsData($("sumImg").src);
+    box=document.createElement("div");box.className="qdoc";box.innerHTML=quoteHTML(q,img);document.body.appendChild(box);
+    await document.fonts?.ready;if(img)await new Promise(r=>{const i=box.querySelector("img");if(!i||i.complete)r();else{i.onload=i.onerror=r;}});
+    const cv=await html2canvas(box,{scale:2,backgroundColor:"#fffaf3",useCORS:true,logging:false});
+    const {jsPDF}=window.jspdf,pdf=new jsPDF({unit:"mm",format:"a4"}),W=210,H=297,pxPerPage=Math.floor(cv.width*H/W);
+    for(let y=0,pg=0;y<cv.height;y+=pxPerPage,pg++){
+      const h=Math.min(pxPerPage,cv.height-y),c=document.createElement("canvas");c.width=cv.width;c.height=h;
+      const g=c.getContext("2d");g.fillStyle="#fffaf3";g.fillRect(0,0,c.width,h);g.drawImage(cv,0,y,cv.width,h,0,0,cv.width,h);
+      if(pg)pdf.addPage();pdf.addImage(c.toDataURL("image/jpeg",.92),"JPEG",0,0,W,h*W/cv.width);}
+    pdf.save(`הצעת-מחיר-נויה-במתנה-${q.ref}.pdf`);
+    showToast("הצעת המחיר ירדה למכשיר שלכם ✓");
+  }catch(e){showToast("לא הצלחנו להכין את הקובץ. נסו שוב, או שלחו לנו את ההזמנה ונשלח הצעת מחיר.");}
+  finally{box&&box.remove();btn.disabled=false;btn.textContent=old;}
+};
 // ===================== Stage 3: admin (catalogue editing) =====================
 // Storage: on the website the catalogue is saved by /api/catalog (shared with every customer, protected by the
 // admin password). Where there is no server (e.g. inside Claude) it is saved in this browser only.
