@@ -1699,7 +1699,9 @@ function stageEnd(silent){STG.timers.forEach(clearTimeout);const nh=document.get
   const was=STG.on;STG.on=false;STG.cur=STG.land=STG.nudge=null;scene.classList.remove("staging","stg-warm");
   if(was&&!silent){setVeil();draw();}}
 function noyaStop(){noyaTimers.forEach(clearTimeout);noyaTimers=[];stageEnd();}
-function noyaSetup(){noyaStop();const host=document.getElementById("noyaHost");if(!host)return;host.innerHTML=`<div class="ai-orb"></div>`;stageStart();}
+// back to the original: products stay hidden under the veil, the gold orb turns while Noya works (staging kept in code, switched off)
+const STAGING_ON=false;
+function noyaSetup(){noyaStop();const host=document.getElementById("noyaHost");if(!host)return;host.innerHTML=`<div class="ai-orb"></div>`;if(STAGING_ON)stageStart();}
 const STEPS=["נויה בוחרת את המוצר המוביל…","נויה בונה שכבות ועומק…","נויה מאזנת צבעים וצורות…","נויה מעמידה את המוצרים על הבמה…","נויה מכוונת אור וצללים…","נויה מלטשת לצילום קטלוגי…"];
 // bring the whole box picture into view so the reveal is seen (the button sits below it, often off-screen on phones)
 function sceneToTop(){const st=scene.closest(".stage")||scene,y=st.getBoundingClientRect().top+window.scrollY-8;
