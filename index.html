@@ -722,6 +722,24 @@ h1.brand{margin:0;line-height:1.2}
 @keyframes nyHat{0%,100%{transform:rotate(0)}50%{transform:rotate(-2deg)}}
 @keyframes nyBraid{0%,100%{transform:rotate(0)}50%{transform:rotate(4deg)}}
 @media (prefers-reduced-motion:reduce){.noya-art *{animation:none!important}.noya-art .ny-prod{transition:none}}
+/* Noya v3 staging: the picture stays clear, Noya stands at the side, the step text sits at the bottom */
+.scene.staging .ai-load{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;justify-content:flex-end;pointer-events:none;padding-bottom:10px}
+.scene.staging .ai-load b,.scene.staging .ai-load span{background:rgba(255,250,243,.88);padding:3px 12px;border-radius:99px;box-shadow:0 2px 8px rgba(74,47,34,.12)}
+.scene.staging #noyaHost{position:absolute;left:1.5%;bottom:4%;width:26%;max-width:190px;min-width:92px}
+.scene.staging .noya-art{width:100%;height:auto;max-width:none}
+#noyaHost .noya-art{width:150px;height:auto}
+.noya-art .arm{transform-box:view-box;transform-origin:128px 112px}
+.noya-art.toss .arm{animation:nyToss .9s cubic-bezier(.3,.7,.3,1)!important}
+@keyframes nyToss{0%{transform:rotate(0)}35%{transform:rotate(-48deg)}65%{transform:rotate(-20deg)}100%{transform:rotate(0)}}
+.noya-art .hatbow{transform-box:fill-box;transform-origin:100% 50%;animation:nyBraid 3.2s ease-in-out infinite}
+.noya-art .iris{animation:nyLook 6s ease-in-out infinite}
+@keyframes nyLook{0%,40%,100%{transform:translate(0,0)}50%,80%{transform:translate(1.2px,.6px)}}
+.scene.stg-warm::after{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;background:radial-gradient(ellipse at 62% 8%,rgba(255,226,170,.38),transparent 62%);animation:stgIn 1.2s ease}
+.scene.stg-flash::before{content:"";position:absolute;inset:0;z-index:9;background:#fff;pointer-events:none;animation:stgFlash .9s ease-out forwards}
+@keyframes stgIn{from{opacity:0}to{opacity:1}}
+@keyframes stgFlash{0%{opacity:0}12%{opacity:.95}100%{opacity:0}}
+.scene.staging.busy{opacity:1}
+@media (prefers-reduced-motion:reduce){.scene.stg-flash::before{animation:none;opacity:0}}
 </style>
 </head>
 <body>
@@ -1372,12 +1390,13 @@ function draw(){
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);drawBg();drawn=[];
   Object.values(anim).map(a=>a.cur).sort((a,b)=>a.z-b.z).forEach(e=>{
     if(e.alpha<=.01)return;
+    if(STG.on){if(!(STG.placed.has(e.key)||(STG.cur&&STG.cur.key===e.key)))return;e=stageView(e);}
     if(e.slab){slab(e);return;}
     const A=asset(e.src);if(!A.ready)return;
     ctx.save();ctx.globalAlpha=e.alpha;
     if(e.cast){ctx.save();ctx.translate(e.cx,e.base);ctx.transform(1,0,-.6,.24,0,0);ctx.filter=`blur(${Math.max(3,e.h*.03)}px)`;ctx.globalAlpha=e.alpha*e.cast*1.6;
       ctx.drawImage(A.sil,-e.w/2,-e.h,e.w,e.h);ctx.restore();}
-    contact(e.cx,e.base-(e.lie?2:0),(e.lie?e.foot:e.w)*.95,e.alpha);
+    if(!e._fly)contact(e.cx,e.base-(e.lie?2:0),(e.lie?e.foot:e.w)*.95,e.alpha);
     ctx.shadowColor="rgba(45,28,18,.24)";ctx.shadowBlur=Math.max(8,e.h*.08);ctx.shadowOffsetX=Math.max(3,e.h*.025);ctx.shadowOffsetY=2;
     if(e.lie){ctx.translate(e.cx,e.base-e.bh/2);ctx.rotate(e.rot*Math.PI/180);ctx.drawImage(A.im,-e.w/2,-e.h/2,e.w,e.h);}
     else{ctx.translate(e.cx,e.base);ctx.rotate(e.rot*Math.PI/180);ctx.drawImage(A.im,-e.w/2,-e.h,e.w,e.h);}
@@ -1543,7 +1562,7 @@ function showAi(src){
   aiImg.hidden=!on;aiTag.hidden=!on;
 }
 function setVeil(){
-  const v=cart.size>0&&!revealed&&!editing;
+  const v=cart.size>0&&!revealed&&!editing&&!STG.on;
   scene.classList.toggle("veiled",v);veil.hidden=!v;
   if(v){const n=[...cart.values()].reduce((a,b)=>a+b,0);document.getElementById("veilCount").textContent=n===1?"פריט אחד נבחר":n+" פריטים נבחרו";}
 }
@@ -1553,7 +1572,7 @@ function onCartChanged(){
   if(!cart.size){revealed=false;editing=false;showAi(null);}
   setVeil();renderAiBar();
 }
-function playReveal(){scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);playUnbox();}
+function playReveal(){scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);if(STG.flashed){STG.flashed=false;}else playUnbox();}
 // 3D gift box opens over the picture: ribbon box spins, lid lifts off, gold sparks, the designed box appears
 function playUnbox(){
   if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;
@@ -1577,84 +1596,98 @@ if(matchMedia("(hover:hover) and (pointer:fine)").matches&&!matchMedia("(prefers
     if(show){if(sh)tilt(show,e,6);else if(show.style.getPropertyValue("--rx"))untilt(show);}},{passive:true});
 }
 function finishReveal(key,src){sceneToTop();
+  if(STG.on){STG.flashed=true;stageEnd(true);scene.classList.remove("stg-flash");void scene.offsetWidth;scene.classList.add("stg-flash");setTimeout(()=>scene.classList.remove("stg-flash"),900);}
   aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();
   showAi(src);setVeil();playReveal();renderAiBar();
 }
-// ===== Noya (illustrated girl: turquoise sun hat, braid, white eyelet dress) designs the customer's real box =====
-const NOYA_SVG=`<svg class="noya-art" data-step="0" viewBox="0 0 260 200" width="320" height="246" role="img" aria-label="נויה מסדרת את המארז שלכם">
+// ===== Noya (illustrated girl: turquoise sun hat with cream bow, braid, cream sailor dress with navy stripes)
+// She stands at the side of the real box picture and places the customer's products one by one, exactly where the
+// builder's layout puts them: base first, then the hero, then back-to-front, with an arc, a soft landing and a shadow.
+const NOYA_SVG=`<svg class="noya-art" data-step="0" viewBox="46 26 112 150" role="img" aria-label="נויה מסדרת את המארז שלכם">
 <defs>
 <linearGradient id="nGold" x1="0" x2="1"><stop offset="0" stop-color="#b08a4f"/><stop offset=".5" stop-color="#e3cc97"/><stop offset="1" stop-color="#b08a4f"/></linearGradient>
-<linearGradient id="nHat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3cb"/><stop offset="1" stop-color="#5fb3aa"/></linearGradient>
-<radialGradient id="nLight" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#fff3c9" stop-opacity=".95"/><stop offset="1" stop-color="#fff3c9" stop-opacity="0"/></radialGradient>
-<pattern id="nEyelet" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="1.1" fill="none" stroke="#d9cbbb" stroke-width=".7"/><circle cx="4.5" cy="2.4" r=".5" fill="#d9cbbb"/><circle cx="4.5" cy="6.6" r=".5" fill="#d9cbbb"/><circle cx="2.4" cy="4.5" r=".5" fill="#d9cbbb"/><circle cx="6.6" cy="4.5" r=".5" fill="#d9cbbb"/></pattern>
-<clipPath id="nBoxClip"><rect x="146" y="60" width="88" height="104"/></clipPath>
+<linearGradient id="nHat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fdcd3"/><stop offset="1" stop-color="#6fbfb4"/></linearGradient>
+<clipPath id="nBodice"><path d="M84 97 Q76 99 75 108 L73 132 L125 132 L123 108 Q122 99 114 97 Z"/></clipPath>
+<pattern id="nEyelet" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1" fill="none" stroke="#e2d6c4" stroke-width=".6"/></pattern>
 </defs>
-<g class="prop p4"><path class="cone" d="M232 46 L178 166 L250 166 Z" fill="url(#nLight)"/><path d="M252 178 V58 Q252 40 236 42" stroke="#4a2f22" stroke-width="2.5" fill="none" stroke-linecap="round"/><g class="lamp"><path d="M224 38 L246 38 L240 52 L230 52 Z" fill="url(#nGold)" stroke="#8c6a33" stroke-width="1.2"/></g></g>
-<g class="boxwrap">
-<g class="prop p3"><rect x="140" y="170" width="100" height="8" rx="2" fill="#f3e6d6" stroke="#8c6a33" stroke-width="1.2"/></g>
-<rect x="208" y="104" width="44" height="52" rx="3" transform="rotate(16 230 130)" fill="#f6ead8" stroke="#8c6a33" stroke-width="1.3"/>
-<rect x="225" y="104" width="7" height="52" transform="rotate(16 230 130)" fill="url(#nGold)"/>
-<rect x="150" y="124" width="80" height="40" rx="2" fill="#efe1cb" stroke="#8c6a33" stroke-width="1.3"/>
-<g class="items" clip-path="url(#nBoxClip)"></g>
-<rect x="146" y="142" width="88" height="30" rx="3" fill="#fbf3e6" stroke="#8c6a33" stroke-width="1.4"/>
-<rect x="186" y="142" width="8" height="30" fill="url(#nGold)"/>
-<path d="M190 142 q-10 -10 -13 -2 q4 5 13 2 q10 -10 13 -2 q-4 5 -13 2" fill="none" stroke="#b08a4f" stroke-width="2.2"/>
-</g>
 <g class="noya">
-<path d="M84 96 Q76 98 74 108 L62 172 L136 172 L124 108 Q122 98 114 96 Z" fill="#fffdf8" stroke="#4a2f22" stroke-width="1.8" stroke-linejoin="round"/>
-<path d="M84 96 Q76 98 74 108 L62 172 L136 172 L124 108 Q122 98 114 96 Z" fill="url(#nEyelet)" opacity=".9"/>
-<path d="M78 130 Q99 136 120 130" stroke="#d9cbbb" stroke-width="1.2" fill="none"/>
-<circle cx="99" cy="108" r="1.3" fill="#e9e1d6" stroke="#bfb2a2" stroke-width=".6"/><circle cx="99" cy="116" r="1.3" fill="#e9e1d6" stroke="#bfb2a2" stroke-width=".6"/><circle cx="99" cy="124" r="1.3" fill="#e9e1d6" stroke="#bfb2a2" stroke-width=".6"/>
-<path d="M74 100 q-4 4 -2 9 q4 -1 5 -5 q2 4 6 3 q1 -6 -4 -9 z" fill="#fffdf8" stroke="#4a2f22" stroke-width="1.3" stroke-linejoin="round"/>
-<path d="M124 100 q4 4 2 9 q-4 -1 -5 -5 q-2 4 -6 3 q-1 -6 4 -9 z" fill="#fffdf8" stroke="#4a2f22" stroke-width="1.3" stroke-linejoin="round"/>
-<path d="M76 110 Q70 132 80 150" stroke="#4a2f22" stroke-width="8.5" fill="none" stroke-linecap="round"/><path d="M76 110 Q70 132 80 150" stroke="#f1d2b6" stroke-width="6" fill="none" stroke-linecap="round"/>
-<rect x="94" y="84" width="10" height="14" rx="4" fill="#f1d2b6" stroke="#4a2f22" stroke-width="1.4"/>
+<path d="M73 130 L60 172 L138 172 L125 130 Z" fill="#fbf5ea" stroke="#4a2f22" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M73 130 L60 172 L138 172 L125 130 Z" fill="url(#nEyelet)"/>
+<path d="M84 97 Q76 99 75 108 L73 132 L125 132 L123 108 Q122 99 114 97 Z" fill="#fbf5ea" stroke="#4a2f22" stroke-width="1.6" stroke-linejoin="round"/>
+<g clip-path="url(#nBodice)" stroke="#22325c" stroke-width="2.3"><path d="M70 110 H130 M70 116 H130 M70 122 H130 M70 128 H130"/></g>
+<rect x="96.5" y="104" width="5" height="28" fill="#fbf5ea"/>
+<circle cx="99" cy="112" r="1.7" fill="url(#nGold)" stroke="#8c6a33" stroke-width=".6"/><circle cx="99" cy="120" r="1.7" fill="url(#nGold)" stroke="#8c6a33" stroke-width=".6"/><circle cx="99" cy="128" r="1.7" fill="url(#nGold)" stroke="#8c6a33" stroke-width=".6"/>
+<path d="M73 131 Q99 135 125 131" stroke="#4a2f22" stroke-width="1.1" fill="none"/>
+<path d="M76 100 q-9 2 -9 10 q4 4 10 1 q-1 -6 -1 -11z" fill="#fbf5ea" stroke="#4a2f22" stroke-width="1.3" stroke-linejoin="round"/><path d="M68 109 q4 3 9 1" stroke="#c9b9a4" stroke-width=".8" fill="none"/>
+<path d="M122 100 q9 2 9 10 q-4 4 -10 1 q1 -6 1 -11z" fill="#fbf5ea" stroke="#4a2f22" stroke-width="1.3" stroke-linejoin="round"/><path d="M130 109 q-4 3 -9 1" stroke="#c9b9a4" stroke-width=".8" fill="none"/>
+<path d="M70 112 Q66 132 78 150" stroke="#4a2f22" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M70 112 Q66 132 78 150" stroke="#efcfb2" stroke-width="5.6" fill="none" stroke-linecap="round"/>
+<rect x="94.5" y="86" width="9" height="12" rx="4" fill="#efcfb2" stroke="#4a2f22" stroke-width="1.3"/>
+<path d="M99 97 Q90 95 86 98 Q85 103 90 104 Q96 104 99 99 Q102 104 108 104 Q113 103 112 98 Q108 95 99 97 Z" fill="#fbf5ea" stroke="#22325c" stroke-width="1.4" stroke-linejoin="round"/>
+<path d="M99 100 l-5 -3 v6z M99 100 l5 -3 v6z" fill="#22325c"/><path d="M98 101 l-3 9 M100 101 l3 9" stroke="#22325c" stroke-width="1.8" stroke-linecap="round"/><circle cx="99" cy="100" r="1.4" fill="#2c3e6e"/>
 <g class="head">
-<path d="M80 66 Q80 52 99 52 Q118 52 118 66 L118 82 Q114 76 112 70 L86 70 Q84 76 80 82 Z" fill="#4a2c1f"/>
-<g class="braid"><ellipse cx="114" cy="86" rx="4.2" ry="5" fill="#4a2c1f"/><ellipse cx="116" cy="94" rx="3.8" ry="4.6" fill="#553324"/><ellipse cx="117" cy="102" rx="3.4" ry="4.2" fill="#4a2c1f"/><ellipse cx="117.5" cy="109" rx="2.6" ry="3.4" fill="#553324"/><circle cx="117.5" cy="113" r="1.8" fill="#7cc8c0"/></g>
-<circle cx="99" cy="70" r="16" fill="#f1d2b6" stroke="#4a2f22" stroke-width="1.8"/>
-<path d="M83.5 66 Q88 58 99 58 Q110 58 114.5 66 Q106 62 99 62.5 Q91 62 83.5 66 Z" fill="#4a2c1f"/>
-<g class="eyes"><ellipse cx="93" cy="70.5" rx="2.8" ry="3.3" fill="#3b2418"/><ellipse cx="105" cy="70.5" rx="2.8" ry="3.3" fill="#3b2418"/><circle cx="94" cy="69.3" r="1" fill="#fff"/><circle cx="106" cy="69.3" r="1" fill="#fff"/></g>
-<path d="M89.5 65.5 q3 -1.6 6 -.4 M102.5 65.1 q3 -1.2 6 .4" stroke="#4a2c1f" stroke-width="1.1" fill="none" stroke-linecap="round"/>
-<path d="M99 73.5 q-.8 2 .6 2.3" stroke="#c99b80" stroke-width="1" fill="none" stroke-linecap="round"/>
-<path d="M96.2 79 q2.8 1.6 5.6 0" stroke="#b5655a" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-<circle cx="89" cy="76" r="2.6" fill="#ec9f8f" opacity=".45"/><circle cx="109" cy="76" r="2.6" fill="#ec9f8f" opacity=".45"/>
-<g class="hat"><ellipse cx="99" cy="58" rx="46" ry="11.5" fill="url(#nHat)" stroke="#3f8f88" stroke-width="1.5"/>
-<ellipse cx="99" cy="58" rx="38" ry="8.5" fill="none" stroke="#9fdcd4" stroke-width="1" opacity=".8"/><ellipse cx="99" cy="58" rx="30" ry="6.4" fill="none" stroke="#9fdcd4" stroke-width="1" opacity=".7"/>
-<path d="M80 57 Q80 36 99 35 Q118 36 118 57 Q99 62 80 57 Z" fill="url(#nHat)" stroke="#3f8f88" stroke-width="1.5"/>
-<path d="M80.5 52 Q99 57 117.5 52 L118 57 Q99 62 80 57 Z" fill="#6cc0b7" stroke="#3f8f88" stroke-width="1"/></g>
+<path d="M81 66 Q81 54 99 54 Q117 54 117 66 L117 84 Q113 77 111 70 L87 70 Q85 77 81 84 Z" fill="#3e2418"/>
+<g class="braid"><ellipse cx="113" cy="88" rx="4" ry="4.8" fill="#3e2418"/><ellipse cx="115" cy="95.5" rx="3.7" ry="4.4" fill="#4b2c1e"/><ellipse cx="116" cy="103" rx="3.3" ry="4" fill="#3e2418"/><ellipse cx="116.5" cy="109.5" rx="2.5" ry="3.2" fill="#4b2c1e"/><circle cx="116.5" cy="113.5" r="1.6" fill="#22325c"/></g>
+<circle cx="99" cy="71" r="15.5" fill="#efcfb2" stroke="#4a2f22" stroke-width="1.7"/>
+<path d="M84 67 Q88 59.5 99 59.5 Q110 59.5 114 67 Q106 63 99 63.6 Q92 63 84 67 Z" fill="#3e2418"/>
+<g class="eyes"><ellipse cx="93" cy="71.5" rx="3" ry="3.5" fill="#fff"/><ellipse cx="105" cy="71.5" rx="3" ry="3.5" fill="#fff"/><circle class="iris" cx="94.2" cy="70.6" r="2.3" fill="#5a3420"/><circle class="iris" cx="106.2" cy="70.6" r="2.3" fill="#5a3420"/><circle cx="94.8" cy="69.8" r=".8" fill="#fff"/><circle cx="106.8" cy="69.8" r=".8" fill="#fff"/>
+<path d="M89.8 68.4 q3.2 -2.2 6.4 -.6 M101.8 67.8 q3.2 -1.6 6.4 .6" stroke="#2a170e" stroke-width="1.1" fill="none" stroke-linecap="round"/></g>
+<path d="M89.6 65.2 q3 -1.4 6 -.2 M102.4 65 q3 -1.2 6 .2" stroke="#3e2418" stroke-width="1" fill="none" stroke-linecap="round"/>
+<path d="M99.6 74 q-1 2.2 .5 2.6" stroke="#c99b80" stroke-width=".9" fill="none" stroke-linecap="round"/>
+<path d="M96.6 80 q2.6 1.3 5.2 0" stroke="#c7766a" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+<circle cx="89.5" cy="77" r="2.6" fill="#ec9f8f" opacity=".42"/><circle cx="108.5" cy="77" r="2.6" fill="#ec9f8f" opacity=".42"/>
+<g class="hat"><ellipse cx="99" cy="59" rx="46" ry="11.5" fill="url(#nHat)" stroke="#3f8f88" stroke-width="1.4"/>
+<ellipse cx="99" cy="59" rx="39" ry="8.8" fill="none" stroke="#b5e6df" stroke-width=".9" opacity=".8"/><ellipse cx="99" cy="59" rx="32" ry="6.8" fill="none" stroke="#b5e6df" stroke-width=".9" opacity=".7"/>
+<path d="M80.5 58 Q80.5 37 99 36 Q117.5 37 117.5 58 Q99 63 80.5 58 Z" fill="url(#nHat)" stroke="#3f8f88" stroke-width="1.4"/>
+<path d="M80.8 51.5 Q99 56.5 117.2 51.5 L117.5 58 Q99 63 80.5 58 Z" fill="#f5ecdc" stroke="#cdbb9f" stroke-width=".9"/>
+<g class="hatbow"><path d="M82 55 q-10 -8 -13 -1 q2 6 13 1z M82 55 q-11 3 -9 9 q6 2 9 -9z" fill="#f5ecdc" stroke="#cdbb9f" stroke-width=".9"/><path d="M82 55 l-6 11 M82 55 l-10 8" stroke="#e6d8bf" stroke-width="2.2" stroke-linecap="round"/><circle cx="82" cy="55" r="2.2" fill="#efe3cd" stroke="#cdbb9f" stroke-width=".8"/></g></g>
 </g>
 <g class="arm">
-<path d="M122 110 Q134 124 140 138" stroke="#4a2f22" stroke-width="8.5" fill="none" stroke-linecap="round"/><path d="M122 110 Q134 124 140 138" stroke="#f1d2b6" stroke-width="6" fill="none" stroke-linecap="round"/>
-<circle cx="141" cy="140" r="4" fill="#f1d2b6" stroke="#4a2f22" stroke-width="1.3"/>
-<g class="held"></g>
-<g class="prop p2"><ellipse cx="150" cy="134" rx="13" ry="9" fill="#fbf3e6" stroke="#8c6a33" stroke-width="1.2"/><circle class="c1" cx="145" cy="131" r="2.6" fill="#b08a4f"/><circle class="c2" cx="152" cy="129" r="2.6" fill="#ec9f8f"/><circle class="c3" cx="157" cy="134" r="2.6" fill="#7cc8c0"/><circle class="c4" cx="151" cy="138" r="2.6" fill="#5a3a29"/></g>
-<g class="prop p5"><rect x="134" y="126" width="24" height="16" rx="3" fill="#4a2f22"/><circle cx="146" cy="134" r="5" fill="#e3cc97" stroke="#fbf3e6" stroke-width="1.4"/><rect x="137" y="123" width="6" height="4" rx="1" fill="#4a2f22"/><circle class="flash" cx="152" cy="128" r="2.6" fill="#fff"/></g>
+<path d="M128 112 Q138 124 142 138" stroke="#4a2f22" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M128 112 Q138 124 142 138" stroke="#efcfb2" stroke-width="5.6" fill="none" stroke-linecap="round"/>
+<circle class="ny-hand" cx="143" cy="140" r="3.8" fill="#efcfb2" stroke="#4a2f22" stroke-width="1.2"/>
+<g class="prop p2"><ellipse cx="150" cy="134" rx="11" ry="7.5" fill="#fbf3e6" stroke="#8c6a33" stroke-width="1.1"/><circle class="c1" cx="146" cy="131.5" r="2.2" fill="#b08a4f"/><circle class="c2" cx="152" cy="130" r="2.2" fill="#ec9f8f"/><circle class="c3" cx="156" cy="134" r="2.2" fill="#7cc8c0"/><circle class="c4" cx="151" cy="137.5" r="2.2" fill="#22325c"/></g>
+<g class="prop p5"><rect x="136" y="126" width="22" height="15" rx="3" fill="#4a2f22"/><circle cx="147" cy="133.5" r="4.6" fill="#e3cc97" stroke="#fbf3e6" stroke-width="1.3"/><rect x="139" y="123.5" width="6" height="3.5" rx="1" fill="#4a2f22"/><circle class="flash" cx="153" cy="128" r="2.4" fill="#fff"/></g>
 </g>
 </g>
-<path d="M4 172 H256" stroke="#8c6a33" stroke-width="2.4" stroke-linecap="round"/><rect x="4" y="172" width="252" height="10" fill="#efe1cb"/>
-<g class="spk" fill="#c9a465"><path d="M40 36 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z"/><path class="s2" d="M168 30 l1.5 4.5 4.5 1.5 -4.5 1.5 -1.5 4.5 -1.5 -4.5 -4.5 -1.5 4.5 -1.5z"/><path class="s3" d="M140 70 l1.2 3.6 3.6 1.2 -3.6 1.2 -1.2 3.6 -1.2 -3.6 -3.6 -1.2 3.6 -1.2z"/></g>
 </svg>`;
 let noyaTimers=[];
-function noyaStep(k){const a=document.querySelector(".noya-art");if(a)a.dataset.step=String(k);}
-function noyaStop(){noyaTimers.forEach(clearTimeout);noyaTimers=[];}
-// the customer's own products (biggest price first), as real photos: the first is held up, then all go into the box one by one
-function noyaSetup(){
-  noyaStop();const host=document.getElementById("noyaHost");if(!host)return;host.innerHTML=NOYA_SVG;
-  const svg=host.firstElementChild,items=svg.querySelector(".items"),held=svg.querySelector(".held");
-  const list=[...cart.keys()].map(id=>byId[id]).filter(Boolean).sort((a,b)=>(+b.price||0)-(+a.price||0)).slice(0,4);
-  const slots=[[190,90,46,60],[163,102,34,48],[216,102,32,48],[178,112,26,38]];  // x,y,w,h inside the box
-  const NS="http://www.w3.org/2000/svg";
-  const img=(p,x,y,w,h,cls)=>{const i=document.createElementNS(NS,"image");i.setAttribute("href",p.img);i.setAttribute("x",x-w/2);i.setAttribute("y",y);i.setAttribute("width",w);i.setAttribute("height",h);
-    i.setAttribute("preserveAspectRatio","xMidYMax meet");i.setAttribute("class",cls);return i;};
-  list.forEach((p,i)=>{const [x,y,w,h]=slots[i];items.appendChild(img(p,x,y,w,h,"ny-prod"));});
-  if(list[0]){held.appendChild(img(list[0],152,82,44,56,"ny-held"));}
-  const prods=[...items.querySelectorAll(".ny-prod")];
-  const T=(ms,f)=>noyaTimers.push(setTimeout(f,ms));
-  T(150,()=>svg.classList.add("holding"));
-  T(3600,()=>{svg.classList.remove("holding");prods[0]&&prods[0].classList.add("in");});
-  prods.slice(1).forEach((el,i)=>T(6000+i*2600,()=>el.classList.add("in")));
+var STG={on:false,placed:new Set(),cur:null,land:null,nudge:null,raf:0,timers:[],flashed:false};
+function noyaStep(k){const a=document.querySelector(".noya-art");if(a)a.dataset.step=String(k);scene.classList.toggle("stg-warm",STG.on&&k>=4);}
+function noyaToss(){const a=document.querySelector(".noya-art");if(!a)return;a.classList.remove("toss");void a.getBoundingClientRect();a.classList.add("toss");}
+function stageHand(){const h=document.querySelector(".noya-art .ny-hand"),r=cv.getBoundingClientRect();
+  if(!h||!r.width)return {x:W*.14,y:H*.62};const b=h.getBoundingClientRect();return {x:b.left+b.width/2-r.left,y:b.top+b.height/2-r.top};}
+function stageView(e){
+  const now=performance.now();
+  if(STG.cur&&STG.cur.key===e.key){const t=Math.min(1,(now-STG.cur.t0)/STG.cur.dur),q=ease(t),s=STG.cur.from;
+    const x=s.x+(e.cx-s.x)*q,y=s.y+(e.base-s.y)*q-Math.sin(Math.PI*q)*H*.2,sc=.42+.58*q;
+    return {...e,cx:x,base:y,w:e.w*sc,h:e.h*sc,rot:(e.rot||0)+(1-q)*-16,alpha:Math.min(1,t*4),cast:0,_fly:true};}
+  if(STG.land&&STG.land.key===e.key){const t=(now-STG.land.t0)/300;if(t<1){const sq=1-.07*Math.sin(Math.PI*t);return {...e,h:e.h*sq,w:e.w*(2-sq),cast:(e.cast||0)*t};}}
+  if(STG.nudge&&STG.nudge.key===e.key){const t=(now-STG.nudge.t0)/800;if(t<1){const k=Math.sin(Math.PI*t);return {...e,cx:e.cx+STG.nudge.dx*k,rot:(e.rot||0)+STG.nudge.dr*k};}}
+  return e;}
+function stageTick(){draw();if(STG.on)STG.raf=requestAnimationFrame(stageTick);}
+function stageStart(){
+  stageEnd(true);if(matchMedia("(prefers-reduced-motion:reduce)").matches||!cart.size)return;
+  recompose(false);
+  const els=Object.entries(anim).filter(([,a])=>!a.to.dead).map(([k,a])=>({k,e:a.to}));
+  if(!els.length)return;
+  const pri=e=>e.slab?0:(e.p&&(e.p.role==="plat"||e.p.role==="lean"))?1:!e.p?2:e.role==="hero"?3:4;   // base, boards, packaging, hero, then back→front
+  els.sort((a,b)=>pri(a.e)-pri(b.e)||a.e.z-b.e.z);
+  STG.on=true;STG.placed=new Set();STG.flashed=false;scene.classList.add("staging");setVeil();
+  const T=(ms,f)=>STG.timers.push(setTimeout(f,ms));
+  let t=700;
+  els.forEach(({k})=>{T(t,()=>{noyaToss();STG.cur={key:k,t0:performance.now(),dur:1000,from:stageHand()};
+      T(1000,()=>{STG.placed.add(k);STG.land={key:k,t0:performance.now()};if(STG.cur&&STG.cur.key===k)STG.cur=null;});});t+=1500;});
+  // when everything is in place: small stylist touches (nudge an item, straighten it)
+  const touch=()=>{const keys=[...STG.placed].filter(k=>anim[k]&&anim[k].to.p);if(keys.length){const k=keys[Math.floor(Math.random()*keys.length)];
+      noyaToss();STG.nudge={key:k,t0:performance.now(),dx:(Math.random()<.5?-1:1)*Math.max(3,W*.008),dr:(Math.random()<.5?-1:1)*2.5};}
+    T(2600,touch);};
+  T(t+600,touch);
+  STG.raf=requestAnimationFrame(stageTick);
 }
+function stageEnd(silent){STG.timers.forEach(clearTimeout);STG.timers=[];cancelAnimationFrame(STG.raf);
+  const was=STG.on;STG.on=false;STG.cur=STG.land=STG.nudge=null;scene.classList.remove("staging","stg-warm");
+  if(was&&!silent){setVeil();draw();}}
+function noyaStop(){noyaTimers.forEach(clearTimeout);noyaTimers=[];stageEnd();}
+function noyaSetup(){noyaStop();const host=document.getElementById("noyaHost");if(!host)return;host.innerHTML=NOYA_SVG;stageStart();}
 const STEPS=["נויה בוחרת את המוצר המוביל…","נויה בונה שכבות ועומק…","נויה מאזנת צבעים וצורות…","נויה מעמידה את המוצרים על הבמה…","נויה מכוונת אור וצללים…","נויה מלטשת לצילום קטלוגי…"];
 // bring the whole box picture into view so the reveal is seen (the button sits below it, often off-screen on phones)
 function sceneToTop(){const st=scene.closest(".stage")||scene,y=st.getBoundingClientRect().top+window.scrollY-8;
