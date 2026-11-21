@@ -1245,7 +1245,8 @@ async function generateAi(force){
     const hero=R.focal?(R.focal.kind==="tray"?R.focal.riders[0]:R.focal.hero):null;
     // up to 3 products show their own retail box behind them (the biggest/priciest first) — fuller, more premium set
     const boxed=new Set([...cart.keys()].filter(id=>byId[id].box).sort((x,y)=>(byId[y].price||0)-(byId[x].price||0)).slice(0,3));
-    const items=[...cart].map(([id,q])=>{const p=byId[id];return {id,name:p.name,qty:q,heightCm:p.h,box:boxed.has(id),
+    const SURF=new Set(["p34","p35","p36","p36a","p37","p38","p75","p75a","p82","p83","p59","p69"]);   // boards, trays, plates, placemats
+    const items=[...cart].map(([id,q])=>{const p=byId[id];return {id,name:p.name,qty:q,heightCm:p.h,box:boxed.has(id),kind:p.cat==="holder"?"candleholder":SURF.has(id)?"surface":"",
       role:p===hero?"hero":p.role==="plat"?"tray":p.role==="lean"?"leaning":(byId[id].lie||byId[id].role==="lie")?"lying":R.planes.back.includes(p)?"back":R.planes.front.includes(p)?"front":"middle"};});
     aiCtrl=new AbortController();const to=setTimeout(()=>aiCtrl.abort(),150000);
     const r=await fetch(AI_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},signal:aiCtrl.signal,

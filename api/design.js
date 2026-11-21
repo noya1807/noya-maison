@@ -19,8 +19,8 @@ const clean = (s, n = 60) => String(s || "").replace(/[^\p{L}\p{N} +\-.'"]/gu, "
 const PACK_FILES = { box0: "pack/box0.webp", box1: "pack/box1.webp", box2: "pack/box2.webp", "42": "pack/42.webp", "31": "pack/31.webp", "39": "pack/39.webp" };
 
 function prompt(items, pack, variant, manual) {
-  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, about ${it.heightCm} cm tall, role: ${it.role}${it.box ? " — WITH ITS OWN RETAIL BOX behind it" : ""}`).join("\n");
-  const boxed = items.filter(i => i.box);
+  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, about ${it.heightCm} cm tall, role: ${it.role}${it.kind === "candleholder" ? " — candle holder" : it.kind === "surface" ? " — serving surface (board / tray / plate)" : ""}${it.box ? " — WITH ITS OWN RETAIL BOX behind it" : ""}`).join("\n");
+  const boxed = items.filter(i => i.box), holders = items.filter(i => i.kind === "candleholder"), surfaces = items.filter(i => i.kind === "surface");
   const hero = items.find(i => i.role === "hero");
   const noPack = pack.id === "none"; // customer chose no packaging: products only
   const moods = [
@@ -51,6 +51,8 @@ ${boxed.length ? `ORIGINAL RETAIL BOXES (style them like a top prop stylist): ea
 - Keep true scale (a box is only slightly taller and wider than its product) and reproduce it exactly as in the photo — same colour, size, finish and printed design.
 - Boxes form the back layer of the composition: taller boxes furthest back, staggered heights, each box partly hidden by its product, with soft natural shadows between box and product.
 - Only these ${boxed.length} product(s) get a box; do not add or duplicate boxes for any other product.
+` : ""}${holders.length ? `CANDLE HOLDERS: keep all candle holders together, standing side by side as one family group (a pair or trio), close enough to almost touch, tall one slightly behind and the shorter one in front of it so the heights step down gracefully. A candle holder pair is never split up or placed apart from its partner.
+` : ""}${surfaces.length ? `BOARDS & TRAYS — style like an experienced set designer: use each serving surface as a stage. Lay it flat (or very slightly raised on a riser) and arrange 1–3 of the smaller products that naturally belong on it ON TOP of it — for example a candle, a cup or mug, salt & pepper, a small vase or jar, a small gift box. Never put tall, heavy or large items or textiles on it; never stack products; leave some of the surface visible so it reads as a board/tray. If there is more than one surface, overlap them in a relaxed layered way (largest underneath). A long board with a handle may instead lean upright at the back.
 ` : ""}NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
 
 ART DIRECTION
@@ -77,7 +79,7 @@ export default async function handler(req, res) {
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const items = (body.items || []).filter(i => /^[a-z0-9]{2,20}$/i.test(i.id)).slice(0, 12)
-      .map(i => ({ id: i.id, name: clean(i.name), qty: Math.max(1, Math.min(20, +i.qty || 1)), role: clean(i.role, 12), heightCm: Math.max(1, Math.min(80, +i.heightCm || 10)), box: !!i.box }));
+      .map(i => ({ id: i.id, name: clean(i.name), qty: Math.max(1, Math.min(20, +i.qty || 1)), role: clean(i.role, 12), heightCm: Math.max(1, Math.min(80, +i.heightCm || 10)), box: !!i.box, kind: ["candleholder", "surface"].includes(i.kind) ? i.kind : "" }));
     if (items.length < 1) { res.status(400).json({ error: "need at least 1 product" }); return; }
     const pack = { id: clean(body.pack?.id, 8), name: clean(body.pack?.name) };
     const variant = Math.abs(+body.variant || 0);
