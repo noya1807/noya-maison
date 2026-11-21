@@ -255,6 +255,12 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .card-who label{flex-direction:row!important;align-items:center;gap:8px!important;font-size:14px!important;color:var(--cocoa)!important;min-height:36px}
 .card-who input{width:18px;height:18px;margin:0;accent-color:var(--cocoa);flex:none}
 .dlv{border:0;padding:0;margin:4px 0 0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.for{border:0;padding:0;margin:4px 0 0;min-width:0}
+.for legend{font-family:var(--display);font-weight:500;font-size:19px;color:var(--cocoa);padding:0;margin-bottom:8px}
+.for legend .opt{font-family:var(--body);font-size:13px;color:var(--cocoa-soft)}
+.for-opts{display:flex;flex-wrap:wrap;gap:8px}
+.for-opts button{border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:8px 16px;font-size:14px;cursor:pointer;color:var(--cocoa)}
+.for-opts button[aria-pressed="true"]{border-color:var(--cocoa);background:var(--cocoa);color:var(--paper);font-weight:700}
 .dlv legend{font-family:var(--display);font-weight:500;font-size:19px;color:var(--cocoa);padding:0;margin-bottom:8px}
 .dlv-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .dlv-opt.vip:has(input:checked){background:linear-gradient(135deg,#fffaf0,#fbefd6)}
@@ -469,7 +475,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 
 <div class="intro" id="intro">
   <div class="howto"><span><i>1</i> בוחרים מוצרים</span><span><i>2</i> בוחרים אריזה</span><span><i>3</i> חושפים את המארז ✨</span></div>
-  <div class="trust">משלוח אישי לכל עובד · מיתוג ולוגו · מינימום הזמנה ₪3,000</div>
+  <div class="trust">משלוח אישי לכל נמען: עובדים, לקוחות ושותפים עסקיים · מיתוג ולוגו · מינימום הזמנה ₪3,000</div>
 </div>
 <div class="layout" id="buildView">
   <section class="cat" aria-labelledby="cat-h">
@@ -574,6 +580,10 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
         <label>אימייל<input id="fEmail" type="email" autocomplete="email"></label>
         <label>ארגון / חברה<input id="fOrg" autocomplete="organization"></label>
       </div>
+      <fieldset class="for">
+        <legend>למי המתנות? <span class="opt">(לא חובה)</span></legend>
+        <div class="for-opts" id="forOpts"><button type="button" data-for="עובדים">עובדים</button><button type="button" data-for="לקוחות">לקוחות</button><button type="button" data-for="שותפים עסקיים">שותפים עסקיים</button><button type="button" data-for="אחר">אחר</button></div>
+      </fieldset>
       <fieldset class="dlv">
         <legend>איך תרצו לקבל את ההזמנה?</legend>
         <div class="dlv-opts">
@@ -1402,7 +1412,7 @@ let addrFiles=[],addrCount=0;
 const grandTotal=()=>r2(orderPer()*boxes+shipCost());
 function syncDlv(){const m=dlvMode(),ship=m==="ship",ind=isIndiv();
   $("shipNote").textContent=`${ils(CONFIG.shipPerBox)} למארז`;$("pickNote").textContent=`ללא עלות · ${CONFIG.pickupAddress||""}`;
-  $("indivNote").textContent=`${ils(CONFIG.indivPerBox)} למארז · עד הבית של כל מקבל`;$("vipNote").textContent=`${ils(CONFIG.vipPerBox)} למארז · שליח VIP ייעודי, מותאם למשלוח למנכ״לים ולבכירים`;
+  $("indivNote").textContent=`${ils(CONFIG.indivPerBox)} למארז · עד הבית או המשרד של כל מקבל: עובד, לקוח או שותף עסקי`;$("vipNote").textContent=`${ils(CONFIG.vipPerBox)} למארז · שליח VIP ייעודי, מותאם למשלוח למנכ״לים ולבכירים`;
   $("indivDesc").innerHTML=m==="vip"?"⭐ <b>משלוח VIP:</b> שליח ייעודי מוסר כל מארז אישית, מותאם למנכ״לים ולבכירים. הורידו את הקובץ, מלאו שורה לכל מקבל והעלו אותו כאן.":"📦 <b>משלוח פרטני:</b> כל מארז נשלח ישירות למקבל שלו. הורידו את הקובץ, מלאו שורה לכל מקבל והעלו אותו כאן.";
   $("tplDl").href=CONFIG.addrTemplate||"#";$("tplDl").hidden=!CONFIG.addrTemplate;
   $("shipBox").hidden=!ship;$("indivBox").hidden=!ind;$("pickBox").hidden=m!=="pickup";$("rcvBox").hidden=$("rcvSame").checked;renderAddrCnt();
@@ -1481,11 +1491,14 @@ function validate(){
   $("fErr").hidden=!errs.length;$("fErr").textContent=errs.length?"חסר או לא תקין: "+errs.join(", "):"";
   return !errs.length;
 }
+let giftFor="";
+document.getElementById("forOpts").onclick=e=>{const b=e.target.closest("button[data-for]");if(!b)return;giftFor=giftFor===b.dataset.for?"":b.dataset.for;
+  document.querySelectorAll("#forOpts button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.for===giftFor));};
 function buildOrder(){
   const t=totals(),d=new Date(),ref="NOYA-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
   const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
   const lines=[`הזמנת מארז – נויה במתנה (${ref})`,"",
-    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,"",
+    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,giftFor?`🎁 המתנות מיועדות ל: ${giftFor}`:null,"",
     ...(isIndiv()?[dlvMode()==="vip"?`⭐ אספקה: משלוח פרטני VIP לכל מקבל (${ils(CONFIG.vipPerBox)} למארז)`:`📦 אספקה: משלוח פרטני לכל מקבל (${ils(CONFIG.indivPerBox)} למארז)`,
       `📎 קובץ כתובות: ${addrFiles.filter(x=>x.url).map(x=>`${x.name} – ${x.url}${x.count?` (${x.count} כתובות)`:""}`).join(" | ")||"יישלח בהמשך"}`]
     :dlvMode()==="ship"?["🚚 אספקה: משלוח לכתובת אחת",
@@ -1513,7 +1526,7 @@ function send(kind){
   try{const g=id=>($(id)&&$(id).value||"").trim();fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({ref:o.ref,via:kind,
     customer:{name:g("fName"),phone:g("fPhone"),email:g("fEmail"),org:g("fOrg")},items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),
     pack:pack.none?null:{id:pack.id,name:pack.name,price:+pack.price||0},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
-    dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:shipCost()},total:grandTotal(),date:g("fDate"),notes:g("fNotes"),text:o.text})}).catch(()=>{});}catch(e){}
+    dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:shipCost()},total:grandTotal(),date:g("fDate"),notes:g("fNotes"),giftFor,text:o.text})}).catch(()=>{});}catch(e){}
   let href;
   if(kind==="wa") href=`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(o.text)}`;
   else if(CONFIG.orderEmail) href=`mailto:${CONFIG.orderEmail}?subject=${encodeURIComponent("הזמנת מארז "+o.ref)}&body=${encodeURIComponent(o.text)}`;
