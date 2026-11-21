@@ -31,6 +31,8 @@ img{max-width:100%}
 
 header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--paper)}
 .brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.5px}
+.brand-sep{margin:0 10px;color:var(--gold);font-weight:400}
+.brand-tool{font-weight:500;font-size:.72em;color:var(--cocoa-soft);white-space:nowrap}
 .brand small{display:block;font-family:var(--body);font-weight:400;font-size:13px;color:var(--cocoa-soft);letter-spacing:0}
 .hq{flex:1;min-width:0;margin:0;text-align:center;font-family:var(--display);font-style:italic;font-size:17px;color:var(--cocoa-soft);text-wrap:balance;transition:opacity .7s}
 .hq.fade{opacity:0}
@@ -553,7 +555,7 @@ details.more[open]{padding-bottom:10px}
 </head>
 <body>
 <header>
-  <div class="brand">נויה במתנה<small>בנו מארז מתנה משלכם</small></div>
+  <div class="brand">נויה במתנה<span class="brand-sep" aria-hidden="true">|</span><span class="brand-tool">בונה המארזים</span></div>
   <p class="hq" id="hq" hidden></p>
   <div class="steps" aria-label="שלבי ההזמנה" id="steps"><span class="on">1. בניית המארז</span><span>2. סיכום ופרטים</span><span>3. שליחה</span></div>
 </header>
