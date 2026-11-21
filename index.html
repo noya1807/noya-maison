@@ -759,11 +759,7 @@ h1.brand{margin:0;line-height:1.2}
 .ub-mono{position:absolute;right:9%;bottom:9%;width:18%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;z-index:3;
   font-family:"Cormorant Garamond","Frank Ruhl Libre",Georgia,serif;font-weight:600;font-size:calc(var(--w)*.1);color:#fffaf1;
   background:radial-gradient(circle at 35% 30%,#f3dfa8,#c9a465 55%,#9c763c);box-shadow:inset 0 0 0 1.5px rgba(255,250,240,.6)}
-.ub-beam{position:absolute;left:50%;top:50%;width:clamp(120px,30vw,240px);height:70%;transform:translate(-50%,-92%) scaleY(0);transform-origin:50% 100%;pointer-events:none;
-  background:linear-gradient(0deg,rgba(255,232,170,.85),rgba(255,232,170,.25) 45%,rgba(255,232,170,0));clip-path:polygon(32% 100%,68% 100%,100% 0,0 0);filter:blur(6px);opacity:0;
-  animation:ubBeam 2.9s ease-out forwards}
-@keyframes ubBeam{0%,44%{opacity:0;transform:translate(-50%,-92%) scaleY(0)}60%{opacity:1;transform:translate(-50%,-92%) scaleY(1)}85%{opacity:.8}100%{opacity:0;transform:translate(-50%,-92%) scaleY(1.15)}}
-.ub-trail{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.gold-rain{position:fixed;inset:0;width:100vw;height:100vh;z-index:300;pointer-events:none}
 </style>
 </head>
 <body>
@@ -1601,29 +1597,41 @@ function onCartChanged(){
 }
 function playReveal(){scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);if(STG.flashed){STG.flashed=false;}else playUnbox();}
 // 3D gift box opens over the picture: ribbon box spins, lid lifts off, gold sparks, the designed box appears
+// gold rain: gold-leaf flakes and tiny sparkles fall over the whole screen for ~3.5s, then fade (only gold/cream tones)
+function goldRain(){
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+  document.querySelector(".gold-rain")?.remove();
+  const c=document.createElement("canvas");c.className="gold-rain";c.setAttribute("aria-hidden","true");document.body.appendChild(c);
+  const d=Math.min(2,devicePixelRatio||1),Wv=innerWidth,Hv=innerHeight;c.width=Wv*d;c.height=Hv*d;const x=c.getContext("2d");x.scale(d,d);
+  const COLS=[[176,138,79],[214,180,110],[236,214,160],[201,164,101],[245,232,200],[156,118,60]];
+  const N=Math.round(Math.min(170,Math.max(90,Wv*Hv/7000)));
+  const mk=burst=>{const col=COLS[Math.floor(Math.random()*COLS.length)],spark=Math.random()<.22;
+    return {x:Math.random()*Wv,y:burst?-Math.random()*Hv*.9:-20-Math.random()*60,vy:(burst?2.2:1.6)+Math.random()*2.2,sway:.6+Math.random()*1.4,sp:Math.random()*6.3,
+      sw:.02+Math.random()*.03,w:spark?2+Math.random()*2:5+Math.random()*7,h:spark?0:3+Math.random()*4,rot:Math.random()*6.3,vr:(Math.random()-.5)*.12,
+      flip:Math.random()*6.3,vf:.06+Math.random()*.1,col,spark};};
+  const ps=Array.from({length:N},()=>mk(true));let t0=performance.now();
+  (function tick(now){const t=now-t0,fade=t>2600?Math.max(0,1-(t-2600)/900):1;
+    if(t<1300&&Math.random()<.9)for(let i=0;i<3;i++)ps.push(mk(false));
+    x.clearRect(0,0,Wv,Hv);
+    ps.forEach(p=>{p.sp+=p.sw;p.x+=Math.sin(p.sp)*p.sway;p.y+=p.vy;p.rot+=p.vr;p.flip+=p.vf;
+      if(p.y>Hv+20)return;
+      if(p.spark){const tw=.5+.5*Math.sin(p.flip*3),g=x.createRadialGradient(p.x,p.y,0,p.x,p.y,p.w*2.4);
+        g.addColorStop(0,`rgba(255,246,214,${.95*tw*fade})`);g.addColorStop(1,"rgba(255,236,180,0)");x.fillStyle=g;x.beginPath();x.arc(p.x,p.y,p.w*2.4,0,7);x.fill();return;}
+      const sc=Math.cos(p.flip),shine=.55+.45*Math.abs(sc),[r,g,b]=p.col;
+      x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.scale(1,sc);
+      x.fillStyle=`rgba(${Math.min(255,r*shine+60*(1-Math.abs(sc)))},${Math.min(255,g*shine+50*(1-Math.abs(sc)))},${Math.min(255,b*shine+30)},${.92*fade})`;
+      x.beginPath();x.moveTo(-p.w/2,-p.h/2);x.lineTo(p.w/2,-p.h/2*.6);x.lineTo(p.w/2*.8,p.h/2);x.lineTo(-p.w/2*.9,p.h/2*.7);x.closePath();x.fill();x.restore();});
+    if(fade>0)requestAnimationFrame(tick);else c.remove();})(t0);
+}
 function playUnbox(){
   if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;
   scene.querySelector(".unbox")?.remove();
   const u=document.createElement("div");u.className="unbox";u.setAttribute("aria-hidden","true");
   const sparks=Array.from({length:14},(_,i)=>{const a=i/14*Math.PI*2,r=90+Math.random()*80;
     return `<i class="ub-spark" style="--dx:${Math.round(Math.cos(a)*r)}px;--dy:${Math.round(Math.sin(a)*r-30)}px;animation-delay:${(Math.random()*.25).toFixed(2)}s"></i>`;}).join("");
-  u.innerHTML=`<div class="ub-wrap" style="transform-style:preserve-3d;perspective:1100px"><div class="ub-box"><div class="ub-f ub-bottom"></div><div class="ub-f ub-back"></div><div class="ub-f ub-left"></div><div class="ub-f ub-right"></div><div class="ub-f ub-front"><span class="ub-logo">NOYA MAISON</span></div><div class="ub-lid"><span class="ub-mono">N</span><div class="ub-bow"></div></div></div></div><div class="ub-beam"></div><canvas class="ub-trail"></canvas>${sparks}`;
+  u.innerHTML=`<div class="ub-wrap" style="transform-style:preserve-3d;perspective:1100px"><div class="ub-box"><div class="ub-f ub-bottom"></div><div class="ub-f ub-back"></div><div class="ub-f ub-left"></div><div class="ub-f ub-right"></div><div class="ub-f ub-front"><span class="ub-logo">NOYA MAISON</span></div><div class="ub-lid"><span class="ub-mono">N</span><div class="ub-bow"></div></div></div></div>${sparks}`;
   scene.appendChild(u);scene.classList.add("unboxing");
-  // gold trail behind the flying lid
-  const tc=u.querySelector(".ub-trail"),lid=u.querySelector(".ub-lid"),tx=tc.getContext("2d"),d=Math.min(2,devicePixelRatio||1);
-  const fit=()=>{const r=u.getBoundingClientRect();tc.width=r.width*d;tc.height=r.height*d;};fit();
-  const parts=[],t0=performance.now();let last=null;
-  (function tick(now){const t=now-t0,ur=u.getBoundingClientRect();
-    if(t>1150&&t<2450){const r=lid.getBoundingClientRect(),x=(r.left+r.width/2-ur.left)*d,y=(r.top+r.height/2-ur.top)*d;
-      const n=last?Math.max(2,Math.round(Math.hypot(x-last.x,y-last.y)/(3*d))):4;
-      for(let i=0;i<n;i++){const k=last?i/n:0,px=last?last.x+(x-last.x)*k:x,py=last?last.y+(y-last.y)*k:y;
-        parts.push({x:px+(Math.random()-.5)*14*d,y:py+(Math.random()-.5)*10*d,vx:(Math.random()-.5)*.5*d,vy:(Math.random()*.6+.2)*d,r:(Math.random()*1.8+.7)*d,life:1,dec:.012+Math.random()*.014});}
-      last={x,y};}
-    tx.clearRect(0,0,tc.width,tc.height);tx.globalCompositeOperation="lighter";
-    for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.01*d;p.life-=p.dec;if(p.life<=0){parts.splice(i,1);continue;}
-      const g=tx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);g.addColorStop(0,`rgba(255,236,180,${p.life})`);g.addColorStop(.4,`rgba(214,172,96,${p.life*.7})`);g.addColorStop(1,"rgba(214,172,96,0)");
-      tx.fillStyle=g;tx.beginPath();tx.arc(p.x,p.y,p.r*3,0,7);tx.fill();}
-    if(t<3000&&u.isConnected)requestAnimationFrame(tick);})(t0);
+  setTimeout(goldRain,1150);   // the lid opens → gold rain over the whole screen
   setTimeout(()=>{u.remove();scene.classList.remove("unboxing");},3000);
 }
 // tilt toward the mouse (computers only)
