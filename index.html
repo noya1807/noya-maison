@@ -1618,7 +1618,7 @@ function renderClients(){
 }
 renderClients();
 
-const QUOTE_DAYS=14;
+const QUOTE_DAYS=7;
 function loadScript(src){return new Promise((ok,bad)=>{if(document.querySelector(`script[src="${src}"]`)){ok();return;}
   const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>bad(new Error("load"));document.head.appendChild(s);});}
 async function imgAsData(src){
@@ -1647,7 +1647,7 @@ function quoteHTML(q,img){
     <div class="qtot">${tot}</div>
     <div class="qnotes"><div>• המחירים כוללים מע"מ. ההצעה כפופה לאישור סופי של נציג נויה במתנה.</div>
       <div>• מינימום הזמנה: ${ils(CONFIG.minOrder)}. מיתוג ולוגו בתוספת, לפי הבחירה.</div>
-      <div>• ההצעה בתוקף ל-${QUOTE_DAYS} יום, בכפוף למלאי.</div></div>
+      <div>• ההצעה בתוקף ל-${QUOTE_DAYS} ימים, בכפוף למלאי.</div></div>
     <div class="qfoot"><span>054-3219070 · 053-7784388 · 053-3460081</span><span>${esc(CONFIG.orderEmail||"")} · NOYAGLOBAL.COM</span></div>`;
 }
 $("quoteBtn").onclick=async()=>{
