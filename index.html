@@ -43,6 +43,38 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 /* catalogue */
 .cat h2,.stage h2{font-family:var(--display);font-weight:500;font-size:22px;margin:0 0 4px;text-wrap:balance}
 .hint{color:var(--cocoa-soft);font-size:14px;margin:0 0 12px}
+.intro{display:flex;align-items:center;justify-content:space-between;gap:10px 18px;flex-wrap:wrap;padding:9px 24px;background:#f8efe3;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--cocoa)}
+.howto{display:flex;gap:14px;flex-wrap:wrap}
+.howto span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.howto i{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--cocoa);color:var(--paper);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.trust{color:var(--cocoa-soft);font-size:12.5px}
+.stage .bgs[hidden]{display:none}
+.chips{position:sticky;top:0;z-index:20;background:var(--cream,#fbf6ef);padding:8px 0;margin-top:-8px}
+.card .ph{position:relative;cursor:zoom-in}
+.addc{position:absolute;bottom:8px;inset-inline-start:8px;width:38px;height:38px;border-radius:50%;border:0;background:var(--paper);color:var(--cocoa);font-size:24px;line-height:1;font-weight:500;box-shadow:0 3px 10px rgba(60,35,20,.22);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,background .15s}
+.addc:hover{background:var(--cocoa);color:var(--paper);transform:scale(1.06)}
+.card .qty{position:absolute;bottom:8px;inset-inline-start:8px;display:flex;align-items:center;background:var(--cocoa);color:var(--paper);border-radius:99px;box-shadow:0 3px 10px rgba(60,35,20,.25);overflow:hidden}
+.card .qty button{border:0;background:transparent;color:inherit;width:34px;height:34px;font-size:19px;line-height:1;cursor:pointer}
+.card .qty output{min-width:16px;text-align:center;font-weight:700;font-size:14px}
+.card .ph .tick{top:8px;left:auto;inset-inline-end:8px}
+.card .ds{-webkit-line-clamp:1}
+.fly{position:fixed;z-index:200;pointer-events:none;object-fit:cover;border-radius:12px;box-shadow:0 10px 24px rgba(60,35,20,.3)}
+.qv{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:16px}
+.qv-scrim{position:absolute;inset:0;background:rgba(40,24,14,.45);opacity:0;transition:opacity .2s}
+.qv-card{position:relative;background:var(--paper);border-radius:18px;max-width:760px;width:100%;max-height:calc(100vh - 32px);overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);transform:translateY(14px);opacity:0;transition:transform .2s,opacity .2s}
+.qv.open .qv-scrim{opacity:1}.qv.open .qv-card{transform:none;opacity:1}
+.qv-x{position:absolute;top:10px;inset-inline-end:10px;z-index:2;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,250,243,.92);font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+#qvBody{display:grid;grid-template-columns:1.1fr 1fr}
+.qv-ph{aspect-ratio:1/1;background:var(--sand)}.qv-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.qv-in{padding:22px 22px 20px;display:flex;flex-direction:column;gap:8px}
+.qv-cat{font-size:12px;color:var(--cocoa-soft)}
+.qv-in h3{margin:0;font-family:var(--display);font-weight:500;font-size:22px;line-height:1.3}
+.qv-ds{margin:0;color:var(--cocoa-soft);font-size:14px}
+.qv-meta{margin:0;font-size:13px;color:var(--cocoa-soft)}
+.qv-pr{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px}
+.qv-add{margin-top:auto;padding:12px;font-size:16px}
+.qv-q{margin-top:auto;display:flex;align-items:center;gap:12px}.qv-q .stepper{flex:1}.qv-ok{color:var(--gold);font-weight:700;font-size:14px}
+@media (max-width:640px){#qvBody{grid-template-columns:1fr}.qv{align-items:flex-end;padding:0}.qv-card{border-radius:18px 18px 0 0;max-height:92vh}.intro{padding:8px 14px;font-size:12.5px}.howto{gap:10px}.trust{font-size:11.5px}}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .chip{border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:6px 14px;font-size:14px}
 .chip[aria-pressed="true"]{background:var(--cocoa);color:var(--paper);border-color:var(--cocoa)}
@@ -435,6 +467,10 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   <div class="steps" aria-label="שלבי ההזמנה" id="steps"><span class="on">1. בניית המארז</span><span>2. סיכום ופרטים</span><span>3. שליחה</span></div>
 </header>
 
+<div class="intro" id="intro">
+  <div class="howto"><span><i>1</i> בוחרים מוצרים</span><span><i>2</i> בוחרים אריזה</span><span><i>3</i> חושפים את המארז ✨</span></div>
+  <div class="trust">משלוח אישי לכל עובד · מיתוג ולוגו · מינימום הזמנה ₪3,000</div>
+</div>
 <div class="layout" id="buildView">
   <section class="cat" aria-labelledby="cat-h">
     <h2 id="cat-h">בחרו מוצרים למארז</h2>
@@ -631,6 +667,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   <p class="err" id="pwErr" hidden></p><div class="send"><button class="ghost" id="pwCancel">ביטול</button><button class="go" id="pwOk">כניסה</button></div></div>
 </div>
 <footer class="foot">© נויה במתנה · <a href="#admin" id="admLink">ניהול</a></footer>
+<div class="qv" id="qv" hidden role="dialog" aria-modal="true" aria-label="פרטי מוצר"><div class="qv-scrim" data-qclose></div><div class="qv-card"><button class="qv-x" id="qvClose" data-qclose aria-label="סגירה">✕</button><div id="qvBody"></div></div></div>
 <div class="bar" id="bar"><div><div class="p" id="barP"></div><div class="c" id="barC"></div></div><button id="barBtn">פרטי המארז</button></div>
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet" role="dialog" aria-label="פרטי המארז">
@@ -707,14 +744,39 @@ function renderGrid(){
   gridEl.innerHTML=P.filter(p=>!p.hidden&&(cat==="all"||p.cat===cat)).map(p=>{
     const q=cart.get(p.id)||0;
     return `<article class="card ${q?"sel":""}" data-id="${p.id}">
-      ${q?`<span class="tick">✓ במארז</span>`:""}
-      <div class="ph${p.photo?" photo":""}"><img src="${p.photo||p.img}" alt="${esc(p.name)}" loading="lazy"></div>
+      <div class="ph${p.photo?" photo":""}" data-qv role="button" tabindex="0" aria-label="פרטים על ${esc(p.name)}"><img src="${p.photo||p.img}" alt="${esc(p.name)}" loading="lazy">
+        ${q?`<span class="tick">✓ במארז</span><div class="qty" role="group" aria-label="כמות"><button data-a="dec" aria-label="הסרת יחידה">−</button><output>${q}</output><button data-a="inc" aria-label="הוספת יחידה">+</button></div>`
+           :`<button class="addc" data-a="inc" aria-label="הוספת ${esc(p.name)} למארז">+</button>`}</div>
       <div class="nm">${esc(p.name)}</div>${p.desc?`<div class="ds">${esc(p.desc)}</div>`:""}${p.price?`<div class="pr">${ils(p.price)}</div>`:""}
-      ${q?`<div class="stepper"><button data-a="inc" aria-label="הוספת יחידה">+</button><output>${q}</output><button data-a="dec" aria-label="הסרת יחידה">−</button></div>`
-         :`<button class="add" data-a="inc">+ הוספה</button>`}
     </article>`}).join("");
 }
-gridEl.onclick=e=>{const b=e.target.closest("button[data-a]");if(!b)return;const id=b.closest(".card").dataset.id;b.dataset.a==="inc"?add(id):dec(id);};
+gridEl.onclick=e=>{const card=e.target.closest(".card");if(!card)return;const id=card.dataset.id,b=e.target.closest("button[data-a]");
+  if(b){if(b.dataset.a==="inc"){if(!cart.has(id))flyToBox(card.querySelector(".ph img"));add(id);}else dec(id);return;}
+  if(e.target.closest("[data-qv]"))openQv(id);};
+gridEl.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-qv]")){e.preventDefault();openQv(e.target.closest(".card").dataset.id);}};
+// 7: the picture "jumps" into the box so the customer feels the add
+function flyToBox(img){
+  if(!img||matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+  const sc=document.getElementById("scene").getBoundingClientRect(),inView=sc.bottom>60&&sc.top<innerHeight-60;
+  const to=(inView?document.getElementById("scene"):document.getElementById("bar")).getBoundingClientRect(),fr=img.getBoundingClientRect();
+  if(!fr.width||!to.width)return;const c=img.cloneNode();c.className="fly";
+  Object.assign(c.style,{left:fr.left+"px",top:fr.top+"px",width:fr.width+"px",height:fr.height+"px"});document.body.appendChild(c);
+  const dx=to.left+to.width/2-(fr.left+fr.width/2),dy=to.top+to.height/2-(fr.top+fr.height/2);
+  c.animate([{transform:"translate(0,0) scale(1)",opacity:1},{transform:`translate(${dx*.5}px,${dy*.5-60}px) scale(.6)`,opacity:.95,offset:.55},{transform:`translate(${dx}px,${dy}px) scale(.18)`,opacity:.2}],{duration:650,easing:"cubic-bezier(.3,.1,.3,1)"}).onfinish=()=>c.remove();
+}
+// 6: quick view — bigger photo + details, only for those who want them
+let qvId=null;
+function openQv(id){const p=byId[id];if(!p)return;qvId=id;renderQv();const m=document.getElementById("qv");m.hidden=false;requestAnimationFrame(()=>m.classList.add("open"));document.getElementById("qvClose").focus();}
+function closeQv(){const m=document.getElementById("qv");m.classList.remove("open");setTimeout(()=>{m.hidden=true;},200);qvId=null;}
+document.getElementById("qv").addEventListener("click",e=>{if(e.target.closest("[data-qclose]")){closeQv();return;}
+  const b=e.target.closest("button[data-qa]");if(!b||!qvId)return;if(b.dataset.qa==="inc"){if(!cart.has(qvId))flyToBox(document.querySelector("#qvBody .qv-ph img"));add(qvId);}else dec(qvId);renderQv();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&qvId)closeQv();});
+function renderQv(){const p=byId[qvId];if(!p)return;const q=cart.get(qvId)||0;
+  document.getElementById("qvBody").innerHTML=`<div class="qv-ph"><img src="${p.photo||p.img}" alt="${esc(p.name)}"></div>
+    <div class="qv-in"><span class="qv-cat">${esc(CATS[p.cat]||"")}</span><h3>${esc(p.name)}</h3>${p.desc?`<p class="qv-ds">${esc(p.desc)}</p>`:""}
+    <p class="qv-meta">גובה כ-${(+p.h).toLocaleString("he-IL")} ס"מ</p>${p.price?`<div class="qv-pr">${ils(p.price)}</div>`:""}
+    ${q?`<div class="qv-q"><div class="stepper"><button data-qa="inc" aria-label="הוספת יחידה">+</button><output>${q}</output><button data-qa="dec" aria-label="הסרת יחידה">−</button></div><span class="qv-ok">✓ במארז</span></div>`
+       :`<button class="add qv-add" data-qa="inc">+ הוספה למארז</button>`}</div>`;}
 
 function add(id){const had=cart.has(id);cart.set(id,(cart.get(id)||0)+1);if(!had)fresh.add(id);update(true);}
 function dec(id){const q=cart.get(id);if(!q)return;if(q===1)remove(id);else{cart.set(id,q-1);update(true);}}
@@ -1050,8 +1112,9 @@ function update(flash){
   document.getElementById("list").innerHTML=document.getElementById("list2").innerHTML=rowsHTML();
   document.getElementById("totals").innerHTML=document.getElementById("totals2").innerHTML=totalsHTML(t);
   document.getElementById("barP").textContent=money(t.total);
-  document.getElementById("barC").innerHTML=`${t.count} פריטים · <button class="bar-pack" data-packs>אריזה: ${esc(packLabel())} · ${pack.none?"הוספה":"החלפה"}</button>`;
+  document.getElementById("barC").innerHTML=`${t.count} מוצרים · <button class="bar-pack" data-packs>${pack.none?"+ הוספת אריזה":"אריזה ✓"}</button>`;
   if(flash) document.querySelectorAll("#bigP,#barP").forEach(el=>{el.classList.remove("priceflash");void el.offsetWidth;el.classList.add("priceflash");});
+  document.querySelector(".stage .bgs").hidden=cart.size===0;
   layout();
   onCartChanged();
   try{renderShow();}catch(e){}
@@ -1268,7 +1331,7 @@ let boxes=1, orderText="", lastSend=null;
 const $=id=>document.getElementById(id);
 function setStep(n){[...$("steps").children].forEach((s,i)=>s.classList.toggle("on",i===n));}
 function showView(v){
-  $("buildView").hidden=v!=="build";$("sumView").hidden=v!=="sum";$("doneView").hidden=v!=="done";$("admView").hidden=v!=="admin";
+  $("buildView").hidden=v!=="build";$("intro").hidden=v!=="build";$("sumView").hidden=v!=="sum";$("doneView").hidden=v!=="done";$("admView").hidden=v!=="admin";
   $("bar").style.display=v==="build"?"":"none";$("steps").style.visibility=v==="admin"?"hidden":"";setStep(v==="build"?0:v==="sum"?1:2);
   sheet.classList.remove("open");scrim.classList.remove("open");window.scrollTo(0,0);
   if(v==="build")requestAnimationFrame(()=>recompose(false));
