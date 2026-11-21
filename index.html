@@ -647,14 +647,13 @@ h1.brand{margin:0;line-height:1.2}
 .ub-spark{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:#e3cc97;box-shadow:0 0 10px #e3cc97;opacity:0;animation:ubSpark 2.9s ease-out forwards}
 .scene.unboxing .ai-img{animation:ubImg 2.9s cubic-bezier(.3,.1,.2,1) forwards}
 @keyframes ubVeil{0%,50%{opacity:1}100%{opacity:0;visibility:hidden}}
-@keyframes ubSpin{0%{transform:translateY(40px) rotateX(-24deg) rotateY(-50deg) scale(.55);opacity:0}
-  14%{transform:translateY(0) rotateX(-24deg) rotateY(-32deg) scale(1);opacity:1}
-  42%{transform:rotateX(-24deg) rotateY(12deg) scale(1)}
-  70%{transform:rotateX(-30deg) rotateY(18deg) scale(1.04);opacity:1}
-  100%{transform:rotateX(-30deg) rotateY(22deg) scale(1.25) translateY(30px);opacity:0}}
+/* opacity/scale live on the wrapper: opacity on a 3D element would flatten it */
+.ub-wrap{animation:ubPop 2.9s cubic-bezier(.45,.05,.2,1) forwards}
+@keyframes ubPop{0%{transform:translateY(40px) scale(.55);opacity:0}14%{transform:none;opacity:1}70%{transform:scale(1.04);opacity:1}100%{transform:translateY(30px) scale(1.25);opacity:0}}
+@keyframes ubSpin{0%{transform:rotateX(-24deg) rotateY(-50deg)}14%{transform:rotateX(-24deg) rotateY(-32deg)}42%{transform:rotateX(-24deg) rotateY(12deg)}70%{transform:rotateX(-30deg) rotateY(18deg)}100%{transform:rotateX(-30deg) rotateY(22deg)}}
 @keyframes ubLid{0%,40%{transform:rotateX(90deg) translateZ(calc(var(--h)/2 + 1px))}
   62%{transform:rotateX(110deg) translateZ(calc(var(--h)*1.6)) rotateZ(14deg)}
-  100%{transform:rotateX(125deg) translateZ(calc(var(--h)*3.4)) rotateZ(40deg);opacity:0}}
+  100%{transform:rotateX(125deg) translateZ(calc(var(--h)*3.4)) rotateZ(40deg)}}
 @keyframes ubSpark{0%,48%{opacity:0;transform:translate(-50%,-50%)}
   60%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.4)}}
 @keyframes ubImg{0%,48%{opacity:0;transform:scale(.86);filter:blur(6px)}100%{opacity:1;transform:scale(1);filter:none}}
@@ -1506,7 +1505,7 @@ function playUnbox(){
   const u=document.createElement("div");u.className="unbox";u.setAttribute("aria-hidden","true");
   const sparks=Array.from({length:14},(_,i)=>{const a=i/14*Math.PI*2,r=90+Math.random()*80;
     return `<i class="ub-spark" style="--dx:${Math.round(Math.cos(a)*r)}px;--dy:${Math.round(Math.sin(a)*r-30)}px;animation-delay:${(Math.random()*.25).toFixed(2)}s"></i>`;}).join("");
-  u.innerHTML=`<div class="ub-box"><div class="ub-f ub-bottom"></div><div class="ub-f ub-back"></div><div class="ub-f ub-left"></div><div class="ub-f ub-right"></div><div class="ub-f ub-front"></div><div class="ub-lid"><div class="ub-bow"></div></div></div>${sparks}`;
+  u.innerHTML=`<div class="ub-wrap" style="transform-style:preserve-3d;perspective:1100px"><div class="ub-box"><div class="ub-f ub-bottom"></div><div class="ub-f ub-back"></div><div class="ub-f ub-left"></div><div class="ub-f ub-right"></div><div class="ub-f ub-front"></div><div class="ub-lid"><div class="ub-bow"></div></div></div></div>${sparks}`;
   scene.appendChild(u);scene.classList.add("unboxing");
   setTimeout(()=>{u.remove();scene.classList.remove("unboxing");},3000);
 }
