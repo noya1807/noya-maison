@@ -1139,7 +1139,7 @@ function showSlide(i,instant){
   const nxt=showFlip?showA:showB,cur=showFlip?showB:showA;showFlip=!showFlip;
   nxt.src=b.img;nxt.alt=b.title||"מארז שנבנה אצלנו";
   const go=()=>{nxt.classList.add("on");cur.classList.remove("on");};
-  if(instant||nxt.complete)go();else nxt.onload=go;
+  if(nxt.complete&&nxt.naturalWidth)go();else nxt.onload=go;
   document.getElementById("showT").textContent=b.title||showTitle(b);
   document.getElementById("showDots").innerHTML=L.length>1?L.map((_,k)=>`<button class="${k===showI?"on":""}" data-k="${k}" aria-label="מארז ${k+1}"></button>`).join(""):"";
   L.forEach((x,k)=>{if(k!==showI){const im=new Image();im.src=x.img;}});
