@@ -679,12 +679,12 @@ function renderStock(){
 const VATR=()=>num(db.settings.vatRate)/100;
 async function pullInbox(){
   try{const {orders}=await api("inbox");if(!orders?.length)return;let n=0;const urls=[];
-    orders.forEach(o=>{urls.push(o._url);const ex=db.orders.find(x=>x.ref===o.ref);if(ex&&ex.status!=="pending")return;const ord=orderFromBuilder(o);
-      if(ex)Object.assign(ex,ord,{id:ex.id,notes:ex.notes||ord.notes});else{db.orders.push(ord);n++;}});
+    let nq=0;orders.forEach(o=>{urls.push(o._url);const ex=db.orders.find(x=>x.ref===o.ref);if(ex&&ex.status!=="pending")return;const ord=orderFromBuilder(o);
+      if(ex)Object.assign(ex,ord,{id:ex.id,notes:ex.notes||ord.notes});else{db.orders.push(ord);if(ord.status==="quote")nq++;else n++;}});
     db.orders.sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
     await new Promise(r=>{touch();setTimeout(r,1200);});await save();
     if(!dirty)await api("inboxdone",{method:"POST",body:{urls}}).catch(()=>{});
-    if(n)toast(`התקבלו ${n} הזמנות חדשות מהבונה`,5000);if(view==="dash"||view==="orders")render();
+    if(n||nq)toast([n?`${n} הזמנות חדשות`:"",nq?`${nq} הצעות מחיר חדשות`:""].filter(Boolean).join(" ו-")+" מהבונה",5000);if(view==="dash"||view==="orders")render();
   }catch(e){}
 }
 function orderFromBuilder(o){
@@ -692,7 +692,8 @@ function orderFromBuilder(o){
   const lines=(o.items||[]).map(([bid,name,q,price])=>{const p=db.products.find(x=>(x.builderIds||[]).includes(String(bid)));return {bid:String(bid),sku:p?.sku||"",name:String(name||""),perBox:num(q)||1,qty:(num(q)||1)*boxes,price:num(price)};});
   if(o.pack){const pid="pack:"+o.pack.id;const p=db.products.find(x=>(x.builderIds||[]).includes(pid));lines.push({bid:pid,sku:p?.sku||"",name:"אריזה: "+o.pack.name,perBox:1,qty:boxes,price:num(o.pack.price),isPack:true});}
   const mode=o.dlv?.mode||"ship";
-  return {id:uid(),ref:o.ref,source:"בונה",createdAt:o.receivedAt||new Date().toISOString(),status:"pending",customer:o.customer||{},boxes,lines,
+  const isQ=o.kind==="quote";
+  return {id:uid(),ref:o.ref,source:isQ?"הצעת מחיר מהבונה":"בונה",createdAt:o.receivedAt||new Date().toISOString(),status:isQ?"quote":"pending",customer:o.customer||{},boxes,lines,
     engrave:num(o.engrave)>0,card:num(o.card)>0,dlvMode:mode,dlvName:o.dlv?.name||"",shipCharge:num(o.dlv?.total),gross:num(o.total),date:o.date||"",notes:o.notes||"",text:o.text||""};
 }
 function orderCalc(o){
@@ -709,13 +710,13 @@ function orderCalc(o){
   return {lines,missing,fixed,fixedT,goodsCost,cost,net,profit,margin:net>0?profit/net:0};
 }
 let ordFilter="pending";
-const ORD_ST={pending:["ממתינה לאישור","st-port"],approved:["מאושרת","st-wh"],cancelled:["בוטלה","st-order"]};
+const ORD_ST={quote:["הצעת מחיר","st-order"],pending:["ממתינה לאישור","st-port"],approved:["מאושרת","st-wh"],cancelled:["בוטלה","st-order"]};
 function renderOrders(){
   const list=db.orders.filter(o=>ordFilter==="all"||o.status===ordFilter);
   const cnt=k=>db.orders.filter(o=>o.status===k).length;
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>הזמנות</h1><p class="sub">כל הזמנה מהבונה נכנסת לכאן לבד כ"ממתינה". רק הזמנות שאישרת נספרות ברווח ובמלאי.</p></div>
     <div class="row"><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
-  <div class="row" style="margin-bottom:12px">${[["pending","ממתינות"],["approved","מאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
+  <div class="row" style="margin-bottom:12px">${[["quote","הצעות מחיר"],["pending","ממתינות"],["approved","מאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
   <div class="tablewrap"><table><thead><tr><th>תאריך</th><th>מס׳</th><th>לקוח</th><th class="num">מארזים</th><th class="num">סה״כ כולל מע״מ</th><th class="num">רווח גולמי</th><th>מצב</th></tr></thead><tbody>
   ${list.map(o=>{const c=orderCalc(o);return `<tr class="click" data-oid="${esc(o.id)}"><td>${esc(new Date(o.createdAt).toLocaleDateString("he-IL"))}</td><td class="sku">${esc(o.ref||"")}</td>
     <td><b>${esc(o.customer?.org||o.customer?.name||"")}</b>${o.customer?.org&&o.customer?.name?` <span class="muted">${esc(o.customer.name)}</span>`:""}</td><td class="num">${esc(o.boxes)}</td><td class="num">${money(Math.round(num(o.gross)))}</td>
@@ -734,8 +735,8 @@ function renderOrder(){
   const prodOpts=db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("");
   $("#view").innerHTML=`<button class="back" id="oBack">→ כל ההזמנות</button>
   <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span></p></div>
-    <div class="row">${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
-  ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:"ההזמנה בוטלה ולא נספרת."}</p>`:""}
+    <div class="row">${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
+  ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:o.status==="quote"?"הצעת מחיר שהלקוח הוריד מהבונה. לא נספרת ברווח ובמלאי. כדאי לחזור אליו, ואם הזמין: \"הלקוח הזמין\".":"ההזמנה בוטלה ולא נספרת."}</p>`:""}
   <div class="cards">
     <div class="card"><div class="k">סה״כ ללקוח (כולל מע״מ)</div><div class="v" style="font-size:22px">${money(Math.round(num(o.gross)))}</div><div class="k">לפני מע״מ: ${money(Math.round(c.net))}</div></div>
     <div class="card"><div class="k">עלות</div><div class="v" style="font-size:22px">${money(Math.round(c.cost))}</div><div class="k">מוצרים ${money(Math.round(c.goodsCost))} · קבועות ${money(Math.round(c.fixedT))||"₪0"}</div></div>
