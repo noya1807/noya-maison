@@ -19,7 +19,8 @@ const clean = (s, n = 60) => String(s || "").replace(/[^\p{L}\p{N} +\-.'"]/gu, "
 const PACK_FILES = { box0: "pack/box0.webp", box1: "pack/box1.webp", box2: "pack/box2.webp", "42": "pack/42.webp", "31": "pack/31.webp", "39": "pack/39.webp" };
 
 function prompt(items, pack, variant, manual) {
-  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, about ${it.heightCm} cm tall, role: ${it.role}`).join("\n");
+  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, about ${it.heightCm} cm tall, role: ${it.role}${it.box ? " — WITH ITS OWN RETAIL BOX behind it" : ""}`).join("\n");
+  const boxed = items.filter(i => i.box);
   const hero = items.find(i => i.role === "hero");
   const noPack = pack.id === "none"; // customer chose no packaging: products only
   const moods = [
@@ -44,7 +45,8 @@ FIDELITY
 Reproduce each product as photographed: same shape, proportions, colours, materials, and any logo or label text that is physically printed on it. Keep true relative sizes from the heights given. Do not add, duplicate or remove products, and do not invent brands.
 STRICT PRODUCT FIDELITY: the products are real items for sale and must look identical to their photos and to the layout sketch. Do not restyle, redesign, recolour, reshape, simplify or "improve" any product; keep every ridge, groove, pattern, speckle, texture, finish and proportion exactly as shown. When in doubt, copy the product more literally, not more creatively.
 CLEAN LIGHTING ON PRODUCTS: the product photos were shot in other light and may contain baked-in shadows, dark patches, grey shading or reflections from that shoot. These are NOT part of the product: remove them and relight every product evenly with this scene's soft light, so each surface shows its true clean colour (a white piece stays clean white all over). Keep only natural soft scene shading and a gentle contact shadow on the surface beneath each item.
-NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
+${boxed.length ? `ORIGINAL RETAIL BOXES: for each product marked "WITH ITS OWN RETAIL BOX", its photo shows the product together with its own branded box. Show that product in front and its own box standing upright just behind it (slightly angled, front panel and logo facing the camera, partly hidden by the product), reproduced exactly as in its photo — same colour, size and printed design. Only these ${boxed.length} product(s) get their box; do not add boxes to any other product and do not duplicate boxes. The boxes add depth and fullness behind the set.
+` : ""}NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
 
 ART DIRECTION
 - Asymmetric pyramid composition; ${hero ? `"${hero.name}" is the hero, slightly elevated near the optical centre` : "pick the most premium item as the hero, slightly elevated near the optical centre"}.
@@ -70,7 +72,7 @@ export default async function handler(req, res) {
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const items = (body.items || []).filter(i => /^[a-z0-9]{2,20}$/i.test(i.id)).slice(0, 12)
-      .map(i => ({ id: i.id, name: clean(i.name), qty: Math.max(1, Math.min(20, +i.qty || 1)), role: clean(i.role, 12), heightCm: Math.max(1, Math.min(80, +i.heightCm || 10)) }));
+      .map(i => ({ id: i.id, name: clean(i.name), qty: Math.max(1, Math.min(20, +i.qty || 1)), role: clean(i.role, 12), heightCm: Math.max(1, Math.min(80, +i.heightCm || 10)), box: !!i.box }));
     if (items.length < 1) { res.status(400).json({ error: "need at least 1 product" }); return; }
     const pack = { id: clean(body.pack?.id, 8), name: clean(body.pack?.name) };
     const variant = Math.abs(+body.variant || 0);
