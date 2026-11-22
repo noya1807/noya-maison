@@ -1198,7 +1198,7 @@ function choosePack(id){const k=id==="none"?NO_PACK:PACKS.find(x=>x.id===id);if(
 function goToPacks(){document.getElementById("sheet").classList.remove("open");document.getElementById("scrim").classList.remove("open");
   document.getElementById("packSec").scrollIntoView({behavior:"smooth",block:"start"});}
 function renderPacks(){
-  packGrid.innerHTML=`<button class="card pcard" role="radio" aria-checked="${pack.none}" data-id="none">${pack.none?`<span class="tick">נבחר ✓</span>`:""}<div class="ph nopack"><span>ללא אריזה</span></div><div class="nm">ללא אריזה</div><div class="pr"></div><span class="pick">${pack.none?"נבחר":"בחירה"}</span></button>`+PACKS.filter(k=>!k.hidden).map(k=>`<button class="card pcard" role="radio" aria-checked="${k===pack}" data-id="${k.id}">${k===pack?`<span class="tick">נבחרה ✓</span>`:""}<div class="ph${k.photo?" photo":""}"><img src="${k.photo||k.img}" alt="" loading="lazy"></div><div class="nm">${k.name}</div>${stockLine(k)}<div class="pr">${packFree()?`<s class="was">${pi(k.price)}</s> <b class="free">ללא חיוב ✓</b>`:pi(k.price)}</div><span class="pick">${k===pack?"האריזה שלכם":"בחירה"}</span></button>`).join("");
+  packGrid.innerHTML=`<button class="card pcard" role="radio" aria-checked="${pack.none}" data-id="none">${pack.none?`<span class="tick">נבחר ✓</span>`:""}<div class="ph nopack"><span>ללא אריזה</span></div><div class="nm">ללא אריזה</div><div class="pr"></div><span class="pick">${pack.none?"נבחר":"בחירה"}</span></button>`+PACKS.filter(k=>!k.hidden).slice().sort((a,b)=>isBag(b)-isBag(a)).map(k=>`<button class="card pcard" role="radio" aria-checked="${k===pack}" data-id="${k.id}">${k===pack?`<span class="tick">נבחרה ✓</span>`:""}<div class="ph${k.photo?" photo":""}"><img src="${k.photo||k.img}" alt="" loading="lazy"></div><div class="nm">${k.name}</div>${stockLine(k)}<div class="pr">${packIsFree(k)?`<s class="was">${pi(k.price)}</s> <b class="free">ללא חיוב ✓</b>`:pi(k.price)}</div><span class="pick">${k===pack?"האריזה שלכם":"בחירה"}</span></button>`).join("");
   packsEl.innerHTML=PACKS.filter(k=>!k.hidden).map(k=>`<button class="pack" aria-pressed="${k===pack}" data-id="${k.id}"><img src="${k.img}" alt=""><span><b>${k.name}</b>${pi(k.price)}</span></button>`).join("");}
 packsEl.onclick=e=>{const b=e.target.closest(".pack");if(!b)return;pack=PACKS.find(k=>k.id===b.dataset.id);renderPacks();update(true);};
 document.addEventListener("click",e=>{if(e.target.closest("[data-packs]"))goToPacks();});
@@ -1507,7 +1507,7 @@ function rowsHTML(){
     <span class="mini"><button data-a="inc" aria-label="הוספה">+</button><output>${q}</output><button data-a="dec" aria-label="הפחתה">−</button></span>
     <span class="sum">${pi(p.price*q)}</span><button class="del" data-a="del" aria-label="הסרת ${esc(p.name)}">✕</button></div>`}).join("");
 }
-function totalsHTML(t){return `<span>אריזה: ${packLabel()} <button class="chg" data-packs>${pack.none?"הוספה":"החלפה"}</button></span><span>${!pack.none&&packFree()?"ללא חיוב ✓":pi(pack.price)}</span>
+function totalsHTML(t){return `<span>אריזה: ${packLabel()} <button class="chg" data-packs>${pack.none?"הוספה":"החלפה"}</button></span><span>${packIsFree(pack)?"ללא חיוב ✓":pi(pack.price)}</span>
   <span>מוצרים (${t.count} פריטים)</span><span>${money(t.items)}</span>
   <span class="lbl">מחיר למארז</span><span class="big" id="bigP">${money(t.total)}</span>`;}
 function onRow(e){const b=e.target.closest("button[data-a]");if(!b)return;const id=b.closest(".row").dataset.id;
@@ -1517,13 +1517,16 @@ function onRow(e){const b=e.target.closest("button[data-a]");if(!b)return;const 
 // packaging is free when products + engraving per box reach FREE_PACK_AT (before VAT; the greeting card is not counted)
 const FREE_PACK_AT=150;
 function itemsPer(){let items=0;for(const [id,q] of cart)items+=(+byId[id].price||0)*q;return items;}
-function packFreeGap(){return Math.max(0,FREE_PACK_AT-(itemsPer()+engCost()));}
-function packFree(){return cart.size>0&&packFreeGap()<=0;}
-function packCharge(){return pack.none?0:packFree()?0:(+pack.price||0);}
+// window bags are always free; jute bags and boxes are paid (cost × 2) until the box passes FREE_PACK_AT
+const isBag=k=>!!k&&!k.none&&/^שקית/.test(k.name);
+function packFreeGap(){const v=itemsPer()+engCost();return v>FREE_PACK_AT?0:Math.max(.01,FREE_PACK_AT-v+.01);}
+function packFree(){return cart.size>0&&itemsPer()+engCost()>FREE_PACK_AT;}
+function packIsFree(k){return !!k&&!k.none&&(isBag(k)||packFree());}
+function packCharge(){return pack.none?0:packIsFree(pack)?0:(+pack.price||0);}
 function totals(){let items=0,count=0;for(const [id,q] of cart){items+=byId[id].price*q;count+=q;}return {items,count,total:items+packCharge()};}
 function renderPackFree(){const el=document.getElementById("packFreeHint");if(!el)return;
   if(!cart.size){el.hidden=true;return;}el.hidden=false;const gap=packFreeGap();
-  el.innerHTML=gap<=0?`🎁 <b>האריזה עלינו!</b> במארז מעל ₪${FREE_PACK_AT} האריזה ללא חיוב`:`🎁 עוד <b>${ils(Math.ceil(gap*100)/100)}</b> למארז, והאריזה עלינו`;el.classList.toggle("ok",gap<=0);}
+  el.innerHTML=gap<=0?`🎁 <b>כל האריזות עלינו!</b> במארז מעל ₪${FREE_PACK_AT} גם תיקי יוטה וקופסאות ללא חיוב`:`🎁 שקית עם חלון – תמיד ללא חיוב. עוד <b>${ils(Math.ceil(gap*100)/100)}</b> למארז, ותיק יוטה או קופסה עלינו`;el.classList.toggle("ok",gap<=0);}
 let packFreeWas=null;
 function update(flash){
   {const f=packFree();if(f!==packFreeWas){packFreeWas=f;renderPacks();}}renderPackFree();
@@ -1780,9 +1783,11 @@ function sceneToTop(){const st=scene.closest(".stage")||scene,y=st.getBoundingCl
   if(Math.abs(window.scrollY-y)>4)window.scrollTo({top:Math.max(0,y),behavior:"smooth"});}
 let packAsked=false;
 function openPackAsk(next){
-  const m=document.getElementById("packAsk"),list=PACKS.filter(k=>!k.hidden&&(k.photo||k.img)).slice().sort((a,b)=>(b.price||0)-(a.price||0)).slice(0,4);
-  document.getElementById("paFree").innerHTML=packFree()?`<b>ובמארז שלכם – האריזה ללא חיוב ✓</b>`:`במארז מעל ₪${FREE_PACK_AT} – האריזה עלינו.`;
-  document.getElementById("paGrid").innerHTML=list.map(k=>`<button type="button" class="pa-card" data-id="${k.id}"><img src="${k.photo||k.img}" alt="" loading="lazy"><span class="nm">${esc(k.name)}</span><span class="pr">${packFree()?"ללא חיוב ✓":pi(k.price)}</span></button>`).join("");
+  const m=document.getElementById("packAsk"),vis=PACKS.filter(k=>!k.hidden&&(k.photo||k.img));
+  const bag=vis.find(k=>isBag(k)&&!/יין/.test(k.name)),jute=vis.find(k=>/יוטה/.test(k.name)),boxes=vis.filter(k=>/^קופסה/.test(k.name)).slice(0,2);
+  const list=[bag,jute,...boxes].filter(Boolean);
+  document.getElementById("paFree").innerHTML=packFree()?`<b>ובמארז שלכם – כל האריזות ללא חיוב ✓</b>`:`שקית עם חלון ללא חיוב. במארז מעל ₪${FREE_PACK_AT} – גם תיק יוטה או קופסה עלינו.`;
+  document.getElementById("paGrid").innerHTML=list.map(k=>`<button type="button" class="pa-card" data-id="${k.id}"><img src="${k.photo||k.img}" alt="" loading="lazy"><span class="nm">${esc(k.name)}</span><span class="pr">${packIsFree(k)?"ללא חיוב ✓":pi(k.price)}</span></button>`).join("");
   const close=()=>{m.hidden=true;};
   document.getElementById("paGrid").onclick=e=>{const b=e.target.closest(".pa-card");if(!b)return;pack=PACKS.find(k=>k.id===b.dataset.id);renderPacks();update(true);close();next&&next();};
   document.getElementById("paSkip").onclick=()=>{close();next&&next();};
@@ -1948,7 +1953,7 @@ const needLogo=()=>engSel.size>0||(cardOn&&!cardSelf);
 const engNames=()=>[...engSel].map(id=>byId[id].name+((cart.get(id)||1)>1?` × ${cart.get(id)}`:"")).join(", ");
 function renderSumLines(){const t=totals();
   $("sumLines").innerHTML=[...cart].map(([id,q])=>{const p=byId[id];return `<div class="ln"><img src="${p.img}" alt=""><span>${esc(p.name)}${q>1?` × ${q}`:""}</span><span>${pi(p.price*q)}</span></div>`}).join("")
-    +(pack.none?`<div class="ln"><span></span><span>אריזה: ללא</span><span></span></div>`:`<div class="ln"><img src="${pack.img}" alt=""><span>אריזה: ${pack.name}</span><span>${packFree()?"ללא חיוב ✓":pi(pack.price)}</span></div>`)
+    +(pack.none?`<div class="ln"><span></span><span>אריזה: ללא</span><span></span></div>`:`<div class="ln"><img src="${pack.img}" alt=""><span>אריזה: ${pack.name}</span><span>${packIsFree(pack)?"ללא חיוב ✓":pi(pack.price)}</span></div>`)
     +(engSel.size?`<div class="ln"><span>✨</span><span>חריטת לוגו: ${esc(engNames())}</span><span>${ils(engCost())}</span></div>`:"")
     +(cardOn?`<div class="ln"><span>💌</span><span>כרטיס ברכה ממותג</span><span>${ils(cardCost())}</span></div>`:"")
     +`<div class="ln tot"><span></span><span>מחיר למארז (${t.count} פריטים)</span><span>${money(orderPer())}</span></div>`;
@@ -2091,7 +2096,7 @@ function buildOrder(){
       `איש קשר לקבלה: ${$("rcvSame").checked?`${f("fName")}, ${f("fPhone")}`:`${f("fRcvName")}, ${f("fRcvPhone")}`}`]
       :[`🏬 אספקה: איסוף עצמי מ${CONFIG.pickupAddress||""}`]),
     date?`תאריך אספקה רצוי: ${date}`:null,"",
-    "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""}${byId[id].price?" – "+ils(byId[id].price*q):""}`),(pack.none?"• אריזה: ללא":packFree()?`• אריזה: ${pack.name} – ללא חיוב (מארז מעל ₪${FREE_PACK_AT})`:`• אריזה: ${pack.name} – ${ils(pack.price)}`),"",
+    "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""}${byId[id].price?" – "+ils(byId[id].price*q):""}`),(pack.none?"• אריזה: ללא":packIsFree(pack)?`• אריזה: ${pack.name} – ללא חיוב${isBag(pack)?"":` (מארז מעל ₪${FREE_PACK_AT})`}`:`• אריזה: ${pack.name} – ${ils(pack.price)}`),"",
     ...(engSel.size?[`✨ חריטת לוגו: ${engNames()} (+${ils(engCost())} למארז)`,f("engNotes")?`הערות לחריטה: ${f("engNotes")}`:null]:[]),
     ...(cardOn?[`💌 כרטיס ברכה ממותג 10×15 (+${ils(cardCost())} למארז)`,cardSelf?"עיצוב הכרטיס: הלקוח ישלח עיצוב מוכן בהמשך":`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[]),
     ...(needLogo()?[`📎 קובץ לוגו: ${engFiles.filter(f=>f.url).map(f=>f.name+" – "+f.url).join(" | ")||"יישלח בהמשך"}`,""]:[]),
@@ -2110,7 +2115,7 @@ function send(kind){
   // copy of the order for the private back office (profit, stock). Fire-and-forget: never blocks or changes the customer flow.
   try{const g=id=>($(id)&&$(id).value||"").trim();fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({ref:o.ref,via:kind,
     customer:{name:g("fName"),phone:g("fPhone"),email:g("fEmail"),org:g("fOrg")},items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),
-    pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packFree()},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
+    pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
     dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost())},total:withVat(grandTotal()),totalNet:grandTotal(),date:g("fDate"),notes:[...stockAlerts(),g("fNotes")].filter(Boolean).join("\n"),giftFor,text:o.text})}).catch(()=>{});}catch(e){}
   let href;
   if(kind==="wa") href=`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(o.text)}`;
@@ -2166,7 +2171,7 @@ async function imgAsData(src){
 function quoteHTML(q,img){
   const f=id=>($(id)&&$(id).value||"").trim(),noP=unpriced(),ils=n=>"₪"+(+n||0).toLocaleString("he-IL",{minimumFractionDigits:2,maximumFractionDigits:2}),money=n=>noP?"בהצעת מחיר":ils(n),pr=n=>noP&&!(+n)?"—":ils(n);
   const rows=[...cart].map(([id,n])=>{const p=byId[id];return `<tr><td>${esc(p.name)}</td><td class="n">${n}</td><td class="n">${pr(p.price)}</td><td class="n">${p.price?ils(p.price*n):"—"}</td></tr>`;});
-  if(!pack.none)rows.push(packFree()?`<tr><td>אריזה: ${esc(pack.name)} (מארז מעל ₪${FREE_PACK_AT})</td><td class="n">1</td><td class="n">${pr(pack.price)}</td><td class="n">ללא חיוב</td></tr>`:`<tr><td>אריזה: ${esc(pack.name)}</td><td class="n">1</td><td class="n">${pr(pack.price)}</td><td class="n">${pr(pack.price)}</td></tr>`);
+  if(!pack.none)rows.push(packIsFree(pack)?`<tr><td>אריזה: ${esc(pack.name)}${isBag(pack)?"":` (מארז מעל ₪${FREE_PACK_AT})`}</td><td class="n">1</td><td class="n">${pr(pack.price)}</td><td class="n">ללא חיוב</td></tr>`:`<tr><td>אריזה: ${esc(pack.name)}</td><td class="n">1</td><td class="n">${pr(pack.price)}</td><td class="n">${pr(pack.price)}</td></tr>`);
   if(engSel.size)rows.push(`<tr><td>חריטת לוגו: ${esc(engNames())}</td><td class="n"></td><td class="n"></td><td class="n">${ils(engCost())}</td></tr>`);
   if(cardOn)rows.push(`<tr><td>כרטיס ברכה ממותג 10×15</td><td class="n">1</td><td class="n">${ils(cardCost())}</td><td class="n">${ils(cardCost())}</td></tr>`);
   rows.push(`<tr class="sub"><td colspan="3">מחיר למארז</td><td class="n">${money(orderPer())}</td></tr>`);
@@ -2236,7 +2241,7 @@ $("qmMake").onclick=async()=>{
     // copy of every downloaded quote for Noya's back office (tab "הצעות מחיר"), with the link to the PDF
     q.upload.finally(()=>{try{fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"quote",ref:q.ref,via:"quote",
       customer:{name:q.client.name,phone:q.client.phone,email:q.client.email,org:q.client.org},items:[...cart].map(([id,n])=>[id,byId[id].name,n,+byId[id].price||0]),
-      pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packFree()},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
+      pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
       dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost())},total:withVat(grandTotal()),totalNet:grandTotal(),
       notes:q.url?`קובץ ההצעה: ${q.url}`:"",text:`הצעת מחיר ${q.ref} (הלקוח הוריד מהבונה)\nבתוקף עד ${q.until}${q.url?`\nקובץ: ${q.url}`:""}`})}).catch(()=>{});}catch(e){}});
   }catch(e){showToast("לא הצלחנו להכין את הקובץ. נסו שוב, או שלחו לנו את ההזמנה ונשלח הצעת מחיר.");}
