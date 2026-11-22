@@ -1188,7 +1188,7 @@ function dec(id){const q=cart.get(id);if(!q)return;if(q===1)remove(id);else{cart
 function remove(id){undoSet=null;lastRemoved=[id,cart.get(id)];cart.delete(id);update(true);showToast(`${byId[id].name} הוסר מהמארז`,true);}
 function showToast(m,undo){const t=document.getElementById("toast");document.getElementById("toastMsg").textContent=m;document.getElementById("undo").hidden=!undo;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),5000);}
 document.getElementById("undo").onclick=()=>{if(undoSet){cart=undoSet[0];pack=undoSet[1];undoSet=null;renderPacks();update(true);}else if(lastRemoved){cart.set(...lastRemoved);fresh.add(lastRemoved[0]);lastRemoved=null;update(true);}document.getElementById("toast").classList.remove("show");};
-document.getElementById("clear").onclick=()=>{if(!cart.size)return;cart.clear();update(true);};
+document.getElementById("clear").onclick=()=>{if(!cart.size&&pack.none)return;cart.clear();pack=NO_PACK;packAsked=false;renderPacks();update(true);};   // empties products and packaging
 
 // ---- Packaging & backgrounds ----
 const packsEl=document.getElementById("packs");
