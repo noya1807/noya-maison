@@ -1526,7 +1526,7 @@ function packCharge(){return pack.none?0:packIsFree(pack)?0:(+pack.price||0);}
 function totals(){let items=0,count=0;for(const [id,q] of cart){items+=byId[id].price*q;count+=q;}return {items,count,total:items+packCharge()};}
 function renderPackFree(){const el=document.getElementById("packFreeHint");if(!el)return;
   if(!cart.size){el.hidden=true;return;}el.hidden=false;const gap=packFreeGap();
-  el.innerHTML=gap<=0?`🎁 <b>כל האריזות עלינו!</b> במארז מעל ₪${FREE_PACK_AT} גם תיקי יוטה וקופסאות ללא חיוב`:`🎁 שקית עם חלון – תמיד ללא חיוב. עוד <b>${ils(Math.ceil(gap*100)/100)}</b> למארז, ותיק יוטה או קופסה עלינו`;el.classList.toggle("ok",gap<=0);}
+  el.innerHTML=gap<=0?`🎁 <b>כל האריזות עלינו!</b> במארז מעל ₪${FREE_PACK_AT} גם תיקי יוטה וקופסאות ללא חיוב`:`🎁 שקית עם חלון – תמיד ללא חיוב. עוד <b>${ils(Math.ceil(gap))}</b> למארז, ותיק יוטה או קופסה עלינו`;el.classList.toggle("ok",gap<=0);}
 let packFreeWas=null;
 function update(flash){
   {const f=packFree();if(f!==packFreeWas){packFreeWas=f;renderPacks();}}renderPackFree();
