@@ -186,6 +186,8 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .sets{display:flex;gap:8px;align-items:center;overflow-x:auto;font-size:13px;color:var(--cocoa-soft)}
 .sets b{flex:0 0 auto;font-weight:600;color:var(--cocoa)}
 .sets{display:block!important;overflow:visible!important}
+.sets-ori{margin:-4px 0 12px;padding:7px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(124,77,160,.10),rgba(124,77,160,.03));border:1px solid rgba(124,77,160,.22);font-size:12.5px;color:#5b3a78;line-height:1.5}
+.sets-ori b{color:#6d3f94;font-weight:800;font-variant-numeric:tabular-nums}.sets-ori .ori-n{font-weight:700}
 .sets-stats{display:flex;align-items:center;justify-content:flex-start;gap:12px;flex-wrap:wrap;margin:-2px 0 10px;font-size:12.5px;color:var(--cocoa-soft)}
 .sets-stats b{font-size:17px;font-weight:800;color:#a37b45;font-variant-numeric:tabular-nums;margin-inline-end:2px}
 .sets-stats i{width:1px;height:14px;background:rgba(176,141,87,.45)}
@@ -1594,13 +1596,13 @@ function update(flash){
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
-setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-stats" id="setsStats"><span><b data-to="48767">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
-(function(){const box=document.getElementById("setsStats");if(!box)return;const nums=[...box.querySelectorAll("b[data-to]")];
-  const fmt=n=>Math.round(n).toLocaleString("he-IL");
-  const done=()=>nums.forEach(b=>b.textContent=fmt(+b.dataset.to));
+setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-stats" id="setsStats"><span><b data-to="48767">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri">💜 נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד</div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+(function(){const box=document.getElementById("setsStats");if(!box)return;const nums=[...document.querySelectorAll("#setsStats b[data-to],#setsOri b[data-to]")];
+  const fmt=(n,b)=>((b&&b.dataset.pre)||"")+Math.round(n).toLocaleString("he-IL");
+  const done=()=>nums.forEach(b=>b.textContent=fmt(+b.dataset.to,b));
   if(matchMedia("(prefers-reduced-motion: reduce)").matches||!("IntersectionObserver" in window)){done();return;}
   const run=()=>{const t0=performance.now(),D=1800;const step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);
-    nums.forEach(b=>{const to=+b.dataset.to;b.textContent=fmt(k<1?to*e+Math.random()*to*0.02*(1-k):to);});if(k<1)requestAnimationFrame(step);else{done();box.classList.add("on");}};requestAnimationFrame(step);};
+    nums.forEach(b=>{const to=+b.dataset.to;b.textContent=fmt(k<1?to*e+Math.random()*to*0.02*(1-k):to,b);});if(k<1)requestAnimationFrame(step);else{done();box.classList.add("on");}};requestAnimationFrame(step);};
   const io=new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)){io.disconnect();run();}},{threshold:.6});io.observe(box);})();
 setsEl.onclick=e=>{const b=e.target.closest(".set");if(!b)return;const x=SETS[+b.dataset.i];
   const prev=[new Map(cart),pack];cart=new Map(x.items.map(id=>[id,1]));x.items.forEach(id=>fresh.add(id));
