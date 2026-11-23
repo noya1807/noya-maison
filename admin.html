@@ -59,6 +59,16 @@ td input,td select{padding:4px 6px}
 [hidden]{display:none!important}
 @media print{header,#toast,.btn{display:none!important}body{background:#fff}.panel,.card,table{break-inside:avoid}}
 @media (max-width:700px){main{padding:14px}header{padding:10px 14px}}
+
+.supgrp{border:1px solid var(--line,#e7dccb);border-radius:14px;margin-bottom:14px;overflow:hidden;background:#fffdf9}
+.sup-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;padding:10px 14px;background:#f4ebdd;border-bottom:1px solid var(--line,#e7dccb)}
+.sup-sum{font-size:13px;color:#6b5444}
+.itm{padding:10px 14px;border-bottom:1px solid #f0e7da}.itm:last-child{border-bottom:0}
+.itm-top{display:flex;gap:8px;align-items:center}.itm-name{flex:1;font-weight:600}
+.itm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin-top:8px}
+.itm-grid label{font-size:12px;color:#7a6656;display:flex;flex-direction:column;gap:3px}
+.itm-out{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#7a6656;justify-content:flex-end}.itm-out b{font-size:14px;color:#3b2a20}.itm-out b.gold{color:#8a6a35}
+.itm-more{margin-top:6px;font-size:12px;color:#7a6656}.itm-more input{margin-top:4px;max-width:340px}
 </style>
 </head>
 <body>
@@ -331,7 +341,7 @@ function renderShip(){
   </div>
 
   <h2>מוצרים במכולה</h2>
-  <div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>מק״ט</th><th>מוצר</th><th>ספק</th><th class="num">כמות</th><th>מטבע</th><th class="num">מחיר ליחידה</th><th class="num">CBM</th><th class="num">שווי (₪)</th><th class="num">עלות נחיתה ליחידה</th><th></th></tr></thead><tbody id="items"></tbody></table></div>
+  <div class="panel"><div id="items"></div>
     <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="addItem">+ שורת מוצר</button>
     <button class="btn sm gold" id="applyLanded">עדכון עלות הנחיתה בכרטיסי המוצרים</button></div>
     <datalist id="prodList">${db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("")}</datalist>
@@ -369,18 +379,32 @@ function renderShip(){
 
   function drawItems(){
     const c=shipCalc(s);
-    $("#items").innerHTML=s.items.map((it,i)=>{const l=c.lines[i];return `<tr data-i="${i}">
-      <td style="width:105px"><input data-f="sku" list="prodList" value="${esc(it.sku)}" dir="ltr"></td>
-      <td><input data-f="name" value="${esc(it.name||(prodBySku(it.sku)||{}).name||"")}"></td>
-      <td style="width:180px"><input data-f="supplier" list="supList" placeholder="${esc(s.supplier||"ספק")}" value="${esc(it.supplier)}"></td>
-      <td style="width:85px"><input data-f="qty" inputmode="decimal" dir="ltr" value="${esc(it.qty)}"></td>
-      <td style="width:82px"><select data-f="currency">${CURS.map(cu=>`<option ${lineCur(s,it)===cu?"selected":""}>${cu}</option>`).join("")}</select></td>
-      <td style="width:105px"><input data-f="unitPrice" inputmode="decimal" dir="ltr" value="${esc(it.unitPrice)}"></td>
-      <td style="width:80px"><input data-f="cbm" inputmode="decimal" dir="ltr" value="${esc(it.cbm)}" title="נפח השורה במכולה (מה-Packing List / פרופורמה)"></td>
-      <td class="num">${l.valueIls?money(Math.round(l.valueIls)):(l.orig&&!rateOf(s,l.cur)?`<span class="warn">חסר שער</span>`:"")}</td>
-      <td class="num"><b>${l.landed&&c.ok?money(Math.round(l.landed*100)/100):""}</b></td>
-      <td><button class="btn sm ghost" data-del="${i}" title="הסרה">✕</button></td></tr>`;}).join("")||`<tr><td colspan="10" class="muted">עוד אין מוצרים. הוסיפו שורות, או שלחו לClaude את הפרופורמות והוא ימלא.</td></tr>`;
-    $("#items").querySelectorAll("input,select").forEach(el=>el.addEventListener("change",()=>{const it=s.items[+el.closest("tr").dataset.i];it[el.dataset.f]=el.value.trim();
+    // one block per supplier: a container can hold goods from several suppliers
+    const groups=new Map();
+    s.items.forEach((it,i)=>{const sup=(it.supplier||s.supplier||"").trim()||"ספק לא מוגדר";if(!groups.has(sup))groups.set(sup,[]);groups.get(sup).push(i);});
+    const fmtOrig=(v,cur)=>cur==="ILS"?money(Math.round(v)):`${cur} ${(Math.round(v*100)/100).toLocaleString("he-IL")}`;
+    const row=i=>{const it=s.items[i],l=c.lines[i];return `<div class="itm" data-i="${i}">
+      <div class="itm-top"><input data-f="name" class="itm-name" placeholder="שם המוצר" value="${esc(it.name||(prodBySku(it.sku)||{}).name||"")}">
+        <button class="btn sm ghost" data-del="${i}" title="הסרת השורה">✕</button></div>
+      <div class="itm-grid">
+        <label>מק״ט<input data-f="sku" list="prodList" value="${esc(it.sku)}" dir="ltr"></label>
+        <label>כמות<input data-f="qty" inputmode="decimal" dir="ltr" value="${esc(it.qty)}"></label>
+        <label>מחיר ליחידה<input data-f="unitPrice" inputmode="decimal" dir="ltr" value="${esc(it.unitPrice)}"></label>
+        <label>מטבע<select data-f="currency">${CURS.map(cu=>`<option ${lineCur(s,it)===cu?"selected":""}>${cu}</option>`).join("")}</select></label>
+        <label>CBM<input data-f="cbm" inputmode="decimal" dir="ltr" value="${esc(it.cbm)}" title="נפח השורה במכולה"></label>
+        <div class="itm-out"><span>שווי</span><b>${l.valueIls?money(Math.round(l.valueIls)):(l.orig&&!rateOf(s,l.cur)?'<span class="warn">חסר שער</span>':"—")}</b></div>
+        <div class="itm-out"><span>עלות נחיתה ליחידה</span><b class="gold">${l.landed&&c.ok?money(Math.round(l.landed*100)/100):"—"}</b></div>
+      </div>
+      <details class="itm-more"><summary>ספק השורה</summary><input data-f="supplier" list="supList" placeholder="${esc(s.supplier||"ספק")}" value="${esc(it.supplier)}"></details>
+    </div>`;};
+    $("#items").innerHTML=s.items.length?[...groups.entries()].map(([sup,idx])=>{
+      const curs={};let ils=0,qty=0,cbm=0;const docs=new Set();
+      idx.forEach(i=>{const l=c.lines[i],it=s.items[i];if(l.orig)curs[l.cur]=(curs[l.cur]||0)+l.orig;ils+=l.valueIls||0;qty+=num(it.qty);cbm+=num(it.cbm);if(it.fromDoc)docs.add(it.fromDoc);});
+      return `<div class="supgrp"><div class="sup-head"><div><b>${esc(sup)}</b>${docs.size?`<span class="muted"> · חשבונית ${[...docs].map(esc).join(", ")}</span>`:""}</div>
+        <div class="sup-sum">${idx.length} שורות · ${Object.entries(curs).map(([k,v])=>fmtOrig(v,k)).join(" + ")||""}${ils?` · ${money(Math.round(ils))}`:""}${cbm?` · ${(Math.round(cbm*100)/100)} CBM`:""}</div></div>
+        ${idx.map(row).join("")}</div>`;}).join("")
+      :`<p class="muted">עוד אין מוצרים. הוסיפו שורות, או שלחו לClaude את הפרופורמות והוא ימלא.</p>`;
+    $("#items").querySelectorAll("input,select").forEach(el=>el.addEventListener("change",()=>{const it=s.items[+el.closest("[data-i]").dataset.i];it[el.dataset.f]=el.value.trim();
       if(el.dataset.f==="currency"&&el.value===s.currency)it.currency="";
       if(el.dataset.f==="sku"){const p=prodBySku(el.value.trim());if(p){it.sku=p.sku;it.name=p.name;if(!it.supplier&&p.supplier)it.supplier=p.supplier;}}
       touch();if(el.dataset.f==="currency")drawFx();drawItems();}));
