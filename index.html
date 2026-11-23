@@ -201,6 +201,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 @media (prefers-reduced-motion: reduce){.sets-ori .ori-heart{animation:none}}
 .sets-ori b{color:#6d3f94;font-weight:800;font-variant-numeric:tabular-nums}.sets-ori .ori-n{font-weight:700}
 .pr.sale s{color:#9a8b7a;font-weight:400;font-size:.88em;margin-inline-end:2px}.pr.sale{color:#b23a3a;font-weight:700}.pr.sale .off{font-size:11px;background:#b23a3a;color:#fff;border-radius:99px;padding:1px 6px;margin-inline-start:2px}.pr.sale small{display:block;font-size:11px;font-weight:600;color:#b23a3a}
+.chip.chip-sale{border-color:#b23a3a;color:#b23a3a;font-weight:700}.chip.chip-sale[aria-pressed="true"]{background:#b23a3a;color:#fff}
 .salebadge{position:absolute;top:8px;inset-inline-start:8px;background:#b23a3a;color:#fff;font-size:11.5px;font-weight:800;border-radius:99px;padding:3px 9px;box-shadow:0 2px 6px rgba(0,0,0,.2);z-index:2}
 .sets-stats{display:flex;align-items:center;justify-content:flex-start;gap:12px;flex-wrap:wrap;margin:-2px 0 10px;font-size:12.5px;color:var(--cocoa-soft)}
 .sets-stats b{font-size:17px;font-weight:800;color:#a37b45;font-variant-numeric:tabular-nums;margin-inline-end:2px}
@@ -1172,8 +1173,9 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 
 // ---- Catalogue ----
 const chipsEl=document.getElementById("chips"), gridEl=document.getElementById("grid");
+const onSale=p=>!p.hidden&&+p.was>+p.price;
 function renderChips(){
-  chipsEl.innerHTML=[["all","הכול"],...Object.entries(CATS).filter(([k])=>P.some(p=>p.cat===k&&!p.hidden))].map(([k,v])=>`<button class="chip" aria-pressed="${k===cat}" data-c="${k}">${v}</button>`).join("");
+  chipsEl.innerHTML=[["all","הכול"],...Object.entries(CATS).filter(([k])=>P.some(p=>p.cat===k&&!p.hidden)),...(P.some(onSale)?[["sale","🔥 מוצרים בהנחות ענק"]]:[])].map(([k,v])=>`<button class="chip${k==="sale"?" chip-sale":""}" aria-pressed="${k===cat}" data-c="${k}">${v}</button>`).join("");
 }
 chipsEl.onclick=e=>{const b=e.target.closest(".chip");if(!b)return;cat=b.dataset.c;renderChips();renderGrid();};
 // stock shown on the card: "2,016 יח' · יגיע למלאי ב-20.1.2027"
@@ -1194,7 +1196,7 @@ function renderBudget(){
   document.getElementById("budTxt").textContent=left>=0?`במארז ${ils(used)} · נשארו ${ils(Math.round(left*100)/100)}`:`חריגה של ${ils(Math.round(-left*100)/100)} מהתקציב`;
 }
 function renderGrid(){
-  let list=P.filter(p=>!p.hidden&&(cat==="all"||p.cat===cat));
+  let list=P.filter(p=>!p.hidden&&(cat==="all"||(cat==="sale"?onSale(p):p.cat===cat)));
   if(sortBy){const k=p=>+p.price||0;list=list.slice().sort((a,b)=>(!k(a))-(!k(b))||(sortBy==="asc"?k(a)-k(b):k(b)-k(a)));}
   else{
     // "מומלץ": families keep their order; inside each family, products with an upcoming arrival date (eta) come first,
