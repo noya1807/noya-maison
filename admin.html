@@ -713,7 +713,7 @@ async function pullInbox(){
 }
 function orderFromBuilder(o){
   const boxes=Math.max(1,num(o.boxes)||1);
-  const linked=bid=>db.products.filter(x=>(x.builderIds||[]).includes(String(bid))).map(x=>x.sku);
+  const linked=bid=>db.products.filter(x=>!x.alt&&(x.builderIds||[]).includes(String(bid))).map(x=>x.sku); // alt = וריאנט חלופי (ריח B) של אותו פריט – לא נספר כחלק מסט
   const lines=(o.items||[]).map(([bid,name,q,price])=>{const ls=linked(bid);const p=ls.length?prodBySku(ls[0]):null;return {bid:String(bid),sku:p?.sku||"",extraSkus:ls.slice(1),name:String(name||""),perBox:num(q)||1,qty:(num(q)||1)*boxes,price:num(price)};});
   if(o.pack){const pid="pack:"+o.pack.id;const ls=linked(pid);const p=ls.length?prodBySku(ls[0]):null;lines.push({bid:pid,sku:p?.sku||"",extraSkus:ls.slice(1),name:"אריזה: "+o.pack.name,perBox:1,qty:boxes,price:num(o.pack.price),isPack:true});}
   const mode=o.dlv?.mode||"ship";
