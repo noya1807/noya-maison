@@ -1155,6 +1155,14 @@ function renderBudget(){
 function renderGrid(){
   let list=P.filter(p=>!p.hidden&&(cat==="all"||p.cat===cat));
   if(sortBy){const k=p=>+p.price||0;list=list.slice().sort((a,b)=>(!k(a))-(!k(b))||(sortBy==="asc"?k(a)-k(b):k(b)-k(a)));}
+  else{
+    // "מומלץ": families keep their order; inside each family, products with an upcoming arrival date (eta) come first,
+    // soonest first. Works automatically for any new product that gets an eta.
+    const today=new Date().toISOString().slice(0,10),fam={},pos=new Map();
+    P.forEach((p,i)=>{if(!(p.cat in fam))fam[p.cat]=i;pos.set(p,i);});
+    const soon=p=>p.eta&&String(p.eta)>=today?String(p.eta):"";
+    list=list.slice().sort((a,b)=>(fam[a.cat]-fam[b.cat])||((!soon(a))-(!soon(b)))||(soon(a)<soon(b)?-1:soon(a)>soon(b)?1:0)||(pos.get(a)-pos.get(b)));
+  }
   const left=budget>0?budget-totals().total:Infinity;
   renderBudget();
   gridEl.innerHTML=list.map(p=>{
