@@ -8,18 +8,23 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="he_IL">
 <meta property="og:site_name" content="נויה במתנה">
-<meta property="og:title" content="נויה במתנה | בונה המארזים">
+<meta property="og:title" content="נויה במתנה | בונים מארז מתנה בדקה אחת">
 <meta property="og:description" content="מארזי מתנה לארגונים ולעסקים, בהתאמה אישית. בוחרים מוצרים, רואים את המארז ומקבלים הצעת מחיר.">
 <meta property="og:url" content="https://noya-maison-cz4l.vercel.app/">
-<meta property="og:image" content="https://noya-maison-cz4l.vercel.app/img/og.jpg">
-<meta property="og:image:secure_url" content="https://noya-maison-cz4l.vercel.app/img/og.jpg">
+<meta property="og:image" content="https://noya-maison-cz4l.vercel.app/img/og-share.jpg">
+<meta property="og:image:secure_url" content="https://noya-maison-cz4l.vercel.app/img/og-share.jpg">
 <meta property="og:image:type" content="image/jpeg">
-<meta property="og:image:alt" content="נויה במתנה – בונה המארזים">
+<meta property="og:image:alt" content="נויה במתנה – בונים מארז מתנה בדקה אחת">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#fffaf3">
 <link rel="icon" type="image/png" sizes="64x64" href="img/icon-64.png">
 <link rel="apple-touch-icon" href="img/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="נויה במתנה">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600;700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
@@ -773,11 +778,20 @@ h1.brand{margin:0;line-height:1.2}
 .pa-card img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:var(--paper)}
 .pa-card .nm{font-size:12.5px;line-height:1.3;color:var(--cocoa)}
 .pa-card .pr{font-size:13px;font-weight:700;color:var(--gold-deep)}
+
+/* install to home screen (Nov 2026) */
+.inst{margin-inline-start:auto;align-self:center;border:1px solid var(--gold-light,#d9c39a);background:var(--paper,#fffaf3);color:inherit;font:600 13.5px var(--body,inherit);padding:6px 14px;border-radius:30px;cursor:pointer;white-space:nowrap}
+.inst:hover{background:#f3e7d3}
+.ios-tip{position:fixed;inset:auto 12px calc(14px + env(safe-area-inset-bottom)) 12px;z-index:9999;background:#fffaf3;border:1px solid #d9c39a;border-radius:16px;box-shadow:0 10px 30px rgba(60,40,20,.18);padding:16px 18px 14px;font-size:15px;line-height:1.55;text-align:right}
+.ios-tip b{display:block;font-size:16px;margin-bottom:4px}
+.ios-tip button{margin-top:10px;border:0;background:#4a2e20;color:#fffaf3;font:700 14px inherit;padding:8px 18px;border-radius:24px}
+@media (max-width:640px){.inst span{display:none}.inst{padding:5px 10px;font-size:16px}}
 </style>
 </head>
 <body>
 <header>
   <h1 class="brand">נויה במתנה<span class="brand-sep" aria-hidden="true">|</span><span class="brand-tool">בונה המארזים</span></h1>
+  <button type="button" class="inst" id="instBtn" hidden aria-label="הוספת הבונה למסך הבית">📲 <span>הוספה למסך הבית</span></button>
   <p class="hq" id="hq" hidden></p>
   <div class="steps" aria-label="שלבי ההזמנה" id="steps"><span class="on">1. בניית המארז</span><span>2. סיכום ופרטים</span><span>3. שליחה</span></div>
 </header>
@@ -2468,6 +2482,27 @@ scrim.onclick=()=>{sheet.classList.remove("open");scrim.classList.remove("open")
 
 renderChips();renderPacks();renderBgs();update(false);
 if(location.hash==="#admin")setTimeout(openAdmin,300);
+</script>
+<script>
+// ---- Install to home screen: Android/Chrome shows the native prompt; iPhone gets a short how-to ----
+(function(){
+  if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
+  const btn=document.getElementById("instBtn"); if(!btn) return;
+  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+  if(standalone) return;
+  const ua=navigator.userAgent, ios=/iphone|ipad|ipod/i.test(ua)||(/macintosh/i.test(ua)&&navigator.maxTouchPoints>1);
+  let deferred=null;
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;btn.hidden=false;});
+  addEventListener("appinstalled",()=>{btn.hidden=true;deferred=null;});
+  if(ios) btn.hidden=false;
+  btn.onclick=async()=>{
+    if(deferred){deferred.prompt();await deferred.userChoice.catch(()=>{});deferred=null;btn.hidden=true;return;}
+    if(document.querySelector(".ios-tip")) return;
+    const d=document.createElement("div");d.className="ios-tip";d.setAttribute("role","dialog");
+    d.innerHTML='<b>הוספת הבונה למסך הבית</b>לוחצים על כפתור השיתוף <span aria-hidden="true">⎙</span> בתחתית Safari, ואז על <b style="display:inline">"הוספה למסך הבית"</b>.<br><button type="button">הבנתי</button>';
+    d.querySelector("button").onclick=()=>d.remove();document.body.appendChild(d);
+  };
+})();
 </script>
 </body>
 </html>
