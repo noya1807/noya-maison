@@ -1088,6 +1088,9 @@ const BGS=[
 // Styling roles: "plat" = a surface other items stand on; "lean" = flat piece leaning against the packaging;
 // RIDE = items that look good standing on a tray. surf = where the tray's top surface sits (share of its height from the bottom).
 const ROLES={"p34":{role:"lean"},"p35":{role:"lean"},"p36":{role:"lean"},"p36a":{role:"lean"},"p37":{role:"lean"},"p38":{role:"lean"},"p59":{role:"lean"},"p69":{role:"lean"},"p75":{role:"plat",h:8,surf:.5},"p75a":{role:"plat",h:7.5,surf:.5},"p115":{role:"plat",h:12,surf:.55},"p116":{role:"plat",h:12,surf:.55}};
+// Candle-holder SETS: the separate pieces and their heights (cm), tallest first. Sent to the AI photo so it always shows
+// every piece at its true, different height (most holder products are a tall + short pair). Add new holder sets here.
+const PARTS={"p2":[25,19.4],"p3":[25.1,20],"p91":[35,31,27],"p117":[17.5,13]};
 const RIDE=new Set([]);
 const LIE0={};
 const SOFT0=new Set([]);
@@ -1836,7 +1839,7 @@ async function generateAi(force){
     // up to 3 products show their own retail box behind them (the biggest/priciest first) — fuller, more premium set
     const boxed=new Set([...cart.keys()].filter(id=>byId[id].box).sort((x,y)=>(byId[y].price||0)-(byId[x].price||0)).slice(0,3));
     const SURF=new Set(["p34","p35","p36","p36a","p37","p38","p75","p75a","p82","p83","p59","p69"]);   // boards, trays, plates, placemats
-    const items=[...cart].map(([id,q])=>{const p=byId[id];return {id,name:p.name,qty:q,heightCm:p.h,box:boxed.has(id),kind:p.cat==="holder"?"candleholder":SURF.has(id)?"surface":"",
+    const items=[...cart].map(([id,q])=>{const p=byId[id];return {id,name:p.name,qty:q,heightCm:p.h,box:boxed.has(id),kind:p.cat==="holder"?"candleholder":SURF.has(id)?"surface":"",parts:PARTS[id]||null,
       role:p===hero?"hero":p.role==="plat"?"tray":p.role==="lean"?"leaning":(byId[id].lie||byId[id].role==="lie")?"lying":R.planes.back.includes(p)?"back":R.planes.front.includes(p)?"front":"middle"};});
     aiCtrl=new AbortController();const to=setTimeout(()=>aiCtrl.abort(),150000);
     const r=await fetch(AI_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},signal:aiCtrl.signal,
