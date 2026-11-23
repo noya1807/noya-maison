@@ -192,10 +192,10 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .sets-stats.on b{animation:statpop .5s ease}@keyframes statpop{50%{transform:scale(1.08)}}
 .sets .sets-h{display:block;font-weight:700;font-size:15px;color:var(--cocoa);margin:0 0 8px}.sets .sets-h small{font-weight:400;font-size:12px;color:var(--cocoa-soft);margin-inline-start:6px}
 .sets-row{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;scrollbar-width:thin}
-.set{flex:0 0 172px;scroll-snap-align:start;border:1px solid rgba(176,141,87,.35);background:#fffdf9;border-radius:16px;padding:0 0 10px;font-size:13px;color:var(--cocoa);display:flex;flex-direction:column;align-items:center;line-height:1.3;gap:2px;overflow:hidden;cursor:pointer;box-shadow:0 2px 10px rgba(90,60,30,.08);transition:transform .2s,box-shadow .2s}
+.set{flex:0 0 160px;scroll-snap-align:start;border:1px solid rgba(176,141,87,.35);background:#fffdf9;border-radius:16px;padding:0 0 10px;font-size:13px;color:var(--cocoa);display:flex;flex-direction:column;align-items:center;line-height:1.3;gap:2px;overflow:hidden;cursor:pointer;box-shadow:0 2px 10px rgba(90,60,30,.08);transition:transform .2s,box-shadow .2s}
 .set:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(90,60,30,.16)}
 .set .set-img{display:block;width:100%;aspect-ratio:4/3;overflow:hidden;background:#f3ece2;margin-bottom:6px}.set .set-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}.set:hover .set-img img{transform:scale(1.05)}
-.set .set-b{font-size:11px;font-weight:700;letter-spacing:.02em;color:#fff;background:linear-gradient(135deg,#c9a46a,#a37b45);border-radius:99px;padding:2px 10px;margin-top:-18px;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.set .set-b{font-size:12px;font-weight:700;letter-spacing:.02em;color:#fff;background:linear-gradient(135deg,#c9a46a,#a37b45);border-radius:99px;padding:3px 12px;margin-top:12px;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .set .set-n{font-weight:700;font-size:14px;color:var(--cocoa);padding:0 8px;text-align:center}.set .set-p{font-size:13px;color:var(--cocoa-soft)}.set .set-go{font-size:11.5px;color:#a37b45;font-weight:600;margin-top:2px}
 .set:hover{background:var(--paper)}
 .tip{margin:0;background:var(--paper);border:1px solid var(--line);border-inline-start:3px solid var(--gold);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--cocoa-soft)}
@@ -1134,11 +1134,11 @@ applyCatalog(DEFAULT_CATALOG);
 // Ready-made boxes shown in the "מארזי השראה" row. Empty = the row is hidden.
 // Each: {name:"שם המארז", pack:"<packaging id>", items:["<product id>", ...]}
 const SETS=[
- {name:"מתנה קטנה ומרגשת",img:"https://w4qizitdfylnksov.public.blob.vercel-storage.com/public/showcase/img-63004da59198.jpg",budget:50,items:["p114","p72","p129"],pack:"p86"},
- {name:"נורדי רך",img:"https://w4qizitdfylnksov.public.blob.vercel-storage.com/public/showcase/img-d3a5d548f181.jpg",budget:99,items:["p89","p117","p13","p108"],pack:"p79"},
- {name:"שולחן מעוצב",img:"https://w4qizitdfylnksov.public.blob.vercel-storage.com/public/showcase/img-7448eaa306b5.jpg",budget:149,items:["p2","p105","p126","p130"],pack:"p96"},
- {name:"בית ואווירה",img:"https://w4qizitdfylnksov.public.blob.vercel-storage.com/public/showcase/img-58a4157a8818.jpg",budget:199,items:["p118","p114","p112","p109","p117","p129","p130"],pack:"p80"},
- {name:"בוקר של קפה",img:"https://w4qizitdfylnksov.public.blob.vercel-storage.com/public/showcase/img-3772665f574a.jpg",budget:249,items:["p62","p106","p112","p84"],pack:"p95"}
+ {name:"מתנה קטנה ומרגשת",budget:50,items:["p114","p72","p129"],pack:"p86"},
+ {name:"נורדי רך",budget:99,items:["p89","p117","p13","p108"],pack:"p79"},
+ {name:"שולחן מעוצב",budget:149,items:["p2","p105","p126","p130"],pack:"p96"},
+ {name:"בית ואווירה",budget:199,items:["p118","p114","p112","p109","p117","p129","p130"],pack:"p80"},
+ {name:"בוקר של קפה",budget:249,items:["p62","p106","p112","p84"],pack:"p95"}
 ];
 
 // ---- State ----
