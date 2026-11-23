@@ -185,7 +185,8 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 
 .sets{display:flex;gap:8px;align-items:center;overflow-x:auto;font-size:13px;color:var(--cocoa-soft)}
 .sets b{flex:0 0 auto;font-weight:600;color:var(--cocoa)}
-.set{flex:0 0 auto;border:1px dashed var(--gold);background:transparent;border-radius:99px;padding:5px 12px;font-size:13px;color:var(--cocoa)}
+.set{flex:0 0 auto;border:1px dashed var(--gold);background:transparent;border-radius:14px;padding:5px 12px;font-size:13px;color:var(--cocoa);display:flex;flex-direction:column;align-items:center;line-height:1.25;gap:1px}
+.set .set-b{font-weight:700;color:var(--cocoa)}.set .set-n{font-size:11.5px;color:var(--cocoa-soft);white-space:nowrap}
 .set:hover{background:var(--paper)}
 .tip{margin:0;background:var(--paper);border:1px solid var(--line);border-inline-start:3px solid var(--gold);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--cocoa-soft)}
 .tip b{color:var(--cocoa)}
@@ -1122,7 +1123,14 @@ function applyCatalog(c){
 applyCatalog(DEFAULT_CATALOG);
 // Ready-made boxes shown in the "מארזי השראה" row. Empty = the row is hidden.
 // Each: {name:"שם המארז", pack:"<packaging id>", items:["<product id>", ...]}
-const SETS=[];
+const SETS=[
+ {name:"מתנה קטנה ומרגשת",budget:50,items:["p114","p13","p52","p40"],pack:"p86"},
+ {name:"נורדי רך",budget:99,items:["p115","p89","p117","p13"],pack:"p96"},
+ {name:"שולחן מעוצב",budget:149,items:["p83","p2","p4"],pack:"p96"},
+ {name:"בית ואווירה",budget:199,items:["p118","p2","p4","p114","p35","p13"],pack:"p95"},
+ {name:"בוקר של קפה",budget:249,items:["p62","p83","p4","p2"],pack:"p95"},
+ {name:"VIP יוקרה",budget:349,items:["p70","p91","p118","p4"],pack:"p95"}
+];
 
 // ---- State ----
 let cart=new Map(); // every visitor starts from an empty box and designs their own
@@ -1576,7 +1584,8 @@ function update(flash){
 // ---- Inspiration boxes & styling tip ----
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
-setsEl.innerHTML=`<b>מארזי השראה:</b>`+SETS.map((x,i)=>`<button class="set" data-i="${i}">${x.name}</button>`).join("");
+function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
+setsEl.innerHTML=`<b>מארזי השראה לפי תקציב:</b>`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}"><span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name} · ${ils(setPrice(x))}</span></button>`).join("");
 setsEl.onclick=e=>{const b=e.target.closest(".set");if(!b)return;const x=SETS[+b.dataset.i];
   const prev=[new Map(cart),pack];cart=new Map(x.items.map(id=>[id,1]));x.items.forEach(id=>fresh.add(id));
   pack=PACKS.find(k=>k.id===x.pack)||NO_PACK;manual.clear();renderPacks();update(true);
