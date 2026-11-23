@@ -639,7 +639,7 @@ function prodsFromShips(){
 function stockAll(){
   const m={};const o=k=>m[k]??={received:0,consumed:0,reserved:0,adj:0,transit:0,eta:""};
   db.shipments.forEach(s=>(s.items||[]).forEach(it=>{if(!it.sku)return;const x=o(it.sku);if(s.status==="wh")x.received+=num(it.qty);else{x.transit+=num(it.qty);if(s.eta&&(!x.eta||s.eta<x.eta))x.eta=s.eta;}}));
-  db.orders.forEach(ord=>{if(ord.status==="cancelled")return;(ord.lines||[]).forEach(l=>{if(!l.sku)return;const x=o(l.sku);if(ord.status==="approved")x.consumed+=num(l.qty);else x.reserved+=num(l.qty);});});
+  db.orders.forEach(ord=>{if(ord.status==="cancelled")return;(ord.lines||[]).forEach(l=>{if(!l.sku)return;[l.sku,...(l.extraSkus||[])].forEach(k=>{const x=o(k);if(ord.status==="approved")x.consumed+=num(l.qty);else x.reserved+=num(l.qty);});});});
   db.stockAdj.forEach(a=>{o(a.sku).adj+=num(a.qty);});
   Object.values(m).forEach(x=>{x.stock=x.received+x.adj-x.consumed;x.available=x.stock-x.reserved;});
   return m;
@@ -689,8 +689,9 @@ async function pullInbox(){
 }
 function orderFromBuilder(o){
   const boxes=Math.max(1,num(o.boxes)||1);
-  const lines=(o.items||[]).map(([bid,name,q,price])=>{const p=db.products.find(x=>(x.builderIds||[]).includes(String(bid)));return {bid:String(bid),sku:p?.sku||"",name:String(name||""),perBox:num(q)||1,qty:(num(q)||1)*boxes,price:num(price)};});
-  if(o.pack){const pid="pack:"+o.pack.id;const p=db.products.find(x=>(x.builderIds||[]).includes(pid));lines.push({bid:pid,sku:p?.sku||"",name:"אריזה: "+o.pack.name,perBox:1,qty:boxes,price:num(o.pack.price),isPack:true});}
+  const linked=bid=>db.products.filter(x=>(x.builderIds||[]).includes(String(bid))).map(x=>x.sku);
+  const lines=(o.items||[]).map(([bid,name,q,price])=>{const ls=linked(bid);const p=ls.length?prodBySku(ls[0]):null;return {bid:String(bid),sku:p?.sku||"",extraSkus:ls.slice(1),name:String(name||""),perBox:num(q)||1,qty:(num(q)||1)*boxes,price:num(price)};});
+  if(o.pack){const pid="pack:"+o.pack.id;const ls=linked(pid);const p=ls.length?prodBySku(ls[0]):null;lines.push({bid:pid,sku:p?.sku||"",extraSkus:ls.slice(1),name:"אריזה: "+o.pack.name,perBox:1,qty:boxes,price:num(o.pack.price),isPack:true});}
   const mode=o.dlv?.mode||"ship";
   const isQ=o.kind==="quote";
   return {id:uid(),ref:o.ref,source:isQ?"הצעת מחיר מהבונה":"בונה",createdAt:o.receivedAt||new Date().toISOString(),status:isQ?"quote":"pending",customer:o.customer||{},boxes,lines,
@@ -699,7 +700,7 @@ function orderFromBuilder(o){
 function orderCalc(o){
   if(o.status==="approved"&&o.frozen)return o.frozen;
   const st=db.settings,b=num(o.boxes)||0;
-  const lines=(o.lines||[]).map(l=>{const uc=l.unitCost!==undefined&&l.unitCost!==""?num(l.unitCost):(l.sku?costOf(l.sku):0);return {...l,uc,cost:uc*num(l.qty)};});
+  const lines=(o.lines||[]).map(l=>{const uc=l.unitCost!==undefined&&l.unitCost!==""?num(l.unitCost):(l.sku?costOf(l.sku):0)+(l.extraSkus||[]).reduce((a,k)=>a+costOf(k),0);return {...l,uc,cost:uc*num(l.qty)};});
   const missing=lines.filter(l=>!l.uc).length;
   const fixed={filler:b*num(st.costFiller),labor:b*num(st.costLabor),card:o.card?b*num(st.costCard):0,engrave:o.engrave?b*num(st.costEngrave):0,
     ship:o.dlvMode==="vip"?b*num(st.shipVip):o.dlvMode==="indiv"?b*num(st.shipIndiv):o.dlvMode==="ship"?num(st.shipOne):0};
