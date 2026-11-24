@@ -2575,7 +2575,7 @@ function catalogChanged(){
   if(!pack.none&&!PACKS.includes(pack))pack=PACKS.find(k=>k.id===pack.id)||NO_PACK;
   renderPacks();update(false);
 }
-store.load().then(c=>{if(c&&c.products&&c.products.length){applyCatalog(c);catalogChanged();}}).catch(()=>{}).finally(()=>loadSharedBox();
+store.load().then(c=>{if(c&&c.products&&c.products.length){applyCatalog(c);catalogChanged();}}).catch(()=>{}).finally(()=>loadSharedBox());
 function deepLink(){try{const q=new URLSearchParams(location.search);const c=q.get("cat");
   if(c&&(CATS[c]||c==="sale")){cat=c;renderChips();renderGrid();}
   const a=(q.get("add")||"").split(",").filter(id=>byId[id]&&!byId[id].hidden);a.forEach(id=>add(id));
