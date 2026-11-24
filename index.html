@@ -1293,7 +1293,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const chipsEl=document.getElementById("chips"), gridEl=document.getElementById("grid");
 const onSale=p=>!p.hidden&&+p.was>+p.price;
 function renderChips(){
-  chipsEl.innerHTML=[["all","הכול"],...Object.entries(CATS).filter(([k])=>P.some(p=>p.cat===k&&!p.hidden)),...(P.some(onSale)?[["sale","🔥 מוצרים בהנחות ענק"]]:[])].map(([k,v])=>`<button class="chip${k==="sale"?" chip-sale":""}" aria-pressed="${k===cat}" data-c="${k}">${v}</button>`).join("");
+  chipsEl.innerHTML=[["all","הכול"],...Object.entries(CATS).filter(([k])=>P.some(p=>p.cat===k&&!p.hidden&&!onSale(p))),...(P.some(onSale)?[["sale","🔥 מוצרים בהנחות ענק"]]:[])].map(([k,v])=>`<button class="chip${k==="sale"?" chip-sale":""}" aria-pressed="${k===cat}" data-c="${k}">${v}</button>`).join("");
 }
 chipsEl.onclick=e=>{const b=e.target.closest(".chip");if(!b)return;cat=b.dataset.c;renderChips();renderGrid();};
 // stock shown on the card: "2,016 יח' · יגיע למלאי ב-20.1.2027"
@@ -1316,7 +1316,7 @@ function renderBudget(){
   document.getElementById("budTxt").textContent=left>=0?`במארז ${ils(used)} · נשארו ${ils(Math.round(left*100)/100)}`:`חריגה של ${ils(Math.round(-left*100)/100)} מהתקציב`;
 }
 function renderGrid(){
-  let list=P.filter(p=>!p.hidden&&(cat==="all"||(cat==="sale"?onSale(p):p.cat===cat)));
+  let list=P.filter(p=>!p.hidden&&(cat==="sale"?onSale(p):!onSale(p)&&(cat==="all"||p.cat===cat)));
   if(sortBy){const k=p=>+p.price||0;list=list.slice().sort((a,b)=>(!k(a))-(!k(b))||(sortBy==="asc"?k(a)-k(b):k(b)-k(a)));}
   else{
     // "מומלץ": families keep their order; inside each family, products with an upcoming arrival date (eta) come first,
