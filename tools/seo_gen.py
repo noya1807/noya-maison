@@ -1,6 +1,9 @@
 # Generates static SEO pages for build.noyaglobal.com from the catalogue in index.html.
 # Run: python3 tools/seo_gen.py   (rewrites /p, /c, /gifts, /guides and sitemap.xml)
-import re, json, os, html, shutil, datetime
+import re, json, os, html, shutil, datetime, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from content_more import AUD, IND, EVT, SIZES, GUIDES2, EN_PAGES
+from product_copy import COPY
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = "https://build.noyaglobal.com"
 TODAY = datetime.date.today().isoformat()
@@ -65,6 +68,15 @@ footer{border-top:1px solid var(--gl);margin-top:30px;padding:24px 18px 90px;tex
 footer b{font-family:'Frank Ruhl Libre',serif;font-size:20px;color:var(--cocoa)}
 footer a{text-decoration:none;font-weight:600}
 .wa{position:fixed;right:18px;bottom:18px;z-index:20;background:#25d366;color:#fff;text-decoration:none;font-weight:700;border-radius:99px;padding:11px 18px;box-shadow:0 8px 20px -6px rgba(0,0,0,.35)}
+".tbl{border-collapse:collapse;width:100%;max-width:820px;background:var(--paper);border-radius:14px;overflow:hidden}.tbl th,.tbl td{border:1px solid var(--line);padding:8px 12px;text-align:start}.tbl th{background:#f1e4d0}
+dl dt{font-weight:700;margin-top:14px}dl dd{margin:2px 0 0}
+.skip{position:absolute;inset-inline-start:-999px}.skip:focus{inset-inline-start:12px;top:12px;z-index:99;background:#fff;padding:8px 12px;border-radius:8px}
+.tool{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:22px;max-width:820px}
+.tool label{display:block;font-weight:700;margin:12px 0 4px}.tool input,.tool select{font:inherit;padding:9px 12px;border:1px solid var(--gl);border-radius:12px;width:100%;max-width:320px;background:#fff}
+.tool .out{margin-top:18px;font-size:18px;background:#fff;border-radius:14px;padding:14px 16px;border:1px solid var(--gl)}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.opts button{font:inherit;font-weight:600;border:1.5px solid var(--gl);background:#fff;border-radius:99px;padding:8px 16px;cursor:pointer;color:var(--cocoa)}.opts button.on{border-color:var(--gold);background:#f6ead3}
+.grp{margin:18px 0}.grp h3{margin-bottom:4px}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 @media (max-width:760px){.hero{grid-template-columns:1fr;padding:16px}.top .btn{padding:8px 14px;font-size:14px}.logo span{display:none}}
 """
 WA = "https://wa.me/972543219070?text=" + "%D7%94%D7%99%D7%99%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%94%D7%90%D7%AA%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%9E%D7%90%D7%A8%D7%96%D7%99%20%D7%A9%D7%99"
@@ -74,25 +86,28 @@ e = lambda t: html.escape(str(t), quote=True)
 def ils(x):
     return ("₪%.2f" % x).rstrip("0").rstrip(".") if x != int(x) else "₪%d" % x
 
-def page(path, title, desc, body, ld, crumbs, img=SITE + "/img/og-magic.jpg"):
+def page(path, title, desc, body, ld, crumbs, img=None, lang="he", alt=None, nav=True):
+    img = img or OG.get(path) or SITE + "/img/og-magic.jpg"
+    alts = "".join(f'<link rel="alternate" hreflang="{k}" href="{SITE}{v}">' for k, v in (alt or {}).items())
     url = SITE + path
     bl = {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "name": n, "item": SITE + u} for i, (n, u) in enumerate(crumbs)]}
     graph = {"@context": "https://schema.org", "@graph": [BIZ, bl] + ld}
     cr = " › ".join(f'<a href="{u}">{e(n)}</a>' if i < len(crumbs) - 1 else e(n) for i, (n, u) in enumerate(crumbs))
     doc = f"""<!doctype html>
-<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{e(title)}</title><meta name="description" content="{e(desc)}"><link rel="canonical" href="{url}">
-<meta property="og:type" content="website"><meta property="og:locale" content="he_IL"><meta property="og:site_name" content="נויה במתנה">
+<html lang="{lang}" dir="{"rtl" if lang=="he" else "ltr"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{e(title)}</title><meta name="description" content="{e(desc)}"><link rel="canonical" href="{url}">{alts}
+<meta property="og:type" content="website"><meta property="og:locale" content="{"he_IL" if lang=="he" else "en_US"}"><meta property="og:site_name" content="נויה במתנה">
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{img}">
 <meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#fffaf3">
 <link rel="icon" type="image/png" href="/img/icon-64.png?v=2"><link rel="apple-touch-icon" href="/img/icon-180.png?v=2">
 {FONT}<style>{CSS}</style>
 <script type="application/ld+json">{json.dumps(graph, ensure_ascii=False)}</script></head><body>
+<a class="skip" href="#main">דילוג לתוכן</a>
 <header class="top"><div class="top-in"><a class="logo" href="/"><img src="/img/icon-180.png?v=2" alt="נויה במתנה" width="36" height="36"><span>נויה במתנה</span></a><a class="btn sm" href="/">לבונה המארזים ←</a></div></header>
-<main><nav class="crumbs" aria-label="פירורי לחם">{cr}</nav>
+<main id="main"><nav class="crumbs" aria-label="פירורי לחם">{cr}</nav>
 {body}
 <section class="band"><h2>בונים מארז – ורואים אותו תוך דקה</h2><p>בוחרים מוצרים ואריזה, רואים את המארז מעוצב ומקבלים הצעת מחיר מיד. מיתוג עם לוגו ומשלוח אישי לכל נמען.</p><a class="btn" href="/">לבונה המארזים ←</a></section>
-{NAV_LINKS}
+{NAV_LINKS if nav else ""}
 </main>
 <footer><b>נויה במתנה</b><br>מארזי שי ומתנות לעובדים, ללקוחות ולשותפים עסקיים<br>
 <a href="tel:0543219070">054-3219070</a> · <a href="tel:0537784388">053-7784388</a> · <a href="tel:0533460081">053-3460081</a><br>
@@ -250,10 +265,22 @@ GUIDES = [
 URLS = []
 VIDEO = '<h2>כך בונים מארז – בדקה אחת</h2><video src="/media/noya-builder-wide.mp4" poster="/media/hero-bg.jpg" controls muted playsinline preload="none" style="width:100%;max-width:900px;border-radius:18px;background:#000" aria-label="סרטון: בונים מארז מתנה בבונה המארזים של נויה"></video>'
 VIDEO_LD = {"@type": "VideoObject", "name": "בונה המארזים של נויה במתנה – בונים מארז מתנה בדקה", "description": "סרטון קצר: בוחרים מוצרים, בוחרים אריזה, חושפים את המארז ומשתפים עם הצוות בוואטסאפ.", "thumbnailUrl": SITE + "/media/hero-bg.jpg", "contentUrl": SITE + "/media/noya-builder-wide.mp4", "uploadDate": "2026-11-24", "inLanguage": "he"}
-LINKS = [("מתנות לעובדים", "/gifts/matanot-laovdim/")] + [(f"מארזים עד ₪{b}", f"/gifts/ad-{b}/") for b in (50,100,150,200,250)] + [("הסיפור שלנו", "/about/")] + [(l["nav"], f'/gifts/{l["slug"]}/') for l in LAND[1:]] + \
-        [(v, f"/c/{k}/") for k, v in CATS.items() if any(p["cat"] == k for p in P)] + [(g["nav"], f'/guides/{g["slug"]}/') for g in GUIDES]
+HOLI = LAND[1:]
+LINKS = [("כל המארזים והמדריכים", "/gifts/"), ("מתנות לעובדים", "/gifts/matanot-laovdim/")] + [(l["nav"], f'/gifts/{l["slug"]}/') for l in HOLI] + \
+        [(f"מארזים עד ₪{b}", f"/gifts/ad-{b}/") for b in (50,100,150,200,250)] + \
+        [("מחשבון תקציב מתנות", "/kelim/machshevon-takziv/"), ("איזה מארז מתאים לכם?", "/kelim/eize-maraz/"), ("מארזי השראה", "/gifts/galeria/"), ("עד מתי להזמין", "/guides/ad-matai-lehazmin/"), ("הסיפור שלנו", "/about/")]
 NAV_LINKS = '<section><h2>עוד מארזים ורעיונות</h2><nav class="links">' + "".join(f'<a href="{u}">{e(n)}</a>' for n, u in LINKS) + "</nav></section>"
-
+ALLG = GUIDES + GUIDES2
+GROUPS = [("חגים", [(l["nav"], f'/gifts/{l["slug"]}/') for l in HOLI] + [("מתנות לעובדים", "/gifts/matanot-laovdim/")]),
+          ("לפי תקציב", [(f"עד ₪{b}", f"/gifts/ad-{b}/") for b in (50,100,150,200,250)] + [(f"מארזים ל-{n} עובדים", f"/gifts/{n}-ovdim/") for n in SIZES]),
+          ("למי המתנה", [(a["nav"], f'/gifts/{a["slug"]}/') for a in AUD]),
+          ("לפי תחום", [(a["nav"], f'/gifts/{a["slug"]}/') for a in IND]),
+          ("אירועים במהלך השנה", [(a["nav"], f'/gifts/{a["slug"]}/') for a in EVT]),
+          ("מדריכים", [(g["nav"], f'/guides/{g["slug"]}/') for g in ALLG]),
+          ("כלים", [("מחשבון תקציב מתנות", "/kelim/machshevon-takziv/"), ("איזה מארז מתאים לכם?", "/kelim/eize-maraz/"), ("מארזי השראה", "/gifts/galeria/")]),
+          ("קטגוריות מוצרים", [(v, f"/c/{k}/") for k, v in CATS.items() if any(p["cat"] == k for p in P)]),
+          ("עוד", [("הסיפור שלנו", "/about/"), ("English", "/en/")])]
+OG = {}
 def picks(cats, n=12):
     out = []
     for c in cats:
@@ -261,10 +288,51 @@ def picks(cats, n=12):
             out.append(p)
     return out[:n]
 
-for d in ("p", "c", "gifts", "guides"):
+for d in ("p", "c", "gifts", "guides", "kelim", "en", "og"):
     shutil.rmtree(os.path.join(ROOT, d), ignore_errors=True)
 
-for l in LAND:
+# ---------- share images (OG) ----------
+from PIL import Image, ImageDraw, ImageFont
+FNT = "/usr/share/fonts/truetype/google-fonts/ofl/opensans/OpenSans[wdth,wght].ttf"
+def _font(sz, bold=True):
+    f = ImageFont.truetype(FNT, sz)
+    try: f.set_variation_by_name(b"Bold" if bold else b"Regular")
+    except Exception: pass
+    return f
+ICON = Image.open(os.path.join(ROOT, "img", "icon-180.png")).convert("RGBA").resize((120, 120))
+def og_make(path, title, sub="נויה במתנה · מארזי שי לעובדים, ללקוחות ולשותפים"):
+    W, H = 1200, 630
+    im = Image.new("RGB", (W, H), "#f7efe4"); d = ImageDraw.Draw(im)
+    d.rectangle([0, 0, W, 14], fill="#b08a4f"); d.rectangle([0, H - 14, W, H], fill="#b08a4f")
+    d.rounded_rectangle([40, 44, W - 40, H - 44], 36, fill="#fffaf3", outline="#e6d3b0", width=3)
+    im.paste(ICON, (W - 200, 84), ICON)
+    f = _font(62); words = title.split(); lines = []; cur = ""
+    for w in words:
+        t = (cur + " " + w).strip()
+        if d.textlength(t, font=f, direction="rtl", language="he") > W - 300 and cur: lines.append(cur); cur = w
+        else: cur = t
+    lines.append(cur); lines = lines[:3]
+    y = 270 - (len(lines) - 1) * 40
+    for ln in lines:
+        d.text((W - 110, y), ln, font=f, fill="#4a2f22", anchor="ra", direction="rtl", language="he"); y += 84
+    d.text((W - 110, H - 140), sub, font=_font(30, False), fill="#7a5a48", anchor="ra", direction="rtl", language="he")
+    d.text((110, H - 140), "build.noyaglobal.com", font=_font(28, False), fill="#b08a4f", anchor="la")
+    slug = path.strip("/").replace("/", "-") or "home"
+    os.makedirs(os.path.join(ROOT, "og"), exist_ok=True)
+    im.save(os.path.join(ROOT, "og", slug + ".jpg"), quality=86, optimize=True, progressive=True)
+    OG[path] = f"{SITE}/og/{slug}.jpg"
+for l in LAND + AUD + IND + EVT: og_make(f'/gifts/{l["slug"]}/', l["h1"])
+for g in ALLG: og_make(f'/guides/{g["slug"]}/', g["h1"])
+for b in (50, 100, 150, 200, 250): og_make(f"/gifts/ad-{b}/", f"מארזי שי לעובדים עד ₪{b}")
+for n in SIZES: og_make(f"/gifts/{n}-ovdim/", f"מתנות ל-{n} עובדים – תקציב ורעיונות")
+og_make("/gifts/", "כל המארזים, הרעיונות והמדריכים")
+og_make("/gifts/galeria/", "מארזי השראה – מתחילים ממארז מוכן")
+og_make("/kelim/machshevon-takziv/", "מחשבון תקציב מתנות לעובדים")
+og_make("/kelim/eize-maraz/", "איזה מארז מתאים לארגון שלכם?")
+og_make("/about/", "הסיפור של נויה במתנה")
+for k, v in CATS.items(): og_make(f"/c/{k}/", f"{v} למארזי שי")
+
+for l in LAND + AUD + IND + EVT:
     pp = picks(l["cats"])
     faqs = COMMON_FAQ
     body = f"""<h1>{e(l["h1"])}</h1><p class="lead">{e(l["lead"])}</p>
@@ -275,9 +343,10 @@ for l in LAND:
 {faq_html(faqs)}"""
     ld = [{"@type": "WebPage", "name": l["title"], "description": l["desc"], "inLanguage": "he"},
           {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": f'{SITE}/p/{p["id"]}/'} for i, p in enumerate(pp)]}, faq_ld(faqs)] + ([VIDEO_LD] if l["slug"] == "matanot-laovdim" else [])
-    page(f'/gifts/{l["slug"]}/', l["title"], l["desc"], body, ld, [("בונה המארזים", "/"), (l["nav"], f'/gifts/{l["slug"]}/')])
+    page(f'/gifts/{l["slug"]}/', l["title"], l["desc"], body, ld, [("בונה המארזים", "/"), (l["nav"], f'/gifts/{l["slug"]}/')],
+         alt={"he": "/gifts/matanot-laovdim/", "en": "/en/employee-gifts-israel/"} if l["slug"] == "matanot-laovdim" else None)
 
-for g in GUIDES:
+for g in ALLG:
     body = f'<article class="prose"><h1>{e(g["h1"])}</h1>{g["body"]}<p><b>רוצים לראות את זה בפועל?</b> <a href="/">היכנסו לבונה המארזים</a>, בחרו מוצרים ותראו את המארז שלכם תוך דקה.</p></article>'
     ld = [{"@type": "Article", "headline": g["h1"], "description": g["desc"], "inLanguage": "he", "datePublished": TODAY, "dateModified": TODAY,
            "author": {"@type": "Organization", "name": "נויה במתנה"}, "publisher": {"@id": SITE + "/#business"}, "mainEntityOfPage": f'{SITE}/guides/{g["slug"]}/'}]
@@ -299,6 +368,8 @@ for p in P:
     cat = CATS.get(p["cat"], "מוצרים")
     name = p["name"]
     d = (p.get("desc") or "").strip()
+    cp = COPY.get(p["id"])
+    if cp: d = cp[0]
     desc = f"{name}" + (f" – {d}" if d else "") + f". {ils(p['price'])} ליחידה לפני מע״מ, למארזי שי לעובדים וללקוחות – מיתוג עם לוגו ומשלוח אישי לכל נמען."
     img = f'{SITE}/{p["photo"] or p["img"]}'
     rel = [x for x in P if x["cat"] == p["cat"] and x["id"] != p["id"]][:8]
@@ -306,13 +377,14 @@ for p in P:
     sale = f' <s style="color:#a08a7a;font-size:18px">{ils(p["was"])}</s>' if p.get("was", 0) > p["price"] else ""
     eta = f'<li>מלאי נוסף בדרך</li>' if p.get("incoming") else ""
     body = f"""<div class="hero"><div><h1>{e(name)}</h1>
-{f'<p class="lead">{e(d)}</p>' if d else ''}
+{f'<p class="lead">{e(d)}</p>' if d else ''}{f'<p><b>רעיון למארז:</b> {e(cp[1])}</p>' if cp else ''}
 <div class="price">{ils(p["price"])}{sale} <small>ליחידה · לפני מע״מ</small></div>
 <ul class="facts"><li>{e(cat)}</li>{'<li>במלאי</li>' if instock else '<li>בהזמנה מראש</li>'}{'<li>מגיע באריזת מתנה</li>' if p.get('box') else ''}{eta}<li>מיתוג ומשלוח לכל נמען</li></ul>
 <div class="cta-row"><a class="btn" href="/?add={p["id"]}">הוסיפו למארז ←</a><a class="btn ghost" href="/c/{p["cat"]}/">עוד {e(cat)}</a></div>
 <p style="font-size:15px;color:var(--soft);margin:10px 0 0">בונים מארז מכמה מוצרים, רואים אותו מעוצב ומקבלים הצעת מחיר מיד. מינימום הזמנה ₪3,000 לכל ההזמנה.</p></div>
 <img src="/{p["photo"] or p["img"]}" alt="{e(name)}" width="720" height="720"></div>
-<h2>עוד {e(cat)} למארז</h2><div class="grid">{"".join(card(x) for x in rel)}</div>"""
+<h2>עוד {e(cat)} למארז</h2><div class="grid">{"".join(card(x) for x in rel)}</div>
+<h2>מתאים במיוחד ל…</h2><nav class="links">{"".join(f'<a href="/gifts/{l["slug"]}/">{e(l["nav"])}</a>' for l in (LAND + AUD + IND + EVT) if p["cat"] in l["cats"][:3])}</nav>"""
     prod = {"@type": "Product", "name": name, "image": [img], "description": desc, "sku": p["id"], "category": cat,
             "brand": {"@type": "Brand", "name": "NOYA"},
             "offers": {"@type": "Offer", "url": f'{SITE}/p/{p["id"]}/', "priceCurrency": "ILS", "price": f'{p["price"]:.2f}',
@@ -370,13 +442,138 @@ ab = f"""<article class="prose"><h1>הסיפור של נויה במתנה</h1>
 <p>משה · <a href="tel:0543219070">054-3219070</a> · <a href="mailto:moshe@noyaglobal.com">moshe@noyaglobal.com</a></p></article>"""
 page("/about/", ABOUT_T, ABOUT_D, ab, [{"@type": "AboutPage", "name": ABOUT_T, "description": ABOUT_D, "inLanguage": "he"}], [("בונה המארזים", "/"), ("הסיפור שלנו", "/about/")])
 
-# sitemap
-pri = lambda u: "1.0" if u == "/" else "0.9" if u.startswith("/gifts/") else "0.8" if u.startswith(("/c/", "/guides/")) else "0.6"
-sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+
+# ---------- team size pages ----------
+for n in SIZES:
+    mn = 3000 / n
+    title = f"מתנות ל-{n} עובדים – תקציב, רעיונות ומחירים | נויה במתנה"
+    desc = f"כמה עולה מתנה ל-{n} עובדים? טבלת תקציב לפי מחיר מארז, עלות משלוח לכל עובד ורעיונות למארזים – כולל מינימום הזמנה ומה כדאי לבדוק."
+    rows = "".join(f"<tr><td>₪{per}</td><td>₪{per*n:,}</td><td>₪{(per+65)*n:,}</td></tr>" for per in (60, 80, 100, 150, 200, 250) if per * n >= 3000)
+    note = f"<p>מינימום ההזמנה הוא ₪3,000 לפני מע״מ לכל ההזמנה. ל-{n} עובדים זה יוצא בממוצע ₪{mn:,.0f} למארז ומעלה.</p>"
+    body = f"""<article class="prose"><h1>מתנות ל-{n} עובדים – תקציב ורעיונות</h1>
+<p class="lead">מזמינים מתנות ל-{n} עובדים? הנה כמה זה עולה בפועל, לפי מחיר המארז ולפי סוג המשלוח – כדי שתוכלו לתכנן תקציב מדויק.</p>
+<h2>טבלת תקציב (לפני מע״מ)</h2>
+<table class="tbl"><thead><tr><th>מחיר מארז</th><th>סה״כ מארזים</th><th>כולל משלוח לכל עובד (₪65)</th></tr></thead><tbody>{rows}</tbody></table>
+{note}
+<h2>איך לבחור</h2><ul>
+<li><b>משלוח מרוכז למשרד</b> זול משמעותית ממשלוח לכל עובד – אם כולם עובדים באותו מקום.</li>
+<li><b>מארז אחיד</b> לכל העובדים הוא הפשוט ביותר לניהול; אפשר להוסיף מארז משודרג להנהלה.</li>
+<li>תכננו גם את <a href="/guides/matanot-laovdim-mas/">עלות המס והגילום</a> אם אתם מגלמים.</li></ul>
+<p>לחישוב מדויק עם המספרים שלכם: <a href="/kelim/machshevon-takziv/?n={n}">מחשבון תקציב מתנות</a>.</p></article>
+<div class="cta-row"><a class="btn" href="/">בונים מארז ורואים מחיר ←</a></div>
+{faq_html(COMMON_FAQ)}"""
+    page(f"/gifts/{n}-ovdim/", title, desc, body, [{"@type": "WebPage", "name": title, "description": desc, "inLanguage": "he"}, faq_ld(COMMON_FAQ)],
+         [("בונה המארזים", "/"), (f"מתנות ל-{n} עובדים", f"/gifts/{n}-ovdim/")])
+
+# ---------- gallery of inspiration sets ----------
+gb = ""
+for i, st in enumerate(SETS):
+    items = [BY[x] for x in st["items"] if x in BY]
+    tot = sum(p["price"] for p in items)
+    gb += f"""<section class="grp"><h2>{e(st['name'])}</h2><p>מארז השראה בתקציב של עד ₪{st['budget']} לפני מע״מ · {len(items)} מוצרים · {ils(round(tot, 2))} למוצרים.</p>
+<div class="grid">{"".join(card(p) for p in items)}</div><div class="cta-row"><a class="btn" href="/?set={i}">פותחים את המארז בבונה ומשנים ←</a></div></section>"""
+gt = "מארזי השראה – מארזי שי מוכנים שאפשר לשנות | נויה במתנה"
+gd = "מארזי השראה של נויה במתנה בתקציבים של ₪50 עד ₪250: פותחים מארז מוכן בבונה, מחליפים מוצרים, מוסיפים לוגו ומקבלים הצעת מחיר."
+page("/gifts/galeria/", gt, gd, f'<h1>מארזי השראה</h1><p class="lead">לא בטוחים מאיפה להתחיל? בחרו אחד ממארזי ההשראה שלנו, פתחו אותו בבונה ושנו כל מה שתרצו – מוצרים, אריזה ולוגו.</p>{gb}',
+     [{"@type": "CollectionPage", "name": gt, "description": gd, "inLanguage": "he"}], [("בונה המארזים", "/"), ("מארזי השראה", "/gifts/galeria/")])
+
+# ---------- calculator ----------
+CALC = """<h1>מחשבון תקציב מתנות לעובדים</h1>
+<p class="lead">כמה יעלו המתנות לכל הארגון? מזינים מספר עובדים, מחיר למארז וסוג משלוח – ומקבלים סה״כ לפני ואחרי מע״מ.</p>
+<form class="tool" id="calc" onsubmit="return false">
+<label for="n">מספר מקבלי מתנה</label><input id="n" type="number" min="1" value="50" inputmode="numeric">
+<label for="per">מחיר מארז (לפני מע״מ, ₪)</label><input id="per" type="number" min="1" value="100" inputmode="numeric">
+<label for="ship">משלוח</label><select id="ship"><option value="65">משלוח אישי לכל נמען – ₪65</option><option value="99">שליח VIP צמוד – ₪99</option><option value="0">איסוף עצמי / משלוח מרוכז (בתיאום)</option></select>
+<label for="vat">מע״מ (%)</label><input id="vat" type="number" min="0" step="0.1" value="18">
+<div class="out" id="out" aria-live="polite"></div></form>
+<div class="cta-row"><a class="btn" id="go" href="/?budget=100">בונים מארז בתקציב הזה ←</a></div>
+<div class="prose"><h2>איך לקרוא את התוצאה</h2><ul><li>המחירים בבונה ובהצעת המחיר שלנו הם לפני מע״מ. שיעור המע״מ ניתן לשינוי במחשבון.</li><li>מינימום ההזמנה הוא ₪3,000 לפני מע״מ לכל ההזמנה.</li><li>אם אתם מגלמים את המס על המתנה, הוסיפו גם את עלות הגילום. <a href="/guides/matanot-laovdim-mas/">מתנות לעובדים ומס</a>.</li></ul></div>
+<script>(function(){var $=function(i){return document.getElementById(i)},f=function(x){return '₪'+Math.round(x).toLocaleString('he-IL')};
+var q=new URLSearchParams(location.search);if(+q.get('n'))$('n').value=+q.get('n');
+function r(){var n=Math.max(0,+$('n').value||0),p=Math.max(0,+$('per').value||0),s=+$('ship').value,v=(+$('vat').value||0)/100;
+var g=n*p,sh=n*s,t=g+sh;$('out').innerHTML='מארזים: <b>'+f(g)+'</b><br>משלוח: <b>'+f(sh)+'</b><br>סה״כ לפני מע״מ: <b>'+f(t)+'</b><br>סה״כ כולל מע״מ: <b>'+f(t*(1+v))+'</b>'+(g&&g<3000?'<br><span style="color:#a0522d">שימו לב: מינימום ההזמנה הוא ₪3,000 לפני מע״מ.</span>':'');
+$('go').href='/?budget='+Math.round(p);}
+['n','per','ship','vat'].forEach(function(i){$(i).addEventListener('input',r)});r();})();</script>"""
+ct = "מחשבון תקציב מתנות לעובדים – כמה יעלו מארזי השי? | נויה במתנה"
+cd = "מחשבון חינמי לתקציב מתנות לעובדים: מספר עובדים × מחיר מארז + משלוח לכל עובד, לפני ואחרי מע״מ. מתכננים תקציב לחג בדקה."
+page("/kelim/machshevon-takziv/", ct, cd, CALC, [{"@type": "WebApplication", "name": "מחשבון תקציב מתנות לעובדים", "applicationCategory": "BusinessApplication", "operatingSystem": "Any", "inLanguage": "he", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "ILS"}}],
+     [("בונה המארזים", "/"), ("מחשבון תקציב מתנות", "/kelim/machshevon-takziv/")])
+
+# ---------- quiz ----------
+QUIZ = """<h1>איזה מארז מתאים לארגון שלכם?</h1>
+<p class="lead">שלוש שאלות קצרות – ונפתח לכם בבונה מארז השראה שמתאים, שאפשר לשנות כרצונכם.</p>
+<div class="tool" id="quiz">
+<h3>1. למי המתנה?</h3><div class="opts" data-q="who"><button data-v="emp">עובדים</button><button data-v="vip">הנהלה / VIP</button><button data-v="cli">לקוחות ושותפים</button></div>
+<h3>2. מה התקציב למארז (לפני מע״מ)?</h3><div class="opts" data-q="bud"><button data-v="50">עד ₪50</button><button data-v="100">עד ₪100</button><button data-v="150">עד ₪150</button><button data-v="200">עד ₪200</button><button data-v="250">₪250 ומעלה</button></div>
+<h3>3. מה הסגנון?</h3><div class="opts" data-q="sty"><button data-v="table">שולחן חג ואירוח</button><button data-v="home">ריח ואווירה בבית</button><button data-v="kitchen">מטבח ושימושי</button></div>
+<div class="out" id="res" aria-live="polite">בחרו תשובה בכל שאלה.</div>
+<div class="cta-row"><a class="btn" id="go" href="/">פותחים את המארז בבונה ←</a></div></div>
+<script>(function(){var a={};var SETS=__SETS__;var CAT={table:'serve',home:'diffuser',kitchen:'kitchen'};
+document.querySelectorAll('.opts').forEach(function(g){g.addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;
+g.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)});a[g.dataset.q]=b.dataset.v;u();});});
+function u(){if(!a.bud){return}var bud=+a.bud;if(a.who==='vip'&&bud<200)bud=200;var best=0,d=1e9;SETS.forEach(function(s,i){var x=Math.abs(s.b-bud);if(x<d){d=x;best=i}});
+var s=SETS[best];var url='/?set='+best;if(a.sty)url+='&cat='+CAT[a.sty];document.getElementById('go').href=url;
+document.getElementById('res').innerHTML='ההמלצה שלנו: <b>מארז "'+s.n+'"</b> – עד ₪'+s.b+' לפני מע״מ.'+(a.who==='vip'?'<br>להנהלה מומלץ גם שליח VIP צמוד (₪99 למארז).':'')+(a.who==='cli'?'<br>ללקוחות מומלץ להוסיף כרטיס ברכה ממותג עם הלוגו שלכם.':'')+'<br>בבונה אפשר להחליף מוצרים ולראות את המחיר מתעדכן.';}})();</script>""".replace("__SETS__", json.dumps([{"n": st["name"], "b": st["budget"]} for st in SETS], ensure_ascii=False))
+qt = "איזה מארז שי מתאים לארגון שלכם? שאלון קצר | נויה במתנה"
+qd = "שאלון של 3 שאלות שממליץ על מארז שי לעובדים, להנהלה או ללקוחות לפי תקציב וסגנון – ופותח אותו בבונה המארזים."
+page("/kelim/eize-maraz/", qt, qd, QUIZ, [{"@type": "WebPage", "name": qt, "description": qd, "inLanguage": "he"}], [("בונה המארזים", "/"), ("איזה מארז מתאים לכם?", "/kelim/eize-maraz/")])
+
+# ---------- hub ----------
+hb = '<h1>כל המארזים, הרעיונות והמדריכים</h1><p class="lead">כל דפי המתנות של נויה במתנה במקום אחד – לפי חג, תקציב, קהל, תחום ואירוע.</p>' + "".join(
+    f'<section class="grp"><h2>{e(t)}</h2><nav class="links">' + "".join(f'<a href="{u}">{e(n)}</a>' for n, u in ls) + "</nav></section>" for t, ls in GROUPS)
+ht = "כל מארזי השי והמתנות לעובדים – לפי חג, תקציב וקהל | נויה במתנה"
+hd = "מפת כל דפי המתנות של נויה במתנה: מארזים לחגים, לפי תקציב, למנהלים, ללקוחות, לפי תחום ולאירועים במהלך השנה – ומדריכים לרכישת מתנות לעובדים."
+page("/gifts/", ht, hd, hb, [{"@type": "CollectionPage", "name": ht, "description": hd, "inLanguage": "he"}], [("בונה המארזים", "/"), ("כל המארזים", "/gifts/")], nav=False)
+
+# ---------- English ----------
+for ep in EN_PAGES:
+    page(ep["path"], ep["title"], ep["desc"], ep["body"], [{"@type": "WebPage", "name": ep["title"], "description": ep["desc"], "inLanguage": "en"}],
+         [("Noya Gifts", "/en/"), (ep["title"].split(" – ")[0].split(" | ")[0], ep["path"])] if ep["path"] != "/en/" else [("Noya Gifts", "/en/")],
+         lang="en", alt={"en": ep["path"], "he": ep["he"]}, nav=False)
+
+# ---------- 404 ----------
+_u = list(URLS)
+page("/404-tmp/", "הדף לא נמצא | נויה במתנה", "הדף לא נמצא – חזרו לבונה המארזים של נויה במתנה.",
+     '<h1>אופס, הדף הזה לא נמצא</h1><p class="lead">יכול להיות שהקישור השתנה. אפשר לחזור לבונה המארזים, או לבחור אחד מהדפים הבאים.</p><div class="cta-row"><a class="btn" href="/">לבונה המארזים ←</a><a class="btn ghost" href="/gifts/">כל המארזים והמדריכים</a></div>',
+     [], [("בונה המארזים", "/"), ("דף לא נמצא", "/404-tmp/")])
+URLS[:] = _u
+_d = open(os.path.join(ROOT, "404-tmp", "index.html"), encoding="utf-8").read().replace('<meta name="description"', '<meta name="robots" content="noindex"><meta name="description"')
+open(os.path.join(ROOT, "404.html"), "w", encoding="utf-8").write(_d); shutil.rmtree(os.path.join(ROOT, "404-tmp"))
+# sitemap (with images + video)
+pri = lambda u: "1.0" if u == "/" else "0.9" if u.startswith("/gifts/") else "0.8" if u.startswith(("/c/", "/guides/", "/kelim/")) else "0.6"
+IMGS = {f'/p/{p["id"]}/': [(f'{SITE}/{p["photo"] or p["img"]}', p["name"])] for p in P}
+sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">']
 for u in ["/"] + URLS:
-    sm.append(f"  <url><loc>{SITE}{u}</loc><lastmod>{TODAY}</lastmod><priority>{pri(u)}</priority></url>")
+    x = f"  <url><loc>{SITE}{u}</loc><lastmod>{TODAY}</lastmod><priority>{pri(u)}</priority>"
+    for src, _ in IMGS.get(u, []): x += f"<image:image><image:loc>{e(src)}</image:loc></image:image>"
+    if u == "/gifts/matanot-laovdim/":
+        x += f"<video:video><video:thumbnail_loc>{SITE}/media/hero-bg.jpg</video:thumbnail_loc><video:title>{e(VIDEO_LD['name'])}</video:title><video:description>{e(VIDEO_LD['description'])}</video:description><video:content_loc>{SITE}/media/noya-builder-wide.mp4</video:content_loc></video:video>"
+    sm.append(x + "</url>")
 sm.append("</urlset>")
 open(os.path.join(ROOT, "sitemap.xml"), "w", encoding="utf-8").write("\n".join(sm) + "\n")
+# llms.txt – facts for AI assistants
+LL = f"""# נויה במתנה (Noya Gifts)
+
+> נויה במתנה מעצבת מארזי שי ומתנות לעובדים, ללקוחות ולשותפים עסקיים בישראל, בהתאמה אישית לכל ארגון. בבונה המארזים באתר בוחרים מוצרים ואריזה, רואים את המארז מעוצב ומקבלים הצעת מחיר מיד.
+
+## עובדות
+- פועלים מאז 2024; מעל 48,000 מארזים ליותר מ-600 חברות וארגונים.
+- מחירים לפני מע״מ. מינימום הזמנה: ₪3,000 לפני מע״מ לכל ההזמנה.
+- משלוח אישי לכל נמען: ₪65 למארז. שליח VIP צמוד: ₪99 למארז. איסוף עצמי: הענבר 1, ברקן.
+- מיתוג עם לוגו: כרטיס ברכה, תגית, אריזה וחריטה על מוצרים נבחרים.
+- מוצרים: מפיצי ריח, נרות, פמוטים, מפות שולחן וטקסטיל, כלי הגשה מעץ וקרמיקה, מתנות למטבח, מארזי תה, קפה, יין וספא.
+- טלפון: 054-3219070 · מייל: moshe@noyaglobal.com · אתר ראשי: https://www.noyaglobal.com
+
+## דפים מרכזיים
+- [בונה המארזים]({SITE}/)
+- [כל המארזים והמדריכים]({SITE}/gifts/)
+- [מתנות לעובדים]({SITE}/gifts/matanot-laovdim/)
+- [מחשבון תקציב מתנות]({SITE}/kelim/machshevon-takziv/)
+- [עד מתי להזמין לכל חג]({SITE}/guides/ad-matai-lehazmin/)
+- [הסיפור שלנו]({SITE}/about/)
+- [English]({SITE}/en/)
+"""
+open(os.path.join(ROOT, "llms.txt"), "w", encoding="utf-8").write(LL)
 # links block for the builder home page
 open(os.path.join(ROOT, "tools", "links.html"), "w", encoding="utf-8").write("".join(f'<a href="{u}">{e(n)}</a>' for n, u in LINKS))
 print("pages", len(URLS))

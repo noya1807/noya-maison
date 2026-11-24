@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   <url><loc>https://build.noyaglobal.com/</loc><lastmod>2026-11-24</lastmod><priority>1.0</priority></url>
-  <url><loc>https://build.noyaglobal.com/gifts/matanot-laovdim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-laovdim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority><video:video><video:thumbnail_loc>https://build.noyaglobal.com/media/hero-bg.jpg</video:thumbnail_loc><video:title>בונה המארזים של נויה במתנה – בונים מארז מתנה בדקה</video:title><video:description>סרטון קצר: בוחרים מוצרים, בוחרים אריזה, חושפים את המארז ומשתפים עם הצוות בוואטסאפ.</video:description><video:content_loc>https://build.noyaglobal.com/media/noya-builder-wide.mp4</video:content_loc></video:video></url>
   <url><loc>https://build.noyaglobal.com/gifts/rosh-hashana/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/gifts/pesach/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/gifts/chanukah/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
@@ -9,9 +9,36 @@
   <url><loc>https://build.noyaglobal.com/gifts/purim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/gifts/sof-shana/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/gifts/maarazim-memutagim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lemenahalim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lelakochot/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-leshutafim-iskiyim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lesapakim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lezevet-refui/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lemorim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lehaitek/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lebankim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lerashuyot/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lebatei-cholim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lemisradei-orchei-din/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-lenadlan/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matana-leoved-chadash/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matana-leyom-huledet-laoved/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matana-lepreisha/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matana-lehuledet/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-leyom-haisha/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matanot-leyom-hamishpacha/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/matana-lesium-proyekt/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/guides/kama-lehotzi-al-matana-laoved/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
   <url><loc>https://build.noyaglobal.com/guides/rayonot-matanot-lechag-laovdim/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
   <url><loc>https://build.noyaglobal.com/guides/mishloach-matanot-laovdim-habayta/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/guides/maraz-muchan-o-beitaama-ishit/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/guides/tav-shai-o-maraz/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/guides/eich-livchor-sapak-maarazei-shai/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/guides/matanot-laovdim-mas/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/guides/milon-munachim/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/guides/ad-matai-lehazmin/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/guides/30-raayonot-matanot-chanukah-laovdim/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/guides/raayonot-matanot-tu-bishvat-laovdim/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
   <url><loc>https://build.noyaglobal.com/c/diffuser/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
   <url><loc>https://build.noyaglobal.com/c/candle/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
   <url><loc>https://build.noyaglobal.com/c/holder/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
@@ -21,123 +48,133 @@
   <url><loc>https://build.noyaglobal.com/c/gift/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
   <url><loc>https://build.noyaglobal.com/c/drink/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
   <url><loc>https://build.noyaglobal.com/c/decor/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p4/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p10/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p11/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p12/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p13/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p52/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p53/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p129/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p130/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p94/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p112/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p113/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p7/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p8/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p19/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p48/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p105/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p106/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p108/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p109/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p110/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p111/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p2/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p3/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p28/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p29/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p30/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p31/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p32/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p39/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p40/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p50/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p50a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p51/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p51a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p56/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p56a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p72/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p91/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p117/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p5/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p114/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p6/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p14/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p15/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p16/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p17/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p18/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p20/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p21/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p23/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p24/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p25/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p33/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p41/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p42/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p43/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p44/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p89/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p90/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p100/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p101/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p128/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p9/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p34/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p35/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p37/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p38/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p69/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p75/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p75a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p82/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p83/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p115/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p116/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p118/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p119/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p124/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p1/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p36/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p36a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p54/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p55/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p63/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p122/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p123/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p125/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p45/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p46/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p126/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p127/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p47/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p49/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p57/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p58/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p59/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p60/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p64/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p65/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p66/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p67/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p68/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p84/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p104/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p22/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p102/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p103/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p61/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p62/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p70/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p71/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p73/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
-  <url><loc>https://build.noyaglobal.com/p/p74/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
+  <url><loc>https://build.noyaglobal.com/p/p4/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p4.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p10/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p10.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p11/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p11.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p12/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p12.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p13/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p13.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p52/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p52.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p53/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p53.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p129/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p129.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p130/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p130.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p94/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p94.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p112/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p112.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p113/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p113.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p7/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p7.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p8/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p8.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p19/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p19.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p48/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p48.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p105/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p105.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p106/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p106.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p108/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p108.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p109/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p109.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p110/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p110.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p111/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p111.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p2/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p2.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p3/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p3.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p28/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p28.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p29/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p29.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p30/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p30.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p31/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p31.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p32/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p32.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p39/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p39.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p40/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p40.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p50/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p50.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p50a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p50a.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p51/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p51.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p51a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p51a.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p56/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p56.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p56a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p56a.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p72/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p72.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p91/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p91.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p117/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p117.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p5/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p5.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p114/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p114.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p6/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p6.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p14/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p14.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p15/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p15.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p16/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p16.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p17/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p17.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p18/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p18.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p20/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p20.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p21/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p21.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p23/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p23.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p24/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p24.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p25/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p25.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p33/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p33.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p41/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p41.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p42/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p42.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p43/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p43.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p44/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p44.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p89/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p89.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p90/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p90.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p100/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p100.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p101/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p101.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p128/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p128.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p9/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p9.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p34/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p34.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p35/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p35.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p37/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p37.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p38/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p38.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p69/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p69.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p75/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p75.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p75a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p75a.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p82/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p82.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p83/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p83.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p115/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p115.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p116/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p116.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p118/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p118.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p119/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p119.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p124/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p124.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p1/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p1.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p36/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p36.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p36a/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p36a.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p54/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p54.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p55/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p55.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p63/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p63.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p122/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p122.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p123/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p123.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p125/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p125.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p45/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p45.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p46/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p46.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p126/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p126.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p127/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p127.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p47/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p47.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p49/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p49.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p57/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p57.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p58/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p58.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p59/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p59.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p60/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p60.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p64/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p64.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p65/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p65.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p66/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p66.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p67/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p67.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p68/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p68.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p84/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p84.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p104/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p104.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p22/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p22.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p102/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p102.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p103/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p103.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p61/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p61.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p62/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p62.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p70/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p70.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p71/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p71.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p73/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p73.webp</image:loc></image:image></url>
+  <url><loc>https://build.noyaglobal.com/p/p74/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority><image:image><image:loc>https://build.noyaglobal.com/img/ph/p74.webp</image:loc></image:image></url>
   <url><loc>https://build.noyaglobal.com/gifts/ad-50/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/gifts/ad-100/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/gifts/ad-150/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/gifts/ad-200/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/gifts/ad-250/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
   <url><loc>https://build.noyaglobal.com/about/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/20-ovdim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/50-ovdim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/100-ovdim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/500-ovdim/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/galeria/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/kelim/machshevon-takziv/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/kelim/eize-maraz/</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
+  <url><loc>https://build.noyaglobal.com/gifts/</loc><lastmod>2026-11-24</lastmod><priority>0.9</priority></url>
+  <url><loc>https://build.noyaglobal.com/en/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
+  <url><loc>https://build.noyaglobal.com/en/employee-gifts-israel/</loc><lastmod>2026-11-24</lastmod><priority>0.6</priority></url>
 </urlset>

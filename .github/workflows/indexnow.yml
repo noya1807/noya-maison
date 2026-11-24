@@ -1,0 +1,20 @@
+name: IndexNow ping
+on:
+  push:
+    branches: [main]
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Wait for Vercel deploy
+        run: sleep 150
+      - name: Submit changed pages to IndexNow
+        run: |
+          KEY=$(ls *.txt | grep -E '^[0-9a-f]{32}\.txt$' | head -1 | sed 's/.txt//')
+          URLS=$(git diff --name-only HEAD~1 HEAD | grep -E '(^|/)index\.html$' | sed -E 's#index\.html$##; s#^#https://build.noyaglobal.com/#' | sort -u | head -9000)
+          [ -z "$URLS" ] && { echo "no page changes"; exit 0; }
+          JSON=$(printf '%s\n' $URLS | python3 -c "import sys,json;print(json.dumps({'host':'build.noyaglobal.com','key':'$KEY','keyLocation':'https://build.noyaglobal.com/$KEY.txt','urlList':[l.strip() for l in sys.stdin if l.strip()]}))")
+          curl -s -o /dev/null -w "IndexNow HTTP %{http_code}\n" -H "Content-Type: application/json; charset=utf-8" -d "$JSON" https://api.indexnow.org/indexnow
