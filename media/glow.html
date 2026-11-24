@@ -1,0 +1,13 @@
+<!doctype html><html lang="he"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html,body{margin:0;height:100%;background:transparent;overflow:hidden}
+.g{position:absolute;inset:var(--pad,18px);border-radius:999px;
+  box-shadow:0 0 0 0 rgba(214,178,106,.0),0 0 18px 6px rgba(214,178,106,.55);
+  animation:breathe 2.6s ease-in-out infinite}
+.r{position:absolute;inset:var(--pad,18px);border-radius:999px;border:2px solid rgba(201,164,101,.85);
+  animation:ring 2.6s ease-out infinite}
+@keyframes breathe{0%,100%{opacity:.15;transform:scale(1)}50%{opacity:1;transform:scale(1.015)}}
+@keyframes ring{0%{opacity:.8;transform:scale(1)}70%,100%{opacity:0;transform:scale(1.08,1.35)}}
+</style></head><body><div class="g"></div><div class="r"></div>
+<script>var p=new URLSearchParams(location.search).get('pad');if(p)document.documentElement.style.setProperty('--pad',p+'px');</script>
+</body></html>
