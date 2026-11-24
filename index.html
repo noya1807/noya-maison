@@ -469,10 +469,10 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   .wa-fab{bottom:96px!important}
 }
 /* ---- top area: centred, aligned to the box picture ---- */
-.howto>span:not(.arr){animation:stepbeat 2.4s ease-in-out infinite;transform-origin:center}
-.howto>span:nth-of-type(3){animation-delay:.4s}.howto>span:nth-of-type(5){animation-delay:.8s}
-.howto>span:not(.arr) i{box-shadow:0 0 0 0 rgba(176,138,79,.55);animation:steppulse 2.4s ease-out infinite}
-.howto>span:nth-of-type(3) i{animation-delay:.4s}.howto>span:nth-of-type(5) i{animation-delay:.8s}
+.howto>span[data-st]{cursor:pointer;border-radius:99px;padding:3px 10px 3px 8px;transition:background .3s,color .3s,opacity .3s;transform-origin:center}
+.howto>span[data-st]:not(.cur){opacity:.6}.howto>span.done{opacity:.85}.howto>span.done i{background:#5f7a5a}
+.howto>span.cur{background:linear-gradient(135deg,#f3e3bf,#e2c58c);color:var(--cocoa);font-weight:700;opacity:1;animation:stepbeat 1.6s ease-in-out infinite}
+.howto>span.cur i{animation:steppulse 1.6s ease-out infinite}
 @keyframes stepbeat{0%,30%,100%{transform:scale(1)}8%{transform:scale(1.08)}16%{transform:scale(1.02)}24%{transform:scale(1.06)}}
 @keyframes steppulse{0%{box-shadow:0 0 0 0 rgba(176,138,79,.55)}40%{box-shadow:0 0 0 7px rgba(176,138,79,0)}100%{box-shadow:0 0 0 0 rgba(176,138,79,0)}}
 @media (prefers-reduced-motion: reduce){.howto>span,.howto i{animation:none!important}}
@@ -875,7 +875,7 @@ h1.brand{margin:0;line-height:1.2}
 </header>
 
 <div class="intro" id="intro">
-  <div class="howto"><span><i>1</i> בוחרים מוצרים</span><span class="arr">←</span><span><i>2</i> בוחרים אריזה</span><span class="arr">←</span><span><i>3</i> חושפים ✨</span></div>
+  <div class="howto" id="howto"><span data-st="1" role="button" tabindex="0"><i>1</i> בוחרים מוצרים</span><span class="arr">←</span><span data-st="2" role="button" tabindex="0"><i>2</i> בוחרים אריזה</span><span class="arr">←</span><span data-st="3" role="button" tabindex="0"><i>3</i> חושפים ✨</span></div>
 </div>
 <div class="layout" id="buildView">
   <section class="cat" aria-labelledby="cat-h">
@@ -1674,6 +1674,15 @@ setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small
   show();el.addEventListener("mouseenter",()=>hold=true);el.addEventListener("mouseleave",()=>hold=false);
   const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
   setInterval(()=>{if(hold||document.hidden)return;if(still){i++;show();return;}t.classList.add("out");setTimeout(()=>{i++;show();t.classList.remove("out");},350);},4000);})();
+(function(){const h=document.getElementById("howto");if(!h)return;const sp=[...h.querySelectorAll("[data-st]")];
+  const step=()=>{const bv=document.getElementById("buildView");if(bv&&bv.hidden)return 0;if(!cart.size)return 1;if(pack.none&&!window._packSeen)return 2;return (document.getElementById("aiImg")&&!document.getElementById("aiImg").hidden)?0:3;};
+  const sync=()=>{const c=step();sp.forEach(e=>{const n=+e.dataset.st;e.classList.toggle("cur",n===c);e.classList.toggle("done",c===0?true:n<c);});};
+  setInterval(sync,600);sync();
+  const ps=document.getElementById("packSec");if(ps)new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)&&cart.size){setTimeout(()=>{window._packSeen=true;},2500);}}).observe(ps);
+  const go=n=>{if(n===1)document.getElementById("grid").scrollIntoView({behavior:"smooth",block:"start"});
+    else if(n===2){window._packSeen=true;document.getElementById("packSec").scrollIntoView({behavior:"smooth",block:"start"});}
+    else{const g=document.getElementById("aiGo");scene.scrollIntoView({behavior:"smooth",block:"center"});if(g&&!g.disabled)setTimeout(()=>g.click(),450);else if(!cart.size)showToast("בחרו קודם מוצר אחד לפחות");}};
+  sp.forEach(e=>{e.addEventListener("click",()=>go(+e.dataset.st));e.addEventListener("keydown",k=>{if(k.key==="Enter"||k.key===" "){k.preventDefault();go(+e.dataset.st);}});});})();
 (function(){const b=document.getElementById("boxesSold");if(!b)return;   // 48,767 on 24.11.2026 (Israel), +88 every day (yearly average)
   const days=Math.max(0,Math.floor((Date.now()-Date.UTC(2026,10,23,22,0))/86400000));b.dataset.to=String(48767+88*days);const o=document.getElementById("orgsCount");if(o)o.dataset.to=String(606+2*Math.floor(days/7));const o2=document.getElementById("orgsCount2");if(o2)o2.textContent=(606+2*Math.floor(days/7)).toLocaleString("he-IL");})();
 (function(){const box=document.getElementById("setsStats");if(!box)return;const nums=[...document.querySelectorAll("#setsStats b[data-to],#setsOri b[data-to]")];
