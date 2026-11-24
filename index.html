@@ -193,6 +193,13 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .ori-dlg{border:0;border-radius:18px;padding:0 0 16px;max-width:min(420px,92vw);max-height:92vh;overflow:auto;text-align:center;color:#3b2a4a;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .ori-dlg::backdrop{background:rgba(40,20,55,.55)}.ori-dlg img{width:100%;display:block}.ori-dlg p{margin:10px 18px 0;font-size:14px;line-height:1.55}.ori-dlg .ori-q{font-weight:700;color:#6d3f94}
 .ori-dlg a{display:inline-block;margin-top:10px;color:#6d3f94;font-weight:700}.ori-dlg .ori-x{position:sticky;top:8px;float:left;margin:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:16px;cursor:pointer;z-index:2}
+.trust{margin:4px 0 14px;padding:12px 0 10px;border-top:1px solid rgba(176,141,87,.25);border-bottom:1px solid rgba(176,141,87,.25)}
+.trust-h{font-size:13px;font-weight:700;color:var(--cocoa);text-align:center;margin-bottom:8px}.trust-h small{font-weight:400;color:var(--cocoa-soft)}
+.trust-mq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.trust-track{display:flex;width:max-content;animation:trustmq 40s linear infinite}.trust-track:hover{animation-play-state:paused}
+.trust-dup{display:flex}.tl{flex:0 0 auto;padding:6px 16px;margin:0 6px;font-family:var(--display);font-size:15px;font-weight:600;color:#7a6a58;letter-spacing:.01em;white-space:nowrap;border:1px solid rgba(176,141,87,.25);border-radius:99px;background:#fffdf9}
+@keyframes trustmq{from{transform:translateX(0)}to{transform:translateX(50%)}}
+@media (prefers-reduced-motion: reduce){.trust-track{animation:none;flex-wrap:wrap;width:auto;justify-content:center}.trust-dup{display:none}}
 .sets-ori{margin:-4px 0 12px;padding:7px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(124,77,160,.10),rgba(124,77,160,.03));border:1px solid rgba(124,77,160,.22);font-size:12.5px;color:#5b3a78;line-height:1.5}
 .sets-ori .ori-more{font-weight:700;color:#6d3f94;white-space:nowrap;text-decoration:underline;text-underline-offset:3px;margin-inline-start:4px}
 .sets-ori:hover{background:linear-gradient(90deg,rgba(124,77,160,.16),rgba(124,77,160,.05))}
@@ -912,6 +919,7 @@ h1.brand{margin:0;line-height:1.2}
       <button type="button" class="quote-btn" id="quoteBtn">⬇ הורדת הצעת מחיר (PDF)</button>
       <span class="quote-sub">מסמך מסודר להעברה לאישור בארגון</span>
     </div>
+    <div class="trust" aria-label="בין לקוחותינו"><div class="trust-h">בין לקוחותינו <small>· 606+ חברות וארגונים</small></div><div class="trust-mq"><div class="trust-track"><span class="tl">בנק מזרחי טפחות</span><span class="tl">צה״ל</span><span class="tl">משטרת ישראל</span><span class="tl">בנק הפועלים</span><span class="tl">בנק דיסקונט</span><span class="tl">כנסת ישראל</span><span class="tl">אלביט</span><span class="tl">עיריית תל אביב</span><span class="tl">כללית</span><span class="tl">המשרד להגנת הסביבה</span><span class="tl">עיריית הרצליה</span><span class="tl">מדטרוניקס</span><span class="tl">פמי פרימיום</span><span class="tl">בנק יהב</span><span aria-hidden="true" class="trust-dup"><span class="tl">בנק מזרחי טפחות</span><span class="tl">צה״ל</span><span class="tl">משטרת ישראל</span><span class="tl">בנק הפועלים</span><span class="tl">בנק דיסקונט</span><span class="tl">כנסת ישראל</span><span class="tl">אלביט</span><span class="tl">עיריית תל אביב</span><span class="tl">כללית</span><span class="tl">המשרד להגנת הסביבה</span><span class="tl">עיריית הרצליה</span><span class="tl">מדטרוניקס</span><span class="tl">פמי פרימיום</span><span class="tl">בנק יהב</span></span></div></div></div>
     <div class="card2 eng" id="engCard" hidden>
       <h3>✨ הוסיפו חריטת לוגו <span class="opt">(לא חובה)</span></h3>
       <p class="eng-pitch">מתנה ממותגת נשארת על השולחן ומזכירה אתכם כל יום. סמנו על אילו פריטים לחרוט:</p>
