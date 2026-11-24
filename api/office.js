@@ -211,6 +211,20 @@ export default async function handler(req, res) {
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");   // edge-cached
       res.status(200).json({ list: await readShowcase() }); return;
     }
+    if (a === "backup") {   // weekly Vercel Cron: copy the latest (encrypted) database to office/backups/, kept 12 weeks
+      const cronOk = process.env.CRON_SECRET ? req.headers.authorization === `Bearer ${process.env.CRON_SECRET}` : /vercel-cron/i.test(req.headers["user-agent"] || "");
+      if (!cronOk && !authed(req)) { res.status(401).json({ error: "unauthorized" }); return; }
+      const v = await dbVersions();
+      if (!v.length) { res.status(200).json({ ok: true, skipped: "no data" }); return; }
+      const r = await fetch(v[0].url, { cache: "no-store" });
+      if (!r.ok) throw new Error("db read " + r.status);
+      const day = new Date().toISOString().slice(0, 10);
+      const b = await put(`office/backups/db-${day}.bin`, Buffer.from(await r.arrayBuffer()), { access: "public", contentType: "application/octet-stream", addRandomSuffix: true });
+      const { blobs } = await list({ prefix: "office/backups/" });
+      blobs.sort((x, y) => new Date(y.uploadedAt) - new Date(x.uploadedAt));
+      const old = blobs.slice(12).map(x => x.url); if (old.length) await del(old).catch(() => {});
+      res.status(200).json({ ok: true, backup: b.pathname, kept: Math.min(blobs.length, 12) }); return;
+    }
     if (a === "logout") { setCookie(res, "", 0); res.status(200).json({ ok: true }); return; }
     if (!authed(req)) { res.status(401).json({ error: "צריך להתחבר" }); return; }
     if (a === "me") { res.status(200).json({ ok: true }); return; }
