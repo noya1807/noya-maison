@@ -1,7 +1,7 @@
 /* Noya – analytics consent + events. GA (Google tag GTM-W9WCSJ4X) runs in consent mode:
    nothing is stored until the visitor approves. Clarity loads only after approval. */
 (function () {
-  var CLARITY = ""; // Microsoft Clarity project id (set when the project exists)
+  var CLARITY = "zitlh29oa9"; // Microsoft Clarity project id (set when the project exists)
   var KEY = "noyaConsent";
   function get() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function put(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }

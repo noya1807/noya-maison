@@ -281,7 +281,7 @@ GROUPS = [("חגים", [(l["nav"], f'/gifts/{l["slug"]}/') for l in HOLI] + [("�
           ("קטגוריות מוצרים", [(v, f"/c/{k}/") for k, v in CATS.items() if any(p["cat"] == k for p in P)]),
           ("עוד", [("הסיפור שלנו", "/about/"), ("English", "/en/")])]
 OG = {}
-TRACK = '''<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}(function(){var c=null;try{c=localStorage.getItem('noyaConsent')}catch(e){}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:c==='yes'?'granted':'denied'})})();gtag('js',new Date());</script><script async src="https://www.googletagmanager.com/gtm.js?id=GTM-W9WCSJ4X"></script><script defer src="/js/track.js?v=1"></script>'''
+TRACK = '''<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}(function(){var c=null;try{c=localStorage.getItem('noyaConsent')}catch(e){}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:c==='yes'?'granted':'denied'})})();gtag('js',new Date());</script><script async src="https://www.googletagmanager.com/gtm.js?id=GTM-W9WCSJ4X"></script><script defer src="/js/track.js?v=2"></script>'''
 def picks(cats, n=12):
     out = []
     for c in cats:
