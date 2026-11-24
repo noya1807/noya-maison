@@ -94,7 +94,7 @@ def page(path, title, desc, body, ld, crumbs, img=None, lang="he", alt=None, nav
     graph = {"@context": "https://schema.org", "@graph": [BIZ, bl] + ld}
     cr = " › ".join(f'<a href="{u}">{e(n)}</a>' if i < len(crumbs) - 1 else e(n) for i, (n, u) in enumerate(crumbs))
     doc = f"""<!doctype html>
-<html lang="{lang}" dir="{"rtl" if lang=="he" else "ltr"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="{lang}" dir="{"rtl" if lang=="he" else "ltr"}"><head>{TRACK}<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)}</title><meta name="description" content="{e(desc)}"><link rel="canonical" href="{url}">{alts}
 <meta property="og:type" content="website"><meta property="og:locale" content="{"he_IL" if lang=="he" else "en_US"}"><meta property="og:site_name" content="נויה במתנה">
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{img}">
@@ -281,6 +281,7 @@ GROUPS = [("חגים", [(l["nav"], f'/gifts/{l["slug"]}/') for l in HOLI] + [("�
           ("קטגוריות מוצרים", [(v, f"/c/{k}/") for k, v in CATS.items() if any(p["cat"] == k for p in P)]),
           ("עוד", [("הסיפור שלנו", "/about/"), ("English", "/en/")])]
 OG = {}
+TRACK = '''<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}(function(){var c=null;try{c=localStorage.getItem('noyaConsent')}catch(e){}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:c==='yes'?'granted':'denied'})})();gtag('js',new Date());</script><script async src="https://www.googletagmanager.com/gtm.js?id=GTM-W9WCSJ4X"></script><script defer src="/js/track.js?v=1"></script>'''
 def picks(cats, n=12):
     out = []
     for c in cats:
