@@ -200,6 +200,8 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .trust-dup{display:flex}.tl{flex:0 0 auto;padding:6px 16px;margin:0 6px;font-family:var(--display);font-size:15px;font-weight:600;color:#7a6a58;letter-spacing:.01em;white-space:nowrap;border:1px solid rgba(176,141,87,.25);border-radius:99px;background:#fffdf9}
 @keyframes trustmq{from{transform:translateX(0)}to{transform:translateX(50%)}}
 @media (prefers-reduced-motion: reduce){.trust-track{animation:none;flex-wrap:wrap;width:auto;justify-content:center}.trust-dup{display:none}}
+.vatx{display:block;font-family:var(--body);font-size:11px;font-weight:600;color:var(--cocoa-soft);letter-spacing:0;line-height:1.2;margin-top:1px}
+.bar .p .vatx{display:inline;margin-inline-start:6px;font-size:11.5px}
 .sets-proof{margin:-4px 0 12px;min-height:22px;text-align:center;font-size:13.5px;color:var(--cocoa)}
 .sets-proof .sp-txt{display:inline-block;transition:opacity .35s,transform .35s}.sets-proof .sp-txt.out{opacity:0;transform:translateY(-6px)}
 .sets-proof b{color:#a37b45;font-weight:800}
@@ -1629,7 +1631,7 @@ function rowsHTML(){
 }
 function totalsHTML(t){return `<span>אריזה: ${packLabel()} <button class="chg" data-packs>${pack.none?"הוספה":"החלפה"}</button></span><span>${packIsFree(pack)?"ללא חיוב ✓":pi(pack.price)}</span>
   <span>מוצרים (${t.count} פריטים)</span><span>${money(t.items)}</span>
-  <span class="lbl">מחיר למארז</span><span class="big" id="bigP">${money(t.total)}</span>`;}
+  <span class="lbl">מחיר למארז</span><span class="big" id="bigP">${money(t.total)}<small class="vatx">לא כולל מע״מ</small></span>`;}
 function onRow(e){const b=e.target.closest("button[data-a]");if(!b)return;const id=b.closest(".row").dataset.id;
   ({inc:()=>add(id),dec:()=>dec(id),del:()=>remove(id)})[b.dataset.a]();}
 ["list","list2"].forEach(i=>document.getElementById(i).onclick=onRow);
@@ -1654,7 +1656,7 @@ function update(flash){
   renderGrid();
   document.getElementById("list").innerHTML=document.getElementById("list2").innerHTML=rowsHTML();
   document.getElementById("totals").innerHTML=document.getElementById("totals2").innerHTML=totalsHTML(t);
-  document.getElementById("barP").textContent=money(t.total);
+  document.getElementById("barP").innerHTML=money(t.total)+'<small class="vatx">לא כולל מע״מ</small>';
   document.getElementById("barC").innerHTML=`${t.count} מוצרים · <button class="bar-pack" data-packs>${pack.none?"+ הוספת אריזה":"אריזה ✓"}</button>`;
   if(flash) document.querySelectorAll("#bigP,#barP").forEach(el=>{el.classList.remove("priceflash");void el.offsetWidth;el.classList.add("priceflash");});
   document.querySelector(".stage .bgs").hidden=cart.size===0;
@@ -2026,7 +2028,7 @@ function toPngBlob(src){return new Promise((ok,no)=>{const im=new Image();im.cro
   c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);const x=c.getContext("2d");x.fillStyle="#f7efe4";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
   c.toBlob(b=>b?ok(b):no(new Error("png")),"image/png");};im.onerror=no;im.src=src;});}
 function shareText(){const t=totals();
-  return `תראו את מארז המתנה שבניתי ב-נויה במתנה ✨\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${ils(t.total)}\nמה דעתכם?`;}
+  return `תראו את מארז המתנה שבניתי ב-נויה במתנה ✨\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${ils(t.total)} (לא כולל מע״מ)\nמה דעתכם?`;}
 let sharing=false, shareReady=null; // shareReady: a prepared phone share, so a second tap can share instantly
 const CTA_LINE="עצבו את המארז שלכם ✨";
 async function shareLink(jpg){ // page with the designed image and one button to start designing; falls back to the site itself
@@ -2108,7 +2110,7 @@ function renderSumLines(){const t=totals();
     +(engSel.size?`<div class="ln"><span>✨</span><span>חריטת לוגו: ${esc(engNames())}</span><span>${ils(engCost())}</span></div>`:"")
     +(cardOn?`<div class="ln"><span>💌</span><span>כרטיס ברכה ממותג</span><span>${ils(cardCost())}</span></div>`:"")
     +`<div class="ln tot"><span></span><span>מחיר למארז (${t.count} פריטים)</span><span>${money(orderPer())}</span></div>`;
-  $("perBox").textContent=money(orderPer());}
+  $("perBox").innerHTML=money(orderPer())+'<small class="vatx">לא כולל מע״מ</small>';}
 function renderEng(){
   const items=engItems();[...engSel].forEach(id=>{if(!items.includes(id))engSel.delete(id);});
   $("cardCard").hidden=!(+CONFIG.cardPrice>0);$("cardOn").checked=cardOn;$("cardUp").hidden=!cardOn;
