@@ -1,8 +1,13 @@
 <!doctype html><html lang="he"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<style>html,body{margin:0;height:100%;background:transparent;overflow:hidden}a{display:block;width:100%;height:100%}video{width:100%;height:100%;object-fit:cover;display:block}</style></head>
-<body><a href="https://build.noyaglobal.com" target="_top" aria-label="בונה המארזים של נויה"><video id="v" autoplay muted loop playsinline preload="auto"></video></a>
+<style>html,body{margin:0;height:100%;background:transparent;overflow:hidden}a{display:block;width:100%;height:100%;cursor:pointer}video{width:100%;height:100%;object-fit:cover;display:block}</style></head>
+<body><a id="go" href="https://build.noyaglobal.com" target="_blank" rel="noopener" aria-label="בונה המארזים של נויה"><video id="v" autoplay muted loop playsinline preload="auto"></video></a>
 <script>
-var v=document.getElementById('v'),B='https://build.noyaglobal.com/media/';
-function pick(){var wide=innerWidth/innerHeight>1.4,s=B+(wide?'noya-builder-wide.mp4':'noya-builder-mobile.mp4');if(v.getAttribute('src')!==s){v.src=s;v.play().catch(function(){});}}
-pick();addEventListener('resize',pick);
+var v=document.getElementById('v'),B='https://build.noyaglobal.com/media/',cur='';
+function pick(){var w=document.documentElement.clientWidth||innerWidth,h=document.documentElement.clientHeight||innerHeight;if(!w||!h)return;
+  var s=B+(w/h>1.4?'noya-builder-wide.mp4':'noya-builder-mobile.mp4')+'?v=2';
+  if(s!==cur){cur=s;v.src=s;v.play().catch(function(){});}}
+pick();addEventListener('resize',pick);setInterval(pick,700);
+if(window.ResizeObserver)new ResizeObserver(pick).observe(document.documentElement);
+// try same-tab navigation first (works where the host allows it), otherwise the link opens a new tab
+document.getElementById('go').addEventListener('click',function(e){try{window.top.location.href=this.href;e.preventDefault();}catch(err){}});
 </script></body></html>
