@@ -29,7 +29,8 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
 {"@type":"LocalBusiness","@id":"https://build.noyaglobal.com/#business","name":"נויה במתנה","alternateName":"NOYA Global","description":"מארזי שי ומתנות לעובדים, ללקוחות ולשותפים עסקיים – בהתאמה אישית, עם מיתוג ולוגו ומשלוח אישי לכל נמען.","url":"https://build.noyaglobal.com/","sameAs":["https://www.noyaglobal.com/"],"logo":"https://build.noyaglobal.com/img/icon-180.png","image":"https://build.noyaglobal.com/img/og-magic.jpg","telephone":"+972-54-321-9070","email":"moshe@noyaglobal.com","address":{"@type":"PostalAddress","streetAddress":"הענבר 1","addressLocality":"ברקן","addressCountry":"IL"},"areaServed":{"@type":"Country","name":"ישראל"},"priceRange":"₪₪","foundingDate":"2024"},
-{"@type":"WebApplication","name":"בונה המארזים של נויה במתנה","url":"https://build.noyaglobal.com/","applicationCategory":"ShoppingApplication","operatingSystem":"Web","inLanguage":"he","offers":{"@type":"Offer","priceCurrency":"ILS","price":"0"},"provider":{"@id":"https://build.noyaglobal.com/#business"}}
+{"@type":"WebApplication","name":"בונה המארזים של נויה במתנה","url":"https://build.noyaglobal.com/","applicationCategory":"ShoppingApplication","operatingSystem":"Web","inLanguage":"he","offers":{"@type":"Offer","priceCurrency":"ILS","price":"0"},"provider":{"@id":"https://build.noyaglobal.com/#business"}},
+{"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "מה מינימום ההזמנה?", "acceptedAnswer": {"@type": "Answer", "text": "מינימום ההזמנה הוא ₪3,000 לפני מע״מ להזמנה כולה – לא לכל מארז."}}, {"@type": "Question", "name": "אפשר לשלוח מארז לכל עובד הביתה?", "acceptedAnswer": {"@type": "Answer", "text": "כן. שולחים לנו רשימת כתובות באקסל, ואנחנו שולחים כל מארז בנפרד עד הבית או המשרד – ₪65 למארז, או ₪99 בשליח VIP צמוד להנהלה בכירה. אפשר גם איסוף עצמי מברקן."}}, {"@type": "Question", "name": "אפשר להוסיף לוגו של החברה?", "acceptedAnswer": {"@type": "Answer", "text": "כן. אפשר למתג את הכרטיס, האריזה ומוצרים נבחרים עם הלוגו שלכם, ולהוסיף ברכה אישית. בבונה אפשר להעלות לוגו ולראות את התוצאה מיד."}}, {"@type": "Question", "name": "המחירים כוללים מע״מ?", "acceptedAnswer": {"@type": "Answer", "text": "לא. כל המחירים בבונה הם לפני מע״מ."}}, {"@type": "Question", "name": "כמה זמן מראש צריך להזמין?", "acceptedAnswer": {"@type": "Answer", "text": "לפני חגים גדולים כמו ראש השנה ופסח מומלץ להזמין 4–6 שבועות מראש, במיוחד כשיש מיתוג ומשלוח אישי לכל עובד."}}, {"@type": "Question", "name": "איך מקבלים הצעת מחיר?", "acceptedAnswer": {"@type": "Answer", "text": "בונים מארז, רואים אותו מעוצב ולוחצים על הורדת הצעת מחיר – או שולחים לנו את המארז בוואטסאפ."}}]}
 ]}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -721,6 +722,13 @@ header{border-bottom:1px solid var(--gold-light)}
 .seo-about p{font-size:14.5px;line-height:1.75;color:var(--cocoa-soft);margin:0 0 10px}
 .seo-about ul{list-style:none;padding:0;margin:6px 0 4px;display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center}
 .seo-about li{font-size:13px;border:1px solid var(--gold-light);border-radius:99px;padding:4px 12px;background:var(--paper)}
+.seo-faq{max-width:760px;margin:18px auto 0;text-align:right}
+.seo-faq h3{font-family:var(--display);font-size:19px;text-align:center;margin:0 0 8px}
+.seo-faq details{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:9px 14px;margin:6px 0;font-size:14.5px}
+.seo-faq summary{font-weight:700;cursor:pointer}.seo-faq p{margin:6px 0 2px;color:var(--cocoa-soft)}
+.seo-links{display:flex;flex-wrap:wrap;gap:6px 8px;justify-content:center;margin:16px 0 0}
+.seo-links a{font-size:13px;color:var(--cocoa);text-decoration:none;border:1px solid var(--gold-light);border-radius:99px;padding:4px 12px;background:var(--paper)}
+.seo-links a:hover{border-color:var(--gold)}
 /* contact footer + WhatsApp */
 .contact-foot{display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 16px 120px;border-top:1px solid var(--gold-light);margin-top:20px;font-size:14px;color:var(--cocoa)}
 .contact-foot a{color:var(--cocoa);text-decoration:none;font-weight:600}
@@ -1182,6 +1190,7 @@ h1.brand{margin:0;line-height:1.2}
   <p>נויה במתנה מעצבת מארזי מתנה לארגונים ולעסקים בהתאמה אישית – מתנות לחג לעובדים, מארזי ראש השנה ופסח, מתנות ללקוחות ולשותפים עסקיים ומארזי VIP להנהלה. בבונה המארזים בוחרים מוצרים ואריזה, רואים מיד איך המארז נראה ומקבלים הצעת מחיר.</p>
   <p>אפשר למתג כל מארז עם הלוגו שלכם, ואנחנו שולחים לכל נמען בנפרד לפי רשימת כתובות – עד הבית או המשרד. יבוא ישיר ומחירים תחרותיים, מינימום הזמנה ₪3,000.</p>
   <ul><li>מארזי שי לעובדים</li><li>מתנות לחג לארגונים</li><li>מארזים ממותגים עם לוגו</li><li>משלוח אישי לכל נמען</li><li>מארזי VIP למנהלים</li><li>מאז 2024 · 600+ חברות וארגונים</li></ul>
+<div class="seo-faq"><h3>שאלות נפוצות</h3><details><summary>מה מינימום ההזמנה?</summary><p>מינימום ההזמנה הוא ₪3,000 לפני מע״מ להזמנה כולה – לא לכל מארז.</p></details><details><summary>אפשר לשלוח מארז לכל עובד הביתה?</summary><p>כן. שולחים לנו רשימת כתובות באקסל, ואנחנו שולחים כל מארז בנפרד עד הבית או המשרד – ₪65 למארז, או ₪99 בשליח VIP צמוד להנהלה בכירה. אפשר גם איסוף עצמי מברקן.</p></details><details><summary>אפשר להוסיף לוגו של החברה?</summary><p>כן. אפשר למתג את הכרטיס, האריזה ומוצרים נבחרים עם הלוגו שלכם, ולהוסיף ברכה אישית. בבונה אפשר להעלות לוגו ולראות את התוצאה מיד.</p></details><details><summary>המחירים כוללים מע״מ?</summary><p>לא. כל המחירים בבונה הם לפני מע״מ.</p></details><details><summary>כמה זמן מראש צריך להזמין?</summary><p>לפני חגים גדולים כמו ראש השנה ופסח מומלץ להזמין 4–6 שבועות מראש, במיוחד כשיש מיתוג ומשלוח אישי לכל עובד.</p></details><details><summary>איך מקבלים הצעת מחיר?</summary><p>בונים מארז, רואים אותו מעוצב ולוחצים על הורדת הצעת מחיר – או שולחים לנו את המארז בוואטסאפ.</p></details></div><nav class="seo-links" aria-label="מארזים לפי חג וקטגוריה"><a href="/gifts/matanot-laovdim/">מתנות לעובדים</a><a href="/gifts/rosh-hashana/">מארזי ראש השנה</a><a href="/gifts/pesach/">מארזי פסח</a><a href="/gifts/chanukah/">מתנות לחנוכה</a><a href="/gifts/tu-bishvat/">מארזי ט״ו בשבט</a><a href="/gifts/purim/">משלוחי מנות לעובדים</a><a href="/gifts/sof-shana/">מתנות לסוף השנה</a><a href="/gifts/maarazim-memutagim/">מארזים ממותגים עם לוגו</a><a href="/c/diffuser/">מפיצי ריח</a><a href="/c/candle/">נרות</a><a href="/c/holder/">פמוטים</a><a href="/c/textile/">טקסטיל</a><a href="/c/serve/">עץ והגשה</a><a href="/c/kitchen/">מטבח</a><a href="/c/gift/">מארזי מתנה</a><a href="/c/drink/">כלי שתייה</a><a href="/c/decor/">אגרטלים ועציצים</a><a href="/guides/kama-lehotzi-al-matana-laoved/">כמה להוציא על מתנה לעובד?</a><a href="/guides/rayonot-matanot-lechag-laovdim/">רעיונות למתנות לחג לעובדים</a><a href="/guides/mishloach-matanot-laovdim-habayta/">איך לשלוח מתנה לכל עובד הביתה</a></nav>
 </section>
 <footer class="foot contact-foot">
   <div class="cf-brand">נויה במתנה</div>
@@ -2566,7 +2575,12 @@ function catalogChanged(){
   if(!pack.none&&!PACKS.includes(pack))pack=PACKS.find(k=>k.id===pack.id)||NO_PACK;
   renderPacks();update(false);
 }
-store.load().then(c=>{if(c&&c.products&&c.products.length){applyCatalog(c);catalogChanged();}}).catch(()=>{}).finally(()=>loadSharedBox());
+store.load().then(c=>{if(c&&c.products&&c.products.length){applyCatalog(c);catalogChanged();}}).catch(()=>{}).finally(()=>loadSharedBox();
+function deepLink(){try{const q=new URLSearchParams(location.search);const c=q.get("cat");
+  if(c&&(CATS[c]||c==="sale")){cat=c;renderChips();renderGrid();}
+  const a=(q.get("add")||"").split(",").filter(id=>byId[id]&&!byId[id].hidden);a.forEach(id=>add(id));
+  if(c||a.length){const g=document.getElementById("buildView");g&&setTimeout(()=>g.scrollIntoView({behavior:"smooth",block:"start"}),300);}}catch(e){}}
+setTimeout(deepLink,600);
 // "אני רוצה את המארז הזה" on a shared link opens the same box, already designed (no new AI run)
 async function loadSharedBox(){
   const id=new URLSearchParams(location.search).get("box");if(!id||!/^[a-z0-9]{6,24}$/.test(id))return;
