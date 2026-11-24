@@ -190,7 +190,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .ori-card:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(91,58,120,.22)}
 .ori-card .ori-img{display:block;width:100%;aspect-ratio:4/3;overflow:hidden}.ori-card .ori-img img{width:100%;height:100%;object-fit:cover;display:block}
 .ori-card .ori-t{font-weight:800;font-size:13px;padding:6px 8px 0;text-align:center;line-height:1.3}.ori-card .ori-s{font-size:11.5px;text-align:center;padding:0 8px}.ori-card .ori-go{font-size:11.5px;font-weight:700;color:#6d3f94}
-.ori-dlg{border:0;border-radius:18px;padding:0 0 16px;max-width:min(420px,92vw);max-height:92vh;overflow:auto;text-align:center;color:#3b2a4a;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.ori-dlg{border:0;border-radius:18px;padding:0 0 16px;max-width:min(520px,94vw);max-height:92vh;overflow:auto;text-align:center;color:#3b2a4a;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .ori-dlg::backdrop{background:rgba(40,20,55,.55)}.ori-dlg img{width:100%;display:block}.ori-dlg p{margin:10px 18px 0;font-size:14px;line-height:1.55}.ori-dlg .ori-q{font-weight:700;color:#6d3f94}
 .ori-dlg a{display:inline-block;margin-top:10px;color:#6d3f94;font-weight:700}.ori-dlg .ori-x{position:sticky;top:8px;float:left;margin:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:16px;cursor:pointer;z-index:2}
 .trust{margin:4px 0 14px;padding:12px 0 10px;border-top:1px solid rgba(176,141,87,.25);border-bottom:1px solid rgba(176,141,87,.25)}
@@ -212,6 +212,18 @@ body.revealed .bar-act{display:flex}body.revealed #barBtn{display:none}
 .sets-proof{margin:-4px 0 12px;min-height:22px;text-align:center;font-size:13.5px;color:var(--cocoa)}
 .sets-proof .sp-txt{display:inline-block;transition:opacity .35s,transform .35s}.sets-proof .sp-txt.out{opacity:0;transform:translateY(-6px)}
 .sets-proof b{color:#a37b45;font-weight:800}
+.ori-tl-h{font-family:var(--display);font-size:24px;color:#6d3f94;margin:26px 18px 6px;text-align:center}
+.ori-tl{list-style:none;margin:8px 18px 4px;padding:0 26px 0 0;position:relative;text-align:right}
+.ori-tl::before{content:"";position:absolute;top:6px;bottom:6px;right:8px;width:3px;border-radius:3px;background:linear-gradient(#cfab6c,#8f5bb8)}
+.ori-tl li{position:relative;margin:0 0 26px;opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s}.ori-tl li.in{opacity:1;transform:none}
+.ori-dot{position:absolute;right:-26px;top:4px;width:19px;height:19px;border-radius:50%;background:#fff;border:4px solid #8f5bb8;box-shadow:0 0 0 4px rgba(143,91,184,.15)}
+.ori-date{font-size:12.5px;font-weight:700;color:#a37b45;letter-spacing:.02em}
+.ori-tl h4{margin:2px 0 4px;font-family:var(--display);font-size:20px;color:#3b2a4a}
+.ori-tl li.big h4{font-size:44px;line-height:1;color:#c0392b;letter-spacing:.06em}
+.ori-tl li p{margin:0 0 8px!important;font-size:14.5px;line-height:1.65}
+.ori-tl li img{width:100%;border-radius:12px;margin-top:4px;cursor:zoom-in;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.ori-zoom{position:fixed;inset:0;background:rgba(20,10,30,.88);display:flex;align-items:center;justify-content:center;z-index:5;cursor:zoom-out;padding:16px}.ori-zoom img{max-width:100%;max-height:100%;border-radius:10px}
+@media (prefers-reduced-motion: reduce){.ori-tl li{opacity:1;transform:none;transition:none}}
 .sets-ori{margin:-4px 0 12px;padding:7px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(124,77,160,.10),rgba(124,77,160,.03));border:1px solid rgba(124,77,160,.22);font-size:12.5px;color:#5b3a78;line-height:1.5}
 .sets-ori .ori-more{font-weight:700;color:#6d3f94;white-space:nowrap;text-decoration:underline;text-underline-offset:3px;margin-inline-start:4px}
 .sets-ori:hover{background:linear-gradient(90deg,rgba(124,77,160,.16),rgba(124,77,160,.05))}
@@ -1702,8 +1714,15 @@ document.getElementById("barAct").addEventListener("click",e=>{const b=e.target.
   const run=()=>{const t0=performance.now(),D=1800;const step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);
     nums.forEach(b=>{const to=+b.dataset.to;b.textContent=fmt(k<1?to*e+Math.random()*to*0.02*(1-k):to,b);});if(k<1)requestAnimationFrame(step);else{done();box.classList.add("on");}};requestAnimationFrame(step);};
   const io=new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)){io.disconnect();run();}},{threshold:.6});io.observe(box);})();
-(function(){const d=document.createElement("dialog");d.className="ori-dlg";d.innerHTML=`<button class="ori-x" aria-label="סגירה">✕</button><img src="img/ori-card.webp" alt="לזכרו של סמ״ר אורי ג׳רבי הי״ד, 4.3.2003 – 18.1.2024"><p class="ori-q">"תבלבל אותם עם השתיקה שלך, תרשים אותם עם הפעולות שלך"</p><p>בכל מארז אורי נתרמים ₪18 לארוחה חמה ליוזמת "האור של אורי". עד היום נתרמו 1,869 ארוחות חמות בשווי ₪33,228.</p><a href="https://www.instagram.com/remember_ori_gerby/" target="_blank" rel="noopener">remember_ori_gerby@ באינסטגרם</a>`;document.body.appendChild(d);
-  const open=()=>{try{d.showModal();}catch(e){d.setAttribute("open","");}};d.querySelector(".ori-x").onclick=()=>d.close();d.addEventListener("click",e=>{if(e.target===d)d.close();});
+const ORI_TL=[ // "הדרך שלנו ביחד" — oldest first
+  {date:"פברואר 2026",title:"יצאנו לדרך",imgs:["img/ori/m1.webp"],text:`אחרי פגישה מרגשת אצל נעמי, ובברכת המשפחה, החלטנו להוציא את המארז הראשון: <b>מארז "האור של אורי"</b> לקראת חג הפסח.<br>על כל מארז שנרכש עוברת תרומה ליוזמת "ארוחה חמה – האור של אורי".`},
+  {date:"פסח 2026",title:"777",big:true,imgs:["img/ori/m2.webp"],text:`בחג הראשון הועברו <b>₪14,000</b> ליוזמה, שהם בדיוק <b>777 ארוחות חמות</b>.<br>ימים אחר כך נעמי שלחה לנו תמונה של קלף שאורי שמר: <b>7 לב אדום</b>, עם החתימה שלו. המספר של אורי היה <b>777</b>.<br>כולנו היינו בהלם. הרגשנו שזה סימן מאורי, שהוא שמח במה שאנחנו עושים ❤️`}
+];
+(function(){const d=document.createElement("dialog");d.className="ori-dlg";d.innerHTML=`<button class="ori-x" aria-label="סגירה">✕</button><img src="img/ori-card.webp" alt="לזכרו של סמ״ר אורי ג׳רבי הי״ד, 4.3.2003 – 18.1.2024"><p class="ori-q">"תבלבל אותם עם השתיקה שלך, תרשים אותם עם הפעולות שלך"</p><p>בכל מארז אורי נתרמים ₪18 לארוחה חמה ליוזמת "האור של אורי". עד היום נתרמו 1,869 ארוחות חמות בשווי ₪33,228.</p>
+  <h3 class="ori-tl-h">הדרך שלנו ביחד</h3><ol class="ori-tl">${ORI_TL.map(m=>`<li class="${m.big?"big":""}"><span class="ori-dot"></span><div class="ori-date">${m.date}</div><h4>${m.title}</h4><p>${m.text}</p>${(m.imgs||[]).map(src=>`<img src="${src}" alt="${m.title}" loading="lazy" data-zoom>`).join("")}</li>`).join("")}</ol>
+  <a href="https://www.instagram.com/remember_ori_gerby/" target="_blank" rel="noopener">remember_ori_gerby@ באינסטגרם</a>`;document.body.appendChild(d);
+  const open=()=>{try{d.showModal();}catch(e){d.setAttribute("open","");}};d.querySelector(".ori-x").onclick=()=>d.close();d.addEventListener("click",e=>{const z=e.target.closest("[data-zoom]");if(z){const v=document.createElement("div");v.className="ori-zoom";v.innerHTML=`<img src="${z.src}" alt="">`;v.onclick=()=>v.remove();d.appendChild(v);}});
+  const io="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);}}),{root:d,threshold:.15}):null;d.querySelectorAll(".ori-tl li").forEach(li=>io?io.observe(li):li.classList.add("in"));d.addEventListener("click",e=>{if(e.target===d)d.close();});
   document.getElementById("oriCard")?.addEventListener("click",open);const ln=document.getElementById("setsOri");if(ln){ln.style.cursor="pointer";ln.setAttribute("role","button");ln.tabIndex=0;ln.addEventListener("click",open);ln.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});}})();
 setsEl.onclick=e=>{const b=e.target.closest(".set");if(!b)return;const x=SETS[+b.dataset.i];
   const prev=[new Map(cart),pack];cart=new Map(x.items.map(id=>[id,1]));x.items.forEach(id=>fresh.add(id));
