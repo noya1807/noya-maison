@@ -141,7 +141,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .empty{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);background:rgba(255,250,243,.88);padding:8px 16px;border-radius:99px;font-size:14px;white-space:nowrap}
 .bgs{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--cocoa-soft)}
 /* showcase: recent boxes built with us, shown while the customer's box is still empty */
-.show{position:absolute;inset:0;z-index:6;background:var(--paper);display:flex;flex-direction:column}
+.show:not(.toast){position:absolute;inset:0;z-index:6;background:var(--paper);display:flex;flex-direction:column}
 .show-media{position:relative;flex:1;min-height:0;overflow:hidden;background:var(--sand)}
 .show-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.1s ease}
 .show-img.on{opacity:1}
