@@ -10,9 +10,10 @@
 <meta property="og:site_name" content="נויה במתנה">
 <meta property="og:title" content="בונה המארזים של נויה במתנה">
 <meta property="og:description" content="מארזי מתנה לארגונים ולעסקים, בהתאמה אישית. בוחרים מוצרים, רואים את המארז ומקבלים הצעת מחיר.">
-<meta property="og:url" content="https://noya-maison-cz4l.vercel.app/">
-<meta property="og:image" content="https://noya-maison-cz4l.vercel.app/img/og-magic.jpg">
-<meta property="og:image:secure_url" content="https://noya-maison-cz4l.vercel.app/img/og-magic.jpg">
+<meta property="og:url" content="https://build.noyaglobal.com/">
+<link rel="canonical" href="https://build.noyaglobal.com/">
+<meta property="og:image" content="https://build.noyaglobal.com/img/og-magic.jpg">
+<meta property="og:image:secure_url" content="https://build.noyaglobal.com/img/og-magic.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:alt" content="נויה במתנה – תנו לעובדים רגע של קסם">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
@@ -25,6 +26,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="נויה במתנה">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"LocalBusiness","@id":"https://build.noyaglobal.com/#business","name":"נויה במתנה","alternateName":"NOYA Global","description":"מארזי שי ומתנות לעובדים, ללקוחות ולשותפים עסקיים – בהתאמה אישית, עם מיתוג ולוגו ומשלוח אישי לכל נמען.","url":"https://build.noyaglobal.com/","sameAs":["https://www.noyaglobal.com/"],"logo":"https://build.noyaglobal.com/img/icon-180.png","image":"https://build.noyaglobal.com/img/og-magic.jpg","telephone":"+972-54-321-9070","email":"moshe@noyaglobal.com","address":{"@type":"PostalAddress","streetAddress":"הענבר 1","addressLocality":"ברקן","addressCountry":"IL"},"areaServed":{"@type":"Country","name":"ישראל"},"priceRange":"₪₪","foundingDate":"2024"},
+{"@type":"WebApplication","name":"בונה המארזים של נויה במתנה","url":"https://build.noyaglobal.com/","applicationCategory":"ShoppingApplication","operatingSystem":"Web","inLanguage":"he","offers":{"@type":"Offer","priceCurrency":"ILS","price":"0"},"provider":{"@id":"https://build.noyaglobal.com/#business"}}
+]}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600;700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
@@ -708,6 +715,12 @@ header{border-bottom:1px solid var(--gold-light)}
 .reveal-btn,.fab-reveal,.show-go,.bar>#barBtn{background:linear-gradient(135deg,#ead6a6,#cfab6c 50%,#b08a4f)!important;color:var(--cocoa)!important;border:0;box-shadow:inset 0 0 0 1px rgba(140,106,51,.45),0 10px 22px -8px rgba(140,106,51,.55)!important;text-shadow:0 1px 0 rgba(255,245,225,.5)}
 .reveal-btn:hover,.fab-reveal:hover,.show-go:hover,.bar>#barBtn:hover{box-shadow:inset 0 0 0 1.5px #8c6a33,0 14px 28px -8px rgba(140,106,51,.6)!important}
 .reveal-btn::after{background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.55) 50%,transparent 60%)}
+/* SEO about block */
+.seo-about{max-width:880px;margin:28px auto 0;padding:22px 20px 6px;text-align:center;color:var(--cocoa)}
+.seo-about h2{font-family:var(--display);font-size:22px;margin:0 0 8px}
+.seo-about p{font-size:14.5px;line-height:1.75;color:var(--cocoa-soft);margin:0 0 10px}
+.seo-about ul{list-style:none;padding:0;margin:6px 0 4px;display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center}
+.seo-about li{font-size:13px;border:1px solid var(--gold-light);border-radius:99px;padding:4px 12px;background:var(--paper)}
 /* contact footer + WhatsApp */
 .contact-foot{display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 16px 120px;border-top:1px solid var(--gold-light);margin-top:20px;font-size:14px;color:var(--cocoa)}
 .contact-foot a{color:var(--cocoa);text-decoration:none;font-weight:600}
@@ -1164,6 +1177,12 @@ h1.brand{margin:0;line-height:1.2}
   <div class="modal-in narrow"><h3>כניסה לניהול</h3><label>סיסמת מנהל<input id="pwIn" type="password" autocomplete="current-password"></label>
   <p class="err" id="pwErr" hidden></p><div class="send"><button class="ghost" id="pwCancel">ביטול</button><button class="go" id="pwOk">כניסה</button></div></div>
 </div>
+<section class="seo-about" aria-labelledby="seoH">
+  <h2 id="seoH">מארזי שי לעובדים, ללקוחות ולשותפים עסקיים</h2>
+  <p>נויה במתנה מעצבת מארזי מתנה לארגונים ולעסקים בהתאמה אישית – מתנות לחג לעובדים, מארזי ראש השנה ופסח, מתנות ללקוחות ולשותפים עסקיים ומארזי VIP להנהלה. בבונה המארזים בוחרים מוצרים ואריזה, רואים מיד איך המארז נראה ומקבלים הצעת מחיר.</p>
+  <p>אפשר למתג כל מארז עם הלוגו שלכם, ואנחנו שולחים לכל נמען בנפרד לפי רשימת כתובות – עד הבית או המשרד. יבוא ישיר ומחירים תחרותיים, מינימום הזמנה ₪3,000.</p>
+  <ul><li>מארזי שי לעובדים</li><li>מתנות לחג לארגונים</li><li>מארזים ממותגים עם לוגו</li><li>משלוח אישי לכל נמען</li><li>מארזי VIP למנהלים</li><li>מאז 2024 · 600+ חברות וארגונים</li></ul>
+</section>
 <footer class="foot contact-foot">
   <div class="cf-brand">נויה במתנה</div>
   <div class="cf-row"><a href="tel:0543219070">054-3219070</a><span>·</span><a href="tel:0537784388">053-7784388</a><span>·</span><a href="tel:0533460081">053-3460081</a></div>
