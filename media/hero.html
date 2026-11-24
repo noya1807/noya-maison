@@ -1,0 +1,8 @@
+<!doctype html><html lang="he"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;height:100%;background:transparent;overflow:hidden}a{display:block;width:100%;height:100%}video{width:100%;height:100%;object-fit:cover;display:block}</style></head>
+<body><a href="https://build.noyaglobal.com" target="_top" aria-label="בונה המארזים של נויה"><video id="v" autoplay muted loop playsinline preload="auto"></video></a>
+<script>
+var v=document.getElementById('v'),B='https://build.noyaglobal.com/media/';
+function pick(){var wide=innerWidth/innerHeight>1.4,s=B+(wide?'noya-builder-wide.mp4':'noya-builder-mobile.mp4');if(v.getAttribute('src')!==s){v.src=s;v.play().catch(function(){});}}
+pick();addEventListener('resize',pick);
+</script></body></html>
