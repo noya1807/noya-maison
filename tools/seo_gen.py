@@ -248,7 +248,9 @@ GUIDES = [
 ]
 
 URLS = []
-LINKS = [("מתנות לעובדים", "/gifts/matanot-laovdim/")] + [(l["nav"], f'/gifts/{l["slug"]}/') for l in LAND[1:]] + \
+VIDEO = '<h2>כך בונים מארז – בדקה אחת</h2><video src="/media/noya-builder-wide.mp4" poster="/media/hero-bg.jpg" controls muted playsinline preload="none" style="width:100%;max-width:900px;border-radius:18px;background:#000" aria-label="סרטון: בונים מארז מתנה בבונה המארזים של נויה"></video>'
+VIDEO_LD = {"@type": "VideoObject", "name": "בונה המארזים של נויה במתנה – בונים מארז מתנה בדקה", "description": "סרטון קצר: בוחרים מוצרים, בוחרים אריזה, חושפים את המארז ומשתפים עם הצוות בוואטסאפ.", "thumbnailUrl": SITE + "/media/hero-bg.jpg", "contentUrl": SITE + "/media/noya-builder-wide.mp4", "uploadDate": "2026-11-24", "inLanguage": "he"}
+LINKS = [("מתנות לעובדים", "/gifts/matanot-laovdim/")] + [(f"מארזים עד ₪{b}", f"/gifts/ad-{b}/") for b in (50,100,150,200,250)] + [("הסיפור שלנו", "/about/")] + [(l["nav"], f'/gifts/{l["slug"]}/') for l in LAND[1:]] + \
         [(v, f"/c/{k}/") for k, v in CATS.items() if any(p["cat"] == k for p in P)] + [(g["nav"], f'/guides/{g["slug"]}/') for g in GUIDES]
 NAV_LINKS = '<section><h2>עוד מארזים ורעיונות</h2><nav class="links">' + "".join(f'<a href="{u}">{e(n)}</a>' for n, u in LINKS) + "</nav></section>"
 
@@ -268,11 +270,11 @@ for l in LAND:
     body = f"""<h1>{e(l["h1"])}</h1><p class="lead">{e(l["lead"])}</p>
 <div class="cta-row"><a class="btn" href="/?cat={l["cats"][0]}">בונים מארז עכשיו ←</a><a class="btn ghost" href="{WA}" target="_blank" rel="noopener">מדברים איתנו בוואטסאפ</a></div>
 <ul class="facts"><li>מאז 2024 · 48,000+ מארזים</li><li>600+ חברות וארגונים</li><li>מיתוג עם לוגו</li><li>משלוח אישי לכל נמען</li></ul>
-<div class="prose">{l["body"]}</div>
+{VIDEO if l["slug"]=="matanot-laovdim" else ""}<div class="prose">{l["body"]}</div>
 <h2>מוצרים מומלצים למארז</h2><div class="grid">{"".join(card(p) for p in pp)}</div>
 {faq_html(faqs)}"""
     ld = [{"@type": "WebPage", "name": l["title"], "description": l["desc"], "inLanguage": "he"},
-          {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": f'{SITE}/p/{p["id"]}/'} for i, p in enumerate(pp)]}, faq_ld(faqs)]
+          {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": f'{SITE}/p/{p["id"]}/'} for i, p in enumerate(pp)]}, faq_ld(faqs)] + ([VIDEO_LD] if l["slug"] == "matanot-laovdim" else [])
     page(f'/gifts/{l["slug"]}/', l["title"], l["desc"], body, ld, [("בונה המארזים", "/"), (l["nav"], f'/gifts/{l["slug"]}/')])
 
 for g in GUIDES:
@@ -318,6 +320,55 @@ for p in P:
                        "itemCondition": "https://schema.org/NewCondition", "seller": {"@id": SITE + "/#business"}}}
     page(f'/p/{p["id"]}/', f"{name} | {cat} למארזי שי – נויה במתנה"[:110], desc[:300], body, [prod],
          [("בונה המארזים", "/"), (cat, f'/c/{p["cat"]}/'), (name, f'/p/{p["id"]}/')], img)
+
+
+# ---------- budget pages ----------
+SRCSETS = re.search(r'^const SETS=\[(.*?)^\];', SRC, re.M | re.S).group(1)
+SETS = []
+for m in re.finditer(r'\{name:"([^"]+)",budget:(\d+),items:\[([^\]]*)\],pack:"([^"]+)"\}', SRCSETS):
+    SETS.append(dict(name=m.group(1), budget=int(m.group(2)), items=re.findall(r'"(\w+)"', m.group(3)), pack=m.group(4)))
+BUD = [(50, "ad-50", "עד ₪50"), (100, "ad-100", "עד ₪100"), (150, "ad-150", "עד ₪150"), (200, "ad-200", "עד ₪200"), (250, "ad-250", "עד ₪250")]
+for i, (b, slug, lab) in enumerate(BUD):
+    st = min(SETS, key=lambda x: abs(x["budget"] - b)); si = SETS.index(st)
+    items = [BY[x] for x in st["items"] if x in BY]
+    lo = BUD[i - 1][0] * 0.5 if i else 0
+    singles = sorted([p for p in P if p["price"] <= b * 0.6 and p["price"] >= lo * 0.4 and not (p.get("was", 0) > p["price"])], key=lambda p: -p.get("stock", 0))[:12]
+    title = f"מארזי שי לעובדים {lab} – רעיונות ומחירים | נויה במתנה"
+    desc = f"מארזי מתנה לעובדים ולקוחות בתקציב {lab} לפני מע״מ: מארז מוכן להתחלה, מוצרים שנכנסים בתקציב ובונה שמראה את המחיר בזמן אמת. מיתוג ומשלוח לכל נמען."
+    nav = f"מארזים {lab}"
+    body = f"""<h1>מארזי שי לעובדים {e(lab)}</h1>
+<p class="lead">מחפשים מתנה לעובדים בתקציב של {e(lab)} למארז? בבונה המארזים מגדירים תקציב, בוחרים מוצרים ורואים את המחיר מתעדכן בזמן אמת – כך המארז נשאר בדיוק בתקציב.</p>
+<div class="cta-row"><a class="btn" href="/?budget={b}">בונים מארז {e(lab)} ←</a><a class="btn ghost" href="/?set={si}">מתחילים מהמארז "{e(st['name'])}" ←</a></div>
+<h2>מארז מוכן להתחלה: "{e(st['name'])}"</h2>
+<p>מארז השראה של נויה בתקציב של עד ₪{st['budget']} לפני מע״מ. אפשר לפתוח אותו בבונה, להחליף מוצרים ולהוסיף לוגו.</p>
+<div class="grid">{"".join(card(p) for p in items)}</div>
+<h2>מוצרים שנכנסים בתקציב {e(lab)}</h2><div class="grid">{"".join(card(p) for p in singles)}</div>
+<div class="prose"><h2>טיפים למארז {e(lab)}</h2><ul>
+<li>מוצר מרכזי אחד טוב עדיף על הרבה פריטים קטנים.</li>
+<li>אריזה יפה וכרטיס ברכה ממותג משדרגים כל מארז – גם בתקציב קטן.</li>
+<li>אם שולחים לכל עובד הביתה, תקצבו גם משלוח: ₪65 למארז, או ₪99 בשליח VIP.</li>
+<li>המחירים לפני מע״מ. מינימום הזמנה ₪3,000 לכל ההזמנה.</li></ul>
+<p>לקריאה נוספת: <a href="/guides/kama-lehotzi-al-matana-laoved/">כמה להוציא על מתנה לעובד?</a></p></div>
+{faq_html(COMMON_FAQ)}"""
+    ld = [{"@type": "WebPage", "name": title, "description": desc, "inLanguage": "he"}, faq_ld(COMMON_FAQ)]
+    page(f"/gifts/{slug}/", title, desc, body, ld, [("בונה המארזים", "/"), (nav, f"/gifts/{slug}/")])
+
+# ---------- about ----------
+ABOUT_T = "הסיפור שלנו – נויה במתנה | מארזי שי לארגונים מאז 2024"
+ABOUT_D = "נויה במתנה – עסק משפחתי למארזי שי לעובדים, ללקוחות ולשותפים עסקיים. מאז 2024 שלחנו מעל 48,000 מארזים ליותר מ-600 חברות וארגונים. מחסן ואיסוף עצמי בברקן."
+ab = f"""<article class="prose"><h1>הסיפור של נויה במתנה</h1>
+<p class="lead">נויה במתנה נקראת על שם נויה, הבת של משה – מייסד העסק. השם הזה מזכיר לנו כל יום שמתנה טובה היא קודם כול מחשבה על מישהו אחר.</p>
+<h2>מה אנחנו עושים</h2>
+<p>אנחנו מעצבים מארזי שי לעובדים, ללקוחות ולשותפים עסקיים – בהתאמה אישית לכל ארגון. מפיצי ריח, פמוטים, נרות, מפות שולחן, כלי הגשה ומתנות למטבח, ביבוא ישיר ובמחירים תחרותיים. כל מארז נבנה לפי התקציב ואופי הארגון, עם מיתוג ולוגו, ונשלח לכל נמען בנפרד או מגיע מרוכז למשרד.</p>
+<h2>במספרים</h2>
+<ul><li>פועלים מאז 2024</li><li>מעל 48,000 מארזים נשלחו</li><li>יותר מ-600 חברות וארגונים, ביניהם בנקים, בתי חולים, רשויות וחברות הייטק</li><li>מחסן ואיסוף עצמי: הענבר 1, ברקן</li></ul>
+<h2>איך זה עובד</h2>
+<ol><li>בונים מארז ב<a href="/">בונה המארזים</a> ורואים אותו מעוצב תוך דקה.</li><li>מורידים הצעת מחיר או מדברים איתנו בוואטסאפ.</li><li>שולחים רשימת כתובות באקסל – ואנחנו אורזים, ממתגים ושולחים.</li></ol>
+<h2>האור של אורי</h2>
+<p>לזכרו של סמ״ר אורי ג׳רבי הי״ד הקמנו את מארז "האור של אורי". מכל מארז כזה נתרמת ארוחה חמה ליוזמת "האור של אורי" – ועד היום נתרמו 1,869 ארוחות חמות בשווי ₪33,228.</p>
+<h2>דברו איתנו</h2>
+<p>משה · <a href="tel:0543219070">054-3219070</a> · <a href="mailto:moshe@noyaglobal.com">moshe@noyaglobal.com</a></p></article>"""
+page("/about/", ABOUT_T, ABOUT_D, ab, [{"@type": "AboutPage", "name": ABOUT_T, "description": ABOUT_D, "inLanguage": "he"}], [("בונה המארזים", "/"), ("הסיפור שלנו", "/about/")])
 
 # sitemap
 pri = lambda u: "1.0" if u == "/" else "0.9" if u.startswith("/gifts/") else "0.8" if u.startswith(("/c/", "/guides/")) else "0.6"
