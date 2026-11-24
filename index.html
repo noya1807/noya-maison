@@ -512,7 +512,13 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
   .fab-reveal.off{opacity:0;transform:translateY(12px);pointer-events:none}
   .toast.show~.fab-reveal{bottom:calc(150px + env(safe-area-inset-bottom))}
 }
-.fab-reveal{display:none}
+@media (min-width:761px){
+  .fab-reveal{display:block;position:fixed;left:24px;bottom:24px;z-index:35;border:0;border-radius:99px;padding:14px 24px;min-height:52px;cursor:pointer;
+    font-family:var(--display);font-size:18px;font-weight:600;transition:opacity .25s,transform .25s}
+  .fab-reveal.off{opacity:0;transform:translateY(12px);pointer-events:none}
+  .fab-reveal:not(.off){animation:fabpulse 2.6s ease-in-out infinite}
+  @keyframes fabpulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+}
 @media (max-width:760px){.fab-reveal{display:block}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 /* "בין לקוחותינו": rotating strip of organisations that ordered from us (logo image if we have one, otherwise the name) */
@@ -1538,11 +1544,13 @@ new ResizeObserver(()=>recompose(false)).observe(scene);
     if(st.getBoundingClientRect().bottom-d<=0)window.scrollBy(0,d);}).observe(st);
 })();
 // phone: while scrolling the products, keep a "reveal" button at hand (it just presses the existing reveal button)
-(()=>{const fab=document.getElementById("fabReveal"),bar=document.getElementById("aibar");let barSeen=true;
-  const sync=()=>{const go=document.getElementById("aiGo");const show=!!go&&!go.disabled&&!barSeen&&!document.getElementById("buildView").hidden;
+(()=>{const fab=document.getElementById("fabReveal"),bar=document.getElementById("aibar");let barSeen=true,gridSeen=false;const desk=matchMedia("(min-width:761px)");
+  const sync=()=>{const go=document.getElementById("aiGo");const show=!!go&&!go.disabled&&(!barSeen||(desk.matches&&gridSeen&&scrollY>250))&&!document.getElementById("buildView").hidden;
     if(show){fab.hidden=false;requestAnimationFrame(()=>fab.classList.remove("off"));}else{fab.classList.add("off");}};
   fab.classList.add("off");
   new IntersectionObserver(es=>{barSeen=es[es.length-1].isIntersecting;sync();}).observe(bar);
+  new IntersectionObserver(es=>{gridSeen=es[es.length-1].isIntersecting;sync();},{rootMargin:"-30% 0px -30% 0px"}).observe(document.getElementById("grid"));
+  addEventListener("scroll",()=>{clearTimeout(sync.t);sync.t=setTimeout(sync,120);},{passive:true});
   new MutationObserver(sync).observe(bar,{childList:true,subtree:true});
   new MutationObserver(sync).observe(document.getElementById("buildView"),{attributes:true,attributeFilter:["hidden"]});
   fab.onclick=()=>{const go=document.getElementById("aiGo");if(!go)return;
