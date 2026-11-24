@@ -120,7 +120,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 
 /* stage */
 .stage{position:sticky;top:12px;align-self:start;display:flex;flex-direction:column;gap:12px}
-@media (min-width:981px){.stage{max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-inline-end:4px}}
+@media (min-width:981px){.stage{max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-inline-end:4px}.stage>*{flex-shrink:0}}
 .packs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
 .pack{flex:0 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:6px 10px 6px 12px;font-size:13px;text-align:start}
 .pack img{height:38px;width:30px;object-fit:contain}
