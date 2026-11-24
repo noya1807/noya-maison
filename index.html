@@ -200,6 +200,9 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .trust-dup{display:flex}.tl{flex:0 0 auto;padding:6px 16px;margin:0 6px;font-family:var(--display);font-size:15px;font-weight:600;color:#7a6a58;letter-spacing:.01em;white-space:nowrap;border:1px solid rgba(176,141,87,.25);border-radius:99px;background:#fffdf9}
 @keyframes trustmq{from{transform:translateX(0)}to{transform:translateX(50%)}}
 @media (prefers-reduced-motion: reduce){.trust-track{animation:none;flex-wrap:wrap;width:auto;justify-content:center}.trust-dup{display:none}}
+.sets-proof{margin:-4px 0 12px;min-height:22px;text-align:center;font-size:13.5px;color:var(--cocoa)}
+.sets-proof .sp-txt{display:inline-block;transition:opacity .35s,transform .35s}.sets-proof .sp-txt.out{opacity:0;transform:translateY(-6px)}
+.sets-proof b{color:#a37b45;font-weight:800}
 .sets-ori{margin:-4px 0 12px;padding:7px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(124,77,160,.10),rgba(124,77,160,.03));border:1px solid rgba(124,77,160,.22);font-size:12.5px;color:#5b3a78;line-height:1.5}
 .sets-ori .ori-more{font-weight:700;color:#6d3f94;white-space:nowrap;text-decoration:underline;text-underline-offset:3px;margin-inline-start:4px}
 .sets-ori:hover{background:linear-gradient(90deg,rgba(124,77,160,.16),rgba(124,77,160,.05))}
@@ -1631,7 +1634,13 @@ function update(flash){
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
-setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-stats" id="setsStats"><span><b data-to="48767">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-stats" id="setsStats"><span><b data-to="48767">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+(function(){const el=document.getElementById("setsProof");if(!el)return;const t=el.querySelector(".sp-txt");
+  const L=[["🏦","בנק מזרחי טפחות"],["🎖️","צה״ל"],["🛡️","משטרת ישראל"],["🏦","בנק הפועלים"],["🏛️","עיריית תל אביב"],["⚙️","אלביט"],["🏦","בנק דיסקונט"],["🏛️","כנסת ישראל"],["🩺","כללית"],["🏛️","עיריית הרצליה"],["🌿","המשרד להגנת הסביבה"],["🏦","בנק יהב"]];
+  let i=0,hold=false;const show=()=>{const [e,n]=L[i%L.length];t.innerHTML=`${e} גם <b>${n}</b> בחר בנויה במתנה`;};
+  show();el.addEventListener("mouseenter",()=>hold=true);el.addEventListener("mouseleave",()=>hold=false);
+  const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setInterval(()=>{if(hold||document.hidden)return;if(still){i++;show();return;}t.classList.add("out");setTimeout(()=>{i++;show();t.classList.remove("out");},350);},4000);})();
 (function(){const box=document.getElementById("setsStats");if(!box)return;const nums=[...document.querySelectorAll("#setsStats b[data-to],#setsOri b[data-to]")];
   const fmt=(n,b)=>((b&&b.dataset.pre)||"")+Math.round(n).toLocaleString("he-IL");
   const done=()=>nums.forEach(b=>b.textContent=fmt(+b.dataset.to,b));
