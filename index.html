@@ -1998,7 +1998,9 @@ function renderAiBar(){
   q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
   q("aiOrder")&&(q("aiOrder").onclick=()=>openSummary());
   q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);generateAi(true);});
-  q("aiDl")&&(q("aiDl").onclick=async()=>{try{const jpg=await toJpeg(currentBoxImage(),2000,.92);const a=document.createElement("a");a.href=jpg;a.download="noya-gift-box-"+new Date().toISOString().slice(0,10)+".jpg";document.body.appendChild(a);a.click();a.remove();showToast("התמונה ירדה למכשיר ✓");}catch(e){showToast("לא הצלחנו להוריד את התמונה. אפשר לנסות שוב.");}});
+  q("aiDl")&&(q("aiDl").onclick=async()=>{const b=q("aiDl");if(b.disabled)return;b.disabled=true;const was=b.textContent;b.textContent="מכין את התמונה…";
+    try{const jpg=await boxCard(currentBoxImage());const a=document.createElement("a");a.href=jpg;a.download="noya-gift-box-"+new Date().toISOString().slice(0,10)+".jpg";document.body.appendChild(a);a.click();a.remove();showToast("התמונה ירדה למכשיר ✓");}
+    catch(e){showToast("לא הצלחנו להוריד את התמונה. אפשר לנסות שוב.");}finally{b.disabled=false;b.textContent=was;}});
   q("aiView")&&(q("aiView").onclick=()=>{editing=!editing;
     if(editing){showAi(null);showToast("גררו מוצרים בתמונה כדי לתקן את המיקום, ואז לחצו \"חשפו את המארז שלכם\"");}
     else{aiStale=false;showAi(aiCache.get(aiCurrent));}
@@ -2070,6 +2072,53 @@ async function shareWhatsApp(src,mode){shareMode=mode||"consult";
     else showToast("וואטסאפ נפתח עם הודעה מוכנה. בחרו למי לשלוח.");
   }catch(e){showToast("לא הצלחנו לשתף כרגע ("+e.message+"). אפשר לנסות שוב.");}
   finally{sharing=false;}
+}
+
+// ---- downloadable "box card": the picture on top, the box details (items, packaging, price, contact, QR) below ----
+const CARD_PHONE="054-3219070", CARD_MAIL="moshe@noyaglobal.com";
+function loadQR(){return window.qrcode?Promise.resolve(window.qrcode):new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="js/qrcode.js";sc.onload=()=>ok(window.qrcode);sc.onerror=no;document.head.appendChild(sc);});}
+function loadImg(src){return new Promise((ok,no)=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>ok(im);im.onerror=no;im.src=src;});}
+async function boxCard(src){
+  await (document.fonts&&document.fonts.ready);
+  const [im,logo,qr]=await Promise.all([loadImg(src),loadImg("img/icon-192.png").catch(()=>null),loadQR().catch(()=>null)]);
+  const W=1200,P=64,iw=W,ih=Math.round(im.naturalHeight*W/im.naturalWidth);
+  const DF='"Frank Ruhl Libre","David Libre",Georgia,serif', BF='"Assistant","Segoe UI",Arial,sans-serif';
+  const items=[...cart].map(([id,q])=>byId[id]?(byId[id].name+(q>1?` × ${q}`:"")):null).filter(Boolean);
+  const c=document.createElement("canvas"),x=c.getContext("2d");
+  // wrap long product names
+  x.font=`500 30px ${BF}`;const maxW=W-2*P-40;const lines=[];
+  items.forEach(t=>{const words=t.split(" ");let cur="";words.forEach(w=>{const n=cur?cur+" "+w:w;if(x.measureText(n).width>maxW&&cur){lines.push([cur,lines.length&&lines[lines.length-1][2]===t?false:true,t]);cur=w;}else cur=n;});lines.push([cur,!lines.length||lines[lines.length-1][2]!==t,t]);});
+  const LH=46, head=120, list=lines.length*LH, packH=pack.none?0:56, priceH=110, foot=290;
+  const H=ih+P+head+list+packH+priceH+foot;
+  c.width=W;c.height=H;x.direction="rtl";
+  x.fillStyle="#f7efe4";x.fillRect(0,0,W,H);
+  x.drawImage(im,0,0,iw,ih);
+  // gold rule under the picture
+  const g=x.createLinearGradient(0,0,W,0);g.addColorStop(0,"#ead6a6");g.addColorStop(.5,"#cfab6c");g.addColorStop(1,"#b08a4f");x.fillStyle=g;x.fillRect(0,ih,W,8);
+  let y=ih+P;
+  // brand line
+  if(logo){x.save();x.beginPath();x.arc(W-P-36,y+36,36,0,Math.PI*2);x.clip();x.drawImage(logo,W-P-72,y,72,72);x.restore();}
+  x.textAlign="right";x.textBaseline="middle";x.fillStyle="#3f271c";x.font=`700 46px ${DF}`;x.fillText("נויה במתנה",W-P-(logo?92:0),y+28);
+  x.font=`400 24px ${BF}`;x.fillStyle="#8a6d55";x.fillText("המארז שעיצבתי ✨",W-P-(logo?92:0),y+70);
+  y+=head;
+  // items
+  x.font=`500 30px ${BF}`;x.fillStyle="#3f271c";
+  lines.forEach(([t,first])=>{if(first){x.fillStyle="#b08a4f";x.beginPath();x.arc(W-P-8,y+LH/2-2,6,0,Math.PI*2);x.fill();x.fillStyle="#3f271c";}x.fillText(t,W-P-28,y+LH/2);y+=LH;});
+  if(!pack.none){x.font=`400 27px ${BF}`;x.fillStyle="#6e4d3b";x.fillText("אריזה: "+pack.name,W-P,y+LH/2+6);y+=packH;}
+  // price
+  y+=22;x.fillStyle="rgba(176,138,79,.35)";x.fillRect(P,y,W-2*P,2);y+=24;
+  const t=totals();x.fillStyle="#3f271c";x.font=`700 54px ${DF}`;x.textAlign="right";const pr=ils(t.total);x.fillText(pr,W-P,y+30);
+  const pw=x.measureText(pr).width;x.font=`600 26px ${BF}`;x.fillStyle="#8a6d55";x.fillText("למארז · לא כולל מע״מ",W-P-pw-18,y+34);
+  y+=priceH-24;
+  // footer: contact (right) + QR (left)
+  x.fillStyle="rgba(176,138,79,.35)";x.fillRect(P,y,W-2*P,2);y+=36;
+  const qs=150;
+  if(qr){try{const q=qr(0,"M");q.addData(SITE_LINK.replace("/?v=2","/"));q.make();const n=q.getModuleCount(),cell=qs/n,qx=P+48;x.fillStyle="#fff";x.fillRect(qx-10,y-10,qs+20,qs+20);x.fillStyle="#3f271c";
+    for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))x.fillRect(qx+k*cell,y+r*cell,Math.ceil(cell),Math.ceil(cell));
+    x.textAlign="center";x.font=`600 21px ${BF}`;x.fillStyle="#6e4d3b";x.fillText("סרקו ועצבו מארז משלכם",qx+qs/2,y+qs+34);}catch(e){}}
+  x.textAlign="right";x.fillStyle="#3f271c";x.font=`700 36px ${BF}`;x.fillText("📞 "+CARD_PHONE,W-P,y+40);
+  x.font=`500 30px ${BF}`;x.fillText("✉️ "+CARD_MAIL,W-P,y+100);
+  return c.toDataURL("image/jpeg",.9);
 }
 // ===================== Stage 2: summary, details, send =====================
 // Set these for the business. orderEmail empty = email button asks the customer to use WhatsApp or copy.
