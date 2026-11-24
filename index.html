@@ -120,6 +120,7 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 
 /* stage */
 .stage{position:sticky;top:12px;align-self:start;display:flex;flex-direction:column;gap:12px}
+@media (min-width:981px){.stage{max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-inline-end:4px}}
 .packs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
 .pack{flex:0 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:6px 10px 6px 12px;font-size:13px;text-align:start}
 .pack img{height:38px;width:30px;object-fit:contain}
@@ -1736,7 +1737,7 @@ function onCartChanged(){
   if(!cart.size){revealed=false;editing=false;showAi(null);}
   setVeil();renderAiBar();
 }
-function playReveal(){scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);if(STG.flashed){STG.flashed=false;}else playUnbox();}
+function playReveal(){if(matchMedia("(min-width:981px)").matches){const st=document.querySelector(".stage"),ab=document.getElementById("aibar");if(st&&ab){const r=ab.getBoundingClientRect(),sr=st.getBoundingClientRect();if(r.bottom>sr.bottom)st.scrollBy({top:r.bottom-sr.bottom+12,behavior:"smooth"});}}scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);if(STG.flashed){STG.flashed=false;}else playUnbox();}
 // 3D gift box opens over the picture: ribbon box spins, lid lifts off, gold sparks, the designed box appears
 // gold rain: gold-leaf flakes and tiny sparkles fall over the whole screen for ~3.5s, then fade (only gold/cream tones)
 function goldRain(){
