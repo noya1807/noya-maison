@@ -21,6 +21,7 @@
 // Encryption key: OFFICE_KEY if set, otherwise derived from the store's BLOB_READ_WRITE_TOKEN.
 // (If you ever rotate the blob token, set OFFICE_KEY to the OLD token first, or export a backup before.)
 import { put, list, del } from "@vercel/blob";
+import { blobHost } from "./catalog.js";
 import crypto from "node:crypto";
 
 const DB_PREFIX = "office/db/";
@@ -155,8 +156,14 @@ async function extractWithAI(content) {
   throw new Error(last);
 }
 
+const SHOW_CURRENT = SHOW_PREFIX + "current.json";   // fixed path → read by URL, no Blob operation
 async function readShowcase() {
-  const { blobs } = await list({ prefix: SHOW_PREFIX + "list-" });
+  const host = blobHost();
+  if (host) {
+    const r = await fetch(host + SHOW_CURRENT + "?t=" + Math.floor(Date.now() / 30000), { cache: "no-store" });
+    if (r.ok) return (await r.json()).list || [];
+  }
+  const { blobs } = await list({ prefix: SHOW_PREFIX + "list-" });   // fallback (before the first save in the new format)
   if (!blobs.length) return [];
   blobs.sort((a, b) => b.uploadedAt - a.uploadedAt || (b.pathname > a.pathname ? 1 : -1));
   const r = await fetch(blobs[0].url + "?t=" + Date.now(), { cache: "no-store" });
@@ -201,6 +208,7 @@ export default async function handler(req, res) {
       res.status(200).json({ ok: true }); return;
     }
     if (a === "showcase" && req.method === "GET") {   // public, read by every builder visit
+      res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");   // edge-cached
       res.status(200).json({ list: await readShowcase() }); return;
     }
     if (a === "logout") { setCookie(res, "", 0); res.status(200).json({ ok: true }); return; }
@@ -210,10 +218,14 @@ export default async function handler(req, res) {
     if (a === "showcase" && req.method === "PUT") {
       const { list: l } = await readBody(req);
       const clean = cleanShow(l);
-      await put(`${SHOW_PREFIX}list-${Date.now()}.json`, JSON.stringify({ list: clean, savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: true });
-      const { blobs } = await list({ prefix: SHOW_PREFIX + "list-" });
-      blobs.sort((x, y) => y.uploadedAt - x.uploadedAt);
-      const old = blobs.slice(10).map(b => b.url); if (old.length) await del(old);
+      const payload = JSON.stringify({ list: clean, savedAt: new Date().toISOString() });
+      await put(SHOW_CURRENT, payload, { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
+      await put(`${SHOW_PREFIX}list-${Date.now()}.json`, payload, { access: "public", contentType: "application/json", addRandomSuffix: true });   // history
+      if (Math.random() < 0.2) {   // prune old history now and then, not on every save
+        const { blobs } = await list({ prefix: SHOW_PREFIX + "list-" });
+        blobs.sort((x, y) => y.uploadedAt - x.uploadedAt);
+        const old = blobs.slice(10).map(b => b.url); if (old.length) await del(old);
+      }
       res.status(200).json({ ok: true, list: clean }); return;
     }
     if (a === "showcaseimg" && req.method === "POST") {

@@ -8,8 +8,17 @@ import { put, list } from "@vercel/blob";
 const KEY = "catalog/catalog.json";
 const authed = req => !!process.env.ADMIN_PASSWORD && req.headers["x-admin-key"] === process.env.ADMIN_PASSWORD;
 
+// Public URL of a blob at a fixed path, built from the store id inside the token. Reading it this way costs
+// no Blob "operation" (only data transfer) — unlike list(), which counts as an advanced operation.
+export const blobHost = () => { const id = (process.env.BLOB_READ_WRITE_TOKEN || "").split("_")[3] || ""; return id ? `https://${id.toLowerCase()}.public.blob.vercel-storage.com/` : ""; };
 export async function readCatalog() {
-  const { blobs } = await list({ prefix: KEY, limit: 1 });
+  const host = blobHost();
+  if (host) {
+    const r = await fetch(host + KEY + "?t=" + Math.floor(Date.now() / 30000), { cache: "no-store" });
+    if (r.status === 404) return null;
+    if (r.ok) return r.json();
+  }
+  const { blobs } = await list({ prefix: KEY, limit: 1 });   // fallback only
   if (!blobs.length) return null;
   const r = await fetch(blobs[0].url + "?t=" + Date.now(), { cache: "no-store" });
   return r.ok ? r.json() : null;
@@ -20,6 +29,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === "GET") {
       if (req.query?.auth) { res.status(authed(req) ? 200 : 401).json({ ok: authed(req) }); return; }
+      res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");   // edge-cached: one read per minute, not per visitor
       res.status(200).json({ catalog: await readCatalog() });
       return;
     }

@@ -148,7 +148,7 @@ async function boot(){
 
 // ---------- saving (automatic, debounced) ----------
 function setSave(t,cls){const e=$("#saveState");e.textContent=t;e.className=cls||"";}
-function touch(){_costs=null;dirty=true;setSave("שומר…");clearTimeout(touch.t);touch.t=setTimeout(save,900);}
+function touch(){_costs=null;dirty=true;setSave("שומר…");clearTimeout(touch.t);touch.t=setTimeout(save,4000);}
 async function save(){
   if(saving){touch();return;}if(!dirty)return;saving=true;dirty=false;
   try{const j=await api("data",{method:"PUT",body:{db,baseRev:rev}});rev=j.rev;setSave("✓ נשמר "+new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"}),"okc");}
