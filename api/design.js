@@ -19,7 +19,6 @@ const clean = (s, n = 60) => String(s || "").replace(/[^\p{L}\p{N} +\-.'"]/gu, "
 const cleanDims = s => String(s || "").replace(/[^\p{L}\p{N} +\-.,()x/]/gu, "").slice(0, 320);
 // boxed products whose clean product photo shows no box: their card photo shows the real (square) retail box
 const BOX_REF = { p108: "ph/p108.webp", p109: "ph/p109.webp", p110: "ph/p110.webp", p111: "ph/p111.webp" };
-const STYLE_REFS = ["s2.jpg", "s3.jpg", "s5.jpg"];   // s1/s4 show a discontinued cylindrical diffuser tube – never send them
 const PACK_FILES = { box0: "pack/box0.webp", box1: "pack/box1.webp", box2: "pack/box2.webp", "42": "pack/42.webp", "31": "pack/31.webp", "39": "pack/39.webp" };
 
 // largest real dimension (cm) of an item: from its REAL SIZE text, else its height
@@ -58,7 +57,7 @@ Create ONE photorealistic catalogue photograph of a styled gift set.
 INPUT IMAGES
 - Image 1: a rough layout sketch built from the real products, drawn TO TRUE SCALE. Use it for which products appear, their exact relative sizes (keep the same size ratios as in the sketch) and a starting arrangement${manual ? " — the customer arranged it by hand, so keep their placement closely" : ", then improve the styling like a professional designer would"}.
 - Next images: the ONLY products in the set, one photo each (in the order listed below)${items.some(i => i.box && BOX_REF[i.id]) ? `, then "box_reference" photos that show the real retail box of some products — use them ONLY for that box's shape, colour and printed design; ignore everything else in them (books, stones, flowers, refill bottles)` : ""}${noPack ? "" : ", followed by the packaging"}.
-- Last image: style reference for mood, light, palette and propping only. Never copy its products.
+- There is NO style reference image: build the set and mood only from the ART DIRECTION below. Every box, bag or package in the picture must come from the product photos, the box_reference photos or the chosen packaging photo — never from memory or older NOYA designs (for example, never a dark brown/black "MAISON NOYA" box with gold edges, never a cylindrical tube).
 
 PRODUCTS (include every one, exactly this quantity, nothing else):
 ${list}
@@ -157,7 +156,7 @@ export default async function handler(req, res) {
       const pb = await readFile(path.join(ROOT, "img", "orig", `${pack.id.replace(/[^a-z0-9]/gi, "")}.jpg`)).catch(() => null);
       if (pb) add(pb, "packaging.jpg", "image/jpeg");
     }
-    add(await readFile(path.join(ROOT, "img", "style", STYLE_REFS[variant % STYLE_REFS.length])), "style_reference.jpg", "image/jpeg");
+    // no style reference image: the old style shots contained discontinued products/boxes that the model copied
 
     const r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
     const j = await r.json();
