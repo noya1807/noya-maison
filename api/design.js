@@ -8,7 +8,9 @@ import { readCatalog } from "./catalog.js";
 
 export const config = { maxDuration: 120 };
 
-const MODEL = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+const MODEL = process.env.OPENAI_IMAGE_MODEL_V26 || "gpt-image-2.6-sunburst";   // Nov 2026: moved to Images 2.6 Sunburst
+const FALLBACK_MODEL = "gpt-image-2";                                             // used automatically if the new model fails
+const COMPLEXITY = process.env.OPENAI_IMAGE_COMPLEXITY || "high";                 // 2.6 only: how much the model plans first
 const QUALITY = process.env.OPENAI_IMAGE_QUALITY || "medium";      // low | medium | high
 const SIZE = process.env.OPENAI_IMAGE_SIZE || "1536x1024";
 const FIDELITY = process.env.OPENAI_INPUT_FIDELITY || "";          // set "high" if the model supports it
@@ -129,7 +131,8 @@ Each box belongs ONLY to the product it is listed with and stands directly behin
 ` : ""}PACKAGING DISCIPLINE (mandatory): the only packaging allowed in the picture is ${boxed.length ? `the own retail box of each product marked "WITH ITS OWN RETAIL BOX" (each box behind its own product, with exactly that product's printed design)` : "none from the products"}${noPack ? "" : `${boxed.length ? " and " : ""}the chosen packaging "${pack.name}"`}. Never add any other box, gift box, carton, bag, tissue paper, ribbon, tag, crate, basket or container — not copied from the style reference, not invented as a prop. If a product's photo shows a box but the product is NOT marked "WITH ITS OWN RETAIL BOX", show the product alone without that box. Never move one product's box to another product and never show a box without its product. Never draw any round cylindrical tube/canister box.
 COMPLETE PRODUCTS: every product appears whole — never cut by the frame edge, by another item or by the riser; never chop off a rim, a top edge, a handle, a lid or the reeds. If a product photo or the layout sketch happens to be cropped, complete the missing part naturally (a round bowl is always a full round bowl with its entire rim visible).
 ${sBowl && sServ ? `SALAD BOWL + SERVERS (mandatory pairing): the salad servers ("${sServ.name}") always go WITH the bowl ("${sBowl.name}") — place them inside the bowl with the spoon and fork leaning together, their handles resting on the rim and sticking out diagonally over the edge, so they clearly belong to the bowl. Only if that hides the bowl's pattern, lay them right beside the bowl, touching it. Never place the servers apart from the bowl or elsewhere in the set. The bowl keeps its full rim visible.
-` : ""}NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
+` : ""}FINAL CHECK before you render (mandatory): the picture shows EXACTLY ${items.reduce((t, i) => t + i.qty, 0)} product unit(s) from the list — no product missing, none added, none duplicated. Each product keeps the SAME object type and form as in its own photo: a flat plate stays a flat plate (never becomes a bowl), a tray stays a tray, a bowl stays a bowl, a box stays the same box; never swap one product for a look-alike. Candle holders that hold candles in their photo always keep those candles in place. Count the products one by one against the list before finishing.
+NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
 
 ART DIRECTION
 - Asymmetric pyramid composition; ${hero ? `"${hero.name}" is the hero, slightly elevated near the optical centre` : "pick the most premium item as the hero, slightly elevated near the optical centre"}.
@@ -164,7 +167,7 @@ export default async function handler(req, res) {
     const form = new FormData();
     const useModel = body.model && TEST_MODELS.includes(body.model) && adminSession(req) ? body.model : MODEL;
     form.append("model", useModel);
-    if (/^gpt-image-2\.6/.test(useModel) && ["low", "medium", "high"].includes(body.complexity)) form.append("complexity", body.complexity);
+    if (/^gpt-image-2\.6/.test(useModel)) form.append("complexity", ["low", "medium", "high"].includes(body.complexity) ? body.complexity : COMPLEXITY);
     form.append("prompt", prompt(items, pack, variant, !!body.manual));
     form.append("size", SIZE);
     form.append("quality", QUALITY);
@@ -197,12 +200,16 @@ export default async function handler(req, res) {
     }
     // no style reference image: the old style shots contained discontinued products/boxes that the model copied
 
-    const r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
-    const j = await r.json();
+    const call = () => fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form }).then(async r => ({ r, j: await r.json().catch(() => ({})) }));
+    let { r, j } = await call(), usedModel = useModel;
+    if ((!r.ok || !j?.data?.[0]?.b64_json) && useModel !== FALLBACK_MODEL) {   // new model failed: same request on the previous model, so the customer still gets a picture
+      form.set("model", FALLBACK_MODEL); form.delete("complexity"); usedModel = FALLBACK_MODEL;
+      ({ r, j } = await call());
+    }
     if (!r.ok) { res.status(502).json({ error: j?.error?.message || `OpenAI ${r.status}` }); return; }
     const b64 = j?.data?.[0]?.b64_json;
     if (!b64) { res.status(502).json({ error: "no image returned" }); return; }
-    res.status(200).json({ image: `data:image/png;base64,${b64}`, model: useModel, admin: body.model ? adminSession(req) : undefined, asked: body.model || undefined });
+    res.status(200).json({ image: `data:image/png;base64,${b64}`, model: usedModel });
   } catch (e) {
     res.status(500).json({ error: String(e.message || e).slice(0, 200) });
   }
