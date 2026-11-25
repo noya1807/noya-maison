@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   const ils = n => "₪" + (+n).toLocaleString("he-IL", { maximumFractionDigits: 2 });
   const per = +b.per || 0, total = per ? Math.round(per * nBoxes * 100) / 100 : 0;
   const lines = items.map(([id, q]) => `• ${b.names?.[id] || id}${q > 1 ? ` × ${q}` : ""}`).join("\n");
-  const waText = `✅ מארז אושר – אשמח לקבל הצעת מחיר מסודרת\n${lines}\nאריזה: ${b.packName || "—"}\n${per ? `מחיר למארז: ${ils(per)} (לפני מע״מ)\n` : ""}כמות: ${nBoxes} מארזים${total ? ` · סה״כ: ${ils(total)} (לפני מע״מ)` : ""}\n\nכרטיס ההזמנה:\n${page}?v=noya`;
+  const waText = `✅ מארז אושר – אשמח לקבל הצעת מחיר מסודרת\n${lines}\nאריזה: ${b.packName || "—"}\n${per ? `מחיר למארז: ${ils(per)} (לפני מע״מ)\n` : ""}כמות: ${nBoxes} מארזים${total ? ` · סה״כ: ${ils(total)} (לפני מע״מ)` : ""}\n\nלפתיחת המארז והפקת הצעת מחיר:\n${home}?box=${boxId}&go=sum`;
   const approveBtn = `<a class="ok" href="https://wa.me/${NOYA_WA}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener">מאשר ✓ – שלחו לנו הצעת מחיר</a>`;
   if (boxId && req.query?.v === "noya") { // order card for Noya after a customer approved: details only, no approve button
     const rows = items.map(([id, q]) => { const pr = +b.prices?.[id] || 0;

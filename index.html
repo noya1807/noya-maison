@@ -2584,7 +2584,7 @@ function deepLink(){try{const q=new URLSearchParams(location.search);const c=q.g
 setTimeout(deepLink,600);
 // "אני רוצה את המארז הזה" on a shared link opens the same box, already designed (no new AI run)
 async function loadSharedBox(){
-  const id=new URLSearchParams(location.search).get("box");if(!id||!/^[a-z0-9]{6,24}$/.test(id))return;
+  const sp=new URLSearchParams(location.search),id=sp.get("box"),toSum=sp.get("go")==="sum";if(!id||!/^[a-z0-9]{6,24}$/.test(id))return;
   history.replaceState(null,"",location.pathname+location.hash);
   try{
     const r=await fetch(SHARE_ENDPOINT+"?box="+id);const j=await r.json().catch(()=>({}));if(!r.ok||!j.box)throw new Error("not found");
@@ -2597,6 +2597,8 @@ async function loadSharedBox(){
     const full=items.length===all.length;
     if(b.image&&full){const key=comboKey();aiCache.set(key,b.image);finishReveal(key,b.image);}
     showToast(full?"המארז נטען ✓ אפשר להמשיך להזמנה או לשנות אותו":"המארז נטען. חלק מהמוצרים כבר לא זמינים, אפשר להשלים ולחשוף מחדש");
+    // approved box opened by Noya from the approval WhatsApp: straight to the order page with the approved quantity
+    if(toSum){boxes=Math.max(1,Math.min(100000,Math.round(+b.boxes||1)));openSummary();showToast("המארז שאושר נטען ✓ אפשר להפיק הצעת מחיר PDF");}
     document.getElementById("scene").scrollIntoView({block:"start"});
   }catch(e){showToast("לא הצלחנו לטעון את המארז ששותף. אפשר לעצב מארז משלכם ✨");}
 }
