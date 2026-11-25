@@ -573,6 +573,7 @@ body.revealed .bar-act{display:flex}body.revealed #barBtn{display:none}
   .aibar button{min-height:44px}
   .reveal-more{flex-wrap:wrap}
   .ar-row>button{flex:1 1 0;min-width:0}
+  .ar-row>#aiShare{flex-basis:100%}
   .row{grid-template-columns:40px minmax(0,1fr) auto auto 36px;gap:8px}
   .row .mini button{width:36px;height:36px}
   .row .del{width:36px;height:36px}
@@ -2127,7 +2128,7 @@ function toPngBlob(src){return new Promise((ok,no)=>{const im=new Image();im.cro
   c.toBlob(b=>b?ok(b):no(new Error("png")),"image/png");};im.onerror=no;im.src=src;});}
 function shareText(){const t=totals();
   const per=orderPer(),many=boxes>1;
-  return `מארז מתנה לאישורך ✨ (נויה במתנה)\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${unpriced()?"בהצעת מחיר":ils(per)+" (לפני מע״מ)"}${many?`\nכמות: ${boxes} מארזים${unpriced()?"":` · סה״כ: ${ils(r2(per*boxes))} (לפני מע״מ)`}`:""}\nאפשר לאשר בלחיצה אחת בקישור 👇`;}
+  return `מארז מתנה לאישורך ✨ (נויה במתנה)\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${unpriced()?"בהצעת מחיר":ils(per)+" (לפני מע״מ)"}${many?`\nכמות: ${boxes} מארזים${unpriced()?"":` · סה״כ: ${ils(r2(per*boxes))} (לפני מע״מ)`}`:""}`;}
 let sharing=false, shareReady=null; // shareReady: a prepared phone share, so a second tap can share instantly
 const ctaLine=()=>shareMode==="spread"?"עצבו את המארז שלכם ✨":"לצפייה במארז ולאישור:";
 async function shareLink(jpg){ // page with the designed image and one button to start designing; falls back to the site itself
