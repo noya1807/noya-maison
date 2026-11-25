@@ -4,6 +4,7 @@ import re, json, os, html, shutil, datetime, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from content_more import AUD, IND, EVT, SIZES, GUIDES2, EN_PAGES
 from product_copy import COPY
+from guides_extra import EXTRA
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = "https://build.noyaglobal.com"
 TODAY = datetime.date.today().isoformat()
@@ -445,8 +446,10 @@ for g in ALLG:
     outro = ['<p><b>רוצים לראות את זה בפועל?</b> <a href="/">היכנסו לבונה המארזים</a>, בחרו מוצרים ותראו את המארז שלכם תוך חצי דקה.</p>',
              '<p><b>מהמדריך למארז:</b> ב<a href="/">בונה המארזים</a> בוחרים מוצרים ואריזה ומקבלים הצעת מחיר מסודרת מיד.</p>',
              '<p><b>רוצים לנסות?</b> פתחו את <a href="/">בונה המארזים</a>, הגדירו תקציב למארז ובדקו מה נכנס בו.</p>'][ALLG.index(g) % 3]
-    body = f'<article class="prose"><h1>{e(g["h1"])}</h1>{g["body"]}{outro}</article>'
-    ld = [{"@type": "Article", "headline": g["h1"], "description": g["desc"], "inLanguage": "he", "datePublished": g.get("published", "2026-11-25"), "dateModified": TODAY,
+    ex = EXTRA.get(g["slug"], {})
+    gfaq = ex.get("faq", [])
+    body = f'<article class="prose"><h1>{e(g["h1"])}</h1>{g["body"]}{ex.get("body", "")}{outro}</article>' + (faq_html(gfaq) if gfaq else "")
+    ld = ([faq_ld(gfaq)] if gfaq else []) + [{"@type": "Article", "headline": g["h1"], "description": g["desc"], "inLanguage": "he", "datePublished": g.get("published", "2026-11-25"), "dateModified": TODAY,
            "author": {"@type": "Organization", "name": "נויה במתנה"}, "publisher": {"@id": SITE + "/#business"}, "mainEntityOfPage": f'{SITE}/guides/{g["slug"]}/'}]
     page(f'/guides/{g["slug"]}/', g["title"], g["desc"], body, ld, [("בונה המארזים", "/"), (g["nav"], f'/guides/{g["slug"]}/')])
 
