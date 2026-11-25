@@ -19,6 +19,22 @@ const clean = (s, n = 60) => String(s || "").replace(/[^\p{L}\p{N} +\-.'"]/gu, "
 const cleanDims = s => String(s || "").replace(/[^\p{L}\p{N} +\-.,()x/]/gu, "").slice(0, 320);
 // boxed products whose clean product photo shows no box: their card photo shows the real (square) retail box
 const BOX_REF = { p108: "ph/p108.webp", p109: "ph/p109.webp", p110: "ph/p110.webp", p111: "ph/p111.webp" };
+// exact look of each product's own retail box, so boxes are never swapped between products
+const BOX_DESC = {
+  p4: "low square cream lidded box with a black velvet insert, small 'NOYA' on the lid; the ceramic candle sits INSIDE the open box with the lid standing behind it",
+  p13: "small square kraft-cream carton printed 'NOYA HOME', about as tall as the amber glass jar",
+  p112: "cream square carton with the letters N-O-Y-A spaced around its edges and a gold square label 'NOYA MAISON SCENTED CANDLE' in the centre",
+  p113: "purple square carton with a gold square label carrying the round 'ORI' logo and the script line 'The Light of Ori'",
+  p105: "tall slim BLACK box with an amber whisky-splash print on its left side, gold 'N' logo, text 'MAISON NOYA REED DIFFUSER WHISKY'",
+  p106: "tall slim WHITE/cream box with gold 'N' logo, text 'MAISON NOYA REED DIFFUSER WHITE MUSK'",
+  p108: "square CREAM carton, gold 'N' logo with reeds, 'MAISON NOYA', a thin gold curved line on the right side",
+  p109: "square BLACK carton, gold 'N' logo with reeds, 'MAISON NOYA', a thin gold curved line on the right side",
+  p110: "square WHITE carton, gold 'N' logo with reeds, 'MAISON NOYA', a thin gold curved line on the right side",
+  p111: "square PURPLE carton with the gold round 'ORI' logo and a thin gold curved line",
+  p9: "tall slim pale pink-cream box printed 'NOYA WINE' with a wine-bottle illustration",
+  p63: "long flat black gift box with a clear lid, the knife lying inside it",
+  p22: "peach-pink carton printed 'NOYA COFFEE' with a coffee-bean illustration",
+};
 const PACK_FILES = { box0: "pack/box0.webp", box1: "pack/box1.webp", box2: "pack/box2.webp", "42": "pack/42.webp", "31": "pack/31.webp", "39": "pack/39.webp" };
 
 // largest real dimension (cm) of an item: from its REAL SIZE text, else its height
@@ -39,7 +55,7 @@ Render these ratios literally on screen: "${a.n}" must look about ${Math.max(1, 
 `;
 }
 function prompt(items, pack, variant, manual) {
-  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, ${it.dims ? `REAL SIZE: ${it.dims}` : `about ${it.heightCm} cm tall${it.widthCm ? ` and ${it.widthCm} cm wide` : ""}`}, role: ${it.role}${it.kind === "candleholder" ? " — candle holder" + (it.parts ? ` SET: ${it.parts.length} separate pieces per set with DIFFERENT heights — ${it.parts.map((h, k) => `${k === 0 ? "tall" : k === it.parts.length - 1 ? "short" : "middle"} ${h} cm`).join(", ")} (show all ${it.parts.length * it.qty} pieces, each at its own true height)` : "") : it.kind === "surface" ? " — serving surface (board / tray / plate)" : it.kind === "diffuser" ? " — reed diffuser" : it.kind === "bowl" ? " — decorative bowl" : ""}${it.box ? ` — WITH ITS OWN RETAIL BOX behind it${BOX_REF[it.id] ? ` (its box is the SQUARE box shown in image "box_reference_${it.id}"; copy that box only)` : ""}` : ""}${it.flowers ? ` — VASE WITH FLOWERS: it must hold ${it.flowers}, exactly as in its product photo (mandatory, never show this vase empty)` : ""}${it.candles ? ` — HOLDER WITH CANDLES: it must hold ${it.candles}, exactly as in its product photo (mandatory, never remove the candles)` : ""}`).join("\n");
+  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, ${it.dims ? `REAL SIZE: ${it.dims}` : `about ${it.heightCm} cm tall${it.widthCm ? ` and ${it.widthCm} cm wide` : ""}`}, role: ${it.role}${it.kind === "candleholder" ? " — candle holder" + (it.parts ? ` SET: ${it.parts.length} separate pieces per set with DIFFERENT heights — ${it.parts.map((h, k) => `${k === 0 ? "tall" : k === it.parts.length - 1 ? "short" : "middle"} ${h} cm`).join(", ")} (show all ${it.parts.length * it.qty} pieces, each at its own true height)` : "") : it.kind === "surface" ? " — serving surface (board / tray / plate)" : it.kind === "diffuser" ? " — reed diffuser" : it.kind === "bowl" ? " — decorative bowl" : ""}${it.box ? ` — WITH ITS OWN RETAIL BOX behind it${BOX_DESC[it.id] ? ` — ITS BOX LOOKS LIKE: ${BOX_DESC[it.id]}` : ""}${BOX_REF[it.id] ? ` (also shown in image "box_reference_${it.id}"; copy that box only)` : ""}` : ""}${it.flowers ? ` — VASE WITH FLOWERS: it must hold ${it.flowers}, exactly as in its product photo (mandatory, never show this vase empty)` : ""}${it.candles ? ` — HOLDER WITH CANDLES: it must hold ${it.candles}, exactly as in its product photo (mandatory, never remove the candles)` : ""}`).join("\n");
   const boxed = items.filter(i => i.box), holders = items.filter(i => i.kind === "candleholder"), surfaces = items.filter(i => i.kind === "surface"), diffusers = items.filter(i => i.kind === "diffuser"), bowls = items.filter(i => i.kind === "bowl");
   const hero = items.find(i => i.role === "hero");
   const SALAD_BOWLS = ["p123", "p125", "p118"], SERVERS = ["p55"];
@@ -78,6 +94,9 @@ ${boxed.length ? `ORIGINAL RETAIL BOXES (style them like a top prop stylist): ea
 - Diffuser boxes are SQUARE/rectangular cartons exactly as photographed. NEVER draw a round cylindrical tube box for any product — that is a discontinued design.
 - Boxes form the back layer of the composition: taller boxes furthest back, staggered heights, each box partly hidden by its product, with soft natural shadows between box and product.
 - Only these ${boxed.length} product(s) get a box; do not add or duplicate boxes for any other product.
+BOX MATCHING TABLE (critical — a wrong box on a product is a failed image):
+${boxed.map(b => `- "${b.name}" → ${BOX_DESC[b.id] || "the box shown in its own product photo"}`).join("\n")}
+Each box belongs ONLY to the product it is listed with and stands directly behind THAT product. A candle never gets a diffuser box, a diffuser never gets a candle box, and two products never swap boxes. Before finishing, check every box in the picture against this table: right colour, right shape, right printed text, right product in front of it.
 ` : ""}${holders.length ? `CANDLE HOLDERS: most candle holder products are sold as a SET of one TALL and one SHORT piece (sometimes three). For every holder listed as a SET, show exactly that number of separate pieces with clearly different heights in the listed proportions (for example 17.5 cm next to 13 cm): the taller one slightly behind, the shorter one in front. Never make the pieces the same height, never merge them into one, never show only one piece of a set. Keep all candle holders together, standing side by side as one family group (a pair or trio), close enough to almost touch, tall one slightly behind and the shorter one in front of it so the heights step down gracefully. A candle holder pair is never split up or placed apart from its partner.
 ` : ""}${surfaces.length ? `FLAT TRAY AS THE STAGE — style like a senior set designer: the flat tray (or board/plate) becomes the centre of the design. Lay it flat on the surface, turned slightly diagonal to the camera, and style 2–3 of the set's products ON it, in this order of priority:
 1. ${diffusers.length ? `The reed diffuser ("${diffusers[0].name}") stands at the back of the tray, a little to one side, its reeds rising up — the tallest item on the tray.` : "If there is a reed diffuser in the set, it stands at the back of the tray, a little to one side, reeds rising up — the tallest item on the tray."}
@@ -100,7 +119,7 @@ ART DIRECTION
 - Tall pieces behind, mid-height supporting items around the hero, small accents in front; lying items placed diagonally to lead the eye.
 - Natural 15–30% overlap so the set reads as one group, with any product label still readable. Height rhythm: avoid neighbours of equal height.
 - Balanced colours: spread dark items, keep one accent colour per side. Rich and abundant but never cluttered; some negative space above.
-- Neutral styling props allowed (travertine risers, a soft linen drape, a few dried botanicals) — they must not look like products.
+- Neutral styling props allowed ONLY: travertine/stone risers, a soft linen drape and a few loose dried botanicals lying on the surface. No vases, jars, bowls, cups, candles, bottles, books or boxes as props — anything that could be mistaken for a product is forbidden unless it is in the product list.
 - Set: ${moods[variant % moods.length]}.
 - Camera: elevated three-quarter view, about 45–50° above the set, looking clearly down onto it so the top surfaces, the riser tops and the surface in front are clearly visible; keep every product upright, true to shape and undistorted.
 - Framing: a closer shot — the product group fills about 75–85% of the frame width, with only a modest margin of backdrop around it; do not crop any product.
