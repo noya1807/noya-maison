@@ -778,6 +778,36 @@ function customerMsg(o){const first=(o.customer?.name||"").trim().split(" ")[0],
   return "";}
 function waBtn(o,cls="btn sm"){const p=waPhone(o.customer?.phone),m=customerMsg(o);if(!p||!m)return "";
   return `<a class="${cls} wa-up" href="https://wa.me/${p}?text=${encodeURIComponent(m)}" target="_blank" rel="noopener" title="נפתח וואטסאפ עם הודעה מוכנה. שולחים רק אם רוצים">💬 עדכן לקוח</a>`;}
+// printable order sheet (for the warehouse): picture, customer, delivery and items with a ✓ column. No costs or profit.
+async function printOrder(o){
+  const w=window.open("","_blank");if(!w){toast("הדפדפן חסם חלון חדש. אפשרו חלונות קופצים לאתר");return;}
+  w.document.write("<p style='font-family:Arial;direction:rtl;padding:20px'>מכין להדפסה…</p>");
+  let img="";if(o.cardImg){try{const h=await (await fetch(o.cardImg.replace(/^https?:\/\/[^/]+/,""),{cache:"no-store"})).text();img=(h.match(/<img src="([^"]+)"/)||[])[1]||"";}catch(e){}}
+  const c=orderCalc(o),b=num(o.boxes)||0,d=o.dlv||{};
+  const dl=o.dlvMode==="ship"?`לכתובת אחת: ${[d.street,d.city].filter(Boolean).join(", ")||"לא צוינה"}${d.addrNote?` · ${d.addrNote}`:""}<br>מקבל: ${d.rcvName||o.customer?.name||""} ${d.rcvPhone||o.customer?.phone||""}`
+    :["indiv","vip"].includes(o.dlvMode)?`${o.dlvMode==="vip"?"VIP ":""}לכל מקבל עד הבית · ${(o.addrFiles||[]).length?(o.addrFiles||[]).map(f=>`${f.name}${f.count?` (${f.count} כתובות)`:""}`).join(", "):"קובץ כתובות עוד לא הגיע"}`
+    :o.dlvMode==="pickup"?"איסוף עצמי מברקן":(o.dlvName||"");
+  const E=x=>String(x??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+  const rows=c.lines.map(l=>`<tr><td class="ck">☐</td><td>${E(l.isPack?l.name:l.name)}${l.sku?` <span class="sku">${E(l.sku)}</span>`:""}</td><td class="n">${l.perBox||"—"}</td><td class="n"><b>${num(l.qty).toLocaleString("he-IL")}</b></td></tr>`).join("");
+  const extras=[o.engrave?"✨ חריטת לוגו":"",o.card?"💌 כרטיס ברכה ממותג":""].filter(Boolean).join(" · ");
+  w.document.open();w.document.write(`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>הזמנה ${E(o.ref)}</title>
+<style>body{font-family:Assistant,Arial,sans-serif;color:#2b1d15;margin:24px}h1{font-size:26px;margin:0}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #b08a4f;padding-bottom:10px;margin-bottom:14px}
+.big{font-size:20px;font-weight:700}.box{border:1px solid #d9c9b4;border-radius:10px;padding:10px 12px;margin-bottom:12px}.k{color:#7a5a48;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:15px}th,td{border-bottom:1px solid #e6dccd;padding:7px 6px;text-align:right}th{font-size:13px;color:#7a5a48}td.n,th.n{text-align:center;width:90px}td.ck{width:28px;font-size:20px;text-align:center}
+.sku{color:#8a7563;font-size:12px}img.pic{max-width:330px;max-height:330px;border-radius:10px;float:left;margin:0 0 10px 16px}.sign{margin-top:28px;display:flex;gap:40px}.sign div{flex:1;border-top:1px solid #999;padding-top:4px;font-size:13px;color:#555}
+@media print{body{margin:10mm}.noprint{display:none}}</style></head><body>
+<div class="top"><div><h1>נויה במתנה · הזמנה ${E(o.ref)}</h1><div class="k">${E(new Date(o.createdAt).toLocaleString("he-IL"))}${o.status==="approved"?` · אושרה ${E(new Date(o.approvedAt).toLocaleDateString("he-IL"))}`:" · ⚠ טרם אושרה סופית"}</div></div>
+<div style="text-align:left"><div class="big">${b} מארזים</div>${o.date?`<div class="k">תאריך רצוי: ${E(new Date(o.date).toLocaleDateString("he-IL"))}</div>`:""}</div></div>
+${img?`<img class="pic" src="${E(img)}" alt="">`:""}
+<div class="box"><div class="k">לקוח</div><div class="big">${E(o.customer?.org||"")}</div><div>${E(o.customer?.name||"")} · ${E(o.customer?.phone||"")}${o.customer?.email?` · ${E(o.customer.email)}`:""}</div></div>
+<div class="box"><div class="k">אספקה</div><div>${E(DLV_SHORT[o.dlvMode]||"")}</div><div>${dl}</div></div>
+${extras?`<div class="box"><div class="k">תוספות</div><div>${extras}</div></div>`:""}
+<div style="clear:both"></div>
+<table><thead><tr><th></th><th>פריט</th><th class="n">במארז</th><th class="n">סה״כ לליקוט</th></tr></thead><tbody>${rows}</tbody></table>
+${o.notes?`<div class="box" style="margin-top:12px"><div class="k">הערות</div><div>${E(o.notes).replace(/\n/g,"<br>")}</div></div>`:""}
+<div class="sign"><div>נארז על ידי</div><div>נבדק על ידי</div><div>תאריך</div></div>
+<p class="noprint" style="margin-top:20px"><button onclick="print()" style="font-size:18px;padding:10px 22px">🖨 הדפסה</button></p>
+<script>const im=document.querySelector("img.pic");const go=()=>setTimeout(()=>print(),300);if(im&&!im.complete){im.onload=go;im.onerror=go;}else go();<\/script></body></html>`);w.document.close();}
 function csvCell(v){v=String(v??"");return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}
 function downloadCsv(name,rows){const b=new Blob(["\ufeff"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
@@ -835,7 +865,7 @@ function renderOrder(){
   const prodOpts=db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("");
   $("#view").innerHTML=`<button class="back" id="oBack">→ כל ההזמנות</button>
   <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span></p></div>
-    <div class="row">${waBtn(o,"btn ghost")}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
+    <div class="row"><button class="btn ghost" id="oPrint">🖨 הדפסת הזמנה</button>${waBtn(o,"btn ghost")}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
   ${o.status==="pending"?`<p class="warn" style="font-weight:700">🔒 כלל ברזל: ההזמנה לא תיכנס ל"בעבודה", לרשימת הליקוט או לייצוא לשליח עד שתלחץ "✓ אישור סופי".</p>`:""}
   ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:o.status==="quote"?"הצעת מחיר שהלקוח הוריד מהבונה. לא נספרת ברווח ובמלאי. כדאי לחזור אליו, ואם הזמין: \"הלקוח הזמין\".":"ההזמנה בוטלה ולא נספרת."}</p>`:""}
   ${(()=>{const b=num(o.boxes)||0,items=c.lines.filter(l=>!l.isPack),packL=c.lines.find(l=>l.isPack),old=c.fixed.pack===undefined;
@@ -861,7 +891,7 @@ function renderOrder(){
       :`<p class="warn" style="margin:0">עוד לא הגיע קובץ כתובות.${lateLink(o)?` קישור אישי ללקוח: <a href="${esc(lateLink(o))}" target="_blank" rel="noopener" dir="ltr">${esc(lateLink(o))}</a> (נכלל אוטומטית ב"עדכן לקוח")`:""}</p>`):""}
     ${o.dlvMode==="pickup"?`<p style="margin:0">איסוף מהענבר 1, ברקן</p>`:""}
     ${(o.engraveFiles||[]).length?`<p style="margin:6px 0 0">קובץ לוגו: ${o.engraveFiles.map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join(" · ")}</p>`:""}
-    ${o.cardImg?`<p style="margin:6px 0 0"><a href="${esc(o.cardImg)}" target="_blank" rel="noopener">📸 כרטיס ההזמנה (תמונה עם כל הפרטים, להדפסה למחסן)</a></p>`:""}
+    ${o.cardImg?`<p style="margin:6px 0 0"><a href="${esc(o.cardImg)}" target="_blank" rel="noopener">📸 כרטיס ההזמנה (התמונה ששלח הלקוח)</a></p>`:""}
   </div>
   <h2>לקוח</h2><div class="panel"><div class="grid">
     ${[["name","שם"],["org","ארגון"],["phone","טלפון"],["email","מייל"]].map(([k,l])=>`<label class="f">${l}<input data-cu="${k}" value="${esc(o.customer?.[k]||"")}" ${dis} ${["phone","email"].includes(k)?'dir="ltr"':""}></label>`).join("")}
@@ -900,6 +930,7 @@ function renderOrder(){
   if($("#oCancel"))$("#oCancel").onclick=()=>{if(confirm("לסמן את ההזמנה כבוטלה?"))setSt("cancelled","ההזמנה סומנה כבוטלה");};
   if($("#oUnapprove"))$("#oUnapprove").onclick=()=>{if(confirm("לבטל את האישור? ההזמנה תחזור ל'ממתינה', המוצרים יחזרו למלאי והעלות תחושב מחדש."))setSt("pending","האישור בוטל");};
   if($("#oRestore"))$("#oRestore").onclick=()=>setSt("pending","ההזמנה חזרה לממתינה");
+  $("#oPrint").onclick=()=>printOrder(o);
   if($("#oAdv"))$("#oAdv").onclick=()=>{const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrder();toast(fulLabel(o)[0]);};
   if($("#oFulBack"))$("#oFulBack").onclick=()=>{const order=[o.engrave?"engrave":null,"packing","ready","shipped"].filter(Boolean);const i=order.indexOf(fulOf(o));if(i>0){o.ful=order[i-1];touch();renderOrder();}};
 }
