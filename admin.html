@@ -784,9 +784,9 @@ async function printOrder(o){
   w.document.write("<p style='font-family:Arial;direction:rtl;padding:20px'>מכין להדפסה…</p>");
   let img="";if(o.cardImg){try{const h=await (await fetch(o.cardImg.replace(/^https?:\/\/[^/]+/,""),{cache:"no-store"})).text();img=(h.match(/<img src="([^"]+)"/)||[])[1]||"";}catch(e){}}
   const c=orderCalc(o),b=num(o.boxes)||0,d=o.dlv||{};
-  const dl=o.dlvMode==="ship"?`לכתובת אחת: ${[d.street,d.city].filter(Boolean).join(", ")||"לא צוינה"}${d.addrNote?` · ${d.addrNote}`:""}<br>מקבל: ${d.rcvName||o.customer?.name||""} ${d.rcvPhone||o.customer?.phone||""}`
+  const dl=o.dlvMode==="ship"?`כתובת: ${[d.street,d.city].filter(Boolean).join(", ")||"לא צוינה"}${d.addrNote?` · ${d.addrNote}`:""}<br>מקבל: ${d.rcvName||o.customer?.name||""} ${d.rcvPhone||o.customer?.phone||""}`
     :["indiv","vip"].includes(o.dlvMode)?`${o.dlvMode==="vip"?"VIP ":""}לכל מקבל עד הבית · ${(o.addrFiles||[]).length?(o.addrFiles||[]).map(f=>`${f.name}${f.count?` (${f.count} כתובות)`:""}`).join(", "):"קובץ כתובות עוד לא הגיע"}`
-    :o.dlvMode==="pickup"?"איסוף עצמי מברקן":(o.dlvName||"");
+    :o.dlvMode==="pickup"?"הענבר 1, ברקן":(o.dlvName||"");
   const E=x=>String(x??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
   const rows=c.lines.map(l=>`<tr><td class="ck">☐</td><td>${E(l.isPack?l.name:l.name)}${l.sku?` <span class="sku">${E(l.sku)}</span>`:""}</td><td class="n">${l.perBox||"—"}</td><td class="n"><b>${num(l.qty).toLocaleString("he-IL")}</b></td></tr>`).join("");
   const extras=[o.engrave?"✨ חריטת לוגו":"",o.card?"💌 כרטיס ברכה ממותג":""].filter(Boolean).join(" · ");
