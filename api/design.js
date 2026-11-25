@@ -16,7 +16,7 @@ const ROOT = process.cwd();
 let day = "", count = 0;
 
 const clean = (s, n = 60) => String(s || "").replace(/[^\p{L}\p{N} +\-.'"]/gu, "").slice(0, n);
-const cleanDims = s => String(s || "").replace(/[^\p{L}\p{N} +\-.,()x/]/gu, "").slice(0, 320);
+const cleanDims = s => String(s || "").replace(/[^\p{L}\p{N} +\-.,()x/]/gu, "").slice(0, 480);
 // boxed products whose clean product photo shows no box: their card photo shows the real (square) retail box
 const BOX_REF = { p108: "ph/p108.webp", p109: "ph/p109.webp", p110: "ph/p110.webp", p111: "ph/p111.webp" };
 // exact look of each product's own retail box, so boxes are never swapped between products
