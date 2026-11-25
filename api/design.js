@@ -140,7 +140,7 @@ ART DIRECTION
 - Set: ${moods[variant % moods.length]}.
 - Camera: elevated three-quarter view, about 45–50° above the set, looking clearly down onto it so the top surfaces, the riser tops and the surface in front are clearly visible; keep every product upright, true to shape and undistorted.
 - Framing: a closer shot — the product group fills about 75–85% of the frame width, with only a modest margin of backdrop around it; do not crop any product.
-- Lighting: soft directional daylight, realistic contact shadows, gentle depth of field, high-end commercial catalogue quality.`;
+- Lighting: BRIGHT, AIRY, HIGH-KEY catalogue photo — soft directional daylight plus a generous soft fill light, so the whole scene is evenly lit and luminous. The backdrop stays a LIGHT cream / pale warm beige (never a deep peach, orange, tan or brown), shadows are soft, light and short (never deep or black), no dark corners, no vignette, no moody or dramatic low-key look. Clean whites stay white, colours natural and true to the product photos, gentle depth of field, high-end commercial catalogue quality.`;
 }
 
 export default async function handler(req, res) {
