@@ -709,7 +709,7 @@ async function pullInbox(){
     // address files the customer sent later through the personal link (matched by order number + private key)
     orders.filter(o=>o.kind==="addr").forEach(o=>{urls.push(o._url);db.lateFiles.push(o);});
     db.lateFiles=db.lateFiles.filter(o=>{const ord=db.orders.find(x=>x.ref===o.ref&&x.lateKey&&x.lateKey===o.k);if(!ord)return true;
-      ord.addrFiles=[...(ord.addrFiles||[]),...(o.files||[]).map(f=>({...f,late:true,at:o.receivedAt||new Date().toISOString()}))];nl++;return false;});
+      ord.addrFiles=(o.files||[]).map(f=>({...f,late:true,at:o.receivedAt||new Date().toISOString()}));nl++;return false;});   // a newer file replaces the earlier one
     db.orders.sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
     await new Promise(r=>{touch();setTimeout(r,1200);});await save();
     if(!dirty)await api("inboxdone",{method:"POST",body:{urls}}).catch(()=>{});

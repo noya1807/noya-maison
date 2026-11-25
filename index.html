@@ -2447,8 +2447,8 @@ async function send(kind){
   try{const g=id=>($(id)&&$(id).value||"").trim();fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({ref:o.ref,via:kind,
     customer:{name:g("fName"),phone:g("fPhone"),email:g("fEmail"),org:g("fOrg")},items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),
     pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
-    dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost()),city:g("fCity"),street:g("fStreet"),addrNote:g("fAddrNote"),
-      rcvName:$("rcvSame").checked?g("fName"):g("fRcvName"),rcvPhone:$("rcvSame").checked?g("fPhone"):g("fRcvPhone"),files:addrFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url,count:x.count||0}))},
+    dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost()),...(dlvMode()==="ship"?{city:g("fCity"),street:g("fStreet"),addrNote:g("fAddrNote"),
+      rcvName:$("rcvSame").checked?g("fName"):g("fRcvName"),rcvPhone:$("rcvSame").checked?g("fPhone"):g("fRcvPhone")}:{}),files:addrFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url,count:x.count||0}))},
     lateKey:lateKey||(lateKey=Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10)),cardImg:orderImg.url||"",engraveFiles:engFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url})),
     total:withVat(grandTotal()),totalNet:grandTotal(),date:g("fDate"),notes:[...stockAlerts(),g("fNotes")].filter(Boolean).join("\n"),giftFor,text:o.text})}).catch(()=>{});}catch(e){}
   let href;
