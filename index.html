@@ -2130,9 +2130,9 @@ function shareText(){const t=totals();
   return `מארז מתנה לאישורך ✨ (נויה במתנה)\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${unpriced()?"בהצעת מחיר":ils(per)+" (לפני מע״מ)"}${many?`\nכמות: ${boxes} מארזים${unpriced()?"":` · סה״כ: ${ils(r2(per*boxes))} (לפני מע״מ)`}`:""}`;}
 let sharing=false, shareReady=null; // shareReady: a prepared phone share, so a second tap can share instantly
 const ctaLine=()=>shareMode==="spread"?"עצבו את המארז שלכם ✨":"לצפייה במארז ולאישור:";
-async function shareLink(jpg){ // page with the designed image and one button to start designing; falls back to the site itself
+async function shareLink(jpg,modeOverride){ // page with the designed image and one button to start designing; falls back to the site itself
   if(!shareAvailable)return location.origin+"/";
-  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:{items:[...cart],pack:pack.id,bg:bg.id,variant,mode:shareMode,boxes,names:Object.fromEntries([...cart.keys()].map(id=>[id,byId[id].name])),prices:Object.fromEntries([...cart.keys()].map(id=>[id,+byId[id].price||0])),packName:pack.none?"ללא":pack.name,per:unpriced()?0:r2(orderPer())}})});
+  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:{items:[...cart],pack:pack.id,bg:bg.id,variant,mode:modeOverride||shareMode,boxes,names:Object.fromEntries([...cart.keys()].map(id=>[id,byId[id].name])),prices:Object.fromEntries([...cart.keys()].map(id=>[id,+byId[id].price||0])),packName:pack.none?"ללא":pack.name,per:unpriced()?0:r2(orderPer())}})});
   const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw new Error(j.error||r.status);return j.url;}
 let shareMode="consult";
 function spreadText(){return "עיצבתי מארז מתנה ב-נויה במתנה ✨\nבוחרים מוצרים, רואים את המארז מיד ומקבלים הצעת מחיר. שווה להציץ 🎁";}
@@ -2170,7 +2170,7 @@ async function shareWhatsApp(src,mode){shareMode=mode||"consult";
 const CARD_PHONE="054-3219070", CARD_MAIL="moshe@noyaglobal.com";
 function loadQR(){return window.qrcode?Promise.resolve(window.qrcode):new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="js/qrcode.js";sc.onload=()=>ok(window.qrcode);sc.onerror=no;document.head.appendChild(sc);});}
 function loadImg(src){return new Promise((ok,no)=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>ok(im);im.onerror=no;im.src=src;});}
-async function boxCard(src){
+async function boxCard(src,order){
   await (document.fonts&&document.fonts.ready);
   const [im,logo,qr]=await Promise.all([loadImg(src),loadImg("img/icon-192.png").catch(()=>null),loadQR().catch(()=>null)]);
   const W=1200,P=64,iw=W,ih=Math.round(im.naturalHeight*W/im.naturalWidth);
@@ -2180,8 +2180,9 @@ async function boxCard(src){
   // wrap long product names
   x.font=`500 30px ${BF}`;const maxW=W-2*P-40;const lines=[];
   items.forEach(t=>{const words=t.split(" ");let cur="";words.forEach(w=>{const n=cur?cur+" "+w:w;if(x.measureText(n).width>maxW&&cur){lines.push([cur,lines.length&&lines[lines.length-1][2]===t?false:true,t]);cur=w;}else cur=n;});lines.push([cur,!lines.length||lines[lines.length-1][2]!==t,t]);});
-  const LH=46, head=120, list=lines.length*LH, packH=pack.none?0:56, priceH=110, foot=290;
-  const H=ih+P+head+list+packH+priceH+foot;
+  const ordLines=order?[order.org?["ארגון",order.org]:null,["כמות",order.boxes+" מארזים"],order.dlv?["אספקה",order.dlv]:null].filter(Boolean):[];
+  const LH=46, head=120, list=lines.length*LH, packH=pack.none?0:56, priceH=110, foot=290, ordH=order?ordLines.length*48+(order.total?84:0)+40:0;
+  const H=ih+P+head+list+packH+priceH+ordH+foot;
   c.width=W;c.height=H;x.direction="rtl";
   x.fillStyle="#f7efe4";x.fillRect(0,0,W,H);
   x.drawImage(im,0,0,iw,ih);
@@ -2191,7 +2192,7 @@ async function boxCard(src){
   // brand line
   if(logo){x.save();x.beginPath();x.arc(W-P-36,y+36,36,0,Math.PI*2);x.clip();x.drawImage(logo,W-P-72,y,72,72);x.restore();}
   x.textAlign="right";x.textBaseline="middle";x.fillStyle="#3f271c";x.font=`700 46px ${DF}`;x.fillText("נויה במתנה",W-P-(logo?92:0),y+28);
-  x.font=`400 24px ${BF}`;x.fillStyle="#8a6d55";x.fillText("המארז שעיצבתי ✨",W-P-(logo?92:0),y+70);
+  x.font=`400 24px ${BF}`;x.fillStyle="#8a6d55";x.fillText(order?"כרטיס הזמנה":"המארז שעיצבתי ✨",W-P-(logo?92:0),y+70);
   y+=head;
   // items
   x.font=`500 30px ${BF}`;x.fillStyle="#3f271c";
@@ -2199,9 +2200,16 @@ async function boxCard(src){
   if(!pack.none){x.font=`400 27px ${BF}`;x.fillStyle="#6e4d3b";x.fillText("אריזה: "+pack.name,W-P,y+LH/2+6);y+=packH;}
   // price
   y+=22;x.fillStyle="rgba(176,138,79,.35)";x.fillRect(P,y,W-2*P,2);y+=24;
-  const t=totals();x.fillStyle="#3f271c";x.font=`700 54px ${DF}`;x.textAlign="right";const pr=ils(t.total);x.fillText(pr,W-P,y+30);
+  const t=totals();x.fillStyle="#3f271c";x.font=`700 54px ${DF}`;x.textAlign="right";const pr=order?(order.per?ils(order.per):"בהצעת מחיר"):ils(t.total);x.fillText(pr,W-P,y+30);
   const pw=x.measureText(pr).width;x.font=`600 26px ${BF}`;x.fillStyle="#8a6d55";x.fillText("למארז · לא כולל מע״מ",W-P-pw-18,y+34);
   y+=priceH-24;
+  if(order){ // order details: organisation, quantity, delivery, total
+    x.fillStyle="rgba(176,138,79,.35)";x.fillRect(P,y,W-2*P,2);y+=20;
+    ordLines.forEach(([k,v])=>{x.textAlign="right";x.font=`600 28px ${BF}`;x.fillStyle="#8a6d55";x.fillText(k+":",W-P,y+24);const kw=x.measureText(k+":").width;
+      x.font=`600 30px ${BF}`;x.fillStyle="#3f271c";let vv=v;while(x.measureText(vv).width>W-2*P-kw-20&&vv.length>4)vv=vv.slice(0,-2);if(vv!==v)vv+="…";x.fillText(vv,W-P-kw-14,y+24);y+=48;});
+    if(order.total){y+=10;x.fillStyle="#efe2cf";x.fillRect(P,y,W-2*P,66);x.fillStyle="#3f271c";x.textAlign="right";x.font=`700 32px ${BF}`;x.fillText("סה״כ לפני מע״מ",W-P-20,y+34);
+      x.textAlign="left";x.font=`700 40px ${DF}`;x.fillText(ils(order.total),P+20,y+34);y+=74;}
+    y+=10;}
   // footer: contact (right) + QR (left)
   x.fillStyle="rgba(176,138,79,.35)";x.fillRect(P,y,W-2*P,2);y+=36;
   const qs=150;
@@ -2233,9 +2241,15 @@ function openSummary(){
 }
 // the box picture travels with the order as a short link (uploaded in the background while the customer fills the form)
 let orderImg={src:"",url:""};
-function prepOrderImage(){const src=$("sumImg").src;if(!src||orderImg.src===src)return;const cur=orderImg={src,url:""};
-  const go=()=>{if(!shareAvailable)return;toJpeg(src,1280,.82).then(shareLink).then(u=>{cur.url=u;}).catch(()=>{});};
-  shareAvailable?go():setTimeout(go,1500);}
+// order card (picture + items + quantity + total) uploaded for the order message; refreshed when the order changes
+const orderInfo=()=>({org:($("fOrg").value||"").trim(),boxes,dlv:dlvName(),per:unpriced()?0:r2(orderPer()),total:unpriced()?0:grandTotal()});
+const orderKey=()=>JSON.stringify([$("sumImg").src.length,$("sumImg").src.slice(-40),[...cart],pack.id,orderInfo()]);
+let orderCardT=null,orderCardP=null;
+function makeOrderCard(){const key=orderKey(),src=$("sumImg").src;if(!src||!shareAvailable)return Promise.resolve();if(orderImg.key===key)return orderCardP||Promise.resolve();
+  const cur=orderImg={key,src,url:""};
+  return orderCardP=boxCard(src,orderInfo()).then(j=>toJpeg(j,2600,.85)).then(j=>shareLink(j,"order")).then(u=>{cur.url=u;}).catch(()=>{});}
+function prepOrderImage(){clearTimeout(orderCardT);orderCardT=setTimeout(makeOrderCard,shareAvailable?2000:3000);}
+["input","change","click"].forEach(ev=>document.getElementById("sumView").addEventListener(ev,()=>prepOrderImage()));
 // ---- logo engraving (optional upsell, chosen per item at order time) ----
 let engSel=new Set(), engFiles=[];
 const engItems=()=>[...cart.keys()].filter(id=>byId[id]&&byId[id].engrave);
@@ -2394,15 +2408,17 @@ function buildOrder(){
     ...(engSel.size?[`✨ חריטת לוגו: ${engNames()} (+${ils(engCost())} למארז)`,f("engNotes")?`הערות לחריטה: ${f("engNotes")}`:null]:[]),
     ...(cardOn?[`💌 כרטיס ברכה ממותג 10×15 (+${ils(cardCost())} למארז)`,cardSelf?"עיצוב הכרטיס: הלקוח ישלח עיצוב מוכן בהמשך":`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[]),
     ...(needLogo()?[`📎 קובץ לוגו: ${engFiles.filter(f=>f.url).map(f=>f.name+" – "+f.url).join(" | ")||"יישלח בהמשך"}`,""]:[]),
-    orderImg.url&&orderImg.src===$("sumImg").src?`📸 תמונת המארז: ${orderImg.url}`:null,orderImg.url&&orderImg.src===$("sumImg").src?"":null,
+    orderImg.url?`📸 כרטיס ההזמנה (תמונה עם כל הפרטים): ${orderImg.url}`:null,orderImg.url?"":null,
     `מחיר למארז (לפני מע"מ): ${money(orderPer())}`,`כמות מארזים: ${boxes}`,
     dlvMode()!=="pickup"?`${dlvName()}: ${boxes} × ${ils(dlvRate())} = ${ils(shipCost())}`:"משלוח: איסוף עצמי (ללא עלות)",
     ...(unpriced()?[`סה"כ: בהצעת מחיר (לאישור נציג)`]:[`סה"כ לפני מע"מ: ${ils(grandTotal())}`,`מע"מ 18%: ${ils(vatOf(grandTotal()))}`,`סה"כ כולל מע"מ: ${ils(withVat(grandTotal()))} (לאישור נציג)`]),
     f("fNotes")?"":null,f("fNotes")?`הערות: ${f("fNotes")}`:null].filter(x=>x!==null);
   return {ref,text:lines.join("\n")};
 }
-function send(kind){
+async function send(kind){
   if(!validate()){$("fErr").scrollIntoView({block:"center",behavior:"smooth"});return;}
+  if(shareAvailable&&orderImg.key!==orderKey()){clearTimeout(orderCardT);await Promise.race([makeOrderCard(),new Promise(r=>setTimeout(r,3000))]);}
+  else if(orderCardP&&!orderImg.url)await Promise.race([orderCardP,new Promise(r=>setTimeout(r,3000))]);
   if(needLogo()&&engFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הלוגו עדיין עולה…");return;}
   if(isIndiv()&&addrFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הכתובות עדיין עולה…");return;}
   const o=buildOrder();orderText=o.text;lastSend=kind;

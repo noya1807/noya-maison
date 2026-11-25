@@ -36,6 +36,15 @@ export default async function handler(req, res) {
   const waText = `✅ מארז אושר – אשמח לקבל הצעת מחיר מסודרת\n${lines}\nאריזה: ${b.packName || "—"}\n${per ? `מחיר למארז: ${ils(per)} (לפני מע״מ)\n` : ""}כמות: ${nBoxes} מארזים${total ? ` · סה״כ: ${ils(total)} (לפני מע״מ)` : ""}\n\nלפתיחת המארז והפקת הצעת מחיר:\n${home}?box=${boxId}&go=sum`;
   // the approver orders straight away: the builder opens on the order page with this box and quantity
   const approveBtn = `<a class="ok" href="${home}?box=${boxId}&go=sum">מאשר ומזמין ✓</a>`;
+  if (boxId && b.mode === "order") { // order card for Noya: the picture with all the order details, nothing else
+    res.setHeader("Content-Type", "text/html; charset=utf-8"); res.setHeader("Cache-Control", "no-cache");
+    res.end(`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>כרטיס הזמנה – נויה במתנה</title><meta property="og:title" content="כרטיס הזמנה – נויה במתנה"><meta property="og:description" content="תמונת המארז עם כל פרטי ההזמנה">
+<meta property="og:image" content="${esc(img)}"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image">
+<style>body{margin:0;background:#f7efe4;display:flex;justify-content:center;padding:12px}img{width:min(760px,100%);height:auto;border-radius:12px;box-shadow:0 10px 26px rgba(74,47,34,.16)}</style></head>
+<body><img src="${esc(img)}" alt="כרטיס הזמנה"></body></html>`);
+    return;
+  }
   if (boxId && req.query?.v === "noya") { // order card for Noya after a customer approved: details only, no approve button
     const rows = items.map(([id, q]) => { const pr = +b.prices?.[id] || 0;
       return `<tr><td>${esc(b.names?.[id] || id)}<small>${esc(id)}</small></td><td>${q}</td><td>${pr ? esc(ils(pr)) : "—"}</td></tr>`; }).join("");

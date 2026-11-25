@@ -15,7 +15,7 @@ const cleanBox = b => {
   if (!items.length) return null;
   const tag = v => (/^[a-z0-9_-]{1,16}$/i.test(String(v || "")) ? String(v) : "");
   return { items, pack: tag(b.pack), bg: tag(b.bg), variant: Math.max(0, Math.min(99, Math.round(+b.variant || 0))),
-    mode: b.mode === "spread" ? "spread" : "consult", boxes: Math.max(1, Math.min(100000, Math.round(+b.boxes || 1))),
+    mode: b.mode === "spread" || b.mode === "order" ? b.mode : "consult", boxes: Math.max(1, Math.min(100000, Math.round(+b.boxes || 1))),
     // names and prices as shown when the box was shared, for the order card Noya opens after an approval
     names: Object.fromEntries(items.map(([id]) => [id, txt(b.names?.[id])])), prices: Object.fromEntries(items.map(([id]) => [id, num(b.prices?.[id])])),
     packName: txt(b.packName), per: num(b.per) };
