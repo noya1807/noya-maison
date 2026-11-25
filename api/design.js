@@ -79,7 +79,7 @@ PRODUCTS (include every one, exactly this quantity, nothing else):
 ${list}
 
 ${sizeLadder(items)}
-${noPack ? "No packaging: arrange the products freely on the surface as an open styled set, with no box, bag or gift container." : `Packaging: ${pack.name}, standing at the back as the backdrop of the set.`}
+${noPack ? "No packaging: arrange the products freely on the surface as an open styled set, with no box, bag or gift container." : (/מגש/.test(pack.name) ? `Packaging: ${pack.name} — a low rectangular woven straw tray with a scalloped rim, exactly as in the packaging photo. It lies FLAT on the surface as the base of the set and the products are arranged standing INSIDE it (taller items at the back, smaller in front). It is a tray, not a backdrop: never stand it upright.` : `Packaging: ${pack.name}, standing at the back as the backdrop of the set.`)}
 
 FIDELITY
 Reproduce each product as photographed: same shape, proportions, colours, materials, and any logo or label text that is physically printed on it. Keep true relative sizes: use each product's REAL SIZE where given (length, width, diameter, height) and the heights for the rest, so every piece keeps its real proportions next to the others — for example a 24 cm long flat tray is clearly longer than a 21 cm vase is tall, and a 25.5 cm bowl is wide and low. Never enlarge, shrink, stretch or reshape a product to fit the composition. Each product photo is shot at its own zoom, so the size of a product inside its photo means nothing — size every product only from its REAL SIZE / height in the list and from the layout sketch. Do not add, duplicate or remove products, and do not invent brands.
