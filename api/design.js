@@ -102,7 +102,8 @@ Each box belongs ONLY to the product it is listed with and stands directly behin
 1. ${diffusers.length ? `The reed diffuser ("${diffusers[0].name}") stands at the back of the tray, a little to one side, its reeds rising up — the tallest item on the tray.` : "If there is a reed diffuser in the set, it stands at the back of the tray, a little to one side, reeds rising up — the tallest item on the tray."}
 2. ${holders.length ? "The candle holder set stands beside it on the tray if it fits naturally: tall piece behind, short piece in front." : "If there is a candle holder pair and it fits naturally, it stands beside the diffuser: tall piece behind, short piece in front."}
 3. One small item from the set in front to close the group — a candle, a small vase or a small cup (only products that are in the set; never add new ones). If a product has its own retail box, the box stands behind the tray, not on it.
-- The tray itself stays exactly as in its photo — same outline (for example a pebble shape), colour, rim and size; never swap it for a different tray.
+- The tray itself stays exactly as in its photo — same outline (for example an asymmetric pebble/teardrop shape stays asymmetric, never a symmetric oval), colour, rim and REAL SIZE; never swap it for a different tray.
+- The tray is NEVER enlarged or reshaped to hold more items: put on it only what physically fits at true scale. A small tray (under about 26 cm long) holds at most ONE or TWO small items; the rest stand around it.
 - Leave about a third of the tray surface empty so it still clearly reads as a tray.
 - Every item stands fully on the tray: nothing hangs over the edge, nothing is stacked on another item.
 - Heights step down from back to front (diffuser → tall holder → short holder → small item) in a gentle pyramid.
