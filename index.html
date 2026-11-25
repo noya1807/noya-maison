@@ -1316,7 +1316,7 @@ function renderBudget(){
   document.getElementById("budTxt").textContent=left>=0?`במארז ${ils(used)} · נשארו ${ils(Math.round(left*100)/100)}`:`חריגה של ${ils(Math.round(-left*100)/100)} מהתקציב`;
 }
 function renderGrid(){
-  let list=P.filter(p=>!p.hidden&&(cat==="sale"?onSale(p):!onSale(p)&&(cat==="all"||p.cat===cat)));
+  let list=P.filter(p=>!p.hidden&&(cat==="sale"?onSale(p):cat==="all"||(!onSale(p)&&p.cat===cat)));
   if(sortBy){const k=p=>+p.price||0;list=list.slice().sort((a,b)=>(!k(a))-(!k(b))||(sortBy==="asc"?k(a)-k(b):k(b)-k(a)));}
   else{
     // "מומלץ": families keep their order; inside each family, products with an upcoming arrival date (eta) come first,
@@ -1326,6 +1326,8 @@ function renderGrid(){
     const soon=p=>p.eta&&String(p.eta)>=today?String(p.eta):"";
     list=list.slice().sort((a,b)=>(fam[a.cat]-fam[b.cat])||((!soon(a))-(!soon(b)))||(soon(a)<soon(b)?-1:soon(a)>soon(b)?1:0)||(pos.get(a)-pos.get(b)));
   }
+  // "הכול": the big-discount products always come last (just above the packaging)
+  if(cat==="all")list=[...list.filter(p=>!onSale(p)),...list.filter(onSale)];
   const left=budget>0?budget-totals().total:Infinity;
   renderBudget();
   gridEl.innerHTML=list.map(p=>{
