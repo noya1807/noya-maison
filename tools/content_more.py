@@ -108,7 +108,7 @@ IND = [
   cats=["kitchen", "diffuser", "gift", "serve", "holder", "drink"],
   body="""<p>מתאימים במיוחד: סט שמן וחומץ על מעמד עץ שיטה, דיפיוזר בבקבוק מעוצב, מארז תה או מארז יין עם אביזרים. אפשר לבנות שתי רמות מארז – ללקוחות מרכזיים ולשאר הלקוחות – ולצרף ברכה חתומה מהשותף שמטפל בכל לקוח.</p>"""),
  dict(slug="matanot-lenadlan", nav="מתנות לנדל״ן, קבלנים ומטבחים", group="תחום",
-  title="מתנות לחברות נדל״ן, קבלנים ומטבחים – מתנה לדיירים וללקוחות | נויה במתנה",
+  title="מתנות לחברות נדל״ן וקבלנים – לדיירים וללקוחות | נויה במתנה",
   h1="מתנות לחברות נדל״ן, קבלנים ומטבחים",
   desc="מארזי שי לחברות נדל״ן, יזמים, קבלנים וחברות מטבחים: מתנת כניסה לדירה, מתנה ללקוחות ולשותפים – מוצרים לבית החדש עם מיתוג.",
   lead="מתנה לבית החדש היא רגע מרגש ללקוח – ומקום מצוין למותג שלכם. כלי הגשה, מפת שולחן או סט למטבח מלווים את הדיירים מהיום הראשון.",
@@ -290,7 +290,7 @@ GUIDES2 = [
 # ---------- English ----------
 EN_PAGES = [
  dict(path="/en/", title="Corporate Gift Boxes in Israel – Noya Gifts (נויה במתנה)",
-  desc="Custom corporate gift boxes for employees, clients and partners in Israel. Build a box online, see it instantly, add your logo, and we ship to every recipient. 600+ companies since 2024.",
+  desc="Custom gift boxes for employees, clients and partners in Israel. Build a box online, add your logo, and we ship to every recipient. 600+ companies since 2024.",
   he="/", body="""<h1>Corporate gift boxes in Israel</h1>
 <p class="lead">Noya Gifts (נויה במתנה) designs custom gift boxes for employees, clients and business partners – for Rosh Hashanah, Passover, Hanukkah and every occasion.</p>
 <div class="cta-row"><a class="btn" href="/">Open the box builder ←</a><a class="btn ghost" href="https://wa.me/972543219070" target="_blank" rel="noopener">WhatsApp us</a></div>
@@ -300,7 +300,7 @@ EN_PAGES = [
 <h2>What's inside</h2><p>Reed diffusers, scented candles, candle holders, tablecloths, wooden and ceramic serving trays, kitchen gifts, tea and coffee sets – directly imported at competitive prices.</p>
 <p>Among our clients: Mizrahi Tefahot Bank, Discount Bank, Bank Hapoalim, Sheba Medical Center, Clalit, Elbit, Partner, the Tel Aviv and Herzliya municipalities and the Knesset.</p>
 <p>See also: <a href="/en/employee-gifts-israel/">Employee gifts in Israel – a quick guide</a>.</p></div>"""),
- dict(path="/en/employee-gifts-israel/", title="Employee Holiday Gifts in Israel – A Guide for International Companies | Noya Gifts",
+ dict(path="/en/employee-gifts-israel/", title="Employee Holiday Gifts in Israel – Guide for Global Companies",
   desc="A short guide for HR teams at international companies in Israel: when Israelis give holiday gifts, typical budgets, delivery to every employee and how to order.",
   he="/gifts/matanot-laovdim/", body="""<article class="prose"><h1>Employee holiday gifts in Israel – a quick guide</h1>
 <p>If your company has a team in Israel, holiday gifts are part of the local work culture. Here is what HR teams at international companies usually need to know.</p>

@@ -38,7 +38,7 @@ a{color:var(--cocoa)}
 .btn.ghost{background:var(--paper);box-shadow:inset 0 0 0 1.5px var(--gold)}
 .btn.sm{padding:8px 16px;font-size:15px}
 main{max-width:1100px;margin:auto;padding:18px 18px 40px}
-.crumbs{font-size:14px;color:var(--soft);margin:4px 0 14px}.crumbs a{color:var(--soft);text-decoration:none}.crumbs a:hover{text-decoration:underline}
+.crumbs{font-size:14px;color:var(--soft);margin:4px 0 14px}.crumbs a{color:var(--soft);text-decoration:none;display:inline-block;padding:6px 0}.crumbs a:hover{text-decoration:underline}
 h1{font-family:'Frank Ruhl Libre',serif;font-size:clamp(28px,4.4vw,42px);line-height:1.25;margin:6px 0 12px}
 h2{font-family:'Frank Ruhl Libre',serif;font-size:clamp(22px,3vw,28px);margin:34px 0 10px}
 h3{font-size:19px;margin:18px 0 6px}
@@ -54,7 +54,7 @@ h3{font-size:19px;margin:18px 0 6px}
 .card:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px rgba(74,47,34,.35)}
 .card img{width:100%;aspect-ratio:1;object-fit:contain;background:#fff}
 .card span{padding:8px 10px 0;font-size:15px;font-weight:600;line-height:1.4}
-.card b{padding:2px 10px 10px;font-size:15px;color:var(--gold)}
+.card b{padding:2px 10px 10px;font-size:15px;color:#8a6a33}
 .prose{max-width:780px}.prose p{margin:0 0 14px}
 .prose ul{padding-inline-start:22px}.prose li{margin:4px 0}
 .faq details{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin:8px 0;max-width:820px}
@@ -66,9 +66,9 @@ h3{font-size:19px;margin:18px 0 6px}
 .links a:hover{border-color:var(--gold)}
 footer{border-top:1px solid var(--gl);margin-top:30px;padding:24px 18px 90px;text-align:center;font-size:15px;color:var(--soft)}
 footer b{font-family:'Frank Ruhl Libre',serif;font-size:20px;color:var(--cocoa)}
-footer a{text-decoration:none;font-weight:600}
-.wa{position:fixed;right:18px;bottom:18px;z-index:20;background:#25d366;color:#fff;text-decoration:none;font-weight:700;border-radius:99px;padding:11px 18px;box-shadow:0 8px 20px -6px rgba(0,0,0,.35)}
-".tbl{border-collapse:collapse;width:100%;max-width:820px;background:var(--paper);border-radius:14px;overflow:hidden}.tbl th,.tbl td{border:1px solid var(--line);padding:8px 12px;text-align:start}.tbl th{background:#f1e4d0}
+footer a{text-decoration:none;font-weight:600;display:inline-block;padding:6px 2px}
+.wa{position:fixed;right:18px;bottom:18px;z-index:20;background:#15803d;color:#fff;text-decoration:none;font-weight:700;border-radius:99px;padding:11px 18px;box-shadow:0 8px 20px -6px rgba(0,0,0,.35)}
+.tbl{border-collapse:collapse;width:100%;max-width:820px;background:var(--paper);border-radius:14px;overflow:hidden}.tbl th,.tbl td{border:1px solid var(--line);padding:8px 12px;text-align:start}.tbl th{background:#f1e4d0}
 dl dt{font-weight:700;margin-top:14px}dl dd{margin:2px 0 0}
 .skip{position:absolute;inset-inline-start:-999px}.skip:focus{inset-inline-start:12px;top:12px;z-index:99;background:#fff;padding:8px 12px;border-radius:8px}
 .tool{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:22px;max-width:820px}
@@ -119,6 +119,30 @@ def page(path, title, desc, body, ld, crumbs, img=None, lang="he", alt=None, nav
     open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
     URLS.append(path)
 
+def ptitle(name, cat, lim=65):
+    B = " | נויה במתנה"
+    for t in (f"{name} | {cat} למארזי שי – נויה במתנה", f"{name} | {cat} – נויה במתנה", name + B):
+        if len(t) <= lim: return t
+    head, sep, tail = name.partition(" – ")
+    keep = sep + tail if tail and len(tail) <= 18 and len(head) >= 20 else ""
+    src = head if keep or len(head) >= 25 else name
+    room = lim - len(B) - len(keep)
+    out = ""
+    for w in src.split():
+        if len((out + " " + w).strip()) > room: break
+        out = (out + " " + w).strip()
+    return out.rstrip(",–- ") + keep + B
+
+def pdesc(name, d, price, lim=160):
+    base = f"{ils(price)} ליחידה לפני מע״מ. מיתוג עם לוגו ומשלוח לכל נמען."
+    d = (d or "").strip().rstrip(".")
+    first = re.split(r"(?<=[.!?])\s", d)[0].rstrip(".") if d else ""
+    for t in ((f"{name} – {d}. {base}" if d else ""), (f"{name}. {first}. {base}" if first else ""), (f"{first}. {base}" if first else ""), f"{name}. {base}"):
+        if t and len(t) <= lim: return t
+    room = lim - len(base) - 3
+    cut = (first or name)[:room].rsplit(" ", 1)[0].rstrip(",–- ")
+    return f"{cut}… {base}"
+
 def card(p):
     return f'<a class="card" href="/p/{p["id"]}/"><img src="/{p["photo"] or p["img"]}" alt="{e(p["name"])}" loading="lazy" width="360" height="360"><span>{e(p["name"])}</span><b>{ils(p["price"])} <small>לפני מע״מ</small></b></a>'
 
@@ -134,6 +158,26 @@ COMMON_FAQ = [
  ("אפשר להוסיף לוגו של החברה?", "כן. אפשר למתג את המארז, הכרטיס והאריזה עם הלוגו שלכם ולהוסיף ברכה אישית."),
  ("איך מקבלים הצעת מחיר?", 'בונים מארז ב<a href="/">בונה המארזים</a>, רואים אותו מעוצב, ומורידים הצעת מחיר מסודרת בלחיצה – או שולחים לנו בוואטסאפ.'),
 ]
+
+# Phrasing variants of the common FAQ, so the same four answers are not copied word for word across dozens of pages.
+FAQ_VAR = [
+ [COMMON_FAQ[0],
+  ("יש מינימום הזמנה?", "כן – ₪3,000 לפני מע״מ לכל ההזמנה יחד. אפשר לשלב בה כמה סוגי מארזים, למשל מארז לעובדים ומארז משודרג להנהלה."),
+  ("מה ההזמנה המינימלית?", "ההזמנה המינימלית היא ₪3,000 לפני מע״מ, והיא נספרת על ההזמנה כולה ולא על כל מארז בנפרד.")],
+ [COMMON_FAQ[1],
+  ("אתם שולחים לכל נמען בנפרד?", "כן. מספיק קובץ אקסל עם שם, טלפון וכתובת לכל נמען. משלוח אישי עולה ₪65 למארז, שליח VIP צמוד ₪99, ואפשר גם לאסוף בעצמכם מהענבר 1, ברקן."),
+  ("איך עובד משלוח לבתי העובדים?", "שולחים לנו קובץ אקסל של כתובות, ואנחנו מוציאים כל מארז לכתובת שלו: ₪65 למארז במשלוח אישי, או ₪99 בשליח VIP צמוד. איסוף עצמי אפשרי מברקן.")],
+ [COMMON_FAQ[2],
+  ("אפשר למתג את המארז?", "כן. הלוגו שלכם יכול להופיע על כרטיס הברכה, על התגית ועל האריזה, ובחלק מהמוצרים גם בחריטה."),
+  ("איך מוסיפים את הלוגו שלנו?", "מעלים את הלוגו בבונה ורואים איך הוא נראה על המארז. אפשר למתג כרטיס, תגית ואריזה, ובחלק מהמוצרים גם לחרוט.")],
+ [COMMON_FAQ[3],
+  ("כמה זמן לוקח לקבל הצעת מחיר?", 'אפשר לקבל אותה מיד: בונים מארז ב<a href="/">בונה המארזים</a> ומורידים הצעת מחיר מסודרת. אם נוח לכם יותר, שלחו לנו הודעה בוואטסאפ.'),
+  ("איך מזמינים?", 'בוחרים מוצרים ואריזה ב<a href="/">בונה המארזים</a>, מורידים הצעת מחיר ושולחים לנו אותה בוואטסאפ או במייל moshe@noyaglobal.com.')],
+]
+import zlib
+def common_faq(key):
+    h = zlib.crc32(key.encode())
+    return [v[(h >> (i * 3)) % len(v)] for i, v in enumerate(FAQ_VAR)]
 
 # ---------- holiday / audience landing pages ----------
 LAND = [
@@ -168,9 +212,26 @@ LAND = [
   desc="מארזי שי לפסח לארגונים: מפות שולחן לליל הסדר, מגשי הגשה, פמוטים ומתנות לבית. מיתוג עם לוגו ומשלוח אישי לכל עובד. בונים מארז ורואים אותו מיד.",
   lead="פסח הוא חג של שולחן גדול ומשפחה – ולכן מארז שמתאים לבית ולשולחן הסדר הוא מתנה שכל עובד משתמש בה כבר בחג עצמו.",
   cats=["textile", "serve", "holder", "kitchen", "candle", "decor"],
+  faq=[("מתי ערב פסח 2027?", "ערב פסח וליל הסדר חלים ביום רביעי, 21 באפריל 2027. כדאי שהמארזים יגיעו לעובדים כמה ימים לפני כן, כדי שיספיקו להשתמש בהם בשולחן החג."),
+       ("כמה זמן מראש להזמין מארזי פסח?", "מומלץ לסגור הזמנה 4–6 שבועות לפני החג – בערך מאמצע פברואר ועד אמצע מרץ 2027. פסח הוא אחת העונות העמוסות בשנה, והזמנה מוקדמת משאירה זמן למיתוג ולאיסוף כתובות."),
+       ("מה נכנס למארז פסח לשולחן הסדר?", "מוצרים שמשתמשים בהם בליל הסדר עצמו: מפת שולחן גדולה, מגשים וקערות הגשה, פמוטים ונרות, ואביזרי מטבח כמו סט לשמן זית או קרש חיתוך מעץ. את השילוב בוחרים בבונה לפי התקציב."),
+       ("אפשר לשלוח מארזים ללקוחות ולעובדים באותה הזמנה?", "כן. אפשר לבנות בהזמנה אחת מארז לעובדים ומארז מכובד יותר ללקוחות או להנהלה, ולשלוח כל אחד לכתובת שלו. המינימום (₪3,000 לפני מע״מ) נספר על ההזמנה כולה.")],
   body="""<p>מארזי הפסח שלנו מתמקדים במה שבאמת נכנס לשימוש בחג: מפות שולחן גדולות במיוחד, מגשים וקערות הגשה, פמוטים ונרות, ואביזרי מטבח איכותיים. הכול נבחר בבונה, מתומחר מיד ונשלח לכל עובד.</p>
+<h3>מתנה שפוגשים בליל הסדר</h3>
+<p>בפסח הבית מתמלא באורחים, והשולחן הוא מרכז החג. מפה חגיגית, מגש הגשה או זוג פמוטים שמגיעים לפני החג נכנסים לשימוש כבר בערב הסדר – ומזכירים את הארגון גם בחגים הבאים. כך מתנה אחת עובדת הרבה יותר מסל מוצרי מזון. וכשהמארז נבנה סביב השולחן, קל להתאים אותו לכל תקציב: מתחילים ממוצר מרכזי אחד ומוסיפים לו פריט או שניים משלימים.</p>
+<h3>רעיונות למארז פסח</h3>
+<ul><li><b>מארז לשולחן הסדר</b> – מפת שולחן גדולה, מגש הגשה וזוג נרות.</li>
+<li><b>מארז למטבח</b> – סט לשמן זית וחומץ, קרש חיתוך מעץ שיטה וקערת הגשה.</li>
+<li><b>מארז ללקוחות ולשותפים</b> – פמוטים או מפיץ ריח יוקרתי עם כרטיס ממותג, ומשלוח בשליח VIP צמוד.</li></ul>
+<h3>מארז אחיד או מארז מדורג</h3>
+<p>רוב הארגונים בוחרים מארז אחיד לכל העובדים, כי הוא הוגן ופשוט לניהול. אפשר להוסיף לו מארז משודרג להנהלה, לעובדים ותיקים או ללקוחות מרכזיים, בלי להגדיל את כל התקציב. בכל אחד מהמארזים אפשר למתג את כרטיס הברכה, התגית והאריזה עם הלוגו שלכם, ובחלק מהמוצרים גם לחרוט. ברכת חג קצרה וחמה על הכרטיס היא מה שהופך מארז יפה למתנה אישית, גם כשהיא נשלחת למאות עובדים.</p>
+<p>בבונה מגדירים תקציב למארז ורואים מיד מה נכנס בו. לרעיונות לפי תקציב: <a href="/gifts/ad-150/">מארזים עד ₪150</a> ו<a href="/gifts/ad-200/">מארזים עד ₪200</a>. לתכנון התקציב לכל הארגון יש גם <a href="/kelim/machshevon-takziv/">מחשבון תקציב מתנות</a>.</p>
 <h3>טיפ להזמנת מארזי פסח</h3>
-<p>כדאי לסגור את ההזמנה כחודש לפני החג. כך יש זמן למיתוג, לקבלת רשימת הכתובות מכל המחלקות ולמשלוח מסודר לפני ליל הסדר.</p>"""),
+<p>ערב פסח 2027 חל ב-21 באפריל. כדאי לסגור את ההזמנה 4–6 שבועות לפני החג. כך יש זמן למיתוג, לקבלת רשימת הכתובות מכל המחלקות ולמשלוח מסודר לפני ליל הסדר. שולחים לנו קובץ אקסל של כתובות, ואנחנו שולחים כל מארז בנפרד (₪65 למארז, או ₪99 בשליח VIP צמוד), או שאוספים בעצמכם מהענבר 1, ברקן. המחירים לפני מע״מ, ומינימום ההזמנה הוא ₪3,000 לכל ההזמנה. פירוט נוסף ב<a href="/guides/ad-matai-lehazmin/">לוח הזמנים להזמנת מארזים לחגים</a>.</p>
+<h3>לקריאה נוספת בבלוג</h3>
+<ul><li><a href="https://www.noyaglobal.com/post/pesach-gifts-seder-table">מתנות לעובדים לפסח: מה באמת משתמשים בו בליל הסדר</a></li>
+<li><a href="https://www.noyaglobal.com/post/pesach-gift-boxes-budget">מארזי פסח לעובדים: כמה להוציא ומה נכנס בכל תקציב</a></li>
+<li><a href="https://www.noyaglobal.com/post/pesach-gifts-clients-partners">מתנות פסח ללקוחות ולשותפים עסקיים: איך בוחרים מתנה מכובדת</a></li></ul>"""),
  dict(slug="chanukah", nav="מתנות לחנוכה", title="מתנות לחנוכה לעובדים ולקוחות – מארזי שי | נויה במתנה",
   h1="מתנות לחנוכה לעובדים וללקוחות",
   desc="מארזי שי לחנוכה: פמוטים, נרות ריחניים ומפיצי ריח שמאירים את הבית. מארזים בהתאמה אישית לארגונים, מיתוג עם לוגו ומשלוח לכל נמען.",
@@ -183,7 +244,27 @@ LAND = [
   desc="מארזי שי לט״ו בשבט לארגונים: עציצים, פריטי עיצוב ירוקים, מגשי עץ ומתנות לבית. מארזים בהתאמה אישית עם מיתוג ומשלוח לכל עובד.",
   lead="ט״ו בשבט הוא חג הטבע והצמיחה – הזדמנות מצוינת למתנה ירוקה, טבעית ומחברת, שמזכירה לעובדים שהארגון צומח איתם.",
   cats=["decor", "serve", "kitchen", "candle", "textile", "holder"],
-  body="""<p>למארז ט״ו בשבט מתאימים במיוחד עציצים ופריטי עיצוב, מגשי הגשה מעץ לפירות יבשים, קערות במבוק וכלים טבעיים. אפשר לבנות מארז קטן וסמלי לכל העובדים, או מארז מושקע יותר להנהלה.</p>"""),
+  faq=[("מתי חל ט״ו בשבט 2027?", "ט״ו בשבט חל ביום שישי, 22 בינואר 2027. מכיוון שהחג נופל בסוף שבוע, רוב הארגונים מחלקים את המארזים כבר בימים שלפניו."),
+       ("כמה זמן מראש כדאי להזמין מארזי ט״ו בשבט?", "מומלץ לסגור הזמנה 3–4 שבועות לפני החג, כלומר עד סוף דצמבר או תחילת ינואר. כך נשאר זמן לאסוף כתובות, להכין מיתוג ולשלוח לפני 22 בינואר."),
+       ("מה מתאים למארז ט״ו בשבט במקום סלסלת פירות יבשים?", "מוצר שנשאר אחרי החג: עציץ או פריט עיצוב ירוק, מגש עץ או מעמד צנצנות להגשת פירות יבשים, קערות במבוק וכלים טבעיים. אפשר לצרף אליהם ברכה ממותגת."),
+       ("אפשר לשלב את מארז ט״ו בשבט עם מתנה לסוף השנה?", "כן. יש ארגונים שסוגרים בהזמנה אחת גם מארזים לסוף השנה וגם מארזי ט״ו בשבט – מינימום ההזמנה (₪3,000 לפני מע״מ) נספר על ההזמנה כולה.")],
+  body="""<p>למארז ט״ו בשבט מתאימים במיוחד עציצים ופריטי עיצוב, מגשי הגשה מעץ לפירות יבשים, קערות במבוק וכלים טבעיים. אפשר לבנות מארז קטן וסמלי לכל העובדים, או מארז מושקע יותר להנהלה.</p>
+<h3>מתנה ירוקה שנשארת אחרי החג</h3>
+<p>סלסלת פירות יבשים נגמרת תוך יום-יומיים. מארז שבנוי סביב מוצר לבית – עציץ, מגש עץ, מעמד צנצנות או קערת הגשה – נשאר על השולחן או על אדן החלון עוד חודשים, ומזכיר לעובד מי חשב עליו. את הפירות היבשים אפשר להגיש בתוכו כבר בחג עצמו.</p>
+<h3>רעיונות למארז ט״ו בשבט</h3>
+<ul><li><b>מארז סמלי לכל העובדים</b> – עציץ קטן או פריט עיצוב ירוק עם כרטיס ברכה ממותג.</li>
+<li><b>מארז לשולחן החג</b> – מגש עץ או מעמד עם צנצנות זכוכית לפירות יבשים, בתוספת נר.</li>
+<li><b>מארז להנהלה</b> – שילוב של כלי הגשה מעץ, פריט עיצוב ומפת שולחן או מגבות.</li></ul>
+<h3>מיתוג שמחבר את המתנה לארגון</h3>
+<p>מתנה ירוקה היא הזדמנות להעביר מסר של צמיחה משותפת. אפשר להוסיף את הלוגו שלכם על כרטיס הברכה, על התגית ועל האריזה, ובחלק מהמוצרים גם בחריטה. ברכה קצרה כמו "צומחים יחד" או "תודה שאתם חלק מהצוות" הופכת מארז פשוט למחווה אישית. כשהמארז נשלח לבית של העובד, הכרטיס הוא מה שמזכיר מי שלח אותו, ולכן כדאי להשקיע בו.</p>
+<p>אם יש לכם עובדים בכמה סניפים או בעבודה היברידית, אפשר לשלב: משלוח מרוכז לסניף אחד ומשלוח אישי הביתה לעובדים אחרים, באותה הזמנה.</p>
+<p>בבונה המארזים מגדירים תקציב, בוחרים מוצרים ואריזה ורואים את המחיר מתעדכן בזמן אמת. לרעיונות לפי תקציב: <a href="/gifts/ad-100/">מארזים עד ₪100</a> ו<a href="/gifts/ad-150/">מארזים עד ₪150</a>.</p>
+<h3>לוח זמנים ומשלוח</h3>
+<p>ט״ו בשבט 2027 חל ביום שישי, 22 בינואר. מומלץ לסגור את ההזמנה 3–4 שבועות מראש, כדי שיהיה זמן לאסוף כתובות מכל המחלקות ולהכין מיתוג. שולחים לנו קובץ אקסל של כתובות, ואנחנו שולחים כל מארז בנפרד (₪65 למארז, או ₪99 בשליח VIP צמוד). אפשר גם איסוף עצמי מהענבר 1, ברקן. המחירים לפני מע״מ, ומינימום ההזמנה הוא ₪3,000 לכל ההזמנה. פירוט נוסף ב<a href="/guides/ad-matai-lehazmin/">לוח הזמנים להזמנת מארזים לחגים</a> וב<a href="/guides/mishloach-matanot-laovdim-habayta/">מדריך המשלוח לכל עובד</a>.</p>
+<h3>לקריאה נוספת בבלוג</h3>
+<ul><li><a href="https://www.noyaglobal.com/post/tu-bishvat-gifts-ideas">מארזי ט״ו בשבט לעובדים: 12 רעיונות לפי תקציב</a></li>
+<li><a href="https://www.noyaglobal.com/post/green-gift-tu-bishvat-employees">מתנה ירוקה לעובדים: מה נותנים בט״ו בשבט במקום עוד סלסלת פירות יבשים</a></li>
+<li><a href="https://www.noyaglobal.com/post/tu-bishvat-order-deadline-delivery">עד מתי להזמין מארזי ט״ו בשבט, ואיך שולחים לכל עובד הביתה</a></li></ul>"""),
  dict(slug="purim", nav="משלוחי מנות לעובדים", title="משלוחי מנות לעובדים בפורים – מארזים לארגונים | נויה במתנה",
   h1="משלוחי מנות ומארזי פורים לעובדים",
   desc="משלוחי מנות ומארזי פורים לארגונים: מארז מעוצב בהתאמה אישית לכל עובד, מיתוג עם לוגו ומשלוח עד הבית. בונים מארז ורואים אותו מיד.",
@@ -335,7 +416,7 @@ for k, v in CATS.items(): og_make(f"/c/{k}/", f"{v} למארזי שי")
 
 for l in LAND + AUD + IND + EVT:
     pp = picks(l["cats"])
-    faqs = COMMON_FAQ
+    faqs = l.get("faq", []) + common_faq(l["slug"])
     body = f"""<h1>{e(l["h1"])}</h1><p class="lead">{e(l["lead"])}</p>
 <div class="cta-row"><a class="btn" href="/?cat={l["cats"][0]}">בונים מארז עכשיו ←</a><a class="btn ghost" href="{WA}" target="_blank" rel="noopener">מדברים איתנו בוואטסאפ</a></div>
 <ul class="facts"><li>מאז 2024 · 48,000+ מארזים</li><li>600+ חברות וארגונים</li><li>מיתוג עם לוגו</li><li>משלוח אישי לכל נמען</li></ul>
@@ -348,7 +429,10 @@ for l in LAND + AUD + IND + EVT:
          alt={"he": "/gifts/matanot-laovdim/", "en": "/en/employee-gifts-israel/"} if l["slug"] == "matanot-laovdim" else None)
 
 for g in ALLG:
-    body = f'<article class="prose"><h1>{e(g["h1"])}</h1>{g["body"]}<p><b>רוצים לראות את זה בפועל?</b> <a href="/">היכנסו לבונה המארזים</a>, בחרו מוצרים ותראו את המארז שלכם תוך דקה.</p></article>'
+    outro = ['<p><b>רוצים לראות את זה בפועל?</b> <a href="/">היכנסו לבונה המארזים</a>, בחרו מוצרים ותראו את המארז שלכם תוך דקה.</p>',
+             '<p><b>מהמדריך למארז:</b> ב<a href="/">בונה המארזים</a> בוחרים מוצרים ואריזה ומקבלים הצעת מחיר מסודרת מיד.</p>',
+             '<p><b>רוצים לנסות?</b> פתחו את <a href="/">בונה המארזים</a>, הגדירו תקציב למארז ובדקו מה נכנס בו.</p>'][ALLG.index(g) % 3]
+    body = f'<article class="prose"><h1>{e(g["h1"])}</h1>{g["body"]}{outro}</article>'
     ld = [{"@type": "Article", "headline": g["h1"], "description": g["desc"], "inLanguage": "he", "datePublished": TODAY, "dateModified": TODAY,
            "author": {"@type": "Organization", "name": "נויה במתנה"}, "publisher": {"@id": SITE + "/#business"}, "mainEntityOfPage": f'{SITE}/guides/{g["slug"]}/'}]
     page(f'/guides/{g["slug"]}/', g["title"], g["desc"], body, ld, [("בונה המארזים", "/"), (g["nav"], f'/guides/{g["slug"]}/')])
@@ -358,6 +442,7 @@ for k, v in CATS.items():
     if not pp: continue
     title = f"{v} למארזי שי ומתנות לעובדים | נויה במתנה"
     desc = f"{CAT_INTRO[k]} {len(pp)} מוצרים, מחירים לפני מע״מ."
+    if len(desc) > 160: desc = f"{CAT_INTRO[k].split(' – ')[0]} – {len(pp)} מוצרים, מחירים לפני מע״מ."
     body = f"""<h1>{e(v)} למארזי שי</h1><p class="lead">{e(CAT_INTRO[k])}</p>
 <div class="cta-row"><a class="btn" href="/?cat={k}">בונים מארז עם {e(v)} ←</a></div>
 <div class="grid">{"".join(card(p) for p in pp)}</div>"""
@@ -375,7 +460,7 @@ for p in P:
     img = f'{SITE}/{p["photo"] or p["img"]}'
     rel = [x for x in P if x["cat"] == p["cat"] and x["id"] != p["id"]][:8]
     instock = (p.get("stock") or 0) > 0
-    sale = f' <s style="color:#a08a7a;font-size:18px">{ils(p["was"])}</s>' if p.get("was", 0) > p["price"] else ""
+    sale = f' <s style="color:var(--soft);font-size:18px">{ils(p["was"])}</s>' if p.get("was", 0) > p["price"] else ""
     eta = f'<li>מלאי נוסף בדרך</li>' if p.get("incoming") else ""
     body = f"""<div class="hero"><div><h1>{e(name)}</h1>
 {f'<p class="lead">{e(d)}</p>' if d else ''}{f'<p><b>רעיון למארז:</b> {e(cp[1])}</p>' if cp else ''}
@@ -383,7 +468,7 @@ for p in P:
 <ul class="facts"><li>{e(cat)}</li>{'<li>במלאי</li>' if instock else '<li>בהזמנה מראש</li>'}{'<li>מגיע באריזת מתנה</li>' if p.get('box') else ''}{eta}<li>מיתוג ומשלוח לכל נמען</li></ul>
 <div class="cta-row"><a class="btn" href="/?add={p["id"]}">הוסיפו למארז ←</a><a class="btn ghost" href="/c/{p["cat"]}/">עוד {e(cat)}</a></div>
 <p style="font-size:15px;color:var(--soft);margin:10px 0 0">בונים מארז מכמה מוצרים, רואים אותו מעוצב ומקבלים הצעת מחיר מיד. מינימום הזמנה ₪3,000 לכל ההזמנה.</p></div>
-<img src="/{p["photo"] or p["img"]}" alt="{e(name)}" width="720" height="720"></div>
+<img src="/{p["photo"] or p["img"]}" alt="{e(name)}" width="720" height="720" fetchpriority="high"></div>
 <h2>עוד {e(cat)} למארז</h2><div class="grid">{"".join(card(x) for x in rel)}</div>
 <h2>מתאים במיוחד ל…</h2><nav class="links">{"".join(f'<a href="/gifts/{l["slug"]}/">{e(l["nav"])}</a>' for l in (LAND + AUD + IND + EVT) if p["cat"] in l["cats"][:3])}</nav>"""
     prod = {"@type": "Product", "name": name, "image": [img], "description": desc, "sku": p["id"], "category": cat,
@@ -391,7 +476,7 @@ for p in P:
             "offers": {"@type": "Offer", "url": f'{SITE}/p/{p["id"]}/', "priceCurrency": "ILS", "price": f'{p["price"]:.2f}',
                        "availability": "https://schema.org/InStock" if instock else "https://schema.org/PreOrder",
                        "itemCondition": "https://schema.org/NewCondition", "seller": {"@id": SITE + "/#business"}}}
-    page(f'/p/{p["id"]}/', f"{name} | {cat} למארזי שי – נויה במתנה"[:110], desc[:300], body, [prod],
+    page(f'/p/{p["id"]}/', ptitle(name, cat), pdesc(name, d, p["price"]), body, [prod],
          [("בונה המארזים", "/"), (cat, f'/c/{p["cat"]}/'), (name, f'/p/{p["id"]}/')], img)
 
 
@@ -422,8 +507,8 @@ for i, (b, slug, lab) in enumerate(BUD):
 <li>אם שולחים לכל עובד הביתה, תקצבו גם משלוח: ₪65 למארז, או ₪99 בשליח VIP.</li>
 <li>המחירים לפני מע״מ. מינימום הזמנה ₪3,000 לכל ההזמנה.</li></ul>
 <p>לקריאה נוספת: <a href="/guides/kama-lehotzi-al-matana-laoved/">כמה להוציא על מתנה לעובד?</a></p></div>
-{faq_html(COMMON_FAQ)}"""
-    ld = [{"@type": "WebPage", "name": title, "description": desc, "inLanguage": "he"}, faq_ld(COMMON_FAQ)]
+{faq_html(common_faq(slug))}"""
+    ld = [{"@type": "WebPage", "name": title, "description": desc, "inLanguage": "he"}, faq_ld(common_faq(slug))]
     page(f"/gifts/{slug}/", title, desc, body, ld, [("בונה המארזים", "/"), (nav, f"/gifts/{slug}/")])
 
 # ---------- about ----------
@@ -462,8 +547,8 @@ for n in SIZES:
 <li>תכננו גם את <a href="/guides/matanot-laovdim-mas/">עלות המס והגילום</a> אם אתם מגלמים.</li></ul>
 <p>לחישוב מדויק עם המספרים שלכם: <a href="/kelim/machshevon-takziv/?n={n}">מחשבון תקציב מתנות</a>.</p></article>
 <div class="cta-row"><a class="btn" href="/">בונים מארז ורואים מחיר ←</a></div>
-{faq_html(COMMON_FAQ)}"""
-    page(f"/gifts/{n}-ovdim/", title, desc, body, [{"@type": "WebPage", "name": title, "description": desc, "inLanguage": "he"}, faq_ld(COMMON_FAQ)],
+{faq_html(common_faq(str(n)))}"""
+    page(f"/gifts/{n}-ovdim/", title, desc, body, [{"@type": "WebPage", "name": title, "description": desc, "inLanguage": "he"}, faq_ld(common_faq(str(n)))],
          [("בונה המארזים", "/"), (f"מתנות ל-{n} עובדים", f"/gifts/{n}-ovdim/")])
 
 # ---------- gallery of inspiration sets ----------
