@@ -121,7 +121,7 @@ const DOC_KINDS=["חשבונית פרופורמה","Packing List","שטר מטע
 const COSTS=[["originFreight","הובלה בארץ המקור עד הנמל (₪)","vol"],["freight","הובלה ימית (₪)","vol"],["port","נמל ואחסנה (₪)","vol"],["clearance","עמיל מכס ושחרור (₪)","vol"],["local","הובלה למחסן (₪)","vol"],["customs","מכס ומיסים (₪)","val"],["fees","עמלות – Alibaba, בנק וכו׳ (₪)","val"],["other","אחר (₪)","val"]];
 const costMethod=(s,k)=>(s.costMethod&&s.costMethod[k])||COSTS.find(c=>c[0]===k)[2];
 const DEFAULT_CATS=[["DB","דבש"],["WN","יין ואלכוהול"],["CH","שוקולד וממתקים"],["DF","פירות יבשים ואגוזים"],["CF","קפה ותה"],["GR","גורמה, ממרחים ורטבים"],["OL","שמן זית"],["KT","כלי מטבח והגשה"],["HM","עיצוב הבית"],["CN","נרות וריחות"],["SP","טיפוח וספא"],["TX","טקסטיל"],["JD","יודאיקה"],["TC","גאדג'טים ואלקטרוניקה"],["BG","תיקים ואביזרים"],["BX","אריזות – קופסאות, סלסלות, מגשים"],["AC","אביזרי אריזה – סרטים, כרטיסים, מילוי"],["EQ","ציוד לעסק (לא למכירה)"],["OT","אחר"]].map(([code,name])=>({code,name}));
-const DEFAULT_SETTINGS={markup:3,costFiller:0,costLabor:0,costCard:0,costEngrave:0,shipOne:0,shipIndiv:0,shipVip:0,minMargin:30,vatRate:18};
+const DEFAULT_SETTINGS={packT1:3,packT2:4,packT3:5,costCarton:1,markup:3,costFiller:0,costLabor:0,costCard:0,costEngrave:0,shipOne:0,shipIndiv:0,shipVip:0,minMargin:30,vatRate:18};
 const emptyDb=()=>({v:1,products:[],shipments:[],suppliers:[],orders:[],stockAdj:[],settings:{...DEFAULT_SETTINGS},categories:DEFAULT_CATS.map(c=>({...c})),seq:{}});
 
 let db=null,rev="",dirty=false,saving=false,view="dash",sel=null,selOrder=null;
@@ -733,13 +733,18 @@ function orderCalc(o){
   const st=db.settings,b=num(o.boxes)||0;
   const lines=(o.lines||[]).map(l=>{const uc=l.unitCost!==undefined&&l.unitCost!==""?num(l.unitCost):(l.sku?costOf(l.sku):0)+(l.extraSkus||[]).reduce((a,k)=>a+costOf(k),0);return {...l,uc,cost:uc*num(l.qty)};});
   const missing=lines.filter(l=>!l.uc).length;
-  const fixed={filler:b*num(st.costFiller),labor:b*num(st.costLabor),card:o.card?b*num(st.costCard):0,engrave:o.engrave?b*num(st.costEngrave):0,
-    ship:o.dlvMode==="vip"?b*num(st.shipVip):o.dlvMode==="indiv"?b*num(st.shipIndiv):o.dlvMode==="ship"?num(st.shipOne):0};
+  // shipping: what the customer paid for it is exactly what it costs (no profit on shipping)
+  const shipNet=num(o.shipCharge)>0?num(o.shipCharge)/(1+VATR()):0;
+  const shipCost=shipNet||(o.dlvMode==="vip"?b*num(st.shipVip):o.dlvMode==="indiv"?b*num(st.shipIndiv):o.dlvMode==="ship"?num(st.shipOne):0);
+  // packing each box by its value before VAT (without shipping): up to ₪99 → ₪3, ₪100–199 → ₪4, ₪200+ → ₪5; plus a big carton per box
+  const boxVal=b?(num(o.gross)/(1+VATR())-shipNet)/b:0;
+  const packRate=boxVal>=200?num(st.packT3):boxVal>=100?num(st.packT2):num(st.packT1);
+  const fixed={pack:b*packRate,carton:b*num(st.costCarton),filler:b*num(st.costFiller),labor:b*num(st.costLabor),card:o.card?b*num(st.costCard):0,engrave:o.engrave?b*num(st.costEngrave):0,ship:shipCost};
   const fixedT=Object.values(fixed).reduce((t,v)=>t+v,0);
   const goodsCost=lines.reduce((t,l)=>t+l.cost,0),cost=goodsCost+fixedT;
   const net=num(o.gross)/(1+VATR());
   const profit=net-cost;
-  return {lines,missing,fixed,fixedT,goodsCost,cost,net,profit,margin:net>0?profit/net:0};
+  return {lines,missing,fixed,fixedT,goodsCost,cost,net,profit,margin:net>0?profit/net:0,boxVal,packRate,shipAtCost:!!shipNet};
 }
 let ordFilter="pending",dlvFilter="all";
 // fulfilment after approval: engraving (only if needed) → packing → ready → shipped / picked up
@@ -859,7 +864,7 @@ function renderOrder(){
   </tbody></table></div><datalist id="ordProds">${prodOpts}</datalist>
   ${locked?"":`<button class="btn sm ghost" id="oAddLine" style="margin-top:10px">+ שורה</button>`}
   <p class="muted" style="font-size:12.5px;margin-bottom:0">עלות ריקה = העלות הממוצעת של המוצר מהמכולות. כשבוחרים מוצר לשורה שהגיעה מהבונה, המערכת זוכרת את הקישור להזמנות הבאות.</p></div>
-  <h2>עלויות קבועות בהזמנה</h2><div class="panel">${[["filler","מילוי וסרט"],["labor","עבודת אריזה"],["card","כרטיסי ברכה"],["engrave","חריטה"],["ship","משלוח (עלות בפועל)"]].map(([k,l])=>`<span style="display:inline-block;margin:0 0 6px 18px">${l}: <b>${money(Math.round(c.fixed[k]))||"₪0"}</b></span>`).join("")}
+  <h2>עלויות קבועות בהזמנה</h2><div class="panel">${[["pack",`אריזת מארז (${c.packRate!==undefined?money(c.packRate):"—"} למארז · שווי מארז ${c.boxVal?money(Math.round(c.boxVal)):"—"})`],["carton","קרטון גדול"],["filler","מילוי וסרט"],["labor","עבודת אריזה"],["card","כרטיסי ברכה"],["engrave","חריטה"],["ship",c.shipAtCost?"משלוח (= מה שהלקוח שילם, בלי רווח)":"משלוח (עלות בפועל)"]].filter(([k])=>c.fixed[k]!==undefined&&(c.fixed[k]||["pack","carton","ship"].includes(k))).map(([k,l])=>`<span style="display:inline-block;margin:0 0 6px 18px">${l}: <b>${money(Math.round(c.fixed[k]))||"₪0"}</b></span>`).join("")}
     <p class="muted" style="font-size:12.5px;margin:4px 0 0">הסכומים לכל מארז נקבעים פעם אחת ב"הגדרות".</p></div>
   <h2>הערות</h2><div class="panel"><textarea data-o="notes" rows="3" ${dis}>${esc(o.notes)}</textarea>${o.text?`<details style="margin-top:8px"><summary class="muted">ההודעה המקורית מהבונה</summary><pre style="white-space:pre-wrap;font:inherit;font-size:13px">${esc(o.text)}</pre></details>`:""}</div>`;
   $("#oBack").onclick=()=>{selOrder=null;render();};
@@ -904,7 +909,7 @@ function renderSettings(){
     ${db.categories.map((c,i)=>{const n=db.products.filter(p=>p.cat===c.code).length;return `<tr data-i="${i}"><td><input data-c="code" value="${esc(c.code)}" dir="ltr" maxlength="3" ${n?"disabled":""}></td><td><input data-c="name" value="${esc(c.name)}"></td><td class="num">${n||""}</td></tr>`;}).join("")}
     </tbody></table><button class="btn sm ghost" id="catNew" style="margin-top:10px">+ קטגוריה</button></div>
   <h2>עלויות קבועות להזמנות</h2><div class="panel"><p class="muted" style="margin-top:0">נכנסות לעלות של כל הזמנה כשמחשבים רווח גולמי. אפשר להשאיר 0 ולמלא בהמשך.</p><div class="grid">
-    ${[["markup","מקדם מחיר מכירה (עלות × ...)"],["costFiller","מילוי וסרט לכל מארז (₪)"],["costLabor","עבודת אריזה לכל מארז (₪)"],["costCard","כרטיס ברכה לכל מארז (₪)"],["costEngrave","חריטה לכל מארז (₪)"],["shipOne","משלוח לכתובת אחת, להזמנה (₪)"],["shipIndiv","משלוח פרטני לכל נמען (₪)"],["shipVip","משלוח VIP לכל נמען (₪)"],["minMargin","התראה מתחת לאחוז רווח (%)"],["vatRate","מע״מ (%)"]].map(([k,l])=>`<label class="f">${l}<input data-st="${k}" inputmode="decimal" dir="ltr" value="${esc(db.settings[k])}"></label>`).join("")}</div></div>
+    ${[["packT1","אריזת מארז בשווי עד ₪99 (₪ למארז)"],["packT2","אריזת מארז בשווי ₪100–199 (₪ למארז)"],["packT3","אריזת מארז בשווי ₪200 ומעלה (₪ למארז)"],["costCarton","קרטון גדול לכל מארז (₪)"],["markup","מקדם מחיר מכירה (עלות × ...)"],["costFiller","מילוי וסרט לכל מארז (₪)"],["costLabor","עבודת אריזה לכל מארז (₪)"],["costCard","כרטיס ברכה לכל מארז (₪)"],["costEngrave","חריטה לכל מארז (₪)"],["shipOne","משלוח לכתובת אחת, להזמנה (₪)"],["shipIndiv","משלוח פרטני לכל נמען (₪)"],["shipVip","משלוח VIP לכל נמען (₪)"],["minMargin","התראה מתחת לאחוז רווח (%)"],["vatRate","מע״מ (%)"]].map(([k,l])=>`<label class="f">${l}<input data-st="${k}" inputmode="decimal" dir="ltr" value="${esc(db.settings[k])}"></label>`).join("")}</div></div>
   <h2>גיבוי</h2><div class="panel"><p class="muted" style="margin-top:0">המערכת שומרת אוטומטית 30 גרסאות אחרונות. מומלץ להוריד גם גיבוי למחשב מדי פעם.</p>
     <div class="row"><button class="btn ghost" id="bkOut">הורדת גיבוי</button><button class="btn ghost" id="bkIn">שחזור מגיבוי</button><input type="file" id="bkFile" accept=".json" hidden></div></div>
   <h2>חשבון</h2><div class="panel"><button class="btn danger" id="logout">יציאה</button></div>`;
