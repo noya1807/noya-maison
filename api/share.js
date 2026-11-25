@@ -5,6 +5,8 @@
 // page can offer "I want this box": GET ?box=<id> → {box:{items,pack,bg,variant,image}}
 import { put, head } from "@vercel/blob";
 
+const txt = v => String(v || "").replace(/[<>\u0000-\u001f]/g, "").slice(0, 120);
+const num = v => { const n = Math.round((+v || 0) * 100) / 100; return n > 0 && n < 1e6 ? n : 0; };
 const cleanBox = b => {
   if (!b || typeof b !== "object") return null;
   const items = (Array.isArray(b.items) ? b.items : []).slice(0, 40)
@@ -13,7 +15,10 @@ const cleanBox = b => {
   if (!items.length) return null;
   const tag = v => (/^[a-z0-9_-]{1,16}$/i.test(String(v || "")) ? String(v) : "");
   return { items, pack: tag(b.pack), bg: tag(b.bg), variant: Math.max(0, Math.min(99, Math.round(+b.variant || 0))),
-    mode: b.mode === "spread" ? "spread" : "consult", boxes: Math.max(1, Math.min(100000, Math.round(+b.boxes || 1))) };
+    mode: b.mode === "spread" ? "spread" : "consult", boxes: Math.max(1, Math.min(100000, Math.round(+b.boxes || 1))),
+    // names and prices as shown when the box was shared, for the order card Noya opens after an approval
+    names: Object.fromEntries(items.map(([id]) => [id, txt(b.names?.[id])])), prices: Object.fromEntries(items.map(([id]) => [id, num(b.prices?.[id])])),
+    packName: txt(b.packName), per: num(b.per) };
 };
 
 const DAILY_LIMIT = +(process.env.SHARE_DAILY_LIMIT || 500);

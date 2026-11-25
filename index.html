@@ -2132,7 +2132,7 @@ let sharing=false, shareReady=null; // shareReady: a prepared phone share, so a 
 const ctaLine=()=>shareMode==="spread"?"עצבו את המארז שלכם ✨":"לצפייה במארז ולאישור:";
 async function shareLink(jpg){ // page with the designed image and one button to start designing; falls back to the site itself
   if(!shareAvailable)return location.origin+"/";
-  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:{items:[...cart],pack:pack.id,bg:bg.id,variant,mode:shareMode,boxes}})});
+  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:{items:[...cart],pack:pack.id,bg:bg.id,variant,mode:shareMode,boxes,names:Object.fromEntries([...cart.keys()].map(id=>[id,byId[id].name])),prices:Object.fromEntries([...cart.keys()].map(id=>[id,+byId[id].price||0])),packName:pack.none?"ללא":pack.name,per:unpriced()?0:r2(orderPer())}})});
   const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw new Error(j.error||r.status);return j.url;}
 let shareMode="consult";
 function spreadText(){return "עיצבתי מארז מתנה ב-נויה במתנה ✨\nבוחרים מוצרים, רואים את המארז מיד ומקבלים הצעת מחיר. שווה להציץ 🎁";}

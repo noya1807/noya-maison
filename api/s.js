@@ -29,8 +29,32 @@ export default async function handler(req, res) {
   const page = `https://${host}/s/${boxId}`;
   const title = approve ? "מארז מתנה לאישורך ✨" : "המארז שבניתי ב-נויה במתנה ✨";
   const desc = approve ? "הוכן עבורכם מארז מתנה בעיצוב אישי. מאשרים בלחיצה, ונציג נויה במתנה יחזור עם הצעת מחיר מסודרת." : "מארז מתנה בעיצוב אישי. בחרו מוצרים, ונויה תעצב לכם מארז משלכם.";
-  const waText = `שלום נויה במתנה, אני מאשר/ת את המארז הזה ✓\n${page}${nBoxes > 1 ? `\nכמות: ${nBoxes} מארזים` : ""}\nאשמח לקבל הצעת מחיר מסודרת.`;
+  const b = bx?.box || {}, items = Array.isArray(b.items) ? b.items : [];
+  const ils = n => "₪" + (+n).toLocaleString("he-IL", { maximumFractionDigits: 2 });
+  const per = +b.per || 0, total = per ? Math.round(per * nBoxes * 100) / 100 : 0;
+  const lines = items.map(([id, q]) => `• ${b.names?.[id] || id}${q > 1 ? ` × ${q}` : ""}`).join("\n");
+  const waText = `✅ מארז אושר – אשמח לקבל הצעת מחיר מסודרת\n${lines}\nאריזה: ${b.packName || "—"}\n${per ? `מחיר למארז: ${ils(per)} (לפני מע״מ)\n` : ""}כמות: ${nBoxes} מארזים${total ? ` · סה״כ: ${ils(total)} (לפני מע״מ)` : ""}\n\nכרטיס ההזמנה:\n${page}?v=noya`;
   const approveBtn = `<a class="ok" href="https://wa.me/${NOYA_WA}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener">מאשר ✓ – שלחו לנו הצעת מחיר</a>`;
+  if (boxId && req.query?.v === "noya") { // order card for Noya after a customer approved: details only, no approve button
+    const rows = items.map(([id, q]) => { const pr = +b.prices?.[id] || 0;
+      return `<tr><td>${esc(b.names?.[id] || id)}<small>${esc(id)}</small></td><td>${q}</td><td>${pr ? esc(ils(pr)) : "—"}</td></tr>`; }).join("");
+    res.setHeader("Content-Type", "text/html; charset=utf-8"); res.setHeader("Cache-Control", "no-cache");
+    res.end(`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>כרטיס הזמנה – מארז שאושר</title>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500&family=Assistant:wght@400;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#f7efe4;color:#4a2f22;font-family:Assistant,Arial,sans-serif;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.w{width:min(760px,100%);display:flex;flex-direction:column;gap:14px}h1{font-family:"Frank Ruhl Libre",Georgia,serif;font-weight:500;font-size:26px;margin:0;text-align:center}
+img{width:100%;border-radius:16px;box-shadow:0 10px 26px rgba(74,47,34,.16)}.card{background:#fffaf3;border:1px solid #e2d3c0;border-radius:16px;padding:14px 16px}
+table{width:100%;border-collapse:collapse;font-size:17px}th,td{text-align:right;padding:8px 6px;border-bottom:1px solid #eee2d2;vertical-align:top}th{font-size:14px;color:#7a5a48}td small{display:block;color:#a08670;font-size:12px}
+.sum{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:17px}.sum b{font-size:19px}.note{font-size:13px;color:#7a5a48;margin:6px 0 0}
+a{display:block;text-align:center;text-decoration:none;border-radius:14px;padding:15px 20px;font-size:19px;font-weight:700;color:#fffaf3;background:linear-gradient(135deg,#3f271c,#6e4d3b 55%,#b08a4f)}a.alt{background:#fffaf3;color:#4a2f22;border:1px solid #e2d3c0;font-weight:400}</style></head>
+<body><div class="w"><h1>✅ מארז שאושר – כרטיס הזמנה</h1><img src="${esc(img)}" alt="תמונת המארז">
+<div class="card"><table><tr><th>מוצר</th><th>כמות במארז</th><th>מחיר ליחידה</th></tr>${rows}</table></div>
+<div class="card sum"><span>אריזה</span><span>${esc(b.packName || "—")}</span><span>מחיר למארז</span><span>${per ? esc(ils(per)) : "בהצעת מחיר"}</span><span>כמות מארזים</span><span>${nBoxes}</span>${total ? `<b>סה״כ לפני מע״מ</b><b>${esc(ils(total))}</b>` : ""}
+<p class="note" style="grid-column:1/-1">המחירים כפי שהוצגו ללקוח בזמן השיתוף, לפני מע״מ.</p></div>
+<a href="${home}?box=${boxId}">פתיחה בבונה (עריכה, הצעת מחיר PDF והזמנה)</a><a class="alt" href="${esc(img)}" download>הורדת התמונה</a></div></body></html>`);
+    return;
+  }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache"); // always fresh, so new buttons show up on links opened before
   res.end(`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8">
