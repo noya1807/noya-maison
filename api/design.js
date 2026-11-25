@@ -3,6 +3,7 @@
 // → {image: dataURL}
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
 import { readCatalog } from "./catalog.js";
 
 export const config = { maxDuration: 120 };
@@ -14,6 +15,20 @@ const FIDELITY = process.env.OPENAI_INPUT_FIDELITY || "";          // set "high"
 const DAILY_LIMIT = +(process.env.DAILY_LIMIT || 300);             // soft guard per server instance
 const ROOT = process.cwd();
 let day = "", count = 0;
+// model comparison: only a logged-in admin (back-office session cookie) may ask for another image model, from a fixed list
+const TEST_MODELS = ["gpt-image-2", "gpt-image-2.6-sunburst", "gpt-image-2.6-flare"];
+function adminSession(req) {
+  try {
+    const pass = process.env.ADMIN_PASSWORD; if (!pass) return false;
+    const base = process.env.OFFICE_KEY || process.env.BLOB_READ_WRITE_TOKEN || "";
+    const key = crypto.createHash("sha256").update("noya-office-sess-v1:" + pass + ":" + base).digest();
+    const t = (String(req.headers.cookie || "").split(";").map(x => x.trim()).find(x => x.startsWith("noya_office=")) || "").slice(12);
+    if (!t.includes(".")) return false;
+    const [body, sig] = t.split("."), good = crypto.createHmac("sha256", key).update(body).digest("base64url");
+    if (sig.length !== good.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(good))) return false;
+    return JSON.parse(Buffer.from(body, "base64url").toString()).exp > Date.now();
+  } catch (e) { return false; }
+}
 
 const clean = (s, n = 60) => String(s || "").replace(/[^\p{L}\p{N} +\-.'"]/gu, "").slice(0, n);
 const cleanDims = s => String(s || "").replace(/[^\p{L}\p{N} +\-.,()x/]/gu, "").slice(0, 480);
@@ -146,7 +161,9 @@ export default async function handler(req, res) {
     const variant = Math.abs(+body.variant || 0);
 
     const form = new FormData();
-    form.append("model", MODEL);
+    const useModel = body.model && TEST_MODELS.includes(body.model) && adminSession(req) ? body.model : MODEL;
+    form.append("model", useModel);
+    if (/^gpt-image-2\.6/.test(useModel) && ["low", "medium", "high"].includes(body.complexity)) form.append("complexity", body.complexity);
     form.append("prompt", prompt(items, pack, variant, !!body.manual));
     form.append("size", SIZE);
     form.append("quality", QUALITY);
@@ -184,7 +201,7 @@ export default async function handler(req, res) {
     if (!r.ok) { res.status(502).json({ error: j?.error?.message || `OpenAI ${r.status}` }); return; }
     const b64 = j?.data?.[0]?.b64_json;
     if (!b64) { res.status(502).json({ error: "no image returned" }); return; }
-    res.status(200).json({ image: `data:image/png;base64,${b64}` });
+    res.status(200).json({ image: `data:image/png;base64,${b64}`, model: useModel });
   } catch (e) {
     res.status(500).json({ error: String(e.message || e).slice(0, 200) });
   }

@@ -2070,7 +2070,7 @@ async function generateAi(force){
       role:p===hero?"hero":p.role==="plat"?"tray":p.role==="lean"?"leaning":(byId[id].lie||byId[id].role==="lie")?"lying":R.planes.back.includes(p)?"back":R.planes.front.includes(p)?"front":"middle"};});
     aiCtrl=new AbortController();const to=setTimeout(()=>aiCtrl.abort(),150000);
     const r=await fetch(AI_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},signal:aiCtrl.signal,
-      body:JSON.stringify({layout:sketch,items,pack:{id:pack.id,name:pack.name},background:bg.id,variant,manual:manual.size>0})});
+      body:JSON.stringify({layout:sketch,items,pack:{id:pack.id,name:pack.name},background:bg.id,variant,manual:manual.size>0,model:window.NOYA_TEST_MODEL||undefined,complexity:window.NOYA_TEST_COMPLEXITY||undefined})});
     clearTimeout(to);
     const j=await r.json().catch(()=>({}));
     if(!r.ok||!j.image)throw new Error(j.error||("שגיאה "+r.status));
