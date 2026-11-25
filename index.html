@@ -372,6 +372,10 @@ body.revealed .bar-act{display:flex}body.revealed #barBtn{display:none}
 .dlv legend{font-family:var(--display);font-weight:500;font-size:19px;color:var(--cocoa);padding:0;margin-bottom:8px}
 .dlv-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .dlv-opt.vip:has(input:checked){background:linear-gradient(135deg,#fffaf0,#fbefd6)}
+.vip-tog{grid-template-columns:auto auto minmax(0,1fr)}
+fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
+.dlv-err{margin:-2px 0 6px}
+.addr-warn{background:#fff4e5;border:1px solid #f0c27a;border-radius:10px;padding:8px 10px;margin-bottom:6px;color:#7a4b12;font-size:14px}
 .addr-cnt{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;color:var(--cocoa);background:#fffaf0;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .addr-cnt:empty{display:none}
 .addr-cnt button{border:1px solid var(--cocoa);background:var(--cocoa);color:#fff;border-radius:999px;padding:5px 12px;font:600 13px var(--body);cursor:pointer}
@@ -1053,25 +1057,18 @@ h1.brand{margin:0;line-height:1.2}
         <label>אימייל<input id="fEmail" type="email" autocomplete="email"></label>
         <label>ארגון / חברה *<input id="fOrg" required autocomplete="organization"></label>
       </div>
-      <p class="note" style="margin:0 0 8px">רק שם, טלפון וארגון. את כל השאר אפשר להשלים מול הנציג שלנו.</p>
-      <details class="more" id="moreDet"><summary>פרטים נוספים: למי המתנות, משלוח, תאריך והערות <span class="opt">(לא חובה)</span></summary>
-      <fieldset class="for">
-        <legend>למי המתנות? <span class="opt">(לא חובה)</span></legend>
-        <div class="for-opts" id="forOpts"><button type="button" data-for="עובדים">עובדים</button><button type="button" data-for="לקוחות">לקוחות</button><button type="button" data-for="שותפים עסקיים">שותפים עסקיים</button><button type="button" data-for="אחר">אחר</button></div>
-      </fieldset>
       <fieldset class="dlv">
-        <legend>איך תרצו לקבל את ההזמנה?</legend>
+        <legend>איך תרצו לקבל את ההזמנה? *</legend>
         <div class="dlv-opts">
-          <label class="dlv-opt"><input type="radio" name="dlv" value="ship" checked><span class="di">🚚</span><span><b>משלוח לכתובת אחת</b><small id="shipNote"></small></span></label>
-          <label class="dlv-opt"><input type="radio" name="dlv" value="indiv"><span class="di">📦</span><span><b>משלוח פרטני לכל מקבל</b><small id="indivNote"></small></span></label>
-          <label class="dlv-opt vip"><input type="radio" name="dlv" value="vip"><span class="di">⭐</span><span><b>משלוח פרטני VIP</b><small id="vipNote"></small></span></label>
-          <label class="dlv-opt"><input type="radio" name="dlv" value="pickup"><span class="di">🏬</span><span><b>איסוף עצמי</b><small id="pickNote"></small></span></label>
+          <label class="dlv-opt"><input type="radio" name="dlv" value="ship"><span class="di">🏢</span><span><b>הכל לכתובת אחת</b><small id="shipNote"></small></span></label>
+          <label class="dlv-opt"><input type="radio" name="dlv" value="indiv"><span class="di">🏠</span><span><b>לכל מקבל עד הבית</b><small id="indivNote"></small></span></label>
+          <label class="dlv-opt"><input type="radio" name="dlv" value="pickup"><span class="di">🏬</span><span><b>איסוף עצמי מברקן</b><small id="pickNote"></small></span></label>
         </div>
         <div class="dlv-box" id="shipBox">
           <div id="addrBox">
             <div class="f2">
-              <label>עיר<input id="fCity" autocomplete="address-level2"></label>
-              <label>רחוב ומספר<input id="fStreet" autocomplete="address-line1"></label>
+              <label>עיר *<input id="fCity" autocomplete="address-level2"></label>
+              <label>רחוב ומספר *<input id="fStreet" autocomplete="address-line1"></label>
             </div>
             <label>קומה, כניסה והערות לשליח<input id="fAddrNote"></label>
           </div>
@@ -1082,6 +1079,7 @@ h1.brand{margin:0;line-height:1.2}
           </div>
         </div>
         <div class="dlv-box" id="indivBox" hidden>
+          <label class="dlv-opt vip vip-tog"><input type="checkbox" id="vipChk"><span class="di">⭐</span><span><b>משלוח VIP למנכ״לים ובכירים</b><small id="vipNote"></small></span></label>
           <p class="note" id="indivDesc"></p>
           <a class="tpl-dl" id="tplDl" href="#" download="קובץ-כתובות-נויה-במתנה.xlsx" target="_blank" rel="noopener">⬇️ הורדת קובץ אקסל לכתובות (שורה לכל מקבל)</a>
           <label class="eng-file">העלאת קובץ הכתובות <span class="opt">(אפשר גם אחרי ההזמנה)</span><input type="file" id="addrFile" accept=".xlsx,.xls,.csv"></label>
@@ -1090,6 +1088,12 @@ h1.brand{margin:0;line-height:1.2}
           <p class="note">ממלאים שורה לכל מקבל: שם, טלפון נייד, עיר, רחוב ומספר, דירה, כניסה וקומה. את שורת הדוגמה אפשר להשאיר, אנחנו מדלגים עליה.</p>
         </div>
         <div class="dlv-box pick" id="pickBox" hidden></div>
+      </fieldset>
+      <p class="err dlv-err" id="dlvErr" hidden>נא לבחור איך לקבל את ההזמנה</p>
+      <details class="more" id="moreDet"><summary>פרטים נוספים: למי המתנות, תאריך והערות <span class="opt">(לא חובה)</span></summary>
+      <fieldset class="for">
+        <legend>למי המתנות? <span class="opt">(לא חובה)</span></legend>
+        <div class="for-opts" id="forOpts"><button type="button" data-for="עובדים">עובדים</button><button type="button" data-for="לקוחות">לקוחות</button><button type="button" data-for="שותפים עסקיים">שותפים עסקיים</button><button type="button" data-for="אחר">אחר</button></div>
       </fieldset>
       <label>תאריך אספקה רצוי<input id="fDate" type="date"></label>
       <label>הערות נוספות<textarea id="fNotes" rows="3"></textarea></label>
@@ -1111,6 +1115,7 @@ h1.brand{margin:0;line-height:1.2}
     <h2 id="doneTitle"></h2>
     <p id="doneText"></p>
     <div class="done-box"><img id="doneImg" alt="המארז שהוזמן"><div id="doneSum"></div></div>
+    <div class="done-logo" id="doneAddr" hidden></div>
     <div class="done-logo" id="doneLogo" hidden></div>
     <p class="note" id="doneRef"></p>
     <div class="send"><button class="ghost" id="resend">פתיחת ההודעה שוב</button><button class="go" id="newBox">בניית מארז נוסף</button></div>
@@ -2222,7 +2227,7 @@ async function boxCard(src,order){
 }
 // ===================== Stage 2: summary, details, send =====================
 // Set these for the business. orderEmail empty = email button asks the customer to use WhatsApp or copy.
-let boxes=1, orderText="", lastSend=null;
+let boxes=1, orderText="", lastSend=null, orderRef="", lateKey="";   // one order number per box: sending again updates the same order
 const $=id=>document.getElementById(id);
 function setStep(n){[...$("steps").children].forEach((s,i)=>s.classList.toggle("on",i===n));}
 function showView(v){
@@ -2242,7 +2247,12 @@ function openSummary(){
 // the box picture travels with the order as a short link (uploaded in the background while the customer fills the form)
 let orderImg={src:"",url:""};
 // order card (picture + items + quantity + total) uploaded for the order message; refreshed when the order changes
-const orderInfo=()=>({org:($("fOrg").value||"").trim(),boxes,dlv:dlvName(),per:unpriced()?0:r2(orderPer()),total:unpriced()?0:grandTotal()});
+function dlvDetail(){const v=id=>($(id).value||"").trim();if(!dlvPicked())return "טרם נבחרה";const m=dlvMode();
+  if(m==="pickup")return "איסוף עצמי מברקן";
+  if(m==="ship"){const a=[v("fStreet"),v("fCity")].filter(Boolean).join(", ");const who=$("rcvSame").checked?[v("fName"),v("fPhone")]:[v("fRcvName"),v("fRcvPhone")];
+    return `לכתובת אחת${a?": "+a:""}${who.filter(Boolean).length?` · מקבל: ${who.filter(Boolean).join(" ")}`:""}`;}
+  const c=addrFiles.find(x=>x.url)?.count;return `${m==="vip"?"VIP ":""}לכל מקבל · ${c?c+" כתובות בקובץ":"קובץ כתובות יישלח"}`;}
+const orderInfo=()=>({org:($("fOrg").value||"").trim(),boxes,dlv:dlvDetail(),per:unpriced()?0:r2(orderPer()),total:unpriced()?0:grandTotal()});
 const orderKey=()=>JSON.stringify([$("sumImg").src.length,$("sumImg").src.slice(-40),[...cart],pack.id,orderInfo()]);
 let orderCardT=null,orderCardP=null;
 function makeOrderCard(){const key=orderKey(),src=$("sumImg").src;if(!src||!shareAvailable)return Promise.resolve();if(orderImg.key===key)return orderCardP||Promise.resolve();
@@ -2293,11 +2303,12 @@ $("engFile").addEventListener("change",e=>{
       .catch(()=>{f.err="ההעלאה נכשלה, אפשר לנסות שוב או לשלוח אחרי ההזמנה";}).finally(renderEngFiles);}
   e.target.value="";renderEngFiles();});
 // ---- delivery: shipping (per box) or self pickup ----
-const dlvMode=()=>(document.querySelector('input[name="dlv"]:checked')||{}).value||"ship";
+const dlvPicked=()=>(document.querySelector('input[name="dlv"]:checked')||{}).value||"";
+const dlvMode=()=>{const v=dlvPicked()||"ship";return v==="indiv"&&$("vipChk")?.checked?"vip":v;};
 const r2=n=>Math.round(n*100)/100;
 const isIndiv=()=>["indiv","vip"].includes(dlvMode());
-const dlvRate=()=>({ship:+CONFIG.shipPerBox||0,indiv:+CONFIG.indivPerBox||0,vip:+CONFIG.vipPerBox||0})[dlvMode()]||0;
-const dlvName=()=>({ship:"משלוח לכתובת אחת",indiv:"משלוח פרטני לכל מקבל",vip:"משלוח פרטני VIP"})[dlvMode()]||"איסוף עצמי";
+const dlvRate=()=>!dlvPicked()?0:({ship:+CONFIG.shipPerBox||0,indiv:+CONFIG.indivPerBox||0,vip:+CONFIG.vipPerBox||0})[dlvMode()]||0;
+const dlvName=()=>!dlvPicked()?"אספקה: טרם נבחרה":({ship:"משלוח לכתובת אחת",indiv:"משלוח פרטני לכל מקבל",vip:"משלוח פרטני VIP"})[dlvMode()]||"איסוף עצמי מברקן";
 const shipCost=()=>r2(dlvRate()*boxes);
 let addrFiles=[],addrCount=0;
 const grandTotal=()=>r2(orderPer()*boxes+shipCost());   // all prices are BEFORE VAT
@@ -2309,12 +2320,15 @@ function syncDlv(){const m=dlvMode(),ship=m==="ship",ind=isIndiv();
   $("tplDl").href=CONFIG.addrTemplate||"#";$("tplDl").hidden=!CONFIG.addrTemplate;
   $("shipBox").hidden=!ship;$("indivBox").hidden=!ind;$("pickBox").hidden=m!=="pickup";$("rcvBox").hidden=$("rcvSame").checked;renderAddrCnt();
   $("pickBox").innerHTML=`איסוף מ: <b>${esc(CONFIG.pickupAddress||"")}</b>${CONFIG.pickupHours?` · ${esc(CONFIG.pickupHours)}`:""} · <a href="https://waze.com/ul?q=${encodeURIComponent(CONFIG.pickupAddress||"")}&navigate=yes" target="_blank" rel="noopener">ניווט ב-Waze</a>`;}
-document.querySelectorAll('input[name="dlv"]').forEach(r=>r.addEventListener("change",()=>{syncDlv();renderQty();}));
+document.querySelectorAll('input[name="dlv"]').forEach(r=>r.addEventListener("change",()=>{$("dlvErr").hidden=true;document.querySelector("fieldset.dlv").classList.remove("bad");syncDlv();renderQty();}));
 $("rcvSame").addEventListener("change",syncDlv);
+$("vipChk").addEventListener("change",()=>{syncDlv();renderQty();});
 function renderAddrFiles(){$("addrFiles").innerHTML=addrFiles.map((f,i)=>`<div class="eng-f"><span>📎 ${esc(f.name)}</span><span class="st ${f.url?"ok":f.err?"bad":""}">${f.url?"✓ הועלה":f.err?f.err:"מעלה…"}</span><button type="button" data-rma="${i}" aria-label="הסרת הקובץ">×</button></div>`).join("");}
 function renderAddrCnt(){const el=$("addrCnt");if(!addrCount||!isIndiv()){el.innerHTML="";return;}
-  el.innerHTML=addrCount===boxes?`✓ בקובץ ${addrCount} כתובות, בדיוק כמו מספר המארזים`
-    :`בקובץ ${addrCount} כתובות והזמנתם ${boxes} מארזים. <button type="button" id="syncBoxes">לעדכן ל-${addrCount} מארזים</button>`;
+  const is=addrFiles[0]?.issues||{},probs=[is.noPhone?`${is.noPhone} שורות בלי טלפון נייד תקין`:"",is.noAddr?`${is.noAddr} שורות בלי עיר או רחוב`:"",is.dup?`${is.dup} שורות כפולות`:""].filter(Boolean);
+  const warn=probs.length?`<div class="addr-warn">⚠️ בדקנו את הקובץ: ${probs.join(" · ")}. כדאי לתקן ולהעלות שוב, כדי שכל מארז יגיע בזמן.</div>`:"";
+  el.innerHTML=warn+(addrCount===boxes?`✓ בקובץ ${addrCount} כתובות, בדיוק כמו מספר המארזים`
+    :`בקובץ ${addrCount} כתובות והזמנתם ${boxes} מארזים. <button type="button" id="syncBoxes">לעדכן ל-${addrCount} מארזים</button>`);
   $("syncBoxes")&&($("syncBoxes").onclick=()=>{boxes=addrCount;renderQty();});}
 // count recipients in the uploaded address file (xlsx read in-browser, no outside library; csv by lines)
 async function zipEntries(buf){const d=new DataView(buf),u=new Uint8Array(buf);let e=-1;
@@ -2339,13 +2353,17 @@ async function countAddr(file){
           a[col<0?a.length:col]=typ==="s"&&v?sst[+v.textContent]:typ==="inlineStr"?c.textContent:v?v.textContent:"";}
         return Array.from(a,x=>x??"");});}
     else return 0;
-    return rows.slice(1).filter(r=>{const c=r.map(t);if(!c.some(Boolean))return false;
+    const list=rows.slice(1).map(r=>r.map(t)).filter(c=>{if(!c.some(Boolean))return false;
       if(c[0]==="ישראל ישראלי"||dig(c[1])==="0549999999"||dig(c[1])==="549999999")return false;
-      return !!(c[0]||c[1]||c[3]);}).length;}catch(e){return 0;}}
+      return !!(c[0]||c[1]||c[3]);});
+    // quick check so the customer fixes the file now, not after the order: columns are name, phone, city, street…
+    const seen=new Set();let noPhone=0,noAddr=0,dup=0;
+    list.forEach(c=>{const p=dig(c[1]);if(!/^(972)?0?5\d{8}$/.test(p))noPhone++;if(!c[2]||!c[3])noAddr++;const k=p||(c[0]+c[3]);if(k){if(seen.has(k))dup++;seen.add(k);}});
+    return {n:list.length,noPhone,noAddr,dup};}catch(e){return {n:0};}}
 $("addrFiles").addEventListener("click",e=>{const b=e.target.closest("[data-rma]");if(!b)return;addrFiles.splice(+b.dataset.rma,1);if(!addrFiles.length)addrCount=0;renderAddrFiles();renderAddrCnt();});
 $("addrFile").addEventListener("change",e=>{const file=e.target.files[0];e.target.value="";if(!file)return;
   const f={name:file.name,url:"",err:""};addrFiles=[f];addrCount=0;renderAddrFiles();renderAddrCnt();
-  countAddr(file).then(n=>{if(addrFiles[0]===f){addrCount=n;f.count=n;renderAddrCnt();}});
+  countAddr(file).then(r=>{if(addrFiles[0]===f){addrCount=r.n||0;f.count=addrCount;f.issues=r;renderAddrCnt();}});
   if(!/\.(xlsx|xls|csv)$/i.test(file.name)){f.err="רק קובץ אקסל או CSV";renderAddrFiles();return;}
   if(file.size>4*1024*1024){f.err="גדול מ-4MB, אפשר לשלוח אחרי ההזמנה";renderAddrFiles();return;}
   if(!shareAvailable){f.err="העלאה זמינה באתר";renderAddrFiles();return;}
@@ -2356,7 +2374,7 @@ function renderQty(){
   const per=orderPer(),sum=per*boxes,need=Math.ceil(CONFIG.minOrder/(per||1)),noP=unpriced(),ok=noP||sum>=CONFIG.minOrder;
   $("qBoxes").value=boxes;$("grand").textContent=money(grandTotal());
   $("vatLines").innerHTML=unpriced()?"":`<div><span>מע"מ 18%</span><span>${ils(vatOf(grandTotal()))}</span></div><div class="inc"><span>סה"כ כולל מע"מ</span><span>${ils(withVat(grandTotal()))}</span></div>`;
-  $("shipLine").textContent=dlvMode()!=="pickup"?`${dlvName()}: ${boxes} מארזים × ${ils(dlvRate())} = ${ils(shipCost())}`:"איסוף עצמי: ללא עלות משלוח";renderAddrCnt();
+  $("shipLine").textContent=!dlvPicked()?"לא כולל משלוח · בוחרים אופן אספקה בטופס למטה":dlvMode()!=="pickup"?`${dlvName()}: ${boxes} מארזים × ${ils(dlvRate())} = ${ils(shipCost())}`:"איסוף עצמי: ללא עלות משלוח";renderAddrCnt();
   $("minFill").style.width=(noP?100:Math.min(100,sum/CONFIG.minOrder*100))+"%";$("minFill").parentElement.classList.toggle("ok",ok);
   $("minMsg").innerHTML=noP?`המחיר הסופי יישלח אליכם בהצעת מחיר. מינימום הזמנה: ${ils(CONFIG.minOrder)}`:ok?`✓ ההזמנה עומדת במינימום של ${ils(CONFIG.minOrder)}`
     :`חסרים ${ils(CONFIG.minOrder-sum)} להזמנת מינימום של ${ils(CONFIG.minOrder)}. <button type="button" id="toMin">${need} מארזים יעמדו במינימום</button>`;
@@ -2383,7 +2401,10 @@ function checkField(id){
 function validate(){
   const bad=Object.keys(FCHECK).filter(id=>!checkField(id));
   ["fCity","fStreet","fRcvName","fRcvPhone"].forEach(i=>$(i).classList.remove("bad"));
-  $("fErr").hidden=!bad.length;$("fErr").textContent=bad.length?"יש להשלים את השדות המסומנים":"";
+  const noDlv=!dlvPicked();$("dlvErr").hidden=!noDlv;document.querySelector("fieldset.dlv").classList.toggle("bad",noDlv);if(noDlv)bad.push("dlv");
+  if(dlvMode()==="ship"&&!noDlv)["fCity","fStreet"].forEach(i=>{if(!$(i).value.trim()){$(i).classList.add("bad");bad.push(i);}});
+  if(dlvMode()==="ship"&&!noDlv&&!$("rcvSame").checked)["fRcvName","fRcvPhone"].forEach(i=>{if(!$(i).value.trim()){$(i).classList.add("bad");bad.push(i);}});
+  $("fErr").hidden=!bad.length;$("fErr").textContent=bad.length?(bad.length===1&&bad[0]==="dlv"?"נא לבחור איך לקבל את ההזמנה":"יש להשלים את השדות המסומנים"):"";
   return !bad.length;
 }
 Object.keys(FCHECK).forEach(id=>{$(id).addEventListener("blur",()=>{if($(id).value||$(id).classList.contains("bad"))checkField(id);});
@@ -2392,7 +2413,7 @@ let giftFor="";
 document.getElementById("forOpts").onclick=e=>{const b=e.target.closest("button[data-for]");if(!b)return;giftFor=giftFor===b.dataset.for?"":b.dataset.for;
   document.querySelectorAll("#forOpts button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.for===giftFor));};
 function buildOrder(){
-  const t=totals(),d=new Date(),ref="NOYA-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
+  const t=totals(),d=new Date(),ref=orderRef||(orderRef="NOYA-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase());
   const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
   const sa=stockAlerts();
   const lines=[`הזמנת מארז – נויה במתנה (${ref})`,"",...(sa.length?["לתשומת לב נויה במתנה:",...sa,""]:[]),
@@ -2426,7 +2447,10 @@ async function send(kind){
   try{const g=id=>($(id)&&$(id).value||"").trim();fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({ref:o.ref,via:kind,
     customer:{name:g("fName"),phone:g("fPhone"),email:g("fEmail"),org:g("fOrg")},items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),
     pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
-    dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost())},total:withVat(grandTotal()),totalNet:grandTotal(),date:g("fDate"),notes:[...stockAlerts(),g("fNotes")].filter(Boolean).join("\n"),giftFor,text:o.text})}).catch(()=>{});}catch(e){}
+    dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost()),city:g("fCity"),street:g("fStreet"),addrNote:g("fAddrNote"),
+      rcvName:$("rcvSame").checked?g("fName"):g("fRcvName"),rcvPhone:$("rcvSame").checked?g("fPhone"):g("fRcvPhone"),files:addrFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url,count:x.count||0}))},
+    lateKey:lateKey||(lateKey=Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10)),cardImg:orderImg.url||"",engraveFiles:engFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url})),
+    total:withVat(grandTotal()),totalNet:grandTotal(),date:g("fDate"),notes:[...stockAlerts(),g("fNotes")].filter(Boolean).join("\n"),giftFor,text:o.text})}).catch(()=>{});}catch(e){}
   let href;
   if(kind==="wa") href=`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(o.text)}`;
   else if(CONFIG.orderEmail) href=`mailto:${CONFIG.orderEmail}?subject=${encodeURIComponent("הזמנת מארז "+o.ref)}&body=${encodeURIComponent(o.text)}`;
@@ -2438,7 +2462,12 @@ async function send(kind){
   $("doneImg").src=$("sumImg").src;
   $("doneSum").innerHTML=`<b>${boxes} מארזים · ${money(grandTotal())} לפני מע"מ</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
   const logoLater=needLogo()&&!engFiles.some(f=>f.url), cardLater=cardOn&&cardSelf;
-  const toSend=[logoLater?"קובץ הלוגו":null,cardLater?"עיצוב כרטיס הברכה (10×15 ס״מ)":null,isIndiv()&&!addrFiles.some(f=>f.url)?"קובץ הכתובות":null].filter(Boolean);
+  const addrLater=isIndiv()&&!addrFiles.some(f=>f.url);
+  const toSend=[logoLater?"קובץ הלוגו":null,cardLater?"עיצוב כרטיס הברכה (10×15 ס״מ)":null].filter(Boolean);
+  $("doneAddr").hidden=!addrLater;
+  if(addrLater)$("doneAddr").innerHTML=`<span>📎 את קובץ הכתובות אפשר לשלוח מתי שנוח, בקישור האישי להזמנה. הוא נכנס ישר להזמנה שלכם:</span>
+    <a class="wa" href="${location.origin}/addr.html?ref=${encodeURIComponent(o.ref)}&k=${lateKey}" target="_blank" rel="noopener" style="text-decoration:none;border-radius:12px">העלאת קובץ הכתובות</a>
+    <span class="note">אפשר גם להעביר את הקישור למי שמכין את הרשימה.</span>`;
   $("doneLogo").hidden=!toSend.length;
   if(toSend.length)$("doneLogo").innerHTML=`<span>✨ נשאר רק לשלוח לנו את ${toSend.join(" ואת ")}, עם מספר ההזמנה <b>${o.ref}</b>:</span>
     <a class="wa" href="https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(`${toSend.join(" ו")} להזמנה ${o.ref} (מצורף)`)}" target="_blank" rel="noopener" style="text-decoration:none;border-radius:12px">שליחה בוואטסאפ</a>
@@ -2452,7 +2481,7 @@ $("resend").onclick=()=>send(lastSend||"wa");
 $("copyOrder").onclick=async()=>{if(!validate())return;const o=buildOrder();
   try{await navigator.clipboard.writeText(o.text);showToast("פרטי ההזמנה הועתקו. אפשר להדביק במייל או בוואטסאפ ל-054-3219070");}
   catch(e){showToast("ההעתקה נחסמה בדפדפן. שלחו בוואטסאפ ל-054-3219070");}};
-$("newBox").onclick=()=>{cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];addrFiles=[];addrCount=0;renderAddrFiles();cardOn=false;cardSelf=false;$("orderForm").reset();syncDlv();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
+$("newBox").onclick=()=>{orderRef="";lateKey="";cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];addrFiles=[];addrCount=0;renderAddrFiles();cardOn=false;cardSelf=false;$("orderForm").reset();syncDlv();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
 
 
 // ===================== "בין לקוחותינו" (fixed, all names shown) + downloadable quote (PDF) =====================

@@ -703,12 +703,17 @@ function renderStock(){
 const VATR=()=>num(db.settings.vatRate)/100;
 async function pullInbox(){
   try{const {orders}=await api("inbox");if(!orders?.length)return;let n=0;const urls=[];
-    let nq=0;orders.forEach(o=>{urls.push(o._url);const ex=db.orders.find(x=>x.ref===o.ref);if(ex&&ex.status!=="pending")return;const ord=orderFromBuilder(o);
-      if(ex)Object.assign(ex,ord,{id:ex.id,notes:ex.notes||ord.notes});else{db.orders.push(ord);if(ord.status==="quote")nq++;else n++;}});
+    let nq=0,nl=0;db.lateFiles??=[];
+    orders.filter(o=>o.kind!=="addr").forEach(o=>{urls.push(o._url);const ex=db.orders.find(x=>x.ref===o.ref);if(ex&&ex.status!=="pending")return;const ord=orderFromBuilder(o);
+      if(ex){ord.addrFiles=[...(ex.addrFiles||[]).filter(f=>f.late),...ord.addrFiles];Object.assign(ex,ord,{id:ex.id,notes:ex.notes||ord.notes,ful:ex.ful||""});}else{db.orders.push(ord);if(ord.status==="quote")nq++;else n++;}});
+    // address files the customer sent later through the personal link (matched by order number + private key)
+    orders.filter(o=>o.kind==="addr").forEach(o=>{urls.push(o._url);db.lateFiles.push(o);});
+    db.lateFiles=db.lateFiles.filter(o=>{const ord=db.orders.find(x=>x.ref===o.ref&&x.lateKey&&x.lateKey===o.k);if(!ord)return true;
+      ord.addrFiles=[...(ord.addrFiles||[]),...(o.files||[]).map(f=>({...f,late:true,at:o.receivedAt||new Date().toISOString()}))];nl++;return false;});
     db.orders.sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
     await new Promise(r=>{touch();setTimeout(r,1200);});await save();
     if(!dirty)await api("inboxdone",{method:"POST",body:{urls}}).catch(()=>{});
-    if(n||nq)toast([n?`${n} הזמנות חדשות`:"",nq?`${nq} הצעות מחיר חדשות`:""].filter(Boolean).join(" ו-")+" מהבונה",5000);if(view==="dash"||view==="orders")render();
+    if(n||nq||nl)toast([n?`${n} הזמנות חדשות`:"",nq?`${nq} הצעות מחיר חדשות`:"",nl?`${nl} קבצי כתובות חדשים`:""].filter(Boolean).join(" ו-")+" מהבונה",5000);if(view==="dash"||view==="orders")render();
   }catch(e){}
 }
 function orderFromBuilder(o){
@@ -719,7 +724,9 @@ function orderFromBuilder(o){
   const mode=o.dlv?.mode||"ship";
   const isQ=o.kind==="quote";
   return {id:uid(),ref:o.ref,source:isQ?"הצעת מחיר מהבונה":"בונה",createdAt:o.receivedAt||new Date().toISOString(),status:isQ?"quote":"pending",customer:o.customer||{},boxes,lines,
-    engrave:num(o.engrave)>0,card:num(o.card)>0,dlvMode:mode,dlvName:o.dlv?.name||"",shipCharge:num(o.dlv?.total),gross:num(o.total),date:o.date||"",notes:o.notes||"",text:o.text||""};
+    engrave:num(o.engrave)>0,card:num(o.card)>0,dlvMode:mode,dlvName:o.dlv?.name||"",shipCharge:num(o.dlv?.total),gross:num(o.total),date:o.date||"",notes:o.notes||"",text:o.text||"",
+    dlv:{city:o.dlv?.city||"",street:o.dlv?.street||"",addrNote:o.dlv?.addrNote||"",rcvName:o.dlv?.rcvName||"",rcvPhone:o.dlv?.rcvPhone||""},
+    addrFiles:(o.dlv?.files||[]).map(f=>({name:f.name,url:f.url,count:num(f.count)})),engraveFiles:o.engraveFiles||[],cardImg:o.cardImg||"",lateKey:o.lateKey||"",ful:""};
 }
 function orderCalc(o){
   if(o.status==="approved"&&o.frozen)return o.frozen;
@@ -734,21 +741,74 @@ function orderCalc(o){
   const profit=net-cost;
   return {lines,missing,fixed,fixedT,goodsCost,cost,net,profit,margin:net>0?profit/net:0};
 }
-let ordFilter="pending";
+let ordFilter="pending",dlvFilter="all";
+// fulfilment after approval: engraving (only if needed) → packing → ready → shipped / picked up
+const FUL={engrave:["⏳ ממתינה לחריטה","st-prod"],packing:["📦 באריזה","st-port"],ready:["✅ מוכנה","st-cleared"],shipped:["🚚 נשלחה","st-sea"]};
+const fulOf=o=>o.status!=="approved"?"":(o.ful||(o.engrave?"engrave":"packing"));
+const fulLabel=o=>{const f=fulOf(o);if(!f)return "";if(f==="shipped"&&o.dlvMode==="pickup")return ["✅ נאספה","st-sea"];if(f==="ready"&&o.dlvMode==="pickup")return ["✅ מוכנה לאיסוף","st-cleared"];return FUL[f];};
+const fulNext=o=>{const f=fulOf(o);return f==="engrave"?"packing":f==="packing"?"ready":f==="ready"?"shipped":"";};
+const fulNextLabel=o=>{const n=fulNext(o);return n==="packing"?"החריטה מוכנה ← לאריזה":n==="ready"?"הארוז מוכן ←":n==="shipped"?(o.dlvMode==="pickup"?"נאספה ✓":"יצאה למשלוח 🚚"):"";};
+const DLV_SHORT={ship:"🏢 לכתובת אחת",indiv:"🏠 לכל מקבל",vip:"⭐ VIP לכל מקבל",pickup:"🏬 איסוף"};
+const dlvGroup=o=>o.dlvMode==="vip"?"indiv":o.dlvMode;
+const shortOf=o=>{const S=stockAll();return orderCalc(o).lines.some(l=>l.sku&&(S[l.sku]?.available??0)<0);};
+function waPhone(p){let d=String(p||"").replace(/\D/g,"");if(d.startsWith("0"))d="972"+d.slice(1);return /^972\d{8,9}$/.test(d)?d:"";}
+function lateLink(o){return o.lateKey?`https://build.noyaglobal.com/addr.html?ref=${encodeURIComponent(o.ref)}&k=${o.lateKey}`:"";}
+function customerMsg(o){const first=(o.customer?.name||"").trim().split(" ")[0],org=o.customer?.org?` של ${o.customer.org}`:"",f=fulOf(o);
+  const hi=`שלום${first?" "+first:""},`;const sign="\nנויה במתנה 🎁";
+  const needAddr=["indiv","vip"].includes(o.dlvMode)&&!(o.addrFiles||[]).length&&lateLink(o)?`\nאת קובץ הכתובות אפשר לשלוח מתי שנוח בקישור האישי להזמנה:\n${lateLink(o)}`:"";
+  if(o.status==="pending")return `${hi}\nקיבלנו את ההזמנה ${o.ref}${org} (${o.boxes} מארזים) ✓\nנעבור עליה ונחזור אליך לאישור בהקדם.${needAddr}${sign}`;
+  if(f==="engrave"||f==="packing")return `${hi}\nההזמנה ${o.ref}${org} אושרה ✓ (${o.boxes} מארזים) והיא בהכנה.\nנעדכן כשהיא ${o.dlvMode==="pickup"?"מוכנה לאיסוף":"יוצאת לדרך"}.${needAddr}${sign}`;
+  if(f==="ready")return o.dlvMode==="pickup"?`${hi}\nההזמנה ${o.ref}${org} מוכנה לאיסוף ✓\nהענבר 1, ברקן. ניווט: https://waze.com/ul?q=${encodeURIComponent("הענבר 1 ברקן")}&navigate=yes${sign}`
+    :`${hi}\nההזמנה ${o.ref}${org} ארוזה ומוכנה ✓ ותצא למשלוח בקרוב.${needAddr}${sign}`;
+  if(f==="shipped")return o.dlvMode==="pickup"?`${hi}\nתודה שאספת את ההזמנה ${o.ref} ✓ שיהיה בהצלחה עם המתנות!${sign}`
+    :`${hi}\nההזמנה ${o.ref}${org} יצאה למשלוח 🚚\n${["indiv","vip"].includes(o.dlvMode)?"כל מארז יגיע ישירות למקבל שלו.":"נעדכן אם יהיה צורך בתיאום מול איש הקשר."}${sign}`;
+  return "";}
+function waBtn(o,cls="btn sm"){const p=waPhone(o.customer?.phone),m=customerMsg(o);if(!p||!m)return "";
+  return `<a class="${cls} wa-up" href="https://wa.me/${p}?text=${encodeURIComponent(m)}" target="_blank" rel="noopener" title="נפתח וואטסאפ עם הודעה מוכנה. שולחים רק אם רוצים">💬 עדכן לקוח</a>`;}
+function csvCell(v){v=String(v??"");return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}
+function downloadCsv(name,rows){const b=new Blob(["\ufeff"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
+function exportCourier(list){
+  const ship=list.filter(o=>o.dlvMode==="ship"),ind=list.filter(o=>["indiv","vip"].includes(o.dlvMode));
+  const rows=[["מספר הזמנה","ארגון","סוג משלוח","שם מקבל","טלפון מקבל","עיר","רחוב ומספר","הערות לשליח","מספר מארזים","קובץ כתובות"]];
+  ship.forEach(o=>rows.push([o.ref,o.customer?.org||"","לכתובת אחת",o.dlv?.rcvName||o.customer?.name||"",o.dlv?.rcvPhone||o.customer?.phone||"",o.dlv?.city||"",o.dlv?.street||"",o.dlv?.addrNote||"",o.boxes,""]));
+  ind.forEach(o=>rows.push([o.ref,o.customer?.org||"",o.dlvMode==="vip"?"VIP לכל מקבל":"לכל מקבל","","","","","",o.boxes,(o.addrFiles||[]).map(f=>f.url).join(" | ")||"חסר קובץ"]));
+  if(rows.length<2){toast("אין הזמנות משלוח מוכנות לייצוא");return;}
+  downloadCsv(`משלוחים-${new Date().toISOString().slice(0,10)}.csv`,rows);toast(`יוצאו ${rows.length-1} הזמנות לקובץ`);}
 const ORD_ST={quote:["הצעת מחיר","st-order"],pending:["ממתינה לאישור","st-port"],approved:["מאושרת","st-wh"],cancelled:["בוטלה","st-order"]};
 function renderOrders(){
-  const list=db.orders.filter(o=>ordFilter==="all"||o.status===ordFilter);
-  const cnt=k=>db.orders.filter(o=>o.status===k).length;
+  const inWork=o=>o.status==="approved"&&fulOf(o)!=="shipped",isDone=o=>o.status==="approved"&&fulOf(o)==="shipped";
+  const byF=k=>db.orders.filter(o=>k==="all"?true:k==="work"?inWork(o):k==="done"?isDone(o):o.status===k);
+  const list=byF(ordFilter).filter(o=>dlvFilter==="all"||dlvGroup(o)===dlvFilter);
+  const cnt=k=>byF(k).length;
+  const work=ordFilter==="work";
+  // pick list: everything still to pack, summed over all orders in work (engraving + packing)
+  const pick={};if(work)list.filter(o=>["engrave","packing"].includes(fulOf(o))).forEach(o=>orderCalc(o).lines.forEach(l=>{const k=l.sku||l.name;(pick[k]??={name:l.sku?(prodBySku(l.sku)?.name||l.name):l.name,sku:l.sku,qty:0,orders:0});pick[k].qty+=num(l.qty);pick[k].orders++;}));
+  const S=work?stockAll():{};const pickRows=Object.values(pick).sort((a,b)=>b.qty-a.qty);
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>הזמנות</h1><p class="sub">כל הזמנה מהבונה נכנסת לכאן לבד כ"ממתינה". רק הזמנות שאישרת נספרות ברווח ובמלאי.</p></div>
     <div class="row"><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
-  <div class="row" style="margin-bottom:12px">${[["quote","הצעות מחיר"],["pending","ממתינות"],["approved","מאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
-  <div class="tablewrap"><table><thead><tr><th>תאריך</th><th>מס׳</th><th>לקוח</th><th class="num">מארזים</th><th class="num">סה״כ כולל מע״מ</th><th class="num">רווח גולמי</th><th>מצב</th></tr></thead><tbody>
+  <div class="row" style="margin-bottom:8px">${[["pending","ממתינות"],["work","בעבודה"],["done","נשלחו / נאספו"],["quote","הצעות מחיר"],["approved","כל המאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
+  <div class="row" style="margin-bottom:12px;gap:6px">${[["all","כל סוגי האספקה"],["pickup","🏬 איסוף"],["ship","🏢 לכתובת אחת"],["indiv","🏠 לכל מקבל"]].map(([k,l])=>`<button class="btn sm ${dlvFilter===k?"":"ghost"}" data-df="${k}">${l}</button>`).join("")}
+    ${work?`<span style="flex:1"></span><button class="btn sm gold" id="oExport">⬇ ייצוא משלוחים מוכנים לשליח</button>`:""}</div>
+  ${work&&pickRows.length?`<details class="panel" open style="margin-bottom:12px"><summary><b>📋 מה לארוז עכשיו</b> <span class="muted">(${pickRows.length} פריטים, מכל ההזמנות שבחריטה או באריזה)</span></summary>
+    <div class="tablewrap" style="max-height:none;margin-top:8px"><table><thead><tr><th>פריט</th><th class="num">כמות לארוז</th><th class="num">בהזמנות</th><th class="num">במלאי אחרי ההזמנות</th></tr></thead><tbody>
+    ${pickRows.map(r=>{const av=r.sku?(S[r.sku]?.available??0):null;return `<tr><td>${esc(r.name)}${r.sku?` <span class="sku">${esc(r.sku)}</span>`:""}</td><td class="num"><b>${r.qty.toLocaleString("he-IL")}</b></td><td class="num">${r.orders}</td><td class="num ${av!==null&&av<0?"bad":""}">${av===null?"":av.toLocaleString("he-IL")}${av!==null&&av<0?" ⚠ חסר":""}</td></tr>`;}).join("")}
+    </tbody></table></div><button class="btn sm ghost" id="oPickCsv" style="margin-top:8px">⬇ הורדת רשימת הליקוט</button></details>`:""}
+  <div class="tablewrap"><table><thead><tr><th>תאריך</th><th>מס׳</th><th>לקוח</th><th>אספקה</th><th class="num">מארזים</th><th class="num">סה״כ כולל מע״מ</th><th class="num">רווח גולמי</th><th>מצב</th>${work?"<th></th>":""}</tr></thead><tbody>
   ${list.map(o=>{const c=orderCalc(o);return `<tr class="click" data-oid="${esc(o.id)}"><td>${esc(new Date(o.createdAt).toLocaleDateString("he-IL"))}</td><td class="sku">${esc(o.ref||"")}</td>
-    <td><b>${esc(o.customer?.org||o.customer?.name||"")}</b>${o.customer?.org&&o.customer?.name?` <span class="muted">${esc(o.customer.name)}</span>`:""}</td><td class="num">${esc(o.boxes)}</td><td class="num">${money(Math.round(num(o.gross)))}</td>
+    <td><b>${esc(o.customer?.org||o.customer?.name||"")}</b>${o.customer?.org&&o.customer?.name?` <span class="muted">${esc(o.customer.name)}</span>`:""}${/בדיקה/.test(o.customer?.org||"")?' <span class="pill st-prod">בדיקה</span>':""}</td>
+    <td style="white-space:nowrap">${esc(DLV_SHORT[o.dlvMode]||"")}${["indiv","vip"].includes(o.dlvMode)&&!(o.addrFiles||[]).length?' <span class="warn" title="עוד לא הגיע קובץ כתובות">📎?</span>':""}</td><td class="num">${esc(o.boxes)}</td><td class="num">${money(Math.round(num(o.gross)))}</td>
     <td class="num ${c.margin*100<num(db.settings.minMargin)?"bad":"okc"}">${money(Math.round(c.profit))} (${Math.round(c.margin*100)}%)${c.missing?' <span class="warn" title="חסרה עלות לחלק מהמוצרים">⚠</span>':""}</td>
-    <td><span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span></td></tr>`;}).join("")||`<tr><td colspan="7" class="muted">אין הזמנות כאן.</td></tr>`}
+    <td>${(()=>{const fl=fulLabel(o);return fl?`<span class="pill ${fl[1]}">${fl[0]}</span>${o.status==="approved"&&fulOf(o)!=="shipped"&&shortOf(o)?' <span class="pill st-port" title="חסר מלאי לחלק מהמוצרים">⚠ חסר מלאי</span>':""}`:`<span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>`;})()}</td>
+    ${work?`<td style="white-space:nowrap">${fulNext(o)?`<button class="btn sm gold" data-adv="${esc(o.id)}">${esc(fulNextLabel(o))}</button>`:""} ${waBtn(o,"btn sm ghost")}</td>`:""}</tr>`;}).join("")||`<tr><td colspan="9" class="muted">אין הזמנות כאן.</td></tr>`}
   </tbody></table></div>`;
   document.querySelectorAll("[data-of]").forEach(b=>b.onclick=()=>{ordFilter=b.dataset.of;renderOrders();});
+  document.querySelectorAll("[data-df]").forEach(b=>b.onclick=()=>{dlvFilter=b.dataset.df;renderOrders();});
+  document.querySelectorAll("[data-adv]").forEach(b=>b.onclick=e=>{e.stopPropagation();const o=db.orders.find(x=>x.id===b.dataset.adv);if(!o)return;
+    const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrders();toast(`${o.ref}: ${fulLabel(o)[0]}`);});
+  document.querySelectorAll(".wa-up").forEach(a=>a.addEventListener("click",e=>e.stopPropagation()));
+  if($("#oExport"))$("#oExport").onclick=()=>exportCourier(list.filter(o=>fulOf(o)==="ready"&&o.dlvMode!=="pickup"));
+  if($("#oPickCsv"))$("#oPickCsv").onclick=()=>downloadCsv(`ליקוט-${new Date().toISOString().slice(0,10)}.csv`,[["פריט","מק״ט","כמות לארוז","בהזמנות"],...pickRows.map(r=>[r.name,r.sku||"",r.qty,r.orders])]);
   document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=()=>{selOrder=tr.dataset.oid;view="orders";render();});
   $("#oPull").onclick=async()=>{toast("בודק…");await pullInbox();renderOrders();};
   $("#oNew").onclick=()=>{const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:"ידני",createdAt:new Date().toISOString(),status:"pending",customer:{},boxes:1,lines:[],engrave:false,card:false,dlvMode:"ship",gross:0,notes:""};
@@ -760,7 +820,7 @@ function renderOrder(){
   const prodOpts=db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("");
   $("#view").innerHTML=`<button class="back" id="oBack">→ כל ההזמנות</button>
   <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span></p></div>
-    <div class="row">${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
+    <div class="row">${waBtn(o,"btn ghost")}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
   ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:o.status==="quote"?"הצעת מחיר שהלקוח הוריד מהבונה. לא נספרת ברווח ובמלאי. כדאי לחזור אליו, ואם הזמין: \"הלקוח הזמין\".":"ההזמנה בוטלה ולא נספרת."}</p>`:""}
   <div class="cards">
     <div class="card"><div class="k">סה״כ ללקוח (כולל מע״מ)</div><div class="v" style="font-size:22px">${money(Math.round(num(o.gross)))}</div><div class="k">לפני מע״מ: ${money(Math.round(c.net))}</div></div>
@@ -768,6 +828,16 @@ function renderOrder(){
     <div class="card"><div class="k">רווח גולמי</div><div class="v ${c.margin*100<num(db.settings.minMargin)?"bad":"okc"}" style="font-size:22px">${money(Math.round(c.profit))}</div><div class="k">${Math.round(c.margin*100)}% מהמכירה לפני מע״מ</div></div>
   </div>
   ${c.missing?`<p class="warn">⚠ ל-${c.missing} שורות אין עלות: צריך לקשר אותן למוצר, או להקליד עלות ידנית בשורה. עד אז הרווח גבוה מהאמת.</p>`:""}
+  ${o.status==="approved"?`<p>שלב: <span class="pill ${fulLabel(o)[1]}">${fulLabel(o)[0]}</span>${fulOf(o)!=="engrave"&&o.engrave?"":""} ${fulOf(o)!=="packing"&&fulOf(o)!=="engrave"?`<button class="btn sm ghost" id="oFulBack">← שלב אחורה</button>`:""}${shortOf(o)&&fulOf(o)!=="shipped"?' <span class="pill st-port">⚠ חסר מלאי לחלק מהמוצרים</span>':""}</p>`:""}
+  <h2>אספקה</h2><div class="panel">
+    <p style="margin:0 0 6px"><b>${esc(DLV_SHORT[o.dlvMode]||o.dlvName||"")}</b>${o.date?` · תאריך רצוי: ${esc(new Date(o.date).toLocaleDateString("he-IL"))}`:""}</p>
+    ${o.dlvMode==="ship"?`<p style="margin:0">כתובת: ${esc([o.dlv?.street,o.dlv?.city].filter(Boolean).join(", ")||"לא צוינה")}${o.dlv?.addrNote?` · ${esc(o.dlv.addrNote)}`:""}<br>מקבל: ${esc(o.dlv?.rcvName||o.customer?.name||"")} ${o.dlv?.rcvPhone||o.customer?.phone?`<span dir="ltr">${esc(o.dlv?.rcvPhone||o.customer?.phone)}</span>`:""}</p>`:""}
+    ${["indiv","vip"].includes(o.dlvMode)?((o.addrFiles||[]).length?`<p style="margin:0">${o.addrFiles.map(f=>`📎 <a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>${f.count?` (${f.count} כתובות${num(f.count)!==num(o.boxes)?` ⚠ הוזמנו ${o.boxes}`:""})`:""}${f.late?' <span class="muted">· נשלח אחר כך</span>':""}`).join("<br>")}</p>`
+      :`<p class="warn" style="margin:0">עוד לא הגיע קובץ כתובות.${lateLink(o)?` קישור אישי ללקוח: <a href="${esc(lateLink(o))}" target="_blank" rel="noopener" dir="ltr">${esc(lateLink(o))}</a> (נכלל אוטומטית ב"עדכן לקוח")`:""}</p>`):""}
+    ${o.dlvMode==="pickup"?`<p style="margin:0">איסוף מהענבר 1, ברקן</p>`:""}
+    ${(o.engraveFiles||[]).length?`<p style="margin:6px 0 0">קובץ לוגו: ${o.engraveFiles.map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join(" · ")}</p>`:""}
+    ${o.cardImg?`<p style="margin:6px 0 0"><a href="${esc(o.cardImg)}" target="_blank" rel="noopener">📸 כרטיס ההזמנה (תמונה עם כל הפרטים, להדפסה למחסן)</a></p>`:""}
+  </div>
   <h2>לקוח</h2><div class="panel"><div class="grid">
     ${[["name","שם"],["org","ארגון"],["phone","טלפון"],["email","מייל"]].map(([k,l])=>`<label class="f">${l}<input data-cu="${k}" value="${esc(o.customer?.[k]||"")}" ${dis} ${["phone","email"].includes(k)?'dir="ltr"':""}></label>`).join("")}
     <label class="f">כמות מארזים<input data-o="boxes" inputmode="numeric" dir="ltr" value="${esc(o.boxes)}" ${dis}></label>
@@ -800,13 +870,15 @@ function renderOrder(){
     else if(k==="qty"){l.qty=num(el.value);l.perBox=0;}else l.unitCost=el.value.trim()===""?undefined:num(el.value);re();});
   document.querySelectorAll("[data-ldel]").forEach(b=>b.onclick=()=>{o.lines.splice(+b.dataset.ldel,1);re();});
   if($("#oAddLine"))$("#oAddLine").onclick=()=>{(o.lines??=[]).push({sku:"",name:"",qty:num(o.boxes)||1,perBox:1});re();};
-  const setSt=(st,msg)=>{o.status=st;if(st==="approved"){o.frozen=JSON.parse(JSON.stringify(orderCalc({...o,status:"pending"})));o.approvedAt=new Date().toISOString();}else{delete o.frozen;delete o.approvedAt;}touch();renderOrder();toast(msg);};
+  const setSt=(st,msg)=>{o.status=st;if(st!=="approved")o.ful="";if(st==="approved"){o.frozen=JSON.parse(JSON.stringify(orderCalc({...o,status:"pending"})));o.approvedAt=new Date().toISOString();}else{delete o.frozen;delete o.approvedAt;}touch();renderOrder();toast(msg);};
   if($("#oApprove"))$("#oApprove").onclick=()=>{const short=c.lines.filter(l=>l.sku&&(S[l.sku]?.available??0)<0);
     if(c.missing&&!confirm(`ל-${c.missing} שורות אין עלות, ולכן הרווח שיוקפא יהיה גבוה מהאמת. לאשר בכל זאת?`))return;
     if(!confirm("לאשר סופית? העלות תוקפא, ההזמנה תיספר ברווח והמוצרים יירדו מהמלאי."))return;setSt("approved","ההזמנה אושרה ✓");};
   if($("#oCancel"))$("#oCancel").onclick=()=>{if(confirm("לסמן את ההזמנה כבוטלה?"))setSt("cancelled","ההזמנה סומנה כבוטלה");};
   if($("#oUnapprove"))$("#oUnapprove").onclick=()=>{if(confirm("לבטל את האישור? ההזמנה תחזור ל'ממתינה', המוצרים יחזרו למלאי והעלות תחושב מחדש."))setSt("pending","האישור בוטל");};
   if($("#oRestore"))$("#oRestore").onclick=()=>setSt("pending","ההזמנה חזרה לממתינה");
+  if($("#oAdv"))$("#oAdv").onclick=()=>{const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrder();toast(fulLabel(o)[0]);};
+  if($("#oFulBack"))$("#oFulBack").onclick=()=>{const order=[o.engrave?"engrave":null,"packing","ready","shipped"].filter(Boolean);const i=order.indexOf(fulOf(o));if(i>0){o.ful=order[i-1];touch();renderOrder();}};
 }
 
 // ---------- suppliers ----------
