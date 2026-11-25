@@ -2313,7 +2313,7 @@ const shipCost=()=>r2(dlvRate()*boxes);
 let addrFiles=[],addrCount=0;
 const grandTotal=()=>r2(orderPer()*boxes+shipCost());   // all prices are BEFORE VAT
 const VAT=0.18,vatOf=n=>r2(n*VAT),withVat=n=>r2(n*(1+VAT));
-function syncDlv(){const m=dlvMode(),ship=m==="ship",ind=isIndiv();
+function syncDlv(){const p=dlvPicked(),m=dlvMode(),ship=p==="ship",ind=p==="indiv";
   $("shipNote").textContent=`${ils(CONFIG.shipPerBox)} למארז`;$("pickNote").textContent=`ללא עלות · ${CONFIG.pickupAddress||""}`;
   $("indivNote").textContent=`${ils(CONFIG.indivPerBox)} למארז · עד הבית או המשרד של כל מקבל: עובד, לקוח או שותף עסקי`;$("vipNote").textContent=`${ils(CONFIG.vipPerBox)} למארז · שליח VIP ייעודי, מותאם למשלוח למנכ״לים ולבכירים`;
   $("indivDesc").innerHTML=m==="vip"?"⭐ <b>משלוח VIP:</b> שליח ייעודי מוסר כל מארז אישית, מותאם למנכ״לים ולבכירים. הורידו את הקובץ, מלאו שורה לכל מקבל והעלו אותו כאן.":"📦 <b>משלוח פרטני:</b> כל מארז נשלח ישירות למקבל שלו. הורידו את הקובץ, מלאו שורה לכל מקבל והעלו אותו כאן.";
