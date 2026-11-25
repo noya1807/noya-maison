@@ -746,7 +746,7 @@ let ordFilter="pending",dlvFilter="all";
 const FUL={engrave:["⏳ ממתינה לחריטה","st-prod"],packing:["📦 באריזה","st-port"],ready:["✅ מוכנה","st-cleared"],shipped:["🚚 נשלחה","st-sea"]};
 const fulOf=o=>o.status!=="approved"?"":(o.ful||(o.engrave?"engrave":"packing"));
 const fulLabel=o=>{const f=fulOf(o);if(!f)return "";if(f==="shipped"&&o.dlvMode==="pickup")return ["✅ נאספה","st-sea"];if(f==="ready"&&o.dlvMode==="pickup")return ["✅ מוכנה לאיסוף","st-cleared"];return FUL[f];};
-const fulNext=o=>{const f=fulOf(o);return f==="engrave"?"packing":f==="packing"?"ready":f==="ready"?"shipped":"";};
+const fulNext=o=>{if(o.status!=="approved")return "";const f=fulOf(o);return f==="engrave"?"packing":f==="packing"?"ready":f==="ready"?"shipped":"";};
 const fulNextLabel=o=>{const n=fulNext(o);return n==="packing"?"החריטה מוכנה ← לאריזה":n==="ready"?"הארוז מוכן ←":n==="shipped"?(o.dlvMode==="pickup"?"נאספה ✓":"יצאה למשלוח 🚚"):"";};
 const DLV_SHORT={ship:"🏢 לכתובת אחת",indiv:"🏠 לכל מקבל",vip:"⭐ VIP לכל מקבל",pickup:"🏬 איסוף"};
 const dlvGroup=o=>o.dlvMode==="vip"?"indiv":o.dlvMode;
@@ -769,6 +769,7 @@ function csvCell(v){v=String(v??"");return /[",\n]/.test(v)?`"${v.replace(/"/g,'
 function downloadCsv(name,rows){const b=new Blob(["\ufeff"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
 function exportCourier(list){
+  list=list.filter(o=>o.status==="approved");   // iron rule: only orders Moshe approved
   const ship=list.filter(o=>o.dlvMode==="ship"),ind=list.filter(o=>["indiv","vip"].includes(o.dlvMode));
   const rows=[["מספר הזמנה","ארגון","סוג משלוח","שם מקבל","טלפון מקבל","עיר","רחוב ומספר","הערות לשליח","מספר מארזים","קובץ כתובות"]];
   ship.forEach(o=>rows.push([o.ref,o.customer?.org||"","לכתובת אחת",o.dlv?.rcvName||o.customer?.name||"",o.dlv?.rcvPhone||o.customer?.phone||"",o.dlv?.city||"",o.dlv?.street||"",o.dlv?.addrNote||"",o.boxes,""]));
@@ -790,6 +791,7 @@ function renderOrders(){
   <div class="row" style="margin-bottom:8px">${[["pending","ממתינות"],["work","בעבודה"],["done","נשלחו / נאספו"],["quote","הצעות מחיר"],["approved","כל המאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
   <div class="row" style="margin-bottom:12px;gap:6px">${[["all","כל סוגי האספקה"],["pickup","🏬 איסוף"],["ship","🏢 לכתובת אחת"],["indiv","🏠 לכל מקבל"]].map(([k,l])=>`<button class="btn sm ${dlvFilter===k?"":"ghost"}" data-df="${k}">${l}</button>`).join("")}
     ${work?`<span style="flex:1"></span><button class="btn sm gold" id="oExport">⬇ ייצוא משלוחים מוכנים לשליח</button>`:""}</div>
+  ${ordFilter==="pending"&&list.length?`<p class="muted" style="margin:-4px 0 10px">🔒 הזמנות כאן לא מתקדמות לאריזה, למשלוח או לייצוא עד שתאשר כל אחת סופית.</p>`:""}
   ${work&&pickRows.length?`<details class="panel" open style="margin-bottom:12px"><summary><b>📋 מה לארוז עכשיו</b> <span class="muted">(${pickRows.length} פריטים, מכל ההזמנות שבחריטה או באריזה)</span></summary>
     <div class="tablewrap" style="max-height:none;margin-top:8px"><table><thead><tr><th>פריט</th><th class="num">כמות לארוז</th><th class="num">בהזמנות</th><th class="num">במלאי אחרי ההזמנות</th></tr></thead><tbody>
     ${pickRows.map(r=>{const av=r.sku?(S[r.sku]?.available??0):null;return `<tr><td style="white-space:normal;min-width:180px;max-width:420px">${esc(r.name)}${r.sku?` <span class="sku">${esc(r.sku)}</span>`:""}</td><td class="num"><b>${r.qty.toLocaleString("he-IL")}</b></td><td class="num">${r.orders}</td><td class="num ${av!==null&&av<0?"bad":""}">${av===null?"":av.toLocaleString("he-IL")}${av!==null&&av<0?" ⚠ חסר":""}</td></tr>`;}).join("")}
@@ -821,6 +823,7 @@ function renderOrder(){
   $("#view").innerHTML=`<button class="back" id="oBack">→ כל ההזמנות</button>
   <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span></p></div>
     <div class="row">${waBtn(o,"btn ghost")}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
+  ${o.status==="pending"?`<p class="warn" style="font-weight:700">🔒 כלל ברזל: ההזמנה לא תיכנס ל"בעבודה", לרשימת הליקוט או לייצוא לשליח עד שתלחץ "✓ אישור סופי".</p>`:""}
   ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:o.status==="quote"?"הצעת מחיר שהלקוח הוריד מהבונה. לא נספרת ברווח ובמלאי. כדאי לחזור אליו, ואם הזמין: \"הלקוח הזמין\".":"ההזמנה בוטלה ולא נספרת."}</p>`:""}
   <div class="cards">
     <div class="card"><div class="k">סה״כ ללקוח (כולל מע״מ)</div><div class="v" style="font-size:22px">${money(Math.round(num(o.gross)))}</div><div class="k">לפני מע״מ: ${money(Math.round(c.net))}</div></div>

@@ -2457,8 +2457,8 @@ async function send(kind){
   else {showToast("כתובת המייל להזמנות עדיין לא הוגדרה. אפשר לשלוח בוואטסאפ או להעתיק את הפרטים.");return;}
   const a=document.createElement("a");a.href=href;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();
   $("doneTitle").textContent=`תודה, ${$("fName").value.trim().split(" ")[0]}!`;
-  $("doneText").innerHTML=kind==="wa"?"פתחנו הודעת וואטסאפ מוכנה עם כל פרטי ההזמנה. <b>כדי שנקבל אותה, לחצו שליחה בוואטסאפ.</b> נחזור אליכם תוך יום עסקים."
-    :`פתחנו מייל מוכן אל ${CONFIG.orderEmail} עם כל פרטי ההזמנה. <b>כדי שנקבל אותו, לחצו שליחה בתוכנת המייל.</b> נחזור אליכם תוך יום עסקים.`;
+  $("doneText").innerHTML=kind==="wa"?"פתחנו הודעת וואטסאפ מוכנה עם כל פרטי ההזמנה. <b>כדי שנקבל אותה, לחצו שליחה בוואטסאפ.</b> נחזור אליכם תוך יום עסקים לאישור סופי, ורק אחריו ההזמנה נכנסת לייצור."
+    :`פתחנו מייל מוכן אל ${CONFIG.orderEmail} עם כל פרטי ההזמנה. <b>כדי שנקבל אותו, לחצו שליחה בתוכנת המייל.</b> נחזור אליכם תוך יום עסקים לאישור סופי, ורק אחריו ההזמנה נכנסת לייצור.`;
   $("doneImg").src=$("sumImg").src;
   $("doneSum").innerHTML=`<b>${boxes} מארזים · ${money(grandTotal())} לפני מע"מ</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
   const logoLater=needLogo()&&!engFiles.some(f=>f.url), cardLater=cardOn&&cardSelf;
