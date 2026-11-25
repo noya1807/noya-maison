@@ -2083,7 +2083,7 @@ function renderAiBar(){
     b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn" id="aiGo">חשפו את המארז שלכם ✨</button><span class="reveal-sub">רגע של הפתעה. תנו לקסם להתגלות.</span></div>`
       +(editing?`<div class="reveal-more"><button class="ghost small" id="aiView">🖼 הצג את המארז המעוצב</button>${reset}</div>`:"");
   } else {
-    b.innerHTML=`<div class="after-reveal"><div class="ar-row"><button class="wa-share" id="aiShare"><svg class="wa-ico" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg>שתפו עם הצוות לאישור</button><button class="ai-go" id="aiDl">⬇ הורדת התמונה</button>${reset}</div>
+    b.innerHTML=`<div class="after-reveal"><div class="ar-row"><button class="wa-share" id="aiShare"><svg class="wa-ico" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg>שתפו עם הצוות לאישור</button><button class="ai-go" id="aiDl">⬇ הורדת התמונה</button><button class="ai-go" id="aiPdf">📄 הצעת מחיר PDF</button>${reset}</div>
       <button class="reveal-btn order-btn" id="aiOrder">המשך להזמנה ←</button><span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
   }
   if(isOwner&&revealed&&!aiBusy&&!(editing&&aiStale)&&!aiImg.hidden)b.insertAdjacentHTML("beforeend",`<div class="reveal-more"><button class="ghost small" id="aiShow">⭐ הוספה לחלון הראווה (רק אתה רואה את הכפתור)</button></div>`);
@@ -2091,6 +2091,7 @@ function renderAiBar(){
   q("aiGo")&&(q("aiGo").onclick=()=>{const r=scene.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)scene.scrollIntoView({behavior:"smooth",block:"center"});generateAi(false);});
   q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
   q("aiOrder")&&(q("aiOrder").onclick=()=>openSummary());
+  q("aiPdf")&&(q("aiPdf").onclick=()=>{openSummary();setTimeout(()=>document.getElementById("quoteBtn").click(),350);});
   document.body.classList.toggle("revealed",!!q("aiOrder"));
   q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);generateAi(true);});
   q("aiDl")&&(q("aiDl").onclick=async()=>{const b=q("aiDl");if(b.disabled)return;b.disabled=true;const was=b.textContent;b.textContent="מכין את התמונה…";
@@ -2125,12 +2126,13 @@ function toPngBlob(src){return new Promise((ok,no)=>{const im=new Image();im.cro
   c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);const x=c.getContext("2d");x.fillStyle="#f7efe4";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
   c.toBlob(b=>b?ok(b):no(new Error("png")),"image/png");};im.onerror=no;im.src=src;});}
 function shareText(){const t=totals();
-  return `תראו את מארז המתנה שבניתי ב-נויה במתנה ✨\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${ils(t.total)} (לא כולל מע״מ)\nמה דעתכם?`;}
+  const per=orderPer(),many=boxes>1;
+  return `מארז מתנה לאישורך ✨ (נויה במתנה)\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${unpriced()?"בהצעת מחיר":ils(per)+" (לפני מע״מ)"}${many?`\nכמות: ${boxes} מארזים${unpriced()?"":` · סה״כ: ${ils(r2(per*boxes))} (לפני מע״מ)`}`:""}\nאפשר לאשר בלחיצה אחת בקישור 👇`;}
 let sharing=false, shareReady=null; // shareReady: a prepared phone share, so a second tap can share instantly
-const CTA_LINE="עצבו את המארז שלכם ✨";
+const ctaLine=()=>shareMode==="spread"?"עצבו את המארז שלכם ✨":"לצפייה במארז ולאישור:";
 async function shareLink(jpg){ // page with the designed image and one button to start designing; falls back to the site itself
   if(!shareAvailable)return location.origin+"/";
-  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:{items:[...cart],pack:pack.id,bg:bg.id,variant}})});
+  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:{items:[...cart],pack:pack.id,bg:bg.id,variant,mode:shareMode,boxes}})});
   const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw new Error(j.error||r.status);return j.url;}
 let shareMode="consult";
 function spreadText(){return "עיצבתי מארז מתנה ב-נויה במתנה ✨\nבוחרים מוצרים, רואים את המארז מיד ומקבלים הצעת מחיר. שווה להציץ 🎁";}
@@ -2142,16 +2144,13 @@ async function shareWhatsApp(src,mode){shareMode=mode||"consult";
     try{await navigator.share(d);shareReady=null;}catch(e){if(e.name!=="AbortError")showToast("לא הצלחנו לשתף כרגע. אפשר לנסות שוב.");}return;}
   sharing=true;
   // computer: put the picture itself on the clipboard (started right away, inside the click) so it can be pasted into the chat
-  let copied=null;
-  if(!mobile&&shareAvailable&&navigator.clipboard&&window.ClipboardItem){
-    try{copied=navigator.clipboard.write([new ClipboardItem({"image/png":toPngBlob(src)})]).then(()=>true,()=>false);}catch(e){copied=null;}}
   try{
     const jpg=await toJpeg(src,1280,.82);
     if(mobile&&navigator.canShare){
       const file=new File([await (await fetch(jpg)).blob()],"noya-gift-box.jpg",{type:"image/jpeg"});
       if(navigator.canShare({files:[file]})){
         showToast("מכין את התמונה לשיתוף…");
-        const data={files:[file],text:msgText()+"\n\n"+CTA_LINE+"\n"+await shareLink(jpg)};
+        const data={files:[file],text:msgText()+"\n\n"+ctaLine()+"\n"+await shareLink(jpg)};
         try{await navigator.share(data);}
         catch(e){if(e.name==="NotAllowedError"){shareReady={src,data};showToast("התמונה מוכנה. לחצו שוב על כפתור השיתוף כדי לשלוח.");}
           else if(e.name!=="AbortError")throw e;}
@@ -2160,11 +2159,9 @@ async function shareWhatsApp(src,mode){shareMode=mode||"consult";
     }
     if(!shareAvailable){showToast("שיתוף התמונה בוואטסאפ פעיל באתר. כאן אפשר להוריד צילום מסך ולשלוח אותו.");return;}
     showToast("מכין את התמונה לשיתוף…");
-    const href="https://wa.me/?text="+encodeURIComponent(msgText()+"\n\n"+CTA_LINE+"\n"+await shareLink(jpg));
+    const href="https://wa.me/?text="+encodeURIComponent(msgText()+"\n\n"+ctaLine()+"\n"+await shareLink(jpg));
     const a=document.createElement("a");a.href=href;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();
-    if(copied&&await copied){showToast(`התמונה הועתקה ✓ בחרו צ'אט בוואטסאפ והדביקו אותה עם ${/Mac|iPhone|iPad/.test(navigator.platform)?"⌘+V":"Ctrl+V"}`);
-      clearTimeout(toastT);toastT=setTimeout(()=>document.getElementById("toast").classList.remove("show"),10000);}
-    else showToast("וואטסאפ נפתח עם הודעה מוכנה. בחרו למי לשלוח.");
+    showToast("וואטסאפ נפתח עם הודעה מוכנה, והתמונה מופיעה בקישור. פשוט בחרו צ'אט ושלחו ✓");
   }catch(e){showToast("לא הצלחנו לשתף כרגע ("+e.message+"). אפשר לנסות שוב.");}
   finally{sharing=false;}
 }

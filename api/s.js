@@ -3,11 +3,12 @@
 import { head } from "@vercel/blob";
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-async function hasBox(q) {
+async function boxFor(q) { // {id, box} when the box "recipe" was saved next to the image
   const id = String(q?.id || "");
-  if (!/^[a-z0-9]{6,24}$/.test(id)) return "";
-  try { await head(`share/${id}.json`); return id; } catch (e) { return ""; }
+  if (!/^[a-z0-9]{6,24}$/.test(id)) return null;
+  try { const m = await head(`share/${id}.json`); const r = await fetch(m.url); return { id, box: r.ok ? await r.json() : {} }; } catch (e) { return null; }
 }
+const NOYA_WA = "972543219070";
 
 async function imageFor(q) {
   const id = String(q?.id || "");
@@ -19,13 +20,17 @@ async function imageFor(q) {
 }
 
 export default async function handler(req, res) {
-  const [img, boxId] = await Promise.all([imageFor(req.query), hasBox(req.query)]);
+  const [img, bx] = await Promise.all([imageFor(req.query), boxFor(req.query)]);
+  const boxId = bx?.id || "", approve = !!boxId && bx.box?.mode !== "spread", nBoxes = Math.max(1, Math.round(+bx?.box?.boxes || 1));
   const ok = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\/share\/[a-z0-9]+\.(jpg|png|webp)$/i.test(img);
   const host = req.headers["x-forwarded-host"] || req.headers.host;
   const home = `https://${host}/`;
   if (!ok) { res.status(404).setHeader("Content-Type", "text/html; charset=utf-8"); res.end(`<!DOCTYPE html><meta charset="utf-8"><p style="font-family:sans-serif;text-align:center;margin-top:20vh">התמונה לא נמצאה. <a href="${home}">לבניית מארז</a></p>`); return; }
-  const title = "המארז שבניתי ב-נויה במתנה ✨";
-  const desc = "מארז מתנה בעיצוב אישי. בחרו מוצרים, ונויה תעצב לכם מארז משלכם.";
+  const page = `https://${host}/s/${boxId}`;
+  const title = approve ? "מארז מתנה לאישורך ✨" : "המארז שבניתי ב-נויה במתנה ✨";
+  const desc = approve ? "הוכן עבורכם מארז מתנה בעיצוב אישי. מאשרים בלחיצה, ונציג נויה במתנה יחזור עם הצעת מחיר מסודרת." : "מארז מתנה בעיצוב אישי. בחרו מוצרים, ונויה תעצב לכם מארז משלכם.";
+  const waText = `שלום נויה במתנה, אני מאשר/ת את המארז הזה ✓\n${page}${nBoxes > 1 ? `\nכמות: ${nBoxes} מארזים` : ""}\nאשמח לקבל הצעת מחיר מסודרת.`;
+  const approveBtn = `<a class="ok" href="https://wa.me/${NOYA_WA}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener">מאשר ✓ – שלחו לנו הצעת מחיר</a>`;
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache"); // always fresh, so new buttons show up on links opened before
   res.end(`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8">
@@ -41,6 +46,8 @@ img{width:min(960px,100%);border-radius:18px;box-shadow:0 12px 32px rgba(74,47,3
 .btns{display:flex;flex-direction:column;gap:10px;width:min(480px,100%)}
 a{display:block;width:min(480px,100%);box-sizing:border-box;text-align:center;color:#fffaf3;text-decoration:none;border-radius:14px;padding:16px 22px;font-family:"Frank Ruhl Libre",Georgia,serif;font-size:21px;font-weight:500;background:linear-gradient(135deg,#3f271c,#6e4d3b 55%,#b08a4f);box-shadow:0 10px 24px rgba(74,47,34,.28)}
 a.alt{background:#fffaf3;color:#4a2f22;border:1px solid #e2d3c0;box-shadow:none;font-size:18px;padding:13px 22px}
-p{margin:0;color:#7a5a48;text-align:center}</style></head>
-<body><h1>${esc(title)}</h1><p>${esc(desc)}</p><img src="${esc(img)}" alt="תמונת מארז מתנה"><div class="btns">${boxId ? `<a href="${home}?box=${boxId}">אני רוצה את המארז הזה ✨</a><a class="alt" href="${home}">עצבו מארז משלכם</a>` : `<a href="${home}">עצבו את המארז שלכם ✨</a>`}</div></body></html>`);
+p{margin:0;color:#7a5a48;text-align:center}
+a.ok{background:linear-gradient(135deg,#1f7a4d,#25a85f);font-size:22px}
+p.small{font-size:14px}</style></head>
+<body><h1>${esc(title)}</h1><p>${esc(desc)}</p><img src="${esc(img)}" alt="תמונת מארז מתנה"><div class="btns">${approve ? `${approveBtn}<a class="alt" href="${home}?box=${boxId}">לצפייה ועריכה של המארז</a><p class="small">ההצעה כפופה לאישור נציג · המחירים לפני מע"מ</p>` : boxId ? `<a href="${home}?box=${boxId}">אני רוצה את המארז הזה ✨</a><a class="alt" href="${home}">עצבו מארז משלכם</a>` : `<a href="${home}">עצבו את המארז שלכם ✨</a>`}</div></body></html>`);
 }
