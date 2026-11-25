@@ -38,5 +38,27 @@
       "path": "/api/office?a=backup",
       "schedule": "0 1 * * 0"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/p/p75",
+      "destination": "/c/serve/",
+      "permanent": true
+    },
+    {
+      "source": "/p/p75/",
+      "destination": "/c/serve/",
+      "permanent": true
+    },
+    {
+      "source": "/p/p75a",
+      "destination": "/c/serve/",
+      "permanent": true
+    },
+    {
+      "source": "/p/p75a/",
+      "destination": "/c/serve/",
+      "permanent": true
+    }
   ]
 }
