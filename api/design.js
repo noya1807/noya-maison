@@ -154,6 +154,7 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+    if (body.ping) { res.status(200).json({ admin: adminSession(req), cookies: String(req.headers.cookie || "").split(";").map(x => x.trim().split("=")[0]) }); return; }
     const items = (body.items || []).filter(i => /^[a-z0-9]{2,20}$/i.test(i.id)).slice(0, 12)
       .map(i => ({ id: i.id, name: clean(i.name), qty: Math.max(1, Math.min(20, +i.qty || 1)), role: clean(i.role, 12), heightCm: Math.max(1, Math.min(80, +i.heightCm || 10)), widthCm: Math.max(0, Math.min(120, +i.widthCm || 0)), box: !!i.box, kind: ["candleholder", "surface", "diffuser", "bowl"].includes(i.kind) ? i.kind : "", dims: cleanDims(i.dims), flowers: clean(i.flowers || "", 80), candles: clean(i.candles || "", 80), parts: Array.isArray(i.parts) && i.parts.length > 1 ? i.parts.slice(0, 4).map(h => Math.max(1, Math.min(80, +h || 0))).filter(h => h > 0) : null }));
     if (items.length < 1) { res.status(400).json({ error: "need at least 1 product" }); return; }
@@ -201,7 +202,7 @@ export default async function handler(req, res) {
     if (!r.ok) { res.status(502).json({ error: j?.error?.message || `OpenAI ${r.status}` }); return; }
     const b64 = j?.data?.[0]?.b64_json;
     if (!b64) { res.status(502).json({ error: "no image returned" }); return; }
-    res.status(200).json({ image: `data:image/png;base64,${b64}`, model: useModel });
+    res.status(200).json({ image: `data:image/png;base64,${b64}`, model: useModel, admin: body.model ? adminSession(req) : undefined, asked: body.model || undefined });
   } catch (e) {
     res.status(500).json({ error: String(e.message || e).slice(0, 200) });
   }
