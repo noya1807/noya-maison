@@ -17,6 +17,9 @@ let day = "", count = 0;
 
 const clean = (s, n = 60) => String(s || "").replace(/[^\p{L}\p{N} +\-.'"]/gu, "").slice(0, n);
 const cleanDims = s => String(s || "").replace(/[^\p{L}\p{N} +\-.,()x/]/gu, "").slice(0, 320);
+// boxed products whose clean product photo shows no box: their card photo shows the real (square) retail box
+const BOX_REF = { p108: "ph/p108.webp", p109: "ph/p109.webp", p110: "ph/p110.webp", p111: "ph/p111.webp" };
+const STYLE_REFS = ["s2.jpg", "s3.jpg", "s5.jpg"];   // s1/s4 show a discontinued cylindrical diffuser tube – never send them
 const PACK_FILES = { box0: "pack/box0.webp", box1: "pack/box1.webp", box2: "pack/box2.webp", "42": "pack/42.webp", "31": "pack/31.webp", "39": "pack/39.webp" };
 
 // largest real dimension (cm) of an item: from its REAL SIZE text, else its height
@@ -37,7 +40,7 @@ Render these ratios literally on screen: "${a.n}" must look about ${Math.max(1, 
 `;
 }
 function prompt(items, pack, variant, manual) {
-  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, ${it.dims ? `REAL SIZE: ${it.dims}` : `about ${it.heightCm} cm tall${it.widthCm ? ` and ${it.widthCm} cm wide` : ""}`}, role: ${it.role}${it.kind === "candleholder" ? " — candle holder" + (it.parts ? ` SET: ${it.parts.length} separate pieces per set with DIFFERENT heights — ${it.parts.map((h, k) => `${k === 0 ? "tall" : k === it.parts.length - 1 ? "short" : "middle"} ${h} cm`).join(", ")} (show all ${it.parts.length * it.qty} pieces, each at its own true height)` : "") : it.kind === "surface" ? " — serving surface (board / tray / plate)" : it.kind === "diffuser" ? " — reed diffuser" : it.kind === "bowl" ? " — decorative bowl" : ""}${it.box ? " — WITH ITS OWN RETAIL BOX behind it" : ""}${it.flowers ? ` — VASE WITH FLOWERS: it must hold ${it.flowers}, exactly as in its product photo (mandatory, never show this vase empty)` : ""}${it.candles ? ` — HOLDER WITH CANDLES: it must hold ${it.candles}, exactly as in its product photo (mandatory, never remove the candles)` : ""}`).join("\n");
+  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, ${it.dims ? `REAL SIZE: ${it.dims}` : `about ${it.heightCm} cm tall${it.widthCm ? ` and ${it.widthCm} cm wide` : ""}`}, role: ${it.role}${it.kind === "candleholder" ? " — candle holder" + (it.parts ? ` SET: ${it.parts.length} separate pieces per set with DIFFERENT heights — ${it.parts.map((h, k) => `${k === 0 ? "tall" : k === it.parts.length - 1 ? "short" : "middle"} ${h} cm`).join(", ")} (show all ${it.parts.length * it.qty} pieces, each at its own true height)` : "") : it.kind === "surface" ? " — serving surface (board / tray / plate)" : it.kind === "diffuser" ? " — reed diffuser" : it.kind === "bowl" ? " — decorative bowl" : ""}${it.box ? ` — WITH ITS OWN RETAIL BOX behind it${BOX_REF[it.id] ? ` (its box is the SQUARE box shown in image "box_reference_${it.id}"; copy that box only)` : ""}` : ""}${it.flowers ? ` — VASE WITH FLOWERS: it must hold ${it.flowers}, exactly as in its product photo (mandatory, never show this vase empty)` : ""}${it.candles ? ` — HOLDER WITH CANDLES: it must hold ${it.candles}, exactly as in its product photo (mandatory, never remove the candles)` : ""}`).join("\n");
   const boxed = items.filter(i => i.box), holders = items.filter(i => i.kind === "candleholder"), surfaces = items.filter(i => i.kind === "surface"), diffusers = items.filter(i => i.kind === "diffuser"), bowls = items.filter(i => i.kind === "bowl");
   const hero = items.find(i => i.role === "hero");
   const SALAD_BOWLS = ["p123", "p125", "p118"], SERVERS = ["p55"];
@@ -54,7 +57,7 @@ Create ONE photorealistic catalogue photograph of a styled gift set.
 
 INPUT IMAGES
 - Image 1: a rough layout sketch built from the real products, drawn TO TRUE SCALE. Use it for which products appear, their exact relative sizes (keep the same size ratios as in the sketch) and a starting arrangement${manual ? " — the customer arranged it by hand, so keep their placement closely" : ", then improve the styling like a professional designer would"}.
-- Next images: the ONLY products in the set, one photo each (in the order listed below)${noPack ? "" : ", followed by the packaging"}.
+- Next images: the ONLY products in the set, one photo each (in the order listed below)${items.some(i => i.box && BOX_REF[i.id]) ? `, then "box_reference" photos that show the real retail box of some products — use them ONLY for that box's shape, colour and printed design; ignore everything else in them (books, stones, flowers, refill bottles)` : ""}${noPack ? "" : ", followed by the packaging"}.
 - Last image: style reference for mood, light, palette and propping only. Never copy its products.
 
 PRODUCTS (include every one, exactly this quantity, nothing else):
@@ -73,6 +76,7 @@ ${boxed.length ? `ORIGINAL RETAIL BOXES (style them like a top prop stylist): ea
 - The box stands upright on the same surface or riser, one step back, offset about a quarter to one side of the product and turned 10–20° toward the camera, so its front panel and logo read clearly.
 - The product stands in front and overlaps the lower third of its box; the box is never in front of, beside, or far away from its product, never lying flat, never open, never floating.
 - Keep true scale (a box is only slightly taller and wider than its product) and reproduce it exactly as in the photo — same colour, size, finish and printed design.
+- Diffuser boxes are SQUARE/rectangular cartons exactly as photographed. NEVER draw a round cylindrical tube box for any product — that is a discontinued design.
 - Boxes form the back layer of the composition: taller boxes furthest back, staggered heights, each box partly hidden by its product, with soft natural shadows between box and product.
 - Only these ${boxed.length} product(s) get a box; do not add or duplicate boxes for any other product.
 ` : ""}${holders.length ? `CANDLE HOLDERS: most candle holder products are sold as a SET of one TALL and one SHORT piece (sometimes three). For every holder listed as a SET, show exactly that number of separate pieces with clearly different heights in the listed proportions (for example 17.5 cm next to 13 cm): the taller one slightly behind, the shorter one in front. Never make the pieces the same height, never merge them into one, never show only one piece of a set. Keep all candle holders together, standing side by side as one family group (a pair or trio), close enough to almost touch, tall one slightly behind and the shorter one in front of it so the heights step down gracefully. A candle holder pair is never split up or placed apart from its partner.
@@ -87,7 +91,7 @@ ${boxed.length ? `ORIGINAL RETAIL BOXES (style them like a top prop stylist): ea
 - Never place textiles, boards, other trays or large boxes on the tray. If there is more than one surface, use the flattest/largest as the stage and overlap the others underneath in a relaxed layer. A long board with a handle may instead lean upright at the back.
 - Products that are not on the tray are arranged around it as part of the same composition.
 ` : ""}${bowls.length ? `DECORATIVE BOWL: a bowl may also act as a small stage — at most 1–2 small items inside it, and only if it looks natural; otherwise leave it empty and show its shape.
-` : ""}PACKAGING DISCIPLINE (mandatory): the only packaging allowed in the picture is ${boxed.length ? `the own retail box of each product marked "WITH ITS OWN RETAIL BOX" (each box behind its own product, with exactly that product's printed design)` : "none from the products"}${noPack ? "" : `${boxed.length ? " and " : ""}the chosen packaging "${pack.name}"`}. Never add any other box, gift box, carton, bag, tissue paper, ribbon, tag, crate, basket or container — not copied from the style reference, not invented as a prop. If a product's photo shows a box but the product is NOT marked "WITH ITS OWN RETAIL BOX", show the product alone without that box. Never move one product's box to another product and never show a box without its product.
+` : ""}PACKAGING DISCIPLINE (mandatory): the only packaging allowed in the picture is ${boxed.length ? `the own retail box of each product marked "WITH ITS OWN RETAIL BOX" (each box behind its own product, with exactly that product's printed design)` : "none from the products"}${noPack ? "" : `${boxed.length ? " and " : ""}the chosen packaging "${pack.name}"`}. Never add any other box, gift box, carton, bag, tissue paper, ribbon, tag, crate, basket or container — not copied from the style reference, not invented as a prop. If a product's photo shows a box but the product is NOT marked "WITH ITS OWN RETAIL BOX", show the product alone without that box. Never move one product's box to another product and never show a box without its product. Never draw any round cylindrical tube/canister box.
 COMPLETE PRODUCTS: every product appears whole — never cut by the frame edge, by another item or by the riser; never chop off a rim, a top edge, a handle, a lid or the reeds. If a product photo or the layout sketch happens to be cropped, complete the missing part naturally (a round bowl is always a full round bowl with its entire rim visible).
 ${sBowl && sServ ? `SALAD BOWL + SERVERS (mandatory pairing): the salad servers ("${sServ.name}") always go WITH the bowl ("${sBowl.name}") — place them inside the bowl with the spoon and fork leaning together, their handles resting on the rim and sticking out diagonally over the edge, so they clearly belong to the bowl. Only if that hides the bowl's pattern, lay them right beside the bowl, touching it. Never place the servers apart from the bowl or elsewhere in the set. The bowl keeps its full rim visible.
 ` : ""}NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
@@ -143,13 +147,17 @@ export default async function handler(req, res) {
       const url = cat?.products?.find(p => p.id === it.id)?.origUrl;
       if (url) { const r = await fetch(url); if (r.ok) add(Buffer.from(await r.arrayBuffer()), `product_${it.id}.jpg`, r.headers.get("content-type") || "image/jpeg"); }
     }
+    for (const it of items) if (it.box && BOX_REF[it.id]) {
+      const b = await readFile(path.join(ROOT, "img", BOX_REF[it.id])).catch(() => null);
+      if (b) add(b, `box_reference_${it.id}.webp`, "image/webp");
+    }
     const pf = PACK_FILES[pack.id];
     if (pf) add(await readFile(path.join(ROOT, "img", pf)), `packaging.${pf.split(".").pop()}`, pf.endsWith("webp") ? "image/webp" : "image/jpeg");
     else if (pack.id && pack.id !== "none") {   // catalogue packaging: clean photo shipped with the site
       const pb = await readFile(path.join(ROOT, "img", "orig", `${pack.id.replace(/[^a-z0-9]/gi, "")}.jpg`)).catch(() => null);
       if (pb) add(pb, "packaging.jpg", "image/jpeg");
     }
-    add(await readFile(path.join(ROOT, "img", "style", `s${(variant % 5) + 1}.jpg`)), "style_reference.jpg", "image/jpeg");
+    add(await readFile(path.join(ROOT, "img", "style", STYLE_REFS[variant % STYLE_REFS.length])), "style_reference.jpg", "image/jpeg");
 
     const r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
     const j = await r.json();
