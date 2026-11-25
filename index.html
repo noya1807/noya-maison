@@ -2053,8 +2053,8 @@ async function generateAi(force){
   aiBusy=true;scene.classList.add("busy");renderAiBar();
   sceneToTop();
   const t0=Date.now();let si=1;
-  aiLoad.hidden=false;noyaSetup();const tick=setInterval(()=>{const s=Math.round((Date.now()-t0)/1000);document.getElementById("aiTime").textContent=s+" שניות · בדרך כלל 20–60 שניות";
-    if(s%5===0){const k=(si++)%STEPS.length;document.getElementById("aiStep").textContent=STEPS[k];noyaStep(k);}},1000);
+  aiLoad.hidden=false;noyaSetup();const tick=setInterval(()=>{const s=Math.round((Date.now()-t0)/1000);document.getElementById("aiTime").textContent=s<=30?s+" שניות · בדרך כלל 15–30 שניות":s+" שניות · עוד רגע… מלטשים את הפרטים האחרונים ✨";
+    if(s%3===0){const k=(si++)%STEPS.length;document.getElementById("aiStep").textContent=STEPS[k];noyaStep(k);}},1000);
   document.getElementById("aiStep").textContent=STEPS[0];noyaStep(0);
   try{
     // layout sketch = what the live designer drew (products only, no UI)
