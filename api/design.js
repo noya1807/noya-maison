@@ -16,11 +16,28 @@ const ROOT = process.cwd();
 let day = "", count = 0;
 
 const clean = (s, n = 60) => String(s || "").replace(/[^\p{L}\p{N} +\-.'"]/gu, "").slice(0, n);
-const cleanDims = s => String(s || "").replace(/[^\p{L}\p{N} +\-.,()x/]/gu, "").slice(0, 140);
+const cleanDims = s => String(s || "").replace(/[^\p{L}\p{N} +\-.,()x/]/gu, "").slice(0, 320);
 const PACK_FILES = { box0: "pack/box0.webp", box1: "pack/box1.webp", box2: "pack/box2.webp", "42": "pack/42.webp", "31": "pack/31.webp", "39": "pack/39.webp" };
 
+// largest real dimension (cm) of an item: from its REAL SIZE text, else its height
+function sizeCm(it) {
+  const nums = (String(it.dims || "").match(/\d+(?:\.\d+)?(?=\s*cm)/g) || []).map(Number).filter(n => n > 0 && n < 400);
+  const fromDims = nums.length ? Math.max(...nums.filter(n => n <= 120)) : 0;   // ignore "when open" sizes of folded textiles
+  return fromDims > 0 ? fromDims : Math.max(it.heightCm, it.widthCm || 0);
+}
+function sizeLadder(items) {
+  const L = items.map(it => ({ n: it.name, c: sizeCm(it) })).sort((a, b) => b.c - a.c);
+  if (L.length < 2) return "";
+  const big = L[0].c;
+  const rows = L.map(x => `- ${x.n}: about ${Math.round(x.c * 10) / 10} cm at its largest = ${Math.round(x.c / big * 100)}% of the largest item`).join("\n");
+  const a = L[0], z = L[L.length - 1];
+  return `SIZE LADDER (true scale — the most important rule after product fidelity). Biggest to smallest, by each product's largest real dimension:
+${rows}
+Render these ratios literally on screen: "${a.n}" must look about ${Math.max(1, Math.round(a.c / z.c * 10) / 10)} times as big as "${z.n}". A product's on-screen size must follow this ladder, never its importance, its price or how close it is to the camera; small items stay small even when they are the hero, and a big item is never shrunk to fit. Check every pair of neighbours against the ladder before finishing.
+`;
+}
 function prompt(items, pack, variant, manual) {
-  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, ${it.dims ? `REAL SIZE: ${it.dims}` : `about ${it.heightCm} cm tall`}, role: ${it.role}${it.kind === "candleholder" ? " — candle holder" + (it.parts ? ` SET: ${it.parts.length} separate pieces per set with DIFFERENT heights — ${it.parts.map((h, k) => `${k === 0 ? "tall" : k === it.parts.length - 1 ? "short" : "middle"} ${h} cm`).join(", ")} (show all ${it.parts.length * it.qty} pieces, each at its own true height)` : "") : it.kind === "surface" ? " — serving surface (board / tray / plate)" : it.kind === "diffuser" ? " — reed diffuser" : it.kind === "bowl" ? " — decorative bowl" : ""}${it.box ? " — WITH ITS OWN RETAIL BOX behind it" : ""}${it.flowers ? ` — VASE WITH FLOWERS: it must hold ${it.flowers}, exactly as in its product photo (mandatory, never show this vase empty)` : ""}${it.candles ? ` — HOLDER WITH CANDLES: it must hold ${it.candles}, exactly as in its product photo (mandatory, never remove the candles)` : ""}`).join("\n");
+  const list = items.map((it, i) => `${i + 1}. ${it.name} — quantity ${it.qty}, ${it.dims ? `REAL SIZE: ${it.dims}` : `about ${it.heightCm} cm tall${it.widthCm ? ` and ${it.widthCm} cm wide` : ""}`}, role: ${it.role}${it.kind === "candleholder" ? " — candle holder" + (it.parts ? ` SET: ${it.parts.length} separate pieces per set with DIFFERENT heights — ${it.parts.map((h, k) => `${k === 0 ? "tall" : k === it.parts.length - 1 ? "short" : "middle"} ${h} cm`).join(", ")} (show all ${it.parts.length * it.qty} pieces, each at its own true height)` : "") : it.kind === "surface" ? " — serving surface (board / tray / plate)" : it.kind === "diffuser" ? " — reed diffuser" : it.kind === "bowl" ? " — decorative bowl" : ""}${it.box ? " — WITH ITS OWN RETAIL BOX behind it" : ""}${it.flowers ? ` — VASE WITH FLOWERS: it must hold ${it.flowers}, exactly as in its product photo (mandatory, never show this vase empty)` : ""}${it.candles ? ` — HOLDER WITH CANDLES: it must hold ${it.candles}, exactly as in its product photo (mandatory, never remove the candles)` : ""}`).join("\n");
   const boxed = items.filter(i => i.box), holders = items.filter(i => i.kind === "candleholder"), surfaces = items.filter(i => i.kind === "surface"), diffusers = items.filter(i => i.kind === "diffuser"), bowls = items.filter(i => i.kind === "bowl");
   const hero = items.find(i => i.role === "hero");
   const noPack = pack.id === "none"; // customer chose no packaging: products only
@@ -34,12 +51,14 @@ function prompt(items, pack, variant, manual) {
 Create ONE photorealistic catalogue photograph of a styled gift set.
 
 INPUT IMAGES
-- Image 1: a rough layout sketch built from the real products. Use it for which products appear, their relative scale and a starting arrangement${manual ? " — the customer arranged it by hand, so keep their placement closely" : ", then improve the styling like a professional designer would"}.
+- Image 1: a rough layout sketch built from the real products, drawn TO TRUE SCALE. Use it for which products appear, their exact relative sizes (keep the same size ratios as in the sketch) and a starting arrangement${manual ? " — the customer arranged it by hand, so keep their placement closely" : ", then improve the styling like a professional designer would"}.
 - Next images: the ONLY products in the set, one photo each (in the order listed below)${noPack ? "" : ", followed by the packaging"}.
 - Last image: style reference for mood, light, palette and propping only. Never copy its products.
 
 PRODUCTS (include every one, exactly this quantity, nothing else):
 ${list}
+
+${sizeLadder(items)}
 ${noPack ? "No packaging: arrange the products freely on the surface as an open styled set, with no box, bag or gift container." : `Packaging: ${pack.name}, standing at the back as the backdrop of the set.`}
 
 FIDELITY
@@ -66,7 +85,9 @@ ${boxed.length ? `ORIGINAL RETAIL BOXES (style them like a top prop stylist): ea
 - Never place textiles, boards, other trays or large boxes on the tray. If there is more than one surface, use the flattest/largest as the stage and overlap the others underneath in a relaxed layer. A long board with a handle may instead lean upright at the back.
 - Products that are not on the tray are arranged around it as part of the same composition.
 ` : ""}${bowls.length ? `DECORATIVE BOWL: a bowl may also act as a small stage — at most 1–2 small items inside it, and only if it looks natural; otherwise leave it empty and show its shape.
-` : ""}NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
+` : ""}PACKAGING DISCIPLINE (mandatory): the only packaging allowed in the picture is ${boxed.length ? `the own retail box of each product marked "WITH ITS OWN RETAIL BOX" (each box behind its own product, with exactly that product's printed design)` : "none from the products"}${noPack ? "" : `${boxed.length ? " and " : ""}the chosen packaging "${pack.name}"`}. Never add any other box, gift box, carton, bag, tissue paper, ribbon, tag, crate, basket or container — not copied from the style reference, not invented as a prop. If a product's photo shows a box but the product is NOT marked "WITH ITS OWN RETAIL BOX", show the product alone without that box. Never move one product's box to another product and never show a box without its product.
+COMPLETE PRODUCTS: every product appears whole — never cut by the frame edge, by another item or by the riser; never chop off a rim, a top edge, a handle, a lid or the reeds. If a product photo or the layout sketch happens to be cropped, complete the missing part naturally (a round bowl is always a full round bowl with its entire rim visible).
+NO ADDED TEXT: do not add any words, letters, numbers, logos, captions, signs, tags, cards or watermarks anywhere in the image. The only text allowed is what is already printed on a product in its photo.
 
 ART DIRECTION
 - Asymmetric pyramid composition; ${hero ? `"${hero.name}" is the hero, slightly elevated near the optical centre` : "pick the most premium item as the hero, slightly elevated near the optical centre"}.
@@ -92,7 +113,7 @@ export default async function handler(req, res) {
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const items = (body.items || []).filter(i => /^[a-z0-9]{2,20}$/i.test(i.id)).slice(0, 12)
-      .map(i => ({ id: i.id, name: clean(i.name), qty: Math.max(1, Math.min(20, +i.qty || 1)), role: clean(i.role, 12), heightCm: Math.max(1, Math.min(80, +i.heightCm || 10)), box: !!i.box, kind: ["candleholder", "surface", "diffuser", "bowl"].includes(i.kind) ? i.kind : "", dims: cleanDims(i.dims), flowers: clean(i.flowers || "", 80), candles: clean(i.candles || "", 80), parts: Array.isArray(i.parts) && i.parts.length > 1 ? i.parts.slice(0, 4).map(h => Math.max(1, Math.min(80, +h || 0))).filter(h => h > 0) : null }));
+      .map(i => ({ id: i.id, name: clean(i.name), qty: Math.max(1, Math.min(20, +i.qty || 1)), role: clean(i.role, 12), heightCm: Math.max(1, Math.min(80, +i.heightCm || 10)), widthCm: Math.max(0, Math.min(120, +i.widthCm || 0)), box: !!i.box, kind: ["candleholder", "surface", "diffuser", "bowl"].includes(i.kind) ? i.kind : "", dims: cleanDims(i.dims), flowers: clean(i.flowers || "", 80), candles: clean(i.candles || "", 80), parts: Array.isArray(i.parts) && i.parts.length > 1 ? i.parts.slice(0, 4).map(h => Math.max(1, Math.min(80, +h || 0))).filter(h => h > 0) : null }));
     if (items.length < 1) { res.status(400).json({ error: "need at least 1 product" }); return; }
     const pack = { id: clean(body.pack?.id, 8), name: clean(body.pack?.name) };
     const variant = Math.abs(+body.variant || 0);
