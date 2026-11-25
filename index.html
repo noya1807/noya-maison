@@ -2597,8 +2597,8 @@ async function loadSharedBox(){
     const full=items.length===all.length;
     if(b.image&&full){const key=comboKey();aiCache.set(key,b.image);finishReveal(key,b.image);}
     showToast(full?"המארז נטען ✓ אפשר להמשיך להזמנה או לשנות אותו":"המארז נטען. חלק מהמוצרים כבר לא זמינים, אפשר להשלים ולחשוף מחדש");
-    // approved box opened by Noya from the approval WhatsApp: straight to the order page with the approved quantity
-    if(toSum){boxes=Math.max(1,Math.min(100000,Math.round(+b.boxes||1)));openSummary();showToast("המארז שאושר נטען ✓ אפשר להפיק הצעת מחיר PDF");}
+    // approved box ("מאשר ומזמין" on the shared page): straight to the order page with the approved quantity
+    if(toSum){boxes=Math.max(1,Math.min(100000,Math.round(+b.boxes||1)));openSummary();showToast("המארז שאושר נטען ✓ ממלאים פרטים ושולחים את ההזמנה");}
     document.getElementById("scene").scrollIntoView({block:"start"});
   }catch(e){showToast("לא הצלחנו לטעון את המארז ששותף. אפשר לעצב מארז משלכם ✨");}
 }

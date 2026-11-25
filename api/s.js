@@ -28,13 +28,14 @@ export default async function handler(req, res) {
   if (!ok) { res.status(404).setHeader("Content-Type", "text/html; charset=utf-8"); res.end(`<!DOCTYPE html><meta charset="utf-8"><p style="font-family:sans-serif;text-align:center;margin-top:20vh">התמונה לא נמצאה. <a href="${home}">לבניית מארז</a></p>`); return; }
   const page = `https://${host}/s/${boxId}`;
   const title = approve ? "מארז מתנה לאישורך ✨" : "המארז שבניתי ב-נויה במתנה ✨";
-  const desc = approve ? "הוכן עבורכם מארז מתנה בעיצוב אישי. מאשרים בלחיצה, ונציג נויה במתנה יחזור עם הצעת מחיר מסודרת." : "מארז מתנה בעיצוב אישי. בחרו מוצרים, ונויה תעצב לכם מארז משלכם.";
+  const desc = approve ? "הוכן עבורכם מארז מתנה בעיצוב אישי. מאשרים ומזמינים בלחיצה אחת." : "מארז מתנה בעיצוב אישי. בחרו מוצרים, ונויה תעצב לכם מארז משלכם.";
   const b = bx?.box || {}, items = Array.isArray(b.items) ? b.items : [];
   const ils = n => "₪" + (+n).toLocaleString("he-IL", { maximumFractionDigits: 2 });
   const per = +b.per || 0, total = per ? Math.round(per * nBoxes * 100) / 100 : 0;
   const lines = items.map(([id, q]) => `• ${b.names?.[id] || id}${q > 1 ? ` × ${q}` : ""}`).join("\n");
   const waText = `✅ מארז אושר – אשמח לקבל הצעת מחיר מסודרת\n${lines}\nאריזה: ${b.packName || "—"}\n${per ? `מחיר למארז: ${ils(per)} (לפני מע״מ)\n` : ""}כמות: ${nBoxes} מארזים${total ? ` · סה״כ: ${ils(total)} (לפני מע״מ)` : ""}\n\nלפתיחת המארז והפקת הצעת מחיר:\n${home}?box=${boxId}&go=sum`;
-  const approveBtn = `<a class="ok" href="https://wa.me/${NOYA_WA}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener">מאשר ✓ – שלחו לנו הצעת מחיר</a>`;
+  // the approver orders straight away: the builder opens on the order page with this box and quantity
+  const approveBtn = `<a class="ok" href="${home}?box=${boxId}&go=sum">מאשר ומזמין ✓</a>`;
   if (boxId && req.query?.v === "noya") { // order card for Noya after a customer approved: details only, no approve button
     const rows = items.map(([id, q]) => { const pr = +b.prices?.[id] || 0;
       return `<tr><td>${esc(b.names?.[id] || id)}<small>${esc(id)}</small></td><td>${q}</td><td>${pr ? esc(ils(pr)) : "—"}</td></tr>`; }).join("");
@@ -73,5 +74,5 @@ a.alt{background:#fffaf3;color:#4a2f22;border:1px solid #e2d3c0;box-shadow:none;
 p{margin:0;color:#7a5a48;text-align:center}
 a.ok{background:linear-gradient(135deg,#1f7a4d,#25a85f);font-size:22px}
 p.small{font-size:14px}</style></head>
-<body><h1>${esc(title)}</h1><p>${esc(desc)}</p><img src="${esc(img)}" alt="תמונת מארז מתנה"><div class="btns">${approve ? `${approveBtn}<a class="alt" href="${home}?box=${boxId}">לצפייה ועריכה של המארז</a><p class="small">ההצעה כפופה לאישור נציג · המחירים לפני מע"מ</p>` : boxId ? `<a href="${home}?box=${boxId}">אני רוצה את המארז הזה ✨</a><a class="alt" href="${home}">עצבו מארז משלכם</a>` : `<a href="${home}">עצבו את המארז שלכם ✨</a>`}</div></body></html>`);
+<body><h1>${esc(title)}</h1><p>${esc(desc)}</p><img src="${esc(img)}" alt="תמונת מארז מתנה"><div class="btns">${approve ? `${approveBtn}<a class="alt" href="${home}?box=${boxId}">לצפייה ועריכה של המארז</a><p class="small">המחירים לפני מע"מ · המחיר הסופי, משלוח ומיתוג יאושרו מול נציג</p>` : boxId ? `<a href="${home}?box=${boxId}">אני רוצה את המארז הזה ✨</a><a class="alt" href="${home}">עצבו מארז משלכם</a>` : `<a href="${home}">עצבו את המארז שלכם ✨</a>`}</div></body></html>`);
 }
