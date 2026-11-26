@@ -2406,7 +2406,7 @@ function surTake(){const pick=sur.pick;if(!pick||sur.busy)return;sur.busy=true;c
     let landed=0;const n=fl.length;
     const allIn=()=>{const sh=document.createElement("div");sh.className="scene-shine";scene.appendChild(sh);setTimeout(()=>sh.remove(),900);
       showToast("🎰 המארז נכנס! עוד רגע הוא נחשף ✨",true);
-      setTimeout(()=>{if(comboKey()===key&&!aiBusy&&!revealed){window._casinoNext=true;generateAi(false);}},450);};
+      setTimeout(()=>{if(comboKey()===key&&!aiBusy&&!revealed)generateAi(false);},450);};
     if(reduce){allIn();return;}
     fl.forEach((o,i)=>setTimeout(()=>cometFly(o,i,n,()=>{sDing(i,i===n-1);buzz(14);if(++landed===n)allIn();}),120+i*160));
   },T);}
