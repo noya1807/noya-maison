@@ -2,7 +2,7 @@
 # Run: python3 tools/seo_gen.py   (rewrites /p, /c, /gifts, /guides and sitemap.xml)
 import re, json, os, html, shutil, datetime, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from content_more import AUD, IND, EVT, SIZES, GUIDES2, EN_PAGES
+from content_more import AUD, IND, EVT, SIZES, GUIDES2, EN_PAGES, KIND
 from product_copy import COPY
 from guides_extra import EXTRA, CAT_MORE
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -379,13 +379,14 @@ URLS = []
 VIDEO = '<h2>כך בונים מארז – בדקה אחת</h2><video src="/media/noya-builder-wide.mp4" poster="/media/hero-bg.jpg" controls muted playsinline preload="none" style="width:100%;max-width:900px;border-radius:18px;background:#000" aria-label="סרטון: בונים מארז מתנה בבונה המארזים של נויה"></video>'
 VIDEO_LD = {"@type": "VideoObject", "name": "בונה המארזים של נויה במתנה – בונים מארז מתנה בדקה", "description": "סרטון קצר: בוחרים מוצרים, בוחרים אריזה, חושפים את המארז ומשתפים עם הצוות בוואטסאפ.", "thumbnailUrl": SITE + "/media/hero-bg.jpg", "contentUrl": SITE + "/media/noya-builder-wide.mp4", "uploadDate": "2026-11-24", "inLanguage": "he"}
 HOLI = LAND[1:]
-LINKS = [("כל המארזים והמדריכים", "/gifts/"), ("מתנות לעובדים", "/gifts/matanot-laovdim/")] + [(l["nav"], f'/gifts/{l["slug"]}/') for l in HOLI] + \
+LINKS = [("כל המארזים והמדריכים", "/gifts/"), ("מתנות לעובדים", "/gifts/matanot-laovdim/")] + [(l["nav"], f'/gifts/{l["slug"]}/') for l in KIND] + [(l["nav"], f'/gifts/{l["slug"]}/') for l in HOLI] + \
         [(f"מארזים עד ₪{b}", f"/gifts/ad-{b}/") for b in (50,100,150,200,250)] + \
         [("מחשבון תקציב מתנות", "/kelim/machshevon-takziv/"), ("איזה מארז מתאים לכם?", "/kelim/eize-maraz/"), ("מארזי השראה", "/gifts/galeria/"), ("עד מתי להזמין", "/guides/ad-matai-lehazmin/"), ("הסיפור שלנו", "/about/")]
 NAV_LINKS = '<section><h2>עוד מארזים ורעיונות</h2><nav class="links">' + "".join(f'<a href="{u}">{e(n)}</a>' for n, u in LINKS) + "</nav></section>"
 ALLG = GUIDES + GUIDES2
 GROUPS = [("חגים", [(l["nav"], f'/gifts/{l["slug"]}/') for l in HOLI] + [("מתנות לעובדים", "/gifts/matanot-laovdim/")]),
           ("לפי תקציב", [(f"עד ₪{b}", f"/gifts/ad-{b}/") for b in (50,100,150,200,250)] + [(f"מארזים ל-{n} עובדים", f"/gifts/{n}-ovdim/") for n in SIZES]),
+          ("סוגי מארזים", [(a["nav"], f'/gifts/{a["slug"]}/') for a in KIND]),
           ("למי המתנה", [(a["nav"], f'/gifts/{a["slug"]}/') for a in AUD]),
           ("לפי תחום", [(a["nav"], f'/gifts/{a["slug"]}/') for a in IND]),
           ("אירועים במהלך השנה", [(a["nav"], f'/gifts/{a["slug"]}/') for a in EVT]),
@@ -435,7 +436,7 @@ def og_make(path, title, sub="נויה במתנה · מארזי שי לעובד�
     os.makedirs(os.path.join(ROOT, "og"), exist_ok=True)
     im.save(os.path.join(ROOT, "og", slug + ".jpg"), quality=86, optimize=True, progressive=True)
     OG[path] = f"{SITE}/og/{slug}.jpg"
-for l in LAND + AUD + IND + EVT: og_make(f'/gifts/{l["slug"]}/', l["h1"])
+for l in LAND + KIND + AUD + IND + EVT: og_make(f'/gifts/{l["slug"]}/', l["h1"])
 for g in ALLG: og_make(f'/guides/{g["slug"]}/', g["h1"])
 for b in (50, 100, 150, 200, 250): og_make(f"/gifts/ad-{b}/", f"מארזי שי לעובדים עד ₪{b}")
 for n in SIZES: og_make(f"/gifts/{n}-ovdim/", f"מתנות ל-{n} עובדים – תקציב ורעיונות")
@@ -446,7 +447,7 @@ og_make("/kelim/eize-maraz/", "איזה מארז מתאים לארגון שלכ�
 og_make("/about/", "הסיפור של נויה במתנה")
 for k, v in CATS.items(): og_make(f"/c/{k}/", f"{v} למארזי שי")
 
-for l in LAND + AUD + IND + EVT:
+for l in LAND + KIND + AUD + IND + EVT:
     pp = picks(l["cats"])
     faqs = l.get("faq", []) + common_faq(l["slug"])
     body = f"""<h1>{e(l["h1"])}</h1><p class="lead">{e(l["lead"])}</p>
@@ -477,6 +478,7 @@ for k, v in CATS.items():
     title = f"{v} למארזי שי ומתנות לעובדים | נויה במתנה"
     desc = f"{CAT_INTRO[k]} {len(pp)} מוצרים, מחירים לפני מע״מ."
     if len(desc) > 160: desc = f"{CAT_INTRO[k].split(' – ')[0]} – {len(pp)} מוצרים, מחירים לפני מע״מ."
+    if len(desc) < 90: desc += " מיתוג עם לוגו ומשלוח לכל נמען."
     body = f"""<h1>{e(v)} למארזי שי</h1><p class="lead">{e(CAT_INTRO[k])}</p>
 <div class="cta-row"><a class="btn" href="/?cat={k}">בונים מארז עם {e(v)} ←</a></div>
 <div class="grid">{"".join(card(p) for p in pp)}</div><div class="prose">{CAT_MORE.get(k, "")}</div>"""
@@ -484,6 +486,25 @@ for k, v in CATS.items():
           {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": f'{SITE}/p/{p["id"]}/'} for i, p in enumerate(pp)]}]
     page(f"/c/{k}/", title, desc, body, ld, [("בונה המארזים", "/"), (v, f"/c/{k}/")])
 
+# how each category works inside a gift box (product pages)
+CAT_TIP = {
+ "diffuser": "מפיץ ריח הוא מוצר מרכזי מצוין במארז: הוא נראה טוב על השולחן, מחזיק שבועות ומזכיר את הנותן בכל פעם שנכנסים לחדר. משלבים אותו עם נר ריחני או כלי הגשה קטן.",
+ "candle": "נרות מוסיפים למארז חום ואווירה, ומתאימים כמעט לכל קהל ולכל חג. נר בודד משלים מארז קיים, וכמה נרות יחד יוצרים מארז פינוק שלם.",
+ "holder": "פמוטים מתאימים במיוחד למארזי חג – ראש השנה, פסח וחנוכה – ולמארזים לבית. משלבים אותם עם נרות ארוכים ומגש קטן.",
+ "textile": "מפות, מגבות וטקסטיל לבית הם מתנה שימושית שנכנסת לבית מיד. אפשר למתג אותם עם חבק ממותג עם לוגו, ולשלב עם כלי הגשה למארז אירוח.",
+ "serve": "כלי הגשה מעץ וקרמיקה הם הבסיס של מארזי אירוח. קרש או מגש גדול משמש גם כבסיס שעליו מסדרים את שאר המוצרים במארז.",
+ "kitchen": "מתנות למטבח הן בחירה בטוחה לעובדים ולקוחות: כולם משתמשים בהן, והן מתאימות למארזי חג ולמארזי אירוח.",
+ "decor": "אגרטלים, עציצים ופריטי עיצוב מוסיפים למארז נגיעה אישית ומעוצבת. משלבים אותם עם נר או מפיץ ריח למארז לבית.",
+ "drink": "כלי שתייה הם מתנה קטנה ושימושית, מתאימה במיוחד לכנסים, לימי גיבוש ולמארזים בתקציב קטן.",
+ "gift": "מארז מוכן הוא מתנה שלמה בפני עצמה, ואפשר להוסיף לו מוצר משלים אחד או שניים כדי להפוך אותו למארז אישי.",
+}
+def prod_faq(p):
+    if p.get("engrave"): b = "כן. אפשר לחרוט את הלוגו שלכם על המוצר בתוספת ₪7 ליחידה. הלוגו מופיע גם על כרטיס הברכה והתגית של המארז."
+    elif p.get("brandKind") == "sleeve": b = "כן. את המוצר ממתגים עם חבק ממותג עם הלוגו שלכם, בתוספת ₪7 ליחידה. הלוגו מופיע גם על כרטיס הברכה והתגית של המארז."
+    else: b = "הלוגו שלכם מופיע על כרטיס הברכה, על התגית ועל האריזה של המארז."
+    return [("אפשר למתג את המוצר עם לוגו?", b),
+            ("איך המארזים מגיעים לעובדים?", "שולחים לנו קובץ אקסל עם כתובות, וכל מארז נשלח בנפרד: ₪65 למארז, או שליח VIP צמוד ב-₪99 למארז. אפשר גם משלוח מרוכז למשרד או איסוף עצמי מהענבר 1, ברקן."),
+            ("יש מינימום הזמנה?", "מינימום ההזמנה הוא ₪3,000 לפני מע״מ לכל ההזמנה. אפשר לשלב כמה מוצרים וכמה סוגי מארזים באותה הזמנה.")]
 for p in P:
     cat = CATS.get(p["cat"], "מוצרים")
     name = p["name"]
@@ -504,13 +525,15 @@ for p in P:
 <p style="font-size:15px;color:var(--soft);margin:10px 0 0">בונים מארז מכמה מוצרים, רואים אותו מעוצב ומקבלים הצעת מחיר מיד. מינימום הזמנה ₪3,000 לכל ההזמנה.</p></div>
 <img src="/{p["photo"] or p["img"]}" alt="{e(name)}" width="720" height="720" fetchpriority="high"></div>
 <h2>עוד {e(cat)} למארז</h2><div class="grid">{"".join(card(x) for x in rel)}</div>
-<h2>מתאים במיוחד ל…</h2><nav class="links">{"".join(f'<a href="/gifts/{l["slug"]}/">{e(l["nav"])}</a>' for l in (LAND + AUD + IND + EVT) if p["cat"] in l["cats"][:3])}</nav>"""
+<h2>מתאים במיוחד ל…</h2><nav class="links">{"".join(f'<a href="/gifts/{l["slug"]}/">{e(l["nav"])}</a>' for l in (LAND + KIND + AUD + IND + EVT) if p["cat"] in l["cats"][:3])}</nav>
+<h2>איך משלבים את המוצר במארז</h2><div class="prose"><p>{e(CAT_TIP.get(p["cat"], ""))} בבונה המארזים מוסיפים את המוצר למארז, רואים את המארז מעוצב ומקבלים הצעת מחיר מיד. רעיונות לפי תקציב: <a href="/gifts/ad-100/">מארזים עד ₪100</a>, <a href="/gifts/ad-200/">עד ₪200</a>.</p></div>
+{faq_html(prod_faq(p))}"""
     prod = {"@type": "Product", "name": name, "image": [img], "description": desc, "sku": p["id"], "category": cat,
             "brand": {"@type": "Brand", "name": "NOYA"},
             "offers": {"@type": "Offer", "url": f'{SITE}/p/{p["id"]}/', "priceCurrency": "ILS", "price": f'{p["price"]:.2f}',
                        "availability": "https://schema.org/InStock" if instock else "https://schema.org/PreOrder",
                        "itemCondition": "https://schema.org/NewCondition", "seller": {"@id": SITE + "/#business"}}}
-    page(f'/p/{p["id"]}/', ptitle(name, cat), pdesc(name, d, p["price"]), body, [prod],
+    page(f'/p/{p["id"]}/', ptitle(name, cat), pdesc(name, d, p["price"]), body, [prod, faq_ld(prod_faq(p))],
          [("בונה המארזים", "/"), (cat, f'/c/{p["cat"]}/'), (name, f'/p/{p["id"]}/')], img)
 
 
