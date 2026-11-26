@@ -169,6 +169,21 @@ async function readJack() {
   if (host) { try { const r = await fetch(host + JACK_CUR + "?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); return { meals: +j.meals || 0, wins: Array.isArray(j.wins) ? j.wins : [] }; } } catch (e) {} }
   return { meals: 0, wins: [] };
 }
+// e-mail alert to the owner (Resend). Needs RESEND_API_KEY in Vercel; NOTIFY_EMAIL / NOTIFY_FROM are optional.
+async function notify(subject, html) {
+  const key = process.env.RESEND_API_KEY; if (!key) return { ok: false, error: "no key" };
+  try {
+    const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: process.env.NOTIFY_FROM || "מכונת המארזים של נויה <onboarding@resend.dev>", to: [process.env.NOTIFY_EMAIL || "moshe@noyaglobal.com"], subject, html }) });
+    const j = await r.json().catch(() => ({})); return r.ok ? { ok: true } : { ok: false, error: j.message || ("status " + r.status) };
+  } catch (e) { return { ok: false, error: String(e.message || e) }; }
+}
+const jackMail = (w, test) => notify((test ? "בדיקה: " : "") + "🎰 יצא 777 במכונת המארזים – 21 ארוחות ל\"האור של אורי\"",
+  `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;line-height:1.6;color:#3f271c">
+   <p>💜 <b>יצאו שלושה 7 במכונת המארזים${test ? " (מייל בדיקה)" : ""}</b></p>
+   <p>הלקוח ראה את ההודעה שנויה במתנה תעביר <b>21 ארוחות חמות</b> למיזם "האור של אורי".</p>
+   <p>זמן: ${new Date(w.at).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" })}</p>
+   <p>אחרי שהעברת את התרומה: ממשק הניהול ← הזמנות ← "✓ העברנו את התרומה". רק אז המונה באתר עולה ב-21.</p></div>`);
 const saveJack = s => put(JACK_CUR, JSON.stringify({ meals: s.meals, wins: s.wins.slice(0, 200), savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
 async function readShowcase() {
   const host = blobHost();
@@ -257,7 +272,7 @@ export default async function handler(req, res) {
     if ((a === "spinshown" || a === "spinvoid") && req.method === "POST") {
       const { id } = await readBody(req); const s = await readJack(); const w = s.wins.find(x => x.id === String(id || ""));
       if (w && !w.donated) {
-        if (a === "spinshown") w.shown = true;
+        if (a === "spinshown") { const first = !w.shown; w.shown = true; if (first) { await saveJack(s); await jackMail(w); res.status(200).json({ ok: true }); return; } }
         else if (!w.shown && Date.now() - new Date(w.at).getTime() < 5 * 60e3) s.wins = s.wins.filter(x => x !== w);
         await saveJack(s);
       }
@@ -266,7 +281,8 @@ export default async function handler(req, res) {
     if (a === "logout") { setCookie(res, "", 0); res.status(200).json({ ok: true }); return; }
     if (!authed(req)) { res.status(401).json({ error: "צריך להתחבר" }); return; }
     if (a === "me") { res.status(200).json({ ok: true }); return; }
-    if (a === "jackpots" && req.method === "GET") { res.status(200).json(await readJack()); return; }
+    if (a === "jackpots" && req.method === "GET") { res.status(200).json({ ...(await readJack()), mail: !!process.env.RESEND_API_KEY }); return; }
+    if (a === "notifytest" && req.method === "POST") { const r = await jackMail({ at: new Date().toISOString() }, true); res.status(r.ok ? 200 : 400).json(r); return; }
     if ((a === "jackpotdone" || a === "jackpotdel") && req.method === "POST") {
       const { id } = await readBody(req); const s = await readJack(); const w = s.wins.find(x => x.id === String(id || ""));
       if (!w) { res.status(404).json({ error: "לא נמצא" }); return; }
