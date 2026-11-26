@@ -2255,15 +2255,16 @@ function spreadText(){return "עיצבתי מארז מתנה ב-נויה במת�
 const msgText=()=>shareMode==="spread"?spreadText():shareText();
 async function shareWhatsApp(src,mode,ready){shareMode=mode||"consult";
   if(sharing||!cart.size)return;
+  const mobile=matchMedia("(pointer:coarse)").matches;let wide=false;
   if(multiOn()&&shareMode!=="spread"){if(!ready){multiReady(()=>shareWhatsApp(src,mode,true));return;}
-    try{showToast("מכין תמונה אחת של כל המארזים…");src=await multiCard();}catch(e){}}
-  const mobile=matchMedia("(pointer:coarse)").matches;
+    // phone: the detailed picture goes as a file; computer: a wide, light picture so WhatsApp shows it on the link
+    try{showToast("מכין תמונה אחת של כל המארזים…");if(mobile)src=await multiCard();else{src=await multiCardWide();wide=true;}}catch(e){}}
   if(mobile&&shareReady&&shareReady.src===src){const d=shareReady.data; // second tap: share straight away
     try{await navigator.share(d);shareReady=null;}catch(e){if(e.name!=="AbortError")showToast("לא הצלחנו לשתף כרגע. אפשר לנסות שוב.");}return;}
   sharing=true;
   // computer: put the picture itself on the clipboard (started right away, inside the click) so it can be pasted into the chat
   try{
-    const jpg=await toJpeg(src,1280,.82);
+    const jpg=wide?src:await toJpeg(src,1280,.82);
     if(mobile&&navigator.canShare){
       const file=new File([await (await fetch(jpg)).blob()],"noya-gift-box.jpg",{type:"image/jpeg"});
       if(navigator.canShare({files:[file]})){
@@ -2394,6 +2395,40 @@ async function multiCard(){
   x.textAlign="right";x.fillStyle="#3f271c";x.font=`700 36px ${BF}`;x.fillText("📞 "+CARD_PHONE,W-P,y+40);x.font=`500 30px ${BF}`;x.fillText("✉️ "+CARD_MAIL,W-P,y+100);
   x.font=`400 22px ${BF}`;x.fillStyle="#8a6d55";x.fillText("המחירים לפני מע״מ · המחיר הסופי יאושר מול נציג",W-P,y+150);
   return c.toDataURL("image/jpeg",.9);}
+
+// landscape version for WhatsApp on a computer: WhatsApp shows a link's picture only when it's wide and light (≈300KB),
+// so every box sits side by side here, and the JPEG is squeezed under the limit
+function jpegUnder(c,max){let q=.86,u=c.toDataURL("image/jpeg",q);while(u.length*.75>max&&q>.45){q-=.08;u=c.toDataURL("image/jpeg",q);}return u;}
+async function multiCardWide(){
+  btSnap();const f=btFilled();
+  const data=f.map(i=>withBT(i,()=>({name:BTYPES[i].name,src:typeImg(i),photos:[...cart.keys()].map(id=>byId[id]&&(byId[id].photo||byId[id].img)).filter(Boolean).slice(0,4),n:[...cart.values()].reduce((a,b)=>a+b,0),boxes,per:unpriced()?0:r2(orderPer())})));
+  const tot=unpriced()?0:orderGoods(),nb=totalBoxes();
+  await (document.fonts&&document.fonts.ready);
+  const [logo,...ims]=await Promise.all([loadImg("img/icon-192.png").catch(()=>null),...data.map(d=>d.src?loadImg(d.src).catch(()=>null):Promise.resolve(null))]);
+  const phs=await Promise.all(data.map((d,k)=>ims[k]?Promise.resolve([]):Promise.all(d.photos.map(u=>loadImg(u).catch(()=>null))).then(a=>a.filter(Boolean))));
+  const W=1200,H=630,P=28,G=18,n=data.length,DF='"Frank Ruhl Libre","David Libre",Georgia,serif',BF='"Assistant","Segoe UI",Arial,sans-serif';
+  const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");x.direction="rtl";
+  x.fillStyle="#f7efe4";x.fillRect(0,0,W,H);
+  // header
+  if(logo){x.save();x.beginPath();x.arc(W-P-26,P+26,26,0,Math.PI*2);x.clip();x.drawImage(logo,W-P-52,P,52,52);x.restore();}
+  x.textAlign="right";x.textBaseline="middle";x.fillStyle="#3f271c";x.font=`700 34px ${DF}`;x.fillText("נויה במתנה",W-P-64,P+20);
+  x.font=`500 19px ${BF}`;x.fillStyle="#8a6d55";x.fillText(`${n} סוגי מארזים בהזמנה אחת · לאישורך ✨`,W-P-64,P+46);
+  const top=P+72,bandH=74,colW=(W-2*P-(n-1)*G)/n,imgH=Math.min(330,H-top-bandH-110);
+  const cover=(img,X,Y,w,h)=>{const sc=Math.max(w/img.naturalWidth,h/img.naturalHeight),sw=w/sc,sh=h/sc;x.drawImage(img,(img.naturalWidth-sw)/2,(img.naturalHeight-sh)/2,sw,sh,X,Y,w,h);};
+  data.forEach((d,k)=>{const X=W-P-(k+1)*colW-k*G,Y=top;   // first box on the right (Hebrew reading order)
+    x.fillStyle="#fffaf3";x.fillRect(X,Y,colW,H-top-bandH-14);
+    x.save();x.beginPath();x.rect(X,Y,colW,imgH);x.clip();x.fillStyle="#efe2cf";x.fillRect(X,Y,colW,imgH);
+    const im=ims[k];if(im)cover(im,X,Y,colW,imgH);
+    else{const ph=phs[k]||[],m=ph.length;if(m===1)cover(ph[0],X,Y,colW,imgH);else if(m>=2){const cw=colW/2-2;cover(ph[0],X,Y,cw,imgH);cover(ph[1],X+cw+4,Y,cw,imgH);}}
+    x.restore();
+    const cx=X+colW/2;x.textAlign="center";x.fillStyle="#3f271c";x.font=`700 ${n>3?24:30}px ${DF}`;x.fillText("מארז "+d.name,cx,Y+imgH+34);
+    x.font=`600 ${n>3?18:21}px ${BF}`;x.fillStyle="#8a6a33";x.fillText(`${d.boxes} מארזים${d.per?` × ${ils(d.per)}`:""}`,cx,Y+imgH+70);
+    x.font=`400 ${n>3?15:17}px ${BF}`;x.fillStyle="#7a5a48";x.fillText(`${d.n} פריטים במארז`,cx,Y+imgH+98);});
+  // total band
+  const by=H-bandH;const g=x.createLinearGradient(0,0,W,0);g.addColorStop(0,"#3f271c");g.addColorStop(1,"#6e4d3b");x.fillStyle=g;x.fillRect(0,by,W,bandH);
+  x.fillStyle="#fffaf3";x.textAlign="right";x.font=`700 28px ${BF}`;x.fillText(`סה״כ ${nb} מארזים${tot?" · לפני מע״מ":""}`,W-P,by+bandH/2);
+  x.textAlign="left";x.font=`700 34px ${DF}`;x.fillStyle="#ead6a6";x.fillText(tot?ils(tot):"📞 "+CARD_PHONE,P,by+bandH/2);
+  return jpegUnder(c,280000);}
 // before sharing / downloading all box types: offer to reveal a box that wasn't designed yet, so the picture looks its best
 function unrevealedTypes(){if(!BTYPES||!aiAvailable)return [];btSnap();return btFilled().filter(i=>i===btCur?!revealed:!(BTYPES[i].revealed&&BTYPES[i].revealedKey===withBT(i,contentKey)));}
 function multiReady(go){const u=unrevealedTypes();if(!u.length){go();return;}
