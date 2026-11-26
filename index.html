@@ -742,6 +742,24 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .lv-ball{background:radial-gradient(circle at 35% 28%,#fff 0 3px,#ff6b5e 5px,#d81e14 55%,#6e0a05)}
 @media (max-width:480px){.slot-sign span{font-size:15px}.jackpot b{font-size:15px}.jackpot small{font-size:11.5px}}
 @media (prefers-reduced-motion:reduce){.slot-cab::before,.slot-cab::after,.slot-sign::before,.slot-sign::after,.slot-sign span,.mr.sur.win{animation:none}}
+/* --- Vegas diamond sign (button + machine top) --- */
+.surprise-btn{display:block;max-width:320px;margin:0 auto 8px;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;border-radius:0;aspect-ratio:300/166;container-type:inline-size;filter:drop-shadow(0 6px 14px rgba(122,26,44,.35))}
+.surprise-btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:none!important}
+.surprise-btn::before,.surprise-btn::after,.slot-sign.vs-wrap::before,.slot-sign.vs-wrap::after{display:none!important}
+.vsign{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.vbulbs{filter:drop-shadow(0 0 2px rgba(255,215,106,.95))}
+.vbl{fill:#fff3c4;animation:vbA .9s steps(1) infinite}.vbl.b{animation-name:vbB}
+.vst{fill:#fff6d2;animation:vtw 1.2s ease-in-out infinite}@keyframes vtw{0%,100%{opacity:.25}50%{opacity:1}}
+.v7{font:italic 900 22px "Assistant","Segoe UI",Arial,sans-serif;fill:#d81e14}
+.surprise-btn:hover .vbl{animation-duration:.3s}
+.surprise-btn .vb-t{position:absolute;left:17%;right:17%;top:47%;bottom:8%;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.08;z-index:1}
+.surprise-btn .vb-t em{font-size:clamp(9px,5.1cqw,14px)}.surprise-btn .vb-t b{font-size:clamp(14px,9.6cqw,27px)}.surprise-btn .vb-t small{font-size:clamp(8.5px,4.9cqw,13px)}
+.surprise-btn .vb-fx{inset:16% 9% 6%;border-radius:50%}
+.slot-sign.vs-wrap{position:relative;width:92%;max-width:none;margin:4px auto 10px;padding:0;background:none;box-shadow:none;border-radius:0;aspect-ratio:300/100;container-type:inline-size}
+.slot-sign.vs-wrap>span{position:absolute;left:10%;right:10%;top:18%;bottom:2%;display:flex;align-items:center;justify-content:center;font-size:clamp(13px,6.6cqw,21px);white-space:nowrap}
+.slot.spinning .vbl,.slot.win .vbl{animation-duration:.22s}.slot.win .vbl.b{animation-name:vbA}
+@media (max-width:1099px){.surprise-btn{max-width:320px}}
+@media (prefers-reduced-motion:reduce){.vbl,.vst{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
 .cl-more{flex:1 1 100%;text-align:center;font-size:12.5px;color:var(--cocoa);margin-top:3px}.cl-more b{color:#8a6a33}
@@ -1980,7 +1998,7 @@ function update(flash){
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
-setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><button type="button" class="surprise-btn" id="surpriseBtn"><span class="vb-fx" aria-hidden="true"></span><span class="vb-777">777</span><span class="vb-t"><em>מכונת המארזים של נויה</em><b>הפתיעו אותי</b><small>אחד מתוך ${combosShort()} שילובים</small></span></button><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><button type="button" class="surprise-btn" id="surpriseBtn" aria-label="מכונת המארזים של נויה – הפתיעו אותי">${vegasSVG(300,150,true,"vb")}<span class="vb-fx" aria-hidden="true"></span><span class="vb-t"><em>מכונת המארזים של נויה</em><b>הפתיעו אותי</b><small>אחד מתוך ${combosShort()} שילובים</small></span></button><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
 (function(){const el=document.getElementById("setsProof");if(!el)return;const t=el.querySelector(".sp-txt");
   const L=[["🏦","בנק מזרחי טפחות"],["🎖️","צה״ל"],["🛡️","משטרת ישראל"],["🏦","בנק הפועלים"],["🏛️","עיריית תל אביב"],["⚙️","אלביט"],["📱","פרטנר"],["🏦","בנק דיסקונט"],["🏛️","כנסת ישראל"],["🩺","כללית"],["🏛️","עיריית הרצליה"],["🌿","המשרד להגנת הסביבה"],["🏦","בנק יהב"],["🏗️", "אפריקה ישראל"],["🚗", "שלמה סיקסט"],["🍳", "מטבחי רגבה"],["🍳", "מטבחי דקל קמילה"],["🩺", "מאוחדת"],["🏭", "בתי הזיקוק"],["🏅", "מכון וינגייט"],["🛡️", "הראל חברה לביטוח"],["🤝", "ההסתדרות"],["🏥", "בית החולים שיבא"],["✈️", "פספורטכארד"],["💊", "אלטמן"]];
   let i=0,hold=false;const show=()=>{const [e,n]=L[i%L.length];t.innerHTML=`${e} גם <b>${n}</b> בחרו בנויה במתנה`;};
@@ -2046,6 +2064,21 @@ let undoSet=null;
 const SUR_W={emp:{candle:3,holder:3,kitchen:2,decor:2,serve:2,textile:2,diffuser:2,drink:2,gift:1},
   mgr:{diffuser:3,gift:3,serve:3,kitchen:2,candle:2,textile:2,holder:1,drink:1,decor:1},
   cli:{diffuser:3,serve:3,kitchen:3,gift:2,candle:2,textile:2,holder:1,decor:1,drink:1}};
+// ===== Vegas-style sign (inspired by the famous diamond sign: bulbs all around, a red star on top, white circles with red 7s). One SVG, so it looks the same on phone and desktop
+function vegasSVG(W,H,circles,id){const t=6,l=6,r=W-6,b=H-6,cx=W/2,cy=H/2;
+  const S=[[[cx,t],[cx+.22*W,t+.03*H],[r-.11*W,cy-.3*H],[r,cy]],[[r,cy],[r-.11*W,cy+.3*H],[cx+.22*W,b-.03*H],[cx,b]],[[cx,b],[cx-.22*W,b-.03*H],[l+.11*W,cy+.3*H],[l,cy]],[[l,cy],[l+.11*W,cy-.3*H],[cx-.22*W,t+.03*H],[cx,t]]];
+  const f=n=>Math.round(n*10)/10,d=`M${cx} ${t}`+S.map(q=>` C${q[1].map(f)} ${q[2].map(f)} ${q[3].map(f)}`).join("")+"Z";
+  const kx=(W/2-10)/(W/2),ky=(H/2-10)/(H/2),pts=[];
+  S.forEach(q=>{for(let i=0;i<80;i++){const u=i/80,v=1-u,P=[0,1].map(k=>v*v*v*q[0][k]+3*v*v*u*q[1][k]+3*v*u*u*q[2][k]+u*u*u*q[3][k]);pts.push([cx+(P[0]-cx)*kx,cy+(P[1]-cy)*ky]);}});
+  let L=0;const cum=pts.map((p,i)=>i?(L+=Math.hypot(p[0]-pts[i-1][0],p[1]-pts[i-1][1])):0);L+=Math.hypot(pts[0][0]-pts[pts.length-1][0],pts[0][1]-pts[pts.length-1][1]);
+  const N=Math.round(L/15/2)*2;let j=0,bl="";for(let n=0;n<N;n++){const want=n*L/N;while(j<cum.length-1&&cum[j+1]<want)j++;const p=pts[j];bl+=`<circle class="vbl${n%2?" b":""}" cx="${f(p[0])}" cy="${f(p[1])}" r="3.9"/>`;}
+  const st=[];for(let i=0;i<16;i++){const a=-Math.PI/2+i*Math.PI/8,R=i%2?6.5:15;st.push(f(cx+R*Math.cos(a))+","+f(t-2+R*Math.sin(a)));}
+  const sb=[0,2,4,6,8,10,12,14].map((i,k)=>{const a=-Math.PI/2+i*Math.PI/8;return `<circle class="vst" style="animation-delay:${k*.15}s" cx="${f(cx+15*Math.cos(a))}" cy="${f(t-2+15*Math.sin(a))}" r="1.9"/>`;}).join("");
+  const cc=circles?[-36,0,36].map(o=>`<circle cx="${cx+o}" cy="${f(H*.3)}" r="15" fill="#fffaf0" stroke="#d9b46a" stroke-width="2"/><text x="${cx+o}" y="${f(H*.3+7.5)}" text-anchor="middle" class="v7">7</text>`).join(""):"";
+  return `<svg class="vsign" viewBox="0 -16 ${W} ${H+16}" aria-hidden="true"><defs><radialGradient id="${id}g" cx="50%" cy="20%" r="80%"><stop offset="0" stop-color="#7a1a2c"/><stop offset=".6" stop-color="#3a0a14"/><stop offset="1" stop-color="#1c0509"/></radialGradient>
+    <linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b5e"/><stop offset="1" stop-color="#b3150c"/></linearGradient></defs>
+    <path d="${d}" fill="url(#${id}g)" stroke="#e3c58c" stroke-width="3"/><path d="${d}" fill="none" stroke="#1c0509" stroke-width="1.2" transform="translate(${f(cx*(1-kx))} ${f(cy*(1-ky))}) scale(${f(kx*1000)/1000} ${f(ky*1000)/1000})" opacity=".6"/>
+    <g class="vbulbs">${bl}</g>${cc}<polygon points="${st.join(" ")}" fill="url(#${id}s)" stroke="#ffd76a" stroke-width="1.4"/><g class="vbulbs">${sb}</g></svg>`;}
 let sur={who:"emp",bud:99,pick:null,held:new Set(),busy:false,cur:[]};
 const surN=()=>sur.bud<=50?2:sur.bud<=149?3:4;
 function surPool(){const W=SUR_W[sur.who];return P.filter(p=>!p.hidden&&+p.price>0&&(+p.stock>0||+p.incoming>0)&&W[p.cat]&&+p.price<=sur.bud&&(p.photo||p.img));}
@@ -2087,7 +2120,7 @@ function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,c
     <button type="button" class="sur-snd" data-sa="mute" aria-label="${surSnd?"השתקת צלילים":"הפעלת צלילים"}">${surSnd?"🔊":"🔇"}</button>
     <div class="sur-q"><b>למי?</b><div>${pill("sw","emp","עובדים",sur.who==="emp")}${pill("sw","mgr","מנהלים",sur.who==="mgr")}${pill("sw","cli","לקוחות",sur.who==="cli")}</div></div>
     <div class="sur-q"><b>תקציב למארז</b><div>${[50,99,149,199,249].map(v=>pill("sb",v,"עד ₪"+v,sur.bud===v)).join("")}</div></div>
-    <div class="slot" id="surSlot"><div class="slot-cab"><div class="slot-sign"><span>מכונת המארזים של נויה</span></div>
+    <div class="slot" id="surSlot"><div class="slot-cab"><div class="slot-sign vs-wrap">${vegasSVG(300,84,false,"ms")}<span>מכונת המארזים של נויה</span></div>
       <div class="slot-reels" id="surReels">${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip"><div class="cell"><img src="${surImg(p)}" alt=""></div></div></div>
         <span class="reel-name">${sur.pick?esc(p.name):""}</span><button type="button" class="hold" data-hold="${k}" aria-pressed="${sur.held.has(k)}" ${sur.pick?"":"disabled"}>${sur.held.has(k)?"🔒 נעול":"החזיקו"}</button></div>`).join("")}</div>
       <div class="coin-slot" aria-hidden="true"></div>
