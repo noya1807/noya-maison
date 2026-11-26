@@ -4,7 +4,7 @@ import re, json, os, html, shutil, datetime, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from content_more import AUD, IND, EVT, SIZES, GUIDES2, EN_PAGES
 from product_copy import COPY
-from guides_extra import EXTRA
+from guides_extra import EXTRA, CAT_MORE
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = "https://build.noyaglobal.com"
 TODAY = datetime.date.today().isoformat()
@@ -479,7 +479,7 @@ for k, v in CATS.items():
     if len(desc) > 160: desc = f"{CAT_INTRO[k].split(' – ')[0]} – {len(pp)} מוצרים, מחירים לפני מע״מ."
     body = f"""<h1>{e(v)} למארזי שי</h1><p class="lead">{e(CAT_INTRO[k])}</p>
 <div class="cta-row"><a class="btn" href="/?cat={k}">בונים מארז עם {e(v)} ←</a></div>
-<div class="grid">{"".join(card(p) for p in pp)}</div>"""
+<div class="grid">{"".join(card(p) for p in pp)}</div><div class="prose">{CAT_MORE.get(k, "")}</div>"""
     ld = [{"@type": "CollectionPage", "name": title, "description": desc, "inLanguage": "he"},
           {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": f'{SITE}/p/{p["id"]}/'} for i, p in enumerate(pp)]}]
     page(f"/c/{k}/", title, desc, body, ld, [("בונה המארזים", "/"), (v, f"/c/{k}/")])
