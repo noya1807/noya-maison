@@ -942,6 +942,7 @@ h1.brand{margin:0;line-height:1.2}
 .sets-rot>*{grid-area:1/1;margin:0!important;opacity:0;visibility:hidden;transition:opacity .45s,visibility .45s;justify-content:center;text-align:center}
 .sets-rot>.on{opacity:1;visibility:visible}
 .bar.is-empty{display:none!important}
+.sets-h[hidden]{display:none!important}
 .mode-pick{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:2px 0 6px}
 .mode-pick .mp-q{font-weight:700;color:#4a2f22;font-size:14.5px}
 .mode-pick button{border:1px solid #d9c3a0;background:#fffaf3;color:#4a2f22;border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
@@ -1836,6 +1837,7 @@ setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small
   show();el.addEventListener("mouseenter",()=>hold=true);el.addEventListener("mouseleave",()=>hold=false);
   const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
   setInterval(()=>{if(hold||document.hidden)return;if(still){i++;show();return;}t.classList.add("out");setTimeout(()=>{i++;show();t.classList.remove("out");},350);},4000);})();
+{const h=document.querySelector("#sets .sets-h");if(h)h.hidden=true;}
 // stats, "האור של אורי" and "גם … בחרו" share one line and take turns (pause while the mouse is over it)
 (function(){const r=document.getElementById("setsRot");if(!r)return;const kids=[...r.children];let i=0,hold=false;
   const show=()=>kids.forEach((k,n)=>k.classList.toggle("on",n===i));show();
@@ -2371,7 +2373,8 @@ function renderBT(){const el=$("boxTabs");if(!el)return;if(!BTYPES){el.hidden=tr
     +(BTYPES.length<6?`<button type="button" class="bt add" data-btadd>＋ סוג מארז נוסף</button>`:"")
     +`<span class="bt-tot">${btFilled().length} סוגים · ${totalBoxes()} מארזים${unpriced()?"":` · ${ils(orderGoods())}`}</span>`;
   renderSetsHint();}
-function renderSetsHint(){const h=document.querySelector("#sets .sets-h small");if(h)h.textContent=BTYPES?`בחרו מארז השראה לכל קהל · עכשיו ממלאים: ${BTYPES[btCur].name}`:"לחצו על מארז, ושנו אותו כרצונכם";}
+function renderSetsHint(){const h=document.querySelector("#sets .sets-h");if(!h)return;h.hidden=!BTYPES;   // the heading shows only in multi mode, to say which tab the box goes into
+  const sm=h.querySelector("small");if(sm)sm.textContent=BTYPES?`עכשיו ממלאים: ${BTYPES[btCur].name}`:"";const t=h.firstChild;if(t&&t.nodeType===3)t.textContent="בחרו מארז השראה לכל קהל ";}
 $("boxTabs").addEventListener("click",e=>{const x=e.target.closest("[data-btx]");if(x){e.stopPropagation();btRemove(+x.dataset.btx);return;}
   if(e.target.closest("[data-btadd]")){btAdd(false);return;}if(e.target.closest(".bt-name"))return;const t=e.target.closest("[data-bt]");if(t)btSwitch(+t.dataset.bt);});
 $("boxTabs").addEventListener("keydown",e=>{const t=e.target.closest("[data-bt]");if(t&&!e.target.closest(".bt-name")&&(e.key==="Enter"||e.key===" ")){e.preventDefault();btSwitch(+t.dataset.bt);}});
