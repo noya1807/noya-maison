@@ -666,17 +666,41 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
   background:linear-gradient(135deg,#f5e6c4,#e3c58c 55%,#cfab6c);box-shadow:0 4px 14px rgba(176,138,79,.3);transition:transform .2s,box-shadow .2s}
 .surprise-btn small{font-weight:500;font-size:11.5px;color:#6e4d3b}.surprise-btn:hover{transform:translateY(-2px) rotate(-1deg);box-shadow:0 8px 20px rgba(176,138,79,.4)}
 @media (max-width:1099px){.surprise-btn{flex-direction:row;justify-content:center;gap:8px;max-width:420px;margin:0 auto 8px}}
-.mr.sur{position:relative;width:min(520px,94vw)}.sur-x{position:absolute;top:8px;left:12px;border:0;background:none;font-size:22px;color:#a08670;cursor:pointer;width:auto!important;margin:0!important}
-.sur-q{margin:10px 0}.sur-q b{display:block;font-size:14px;margin-bottom:6px}.sur-q div{display:flex;flex-wrap:wrap;gap:6px}
+.mr.sur{position:relative;width:min(580px,96vw);max-height:94vh;overflow:auto}
+.sur-x{position:absolute;top:8px;left:12px;border:0;background:none;font-size:22px;color:#a08670;cursor:pointer;width:auto!important;margin:0!important}
+.sur-snd{position:absolute;top:10px;left:46px;border:0;background:none;font-size:18px;cursor:pointer;width:auto!important;margin:0!important;padding:2px 4px!important}
+.sur-q{margin:8px 0}.sur-q b{display:block;font-size:14px;margin-bottom:6px}.sur-q div{display:flex;flex-wrap:wrap;gap:6px}
 .sur-q button{width:auto!important;margin:0!important;border:1px solid #d9c3a0;background:#fffaf3;color:#4a2f22;border-radius:999px;padding:6px 13px;font:inherit;font-size:14px;cursor:pointer}
 .sur-q button[aria-pressed="true"]{background:linear-gradient(135deg,#3f271c,#6e4d3b 60%,#b08a4f);color:#fffaf3;border-color:transparent}
-.sur-reels{display:flex;gap:8px;justify-content:center;margin:14px 0 6px;min-height:150px;align-items:stretch}
-.sur-hint{align-self:center;color:#8a6d55;font-size:14px}
-.reel{flex:1 1 0;max-width:130px;background:#fff;border:1px solid #eadcc6;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;align-items:center}
-.reel img{width:100%;aspect-ratio:1;object-fit:cover;background:#f3ece2}.reel span{font-size:11.5px;padding:4px 6px;text-align:center;line-height:1.25;color:#4a2f22}
-.reel.spin img{filter:blur(1.5px);transform:translateY(-2px)}.reel.stop{animation:reelStop .45s cubic-bezier(.2,1.6,.4,1)}
-@keyframes reelStop{0%{transform:translateY(-10px)}60%{transform:translateY(4px)}100%{transform:none}}
-.sur-sum{text-align:center;font-weight:800;color:#8a6a33;margin:4px 0 8px}.sur-act{display:flex;gap:8px}.sur-act button{flex:1}
+.slot{display:flex;direction:ltr;align-items:flex-start;justify-content:center;margin:12px 0 10px}
+.slot-cab{flex:1;min-width:0;background:linear-gradient(180deg,#6a4532,#3f271c 70%);border-radius:22px;padding:8px 10px 10px;box-shadow:inset 0 0 0 3px #c9a14e,inset 0 0 0 6px #3f271c,0 14px 30px rgba(63,39,28,.38)}
+.slot-sign{direction:rtl;text-align:center;margin:4px auto 8px;padding:5px 10px;border-radius:12px;font-weight:900;font-size:20px;color:#3f271c;background:linear-gradient(180deg,#fbeec9,#d8b371);box-shadow:0 0 14px rgba(255,215,106,.45),inset 0 -2px 0 rgba(0,0,0,.12)}
+.bulbs{display:flex;justify-content:space-between;padding:2px 6px}
+.bulbs i{width:8px;height:8px;border-radius:50%;background:#fff3c4;box-shadow:0 0 6px #ffd76a;animation:bulb 1.2s steps(1) infinite}
+.bulbs i:nth-child(odd){animation-delay:.6s}@keyframes bulb{0%{opacity:1}50%{opacity:.22}}
+.slot.win .bulbs i{animation-duration:.22s}
+.slot-reels{display:flex;direction:rtl;gap:7px;background:#1f130d;padding:7px;border-radius:12px;box-shadow:inset 0 3px 12px rgba(0,0,0,.65)}
+.reel-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.reel-win{position:relative;width:100%;height:calc(var(--ch,100px)*1.25);overflow:hidden;border-radius:8px;background:#fffaf3}
+.reel-win::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(31,19,13,.8),rgba(31,19,13,0) 24%,rgba(255,255,255,.16) 46%,rgba(31,19,13,0) 74%,rgba(31,19,13,.8))}
+.reel-col.held .reel-win{box-shadow:0 0 0 3px #d62d1f}
+.reel-col.stop .reel-win{animation:reelShake .25s ease}@keyframes reelShake{40%{transform:translateY(2px)}}
+.strip{position:absolute;left:0;right:0;top:calc(var(--ch,100px)*.125);will-change:transform}
+.cell{height:var(--ch,100px);padding:5px;box-sizing:border-box}.cell img{display:block;width:100%;height:100%;object-fit:cover;border-radius:6px;background:#f3ece2}
+.strip.blur{filter:blur(2.4px)}
+.reel-name{font-size:11px;color:#f3e3c6;text-align:center;line-height:1.25;min-height:2.5em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hold{width:100%!important;margin:0!important;font:inherit;font-size:12px;font-weight:800;padding:4px 0!important;border-radius:8px;border:0;cursor:pointer;color:#3f271c;background:linear-gradient(180deg,#f1dca8,#b08a4f);box-shadow:0 2px 0 #6e4d3b}
+.hold[aria-pressed="true"]{background:linear-gradient(180deg,#e2463a,#8e1f14);color:#fff;box-shadow:0 2px 0 #5a0f08}.hold:disabled{opacity:.4;cursor:default}
+.jackpot{direction:rtl;margin-top:8px;background:#120b07;border-radius:10px;padding:8px;text-align:center;color:#ffd76a;font-weight:900;font-size:18px;text-shadow:0 0 8px rgba(255,200,80,.7);box-shadow:inset 0 2px 8px rgba(0,0,0,.7)}
+.slot.win .jackpot{animation:jp .5s ease 3}@keyframes jp{50%{transform:scale(1.05);color:#fff6d8}}
+.lever{position:relative;flex:0 0 44px;width:44px;height:220px;touch-action:none;cursor:grab;--p:0}
+.lv-base{position:absolute;left:0;top:132px;width:28px;height:48px;border-radius:0 12px 12px 0;background:linear-gradient(90deg,#3f271c,#7a5440);box-shadow:inset 0 0 0 2px #c9a14e}
+.lv-rod{position:absolute;left:17px;width:8px;bottom:64px;top:calc(26px + var(--p)*100px);border-radius:4px;background:linear-gradient(90deg,#9c7740,#f7e7bf,#9c7740);transition:top .4s cubic-bezier(.3,1.8,.5,1)}
+.lv-ball{position:absolute;left:4px;top:calc(4px + var(--p)*100px);width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9a8a,#d62d1f 55%,#7d130b);box-shadow:0 4px 8px rgba(0,0,0,.35);transition:top .4s cubic-bezier(.3,1.8,.5,1)}
+.lever.drag{cursor:grabbing}.lever.drag .lv-rod,.lever.drag .lv-ball{transition:none}
+.sur-act{display:flex;gap:8px}.sur-act button{flex:1}
+@media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
+@media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
 .cl-more{flex:1 1 100%;text-align:center;font-size:12.5px;color:var(--cocoa);margin-top:3px}.cl-more b{color:#8a6a33}
 .cl-item img{max-height:18px;max-width:72px;object-fit:contain;filter:grayscale(1);opacity:.8;transition:filter .3s,opacity .3s}
 .cl-item:hover img{filter:none;opacity:1}
@@ -1978,42 +2002,101 @@ let undoSet=null;
 const SUR_W={emp:{candle:3,holder:3,kitchen:2,decor:2,serve:2,textile:2,diffuser:2,drink:2,gift:1},
   mgr:{diffuser:3,gift:3,serve:3,kitchen:2,candle:2,textile:2,holder:1,drink:1,decor:1},
   cli:{diffuser:3,serve:3,kitchen:3,gift:2,candle:2,textile:2,holder:1,decor:1,drink:1}};
-let sur={who:"emp",bud:99,pick:null,spin:null};
-function surPick(){const B=sur.bud,W=SUR_W[sur.who],pool=P.filter(p=>!p.hidden&&+p.price>0&&(+p.stock>0||+p.incoming>0)&&W[p.cat]&&+p.price<=B);
-  if(!pool.length)return null;const want=B<=50?2:B<=99?(Math.random()<.5?2:3):B<=149?3:(Math.random()<.5?3:4);let best=null;
-  for(let a=0;a<260;a++){const used=new Set(),items=[];let sum=0;
-    for(let k=0;k<want;k++){const opts=pool.filter(p=>!used.has(p.cat)&&!items.includes(p)&&sum+ +p.price<=B);if(!opts.length)break;
+let sur={who:"emp",bud:99,pick:null,held:new Set(),busy:false,cur:[]};
+const surN=()=>sur.bud<=50?2:sur.bud<=149?3:4;
+function surPool(){const W=SUR_W[sur.who];return P.filter(p=>!p.hidden&&+p.price>0&&(+p.stock>0||+p.incoming>0)&&W[p.cat]&&+p.price<=sur.bud&&(p.photo||p.img));}
+function surPick(){const B=sur.bud,W=SUR_W[sur.who],n=surN(),pool=surPool();
+  const fixed=Array.from({length:n},(_,k)=>sur.held.has(k)?sur.cur[k]:null),base=fixed.filter(Boolean).reduce((t,p)=>t+ +p.price,0);let best=null;
+  for(let a=0;a<320;a++){const items=fixed.slice(),used=new Set(items.filter(Boolean).map(p=>p.cat));let sum=base,ok=true;
+    const slots=[...Array(n).keys()].filter(k=>!items[k]).sort(()=>Math.random()-.5);
+    for(const k of slots){const opts=pool.filter(p=>!used.has(p.cat)&&!items.includes(p)&&sum+ +p.price<=B);if(!opts.length){ok=false;break;}
       const tw=opts.reduce((t,p)=>t+W[p.cat],0);let r=Math.random()*tw,c=opts[0];for(const p of opts){r-=W[p.cat];if(r<=0){c=p;break;}}
-      items.push(c);used.add(c.cat);sum+= +c.price;}
-    if(items.length<2&&pool.length>1)continue;const sc=sum/B+(items.length===want?.15:0);if(!best||sc>best.sc)best={items,sum,sc};
-    if(sum>=B*.85&&items.length===want&&Math.random()<.35)break;}
+      items[k]=c;used.add(c.cat);sum+= +c.price;}
+    if(!ok)continue;const sc=sum/B;if(!best||sc>best.sc)best={items,sum,sc};if(sc>=.85&&Math.random()<.3)break;}
   return best;}
+// ---- sounds (made in the browser, no files). On by default, 🔇 mutes and is remembered
+let surSnd=(()=>{try{return localStorage.getItem("noya_sound")!=="0";}catch(e){return true;}})(),actx=null;
+function sAud(){if(!surSnd)return null;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume();return actx;}catch(e){return null;}}
+function tone(f,dur,type,vol,when,slide){const a=sAud();if(!a)return;const t=a.currentTime+(when||0),o=a.createOscillator(),g=a.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+dur);g.gain.setValueAtTime(vol||.15,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.03);}
+const sTick=()=>tone(1700+Math.random()*400,.022,"square",.03);
+const sThud=()=>{tone(170,.18,"triangle",.3,0,70);tone(950,.03,"square",.06);};
+const sLever=()=>{for(let i=0;i<5;i++)tone(720-i*70,.03,"square",.05,i*.04);tone(110,.22,"triangle",.28,.22,55);};
+const sWin=()=>{[523,659,784,1047,1319].forEach((f,i)=>tone(f,.3,"triangle",.13,i*.09));[1568,2093,2637].forEach((f,i)=>tone(f,.55,"sine",.05,.5+i*.08));};
+const surImg=p=>esc(p.photo||p.img);
 function surOpen(){let d=$("surModal");if(!d){d=document.createElement("div");d.id="surModal";d.className="mr-bg";document.body.appendChild(d);
-    d.addEventListener("click",e=>{if(e.target===d){surClose();return;}const b=e.target.closest("[data-sw],[data-sb],[data-sa]");if(!b)return;
-      if(b.dataset.sw){sur.who=b.dataset.sw;surRender();}else if(b.dataset.sb){sur.bud=+b.dataset.sb;surRender();}
-      else if(b.dataset.sa==="spin")surSpin();else if(b.dataset.sa==="take")surTake();else if(b.dataset.sa==="close")surClose();});}
-  sur.pick=null;d.hidden=false;surRender();}
-function surClose(){clearInterval(sur.spin);const d=$("surModal");if(d)d.hidden=true;}
-function surRender(){const d=$("surModal"),pill=(k,v,l,cur)=>`<button type="button" data-${k}="${v}" aria-pressed="${cur}">${l}</button>`;
+    d.addEventListener("click",e=>{if(e.target===d){surClose();return;}const b=e.target.closest("[data-sw],[data-sb],[data-sa],[data-hold]");if(!b)return;
+      if(b.dataset.sa==="close"){surClose();return;}
+      if(b.dataset.sa==="mute"){surSnd=!surSnd;try{localStorage.setItem("noya_sound",surSnd?"1":"0");}catch(e){}b.textContent=surSnd?"🔊":"🔇";b.setAttribute("aria-label",surSnd?"השתקת צלילים":"הפעלת צלילים");if(surSnd)tone(880,.12,"triangle",.12);return;}
+      if(sur.busy)return;
+      if(b.dataset.sw||b.dataset.sb){if(b.dataset.sw)sur.who=b.dataset.sw;else sur.bud=+b.dataset.sb;sur.pick=null;sur.held.clear();sur.cur=[];surRender();}
+      else if(b.dataset.hold!==undefined){const k=+b.dataset.hold;if(!sur.pick)return;
+        if(sur.held.has(k))sur.held.delete(k);else{if(sur.held.size>=surN()-1){showToast("השאירו לפחות מוצר אחד להגרלה 🎰");return;}sur.held.add(k);}
+        b.setAttribute("aria-pressed",sur.held.has(k));b.textContent=sur.held.has(k)?"🔒 נעול":"החזיקו";b.closest(".reel-col").classList.toggle("held",sur.held.has(k));tone(sur.held.has(k)?620:420,.08,"square",.06);}
+      else if(b.dataset.sa==="spin")surPull();else if(b.dataset.sa==="take")surTake();});}
+  sur.pick=null;sur.held.clear();sur.cur=[];d.hidden=false;surRender();}
+function surClose(){if(sur.busy)return;const d=$("surModal");if(d)d.hidden=true;}
+function surActs(){return sur.pick?`<button type="button" class="go" data-sa="take">הכניסו למארז ✓</button><button type="button" class="ghost" data-sa="spin">🎰 סיבוב נוסף</button>`:`<button type="button" class="go" data-sa="spin">🎰 משכו את הידית</button>`;}
+function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,cur)=>`<button type="button" data-${k}="${v}" aria-pressed="${cur}">${l}</button>`;
+  if(sur.cur.length!==n)sur.cur=Array.from({length:n},()=>pool[(Math.random()*pool.length)|0]).filter(Boolean);
+  const bulbs=`<div class="bulbs">${"<i></i>".repeat(13)}</div>`;
   d.innerHTML=`<div class="mr sur" role="dialog" aria-label="הפתיעו אותי"><button type="button" class="sur-x" data-sa="close" aria-label="סגירה">×</button>
-    <h3>🎲 הפתיעו אותי</h3>
+    <button type="button" class="sur-snd" data-sa="mute" aria-label="${surSnd?"השתקת צלילים":"הפעלת צלילים"}">${surSnd?"🔊":"🔇"}</button>
     <div class="sur-q"><b>למי?</b><div>${pill("sw","emp","עובדים",sur.who==="emp")}${pill("sw","mgr","מנהלים",sur.who==="mgr")}${pill("sw","cli","לקוחות",sur.who==="cli")}</div></div>
     <div class="sur-q"><b>תקציב למארז</b><div>${[50,99,149,199,249].map(v=>pill("sb",v,"עד ₪"+v,sur.bud===v)).join("")}</div></div>
-    <div class="sur-reels" id="surReels">${sur.pick?sur.pick.items.map(p=>`<div class="reel"><img src="${esc(p.photo||p.img)}" alt=""><span>${esc(p.name)}</span></div>`).join(""):'<p class="sur-hint">בחרו למי ותקציב, ולחצו "הגרילו" ✨</p>'}</div>
-    ${sur.pick?`<p class="sur-sum">${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</p>`:""}
-    <div class="sur-act">${sur.pick?`<button type="button" class="go" data-sa="take">הכניסו למארז ✓</button><button type="button" class="ghost" data-sa="spin">🎲 עוד אחד</button>`:`<button type="button" class="go" data-sa="spin">🎲 הגרילו לי מארז</button>`}</div></div>`;}
-function surSpin(){const pick=surPick();if(!pick){showToast("לא מצאנו מוצרים בתקציב הזה. נסו תקציב אחר");return;}
-  const n=pick.items.length,pool=P.filter(p=>!p.hidden&&(p.photo||p.img));sur.pick=null;surRender();
-  const box=$("surReels");box.innerHTML=Array.from({length:n},()=>`<div class="reel spin"><img alt=""><span>…</span></div>`).join("");
-  $("surModal").querySelector(".sur-act").innerHTML=`<button type="button" class="go" disabled>מגרילים… ✨</button>`;
-  const reels=[...box.children];let t=0;clearInterval(sur.spin);
-  sur.spin=setInterval(()=>{t+=1;reels.forEach((r,k)=>{if(r.classList.contains("spin")){const q=pool[(Math.random()*pool.length)|0];r.querySelector("img").src=q.photo||q.img;}});
-    reels.forEach((r,k)=>{if(r.classList.contains("spin")&&t>=10+k*7){r.classList.remove("spin");r.classList.add("stop");const p=pick.items[k];r.querySelector("img").src=p.photo||p.img;r.querySelector("span").textContent=p.name;try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}}});
-    if(reels.every(r=>!r.classList.contains("spin"))){clearInterval(sur.spin);setTimeout(()=>{sur.pick=pick;surRender();},420);}},90);}
-function surTake(){const pick=sur.pick;if(!pick)return;const prev=[new Map(cart),pack];
+    <div class="slot" id="surSlot"><div class="slot-cab">${bulbs}<div class="slot-sign">🎰 הפתיעו אותי</div>
+      <div class="slot-reels" id="surReels">${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip"><div class="cell"><img src="${surImg(p)}" alt=""></div></div></div>
+        <span class="reel-name">${sur.pick?esc(p.name):""}</span><button type="button" class="hold" data-hold="${k}" aria-pressed="${sur.held.has(k)}" ${sur.pick?"":"disabled"}>${sur.held.has(k)?"🔒 נעול":"החזיקו"}</button></div>`).join("")}</div>
+      <div class="jackpot" id="surJack">${sur.pick?`${ils(r2(sur.pick.sum))} למארז · בתקציב ✓`:"משכו את הידית! 🎰"}</div>${bulbs}</div>
+      <div class="lever" id="surLever" role="button" aria-label="משיכת הידית"><div class="lv-base"></div><div class="lv-rod"></div><div class="lv-ball"></div></div></div>
+    <div class="sur-act" id="surAct">${surActs()}</div></div>`;
+  surSize();surLeverBind();}
+function surSize(){const r=$("surReels"),w=r&&r.querySelector(".reel-win");if(w)r.style.setProperty("--ch",w.clientWidth+"px");}
+addEventListener("resize",()=>{const d=$("surModal");if(d&&!d.hidden&&!sur.busy)surSize();});
+function surLeverBind(){const lv=$("surLever");if(!lv)return;let y0=null,p=0;const set=v=>{p=Math.max(0,Math.min(1,v));lv.style.setProperty("--p",p);};
+  lv.onpointerdown=e=>{if(sur.busy)return;y0=e.clientY;p=0;try{lv.setPointerCapture(e.pointerId);}catch(_){}lv.classList.add("drag");};
+  lv.onpointermove=e=>{if(y0===null)return;const old=p;set((e.clientY-y0)/96);if(Math.floor(p*5)!==Math.floor(old*5))tone(700-p*300,.03,"square",.04);};
+  lv.onpointerup=lv.onpointercancel=e=>{if(y0===null)return;const moved=Math.abs(e.clientY-y0);y0=null;lv.classList.remove("drag");if(p>.5||moved<6)surPull();else set(0);};}
+function surPull(){if(sur.busy)return;const lv=$("surLever");if(!lv){surSpin();return;}sLever();buzz(20);lv.classList.remove("drag");lv.style.setProperty("--p",1);
+  setTimeout(()=>{lv.style.setProperty("--p",0);surSpin();},300);}
+function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(sur.held.size?"אין שילוב בתקציב עם המוצרים הנעולים. בטלו נעילה ונסו שוב":"לא מצאנו מוצרים בתקציב הזה. נסו תקציב אחר");return;}
+  const d=$("surModal"),slot=$("surSlot"),reels=$("surReels");sur.busy=true;sur.pick=null;slot.classList.remove("win");
+  d.querySelectorAll(".hold").forEach(b=>b.disabled=true);d.querySelectorAll("#surAct button").forEach(b=>b.disabled=true);
+  $("surJack").textContent="מגרילים… 🎰";
+  const all=P.filter(p=>!p.hidden&&(p.photo||p.img)),rnd=()=>all[(Math.random()*all.length)|0];
+  const ch=parseFloat(reels.style.getPropertyValue("--ch"))||100,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const cols=[...reels.querySelectorAll(".reel-col")];let order=0,todo=0,done=0;
+  const tick=setInterval(sTick,70);
+  cols.forEach((col,k)=>{if(sur.held.has(k))return;todo++;const L=reduce?3:16+order*6,dur=reduce?500:1500+order*560;order++;
+    const strip=col.querySelector(".strip"),name=col.querySelector(".reel-name");name.textContent="";
+    // cells top→bottom: [extra, target, …random…, current]. The reel rolls DOWN from "current" to "target", like a real machine
+    const cells=[rnd(),pick.items[k],...Array.from({length:L},rnd),sur.cur[k]||rnd()];
+    strip.innerHTML=cells.map(p=>`<div class="cell"><img src="${surImg(p)}" alt=""></div>`).join("");
+    const start=-(cells.length-1)*ch,end=-ch;strip.style.transform=`translateY(${start}px)`;
+    if(!reduce)strip.classList.add("blur");
+    const an=strip.animate(reduce?[{transform:`translateY(${start}px)`},{transform:`translateY(${end}px)`}]:[
+      {transform:`translateY(${start}px)`,easing:"ease-in-out"},
+      {transform:`translateY(${start-ch*.2}px)`,offset:.06,easing:"cubic-bezier(.25,.1,.45,1)"},   // small wind-up before it rolls
+      {transform:`translateY(${end+ch*.34}px)`,offset:.8,easing:"ease-out"},                       // rolls past the product a little…
+      {transform:`translateY(${end-ch*.15}px)`,offset:.89,easing:"ease-in-out"},                   // …comes back up…
+      {transform:`translateY(${end+ch*.06}px)`,offset:.95,easing:"ease-in-out"},                   // …a little down…
+      {transform:`translateY(${end}px)`}],{duration:dur,fill:"forwards"});
+    setTimeout(()=>strip.classList.remove("blur"),dur*.66);
+    setTimeout(()=>{sThud();buzz(15);col.classList.remove("stop");void col.offsetWidth;col.classList.add("stop");},dur*(reduce?1:.8));
+    an.onfinish=()=>{strip.innerHTML=`<div class="cell"><img src="${surImg(pick.items[k])}" alt=""></div>`;an.cancel();strip.style.transform="";
+      name.textContent=pick.items[k].name;if(++done===todo)surWin(pick,tick);};});
+  if(!todo)surWin(pick,tick);}
+function surWin(pick,tick){clearInterval(tick);sur.cur=pick.items;sur.pick=pick;sur.busy=false;
+  const d=$("surModal"),slot=$("surSlot"),jack=$("surJack");
+  d.querySelectorAll(".reel-col").forEach((c,k)=>{c.querySelector(".reel-name").textContent=pick.items[k].name;const h=c.querySelector(".hold");h.disabled=false;});
+  jack.textContent=`${ils(r2(pick.sum))} למארז · בתקציב ✓`;$("surAct").innerHTML=surActs();
+  slot.classList.add("win");sWin();buzz([12,50,12,50,30]);
+  const r=jack.getBoundingClientRect();[0,180,360].forEach((t,i)=>setTimeout(()=>landFx("surJack",r.left+r.width*(.25+.25*i),r.top+r.height/2),t));
+  setTimeout(()=>slot.classList.remove("win"),2600);}
+function surTake(){const pick=sur.pick;if(!pick||sur.busy)return;const prev=[new Map(cart),pack];
   cart=new Map(pick.items.map(p=>[p.id,1]));pick.items.forEach(p=>fresh.add(p.id));
   pack=PACKS.find(k=>!k.hidden&&isBag(k))||NO_PACK;manual.clear();renderPacks();update(true);
-  undoSet=prev;surClose();showToast("🎲 המארז שלכם מוכן! אפשר לשנות אותו כרצונכם",true);
+  undoSet=prev;surClose();showToast("🎰 המארז שלכם מוכן! אפשר לשנות אותו כרצונכם",true);
   setTimeout(()=>scene.scrollIntoView({behavior:"smooth",block:"center"}),150);}
 document.addEventListener("click",e=>{if(e.target.closest("#surpriseBtn"))surOpen();});
 // ---- Showcase: up to 12 recent boxes the owner chose to show; rotates while the customer's box is empty ----
