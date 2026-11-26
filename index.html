@@ -794,6 +794,14 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .jack-card b{color:#6d3f94}.jack-card .jc-more{width:auto!important;margin:0!important;padding:0!important;border:0;background:none;color:#6d3f94;font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .jackpot small.jp-don{color:#e7c9ff;font-size:11.5px}
 .ori-777{display:block;margin-top:3px;font-size:.92em;font-weight:700;color:#6d3f94}
+.slot.gentle.tense .reel-col.last .reel-win{animation:none;box-shadow:0 0 0 2px #e3c58c}
+.slot.calm .vbl,.slot.calm .vbl.b,.slot.calm .vst{animation:none!important;opacity:.85}
+.jackpot-wrap.jp-calm .jpb,.jackpot-wrap.jp-calm .jpb.b{animation:none!important;opacity:.8}
+.slot.calm .slot-cab{box-shadow:inset 0 0 0 2px #e8ebee,inset 0 0 0 4px #8a8f96,inset 0 0 0 6px #1a0508,0 16px 34px rgba(30,6,10,.45),0 0 46px rgba(167,120,210,.6);transition:box-shadow 2.4s ease}
+.jackpot.calm b{color:#f3dfc0;text-shadow:0 0 6px rgba(243,223,192,.35);letter-spacing:2px}.jackpot.calm small{color:#e7c9ff}
+.jack-card{animation:jcIn 1.8s ease both}.jack-card i{font-style:normal;color:#8a6aa6;font-size:.9em}
+@keyframes jcIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
 @media (prefers-reduced-motion:reduce){.vbl,.vst{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
@@ -2195,12 +2203,13 @@ function surLeverBind(){const lv=$("surLever");if(!lv)return;let y0=null,p=0;con
   lv.onpointerdown=e=>{if(sur.busy)return;y0=e.clientY;p=0;try{lv.setPointerCapture(e.pointerId);}catch(_){}lv.classList.add("drag");};
   lv.onpointermove=e=>{if(y0===null)return;const old=p;set((e.clientY-y0)/96);if(Math.floor(p*5)!==Math.floor(old*5))tone(700-p*300,.03,"square",.04);};
   lv.onpointerup=lv.onpointercancel=e=>{if(y0===null)return;const moved=Math.abs(e.clientY-y0);y0=null;lv.classList.remove("drag");if(p>.5||moved<6)surPull();else set(0);};}
-function surPull(){if(sur.busy)return;sur.dec=sur.held.size?Promise.resolve({jackpot:false}):fetch(JACK_EP+"?a=spin",{method:"POST"}).then(r=>r.json()).catch(()=>({jackpot:false}));const lv=$("surLever");if(!lv){surSpin();return;}sLever();buzz(20);lv.classList.remove("drag");lv.style.setProperty("--p",1);
+const DEMO777=/[?&]demo777=1/.test(location.search);
+function surPull(){if(sur.busy)return;sur.dec=sur.held.size?Promise.resolve({jackpot:false}):DEMO777?Promise.resolve({jackpot:true,id:"demo"}):fetch(JACK_EP+"?a=spin",{method:"POST"}).then(r=>r.json()).catch(()=>({jackpot:false}));const lv=$("surLever");if(!lv){surSpin();return;}sLever();buzz(20);lv.classList.remove("drag");lv.style.setProperty("--p",1);
   setTimeout(()=>{lv.style.setProperty("--p",0);surSpin();},300);}
 function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(sur.held.size?"אין שילוב בתקציב עם המוצרים הנעולים. בטלו נעילה ונסו שוב":"לא מצאנו מוצרים בתקציב הזה. נסו תקציב אחר");return;}
   const d=$("surModal"),slot=$("surSlot"),reels=$("surReels");sur.busy=true;sur.pick=null;slot.classList.remove("win");
   d.querySelectorAll(".hold").forEach(b=>b.disabled=true);d.querySelectorAll("#surAct button").forEach(b=>b.disabled=true);
-  $("surJack").innerHTML="<b>מגרילים… 🎰</b>";$("surJack").classList.remove("lit","jp-flash");d.querySelector(".jack-card")?.remove();$("surJW").classList.remove("jp-win","jp-run");sur.winId=(sur.winId||0)+1;slot.classList.add("spinning");$("surTray").innerHTML="";
+  $("surJack").innerHTML="<b>מגרילים… 🎰</b>";$("surJack").classList.remove("lit","jp-flash","calm");d.querySelector(".jack-card")?.remove();slot.classList.remove("calm","gentle");$("surJW").classList.remove("jp-calm");$("surJW").classList.remove("jp-win","jp-run");sur.winId=(sur.winId||0)+1;slot.classList.add("spinning");$("surTray").innerHTML="";
   const all=P.filter(p=>!p.hidden&&(p.photo||p.img)),rnd=()=>Math.random()<.09?"7":all[(Math.random()*all.length)|0];let anyStop=false;
   const ch=parseFloat(reels.style.getPropertyValue("--ch"))||100,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
   const cols=[...reels.querySelectorAll(".reel-col")];let order=0,todo=0,done=0;
@@ -2217,8 +2226,8 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
       strip.style.transform=`translateY(${start}px)`;strip.classList.add("blur");
       (async()=>{
         await strip.animate([{transform:`translateY(${start}px)`,easing:"ease-in-out"},{transform:`translateY(${start-ch*.2}px)`,offset:.06,easing:"cubic-bezier(.3,.55,.5,1)"},{transform:`translateY(${mid}px)`}],{duration:T1,fill:"forwards"}).finished;
-        strip.classList.remove("blur");clearInterval(tick);slot2.classList.add("tense");col.classList.add("last");$("surJack").innerHTML="<b>ועכשיו… 🥁</b>";
-        let y=mid;for(const d of [240,320,420,560]){const ny=y+ch;await strip.animate([{transform:`translateY(${y}px)`},{transform:`translateY(${ny}px)`}],{duration:d,easing:"cubic-bezier(.45,0,.3,1)",fill:"forwards"}).finished;y=ny;tone(1500,.045,"square",.07);buzz(8);}
+        strip.classList.remove("blur");clearInterval(tick);slot2.classList.add("tense");col.classList.add("last");$("surJack").innerHTML=pick.jackpot?"<b>…</b>":"<b>ועכשיו… 🥁</b>";
+        let y=mid;for(const d of [240,320,420,560]){const ny=y+ch;await strip.animate([{transform:`translateY(${y}px)`},{transform:`translateY(${ny}px)`}],{duration:d,easing:"cubic-bezier(.45,0,.3,1)",fill:"forwards"}).finished;y=ny;if(!pick.jackpot){tone(1500,.045,"square",.07);buzz(8);}}
         await wait(320);   // almost stops on the one before…
         setTimeout(()=>{sThud();buzz(18);col.classList.remove("last");col.classList.remove("stop");void col.offsetWidth;col.classList.add("stop");},495);
         await strip.animate([{transform:`translateY(${y}px)`,easing:"cubic-bezier(.3,0,.4,1)"},{transform:`translateY(${end+ch*.3}px)`,offset:.55,easing:"ease-out"},{transform:`translateY(${end-ch*.12}px)`,offset:.78,easing:"ease-in-out"},{transform:`translateY(${end+ch*.05}px)`,offset:.92,easing:"ease-in-out"},{transform:`translateY(${end}px)`}],{duration:900,fill:"forwards"}).finished;
@@ -2244,7 +2253,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
       name.textContent=pick.jackpot?"":pick.items[k].name;if(++done===todo)surWin(pick,tick);};});
   (sur.dec||Promise.resolve({jackpot:false})).then(d=>{if(!d||!d.jackpot)return;
     if(anyStop||done){fetch(JACK_EP+"?a=spinvoid",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:d.id})}).catch(()=>{});return;}
-    pick.jackpot=d.id;cols.forEach(c=>{const t=c.querySelector(".strip").children[1];if(t)t.outerHTML=cellHTML("7");});});
+    pick.jackpot=d.id;slot.classList.add("gentle");cols.forEach(c=>{const t=c.querySelector(".strip").children[1];if(t)t.outerHTML=cellHTML("7");});});
   if(!todo)surWin(pick,tick);}
 function surWin(pick,tick){if(pick.jackpot)return surJackWin(pick,tick);clearInterval(tick);{const sl=$("surSlot");if(sl){sl.classList.remove("tense");sl.querySelectorAll(".reel-col.last").forEach(c=>c.classList.remove("last"));}}sur.cur=pick.items;sur.pick=pick;sur.busy=false;
   const d=$("surModal"),slot=$("surSlot"),jack=$("surJack");
@@ -2261,20 +2270,19 @@ function surCoins(){const tray=$("surTray"),jack=$("surJack");if(!tray||!jack)re
     c.animate([{transform:`translateY(${fy}px) rotateY(0)`,opacity:0},{opacity:1,offset:.08},{transform:`translateY(0) rotateY(${turn}deg)`,offset:.78,easing:"ease-in"},
       {transform:`translateY(-7px) rotateY(${turn+90}deg)`,offset:.88,easing:"ease-out"},{transform:`translateY(0) rotateY(${turn+180}deg)`}],{duration:900,delay:i*75,fill:"backwards",easing:"cubic-bezier(.45,0,.9,.6)"});}}
 // ===== 777: Noya donates 21 hot meals to "האור של אורי" (the owner sends it and marks it in the back office; the site counter shows sent ones)
-function surJackWin(pick,tick){clearInterval(tick);const sl=$("surSlot"),d=$("surModal"),jack=$("surJack"),jw=$("surJW"),box=d.querySelector(".mr.sur");
-  sl.classList.remove("tense","spinning");sl.querySelectorAll(".reel-col.last").forEach(c=>c.classList.remove("last"));
-  sur.cur=sur.cur.map(()=>"7");sur.pick=null;sur.busy=false;sur.held.clear();
+function surJackWin(pick,tick){clearInterval(tick);const sl=$("surSlot"),d=$("surModal"),jack=$("surJack"),jw=$("surJW"),demo=pick.jackpot==="demo";
+  sl.classList.remove("tense","spinning","win");sl.querySelectorAll(".reel-col.last").forEach(c=>c.classList.remove("last"));
+  sur.cur=sur.cur.map(()=>"7");sur.pick=null;sur.busy=false;sur.held.clear();sur.winId=(sur.winId||0)+1;
   d.querySelectorAll(".reel-col").forEach(c=>{c.querySelector(".reel-name").textContent="";c.classList.remove("held");const h=c.querySelector(".hold");h.disabled=true;h.setAttribute("aria-pressed","false");h.textContent="החזיקו";});
-  sur.winId=(sur.winId||0)+1;const id=sur.winId;jack.classList.add("lit","jp-flash");jw.classList.remove("jp-run");jw.classList.add("jp-win");
-  setTimeout(()=>{if(sur.winId!==id)return;jack.classList.remove("jp-flash");jw.classList.remove("jp-win");jw.classList.add("jp-run");},3000);
-  jack.innerHTML=`<b>🎉 7 · 7 · 7 !</b><small>יצא לכם ג'קפוט אמיתי</small>`;
+  // calm: lights stay softly lit like candles, a soft lilac glow, one quiet low note
+  sl.classList.add("calm");jw.classList.remove("jp-win","jp-run");jw.classList.add("jp-calm");jack.classList.remove("lit","jp-flash");jack.classList.add("calm");
+  jack.innerHTML=`<b>7 · 7 · 7</b><small>רגע של אור 🕯️</small>`;
+  tone(392,2.2,"sine",.06);tone(784,1.4,"sine",.018,.03);buzz(20);
   d.querySelector(".jack-card")?.remove();
-  $("surAct").insertAdjacentHTML("beforebegin",`<div class="jack-card">💜 <b>הבאתם מזל!</b> נויה במתנה תעביר <b>21 ארוחות חמות</b> למיזם "האור של אורי", לזכר סמ"ר אורי ג׳רבי הי״ד. התרומה תתווסף למונה כאן באתר. <button type="button" class="jc-more">לסיפור של אורי ←</button></div>`);
+  $("surAct").insertAdjacentHTML("beforebegin",`<div class="jack-card">💜 יצאו שלושה 7. לכבוד הרגע הזה, נויה במתנה תעביר <b>21 ארוחות חמות</b> למיזם "האור של אורי", לזכר סמ"ר אורי ג׳רבי הי״ד. התרומה תתווסף למונה כאן באתר.${demo?' <i>(הדגמה – לא נרשמה תרומה)</i>':""} <button type="button" class="jc-more">לסיפור של אורי ←</button></div>`);
   d.querySelector(".jc-more").onclick=()=>{surClose();setTimeout(()=>$("setsOri")?.click(),120);};
-  $("surAct").innerHTML=`<button type="button" class="go" data-sa="spin">🎰 סובבו שוב למארז שלכם</button>`;
-  sl.classList.add("win");box.classList.add("win");sWin();setTimeout(sWin,700);buzz([20,60,20,60,20,60,40]);surCoins();setTimeout(surCoins,500);surFountain();
-  setTimeout(()=>{sl.classList.remove("win");box.classList.remove("win");},3200);
-  fetch(JACK_EP+"?a=spinshown",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:pick.jackpot})}).catch(()=>{});}
+  $("surAct").innerHTML=`<button type="button" class="go" data-sa="spin">סובבו שוב למארז שלכם</button>`;
+  if(!demo)fetch(JACK_EP+"?a=spinshown",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:pick.jackpot})}).catch(()=>{});}
 // meals donated through the machine: shown in the Ori card and on the machine (only donations the owner marked as sent)
 fetch(JACK_EP+"?a=jackpot").then(r=>r.json()).then(j=>{const m=+j.meals||0;if(!m)return;JACK.meals=m;
   const o=$("setsOri");if(!o)return;const bs=o.querySelectorAll("b[data-to]");
