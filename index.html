@@ -726,7 +726,7 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .reel-win{box-shadow:0 0 0 2px #c9ccd1}
 .pay{position:absolute;z-index:3;top:calc(7px + var(--ch,100px)*.625);width:0;height:0;border:7px solid transparent;transform:translateY(-50%);pointer-events:none;filter:drop-shadow(0 0 3px rgba(255,214,106,.9))}
 .pay-l{left:-3px;border-left:9px solid #ffd76a}.pay-r{right:-3px;border-right:9px solid #ffd76a}
-.slot-reels::before{content:"";position:absolute;z-index:2;left:8px;right:8px;top:calc(7px + var(--ch,100px)*.625);height:2px;transform:translateY(-50%);background:rgba(230,40,40,.85);box-shadow:0 0 6px rgba(255,60,60,.9);pointer-events:none}
+.slot-reels::before{display:none;content:"";position:absolute;z-index:2;left:8px;right:8px;top:calc(7px + var(--ch,100px)*.625);height:2px;transform:translateY(-50%);background:rgba(230,40,40,.85);box-shadow:0 0 6px rgba(255,60,60,.9);pointer-events:none}
 .reel-name{color:#f3dfc0}
 .coin-slot{width:58px;height:16px;margin:10px auto 0;border-radius:5px;background:linear-gradient(180deg,#eef0f2,#7c8188);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 0 #000}
 .coin-slot::after{content:"";width:32px;height:4px;border-radius:2px;background:#0b0304}
@@ -2086,7 +2086,7 @@ function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,c
     <div class="sur-q"><b>למי?</b><div>${pill("sw","emp","עובדים",sur.who==="emp")}${pill("sw","mgr","מנהלים",sur.who==="mgr")}${pill("sw","cli","לקוחות",sur.who==="cli")}</div></div>
     <div class="sur-q"><b>תקציב למארז</b><div>${[50,99,149,199,249].map(v=>pill("sb",v,"עד ₪"+v,sur.bud===v)).join("")}</div></div>
     <div class="slot" id="surSlot"><div class="slot-cab"><div class="slot-sign"><span>הפתיעו אותי</span></div>
-      <div class="slot-reels" id="surReels"><i class="pay pay-l"></i><i class="pay pay-r"></i>${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip"><div class="cell"><img src="${surImg(p)}" alt=""></div></div></div>
+      <div class="slot-reels" id="surReels">${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip"><div class="cell"><img src="${surImg(p)}" alt=""></div></div></div>
         <span class="reel-name">${sur.pick?esc(p.name):""}</span><button type="button" class="hold" data-hold="${k}" aria-pressed="${sur.held.has(k)}" ${sur.pick?"":"disabled"}>${sur.held.has(k)?"🔒 נעול":"החזיקו"}</button></div>`).join("")}</div>
       <div class="coin-slot" aria-hidden="true"></div>
       <div class="jackpot" id="surJack">${sur.pick?`<b>${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</b>`:`<b>משכו את הידית! 🎰</b><small>${combosInfo().txt} שילובים</small>`}</div>
@@ -2132,7 +2132,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
 function surWin(pick,tick){clearInterval(tick);sur.cur=pick.items;sur.pick=pick;sur.busy=false;
   const d=$("surModal"),slot=$("surSlot"),jack=$("surJack");
   d.querySelectorAll(".reel-col").forEach((c,k)=>{c.querySelector(".reel-name").textContent=pick.items[k].name;const h=c.querySelector(".hold");h.disabled=false;});
-  jack.innerHTML=`<b>🎉 בינגו! פגעתם באחד מ־${combosShort()}</b><small>${ils(r2(pick.sum))} למארז · בתקציב ✓</small>`;$("surAct").innerHTML=surActs();
+  jack.innerHTML=`<b>🎉 בינגו! פגעתם באחד מ־${combosShort()}</b><small>${ils(r2(pick.sum))} למארז · הכניסו למארז וחשפו ✨</small>`;$("surAct").innerHTML=surActs();
   const box=d.querySelector(".mr.sur");slot.classList.remove("spinning");slot.classList.add("win");box.classList.add("win");sWin();buzz([12,50,12,50,30]);
   surCoins();
   setTimeout(()=>{slot.classList.remove("win");box.classList.remove("win");},2800);}
