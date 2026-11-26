@@ -854,6 +854,26 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .vt-handle{transform-box:view-box;transform-origin:130px 130px;transition:transform .7s cubic-bezier(.4,0,.2,1)}.vt.turn .vt-handle{transform:rotate(-90deg)}
 .vt.open .vt-dial{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.vt-dial{animation:none}.vt-door{transition:none}}
+/* 🎡 product roulette: button + window */
+.rw-btn{margin-top:2px}.rw-btn .rb-ico{position:absolute;left:50%;top:8%;width:21%;transform:translateX(-50%);z-index:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.rw-btn .rb-ico svg{display:block;width:100%;height:auto;animation:rbSpin 7s linear infinite}@keyframes rbSpin{to{transform:rotate(360deg)}}
+@media (max-width:1099px){.rw-btn .rb-ico{left:auto;right:6%;top:50%;width:14%;transform:translateY(-50%)}}
+.mr.rw{width:min(520px,96vw)}
+.rw-sign{position:relative;width:min(320px,86%);aspect-ratio:300/58;margin:22px auto 6px;container-type:inline-size}.rw-sign .vsign{position:absolute;inset:0;width:100%;height:100%;display:block!important}
+.rw-sign span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(14px,6cqw,19px);color:#ffe6a3;text-shadow:0 0 4px #ffcf66,0 0 12px rgba(255,190,80,.8)}
+.rw-wheel{display:flex;justify-content:center;margin:6px 0}.rw-wheel canvas{display:block;border-radius:50%;touch-action:none;cursor:grab;filter:drop-shadow(0 12px 24px rgba(30,6,10,.45))}
+.rw-msg{text-align:center;font-weight:800;color:#5a3a2a;min-height:1.4em;margin:2px 0 8px}
+.rw-tray{display:flex;gap:8px;justify-content:center}
+.rw-slot{flex:1 1 0;max-width:120px;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;border-radius:12px;border:1.5px dashed #d9c3a0;background:#fffaf3}
+.rw-slot.next{border-color:#b08a4f;box-shadow:0 0 0 3px rgba(227,197,140,.35)}.rw-slot.full{border-style:solid;border-color:#e3c58c}
+.rw-slot img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}.rw-q{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font:900 30px Georgia,serif;color:#d9c3a0;border-radius:8px;background:#f6efe4}
+.rw-n{font-size:11px;line-height:1.25;text-align:center;color:#4a2f22;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}.rw-p{font-size:12px;font-weight:800;color:#8a6a33}
+.rw-re{position:absolute;top:4px;left:4px;width:26px!important;height:26px;margin:0!important;padding:0!important;border-radius:50%;border:0;background:rgba(255,250,243,.92);box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer;font-size:13px}
+.rw-slot.pop{animation:reelStop .45s cubic-bezier(.2,1.6,.4,1)}
+.rw-sum{text-align:center;font-size:13.5px;color:#5a3a2a;margin:8px 0}
+.rw-pop{position:fixed;z-index:10070;transform:translate(-50%,-50%);width:170px;padding:10px;border-radius:16px;background:#fffaf3;box-shadow:0 0 0 2px #e3c58c,0 14px 34px rgba(30,6,10,.45);display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;animation:rwPop .4s cubic-bezier(.2,1.5,.4,1)}
+.rw-pop img{width:110px;height:110px;object-fit:cover;border-radius:10px}.rw-pop b{font-size:13px;color:#3f271c;line-height:1.3}.rw-pop span{font-weight:800;color:#8a6a33}
+@keyframes rwPop{from{transform:translate(-50%,-50%) scale(.4);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
 @media (prefers-reduced-motion:reduce){.vbl,.vst{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
@@ -2093,7 +2113,7 @@ function update(flash){
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
-setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><button type="button" class="surprise-btn" id="surpriseBtn" aria-label="מכונת המארזים של נויה – הפתיעו אותי">${vegasRect(300,180,"vb")}${vegasRect(380,84,"vm",true,true)}<span class="vb-fx" aria-hidden="true"></span><span class="vb-t"><em>מכונת המארזים של נויה</em><b>הפתיעו אותי</b><small>אחד מתוך ${combosShort()} שילובים</small></span></button><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><button type="button" class="surprise-btn" id="surpriseBtn" aria-label="מכונת המארזים של נויה – הפתיעו אותי">${vegasRect(300,180,"vb")}${vegasRect(380,84,"vm",true,true)}<span class="vb-fx" aria-hidden="true"></span><span class="vb-t"><em>מכונת המארזים של נויה</em><b>הפתיעו אותי</b><small>אחד מתוך ${combosShort()} שילובים</small></span></button><button type="button" class="surprise-btn rw-btn" id="rwBtn" aria-label="רולטת המוצרים של נויה">${vegasRect(300,180,"rb",false)}${vegasRect(380,84,"rbm",false,true)}<span class="rb-ico">${rwIcon()}</span><span class="vb-t"><em>רולטת המוצרים של נויה</em><b>סובבו ובנו מארז</b><small>כל סיבוב מוסיף מוצר</small></span></button><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
 (function(){const el=document.getElementById("setsProof");if(!el)return;const t=el.querySelector(".sp-txt");
   const L=[["🏦","בנק מזרחי טפחות"],["🎖️","צה״ל"],["🛡️","משטרת ישראל"],["🏦","בנק הפועלים"],["🏛️","עיריית תל אביב"],["⚙️","אלביט"],["📱","פרטנר"],["🏦","בנק דיסקונט"],["🏛️","כנסת ישראל"],["🩺","כללית"],["🏛️","עיריית הרצליה"],["🌿","המשרד להגנת הסביבה"],["🏦","בנק יהב"],["🏗️", "אפריקה ישראל"],["🚗", "שלמה סיקסט"],["🍳", "מטבחי רגבה"],["🍳", "מטבחי דקל קמילה"],["🩺", "מאוחדת"],["🏭", "בתי הזיקוק"],["🏅", "מכון וינגייט"],["🛡️", "הראל חברה לביטוח"],["🤝", "ההסתדרות"],["🏥", "בית החולים שיבא"],["✈️", "פספורטכארד"],["💊", "אלטמן"]];
   let i=0,hold=false;const show=()=>{const [e,n]=L[i%L.length];t.innerHTML=`${e} גם <b>${n}</b> בחרו בנויה במתנה`;};
@@ -2321,6 +2341,109 @@ function surCoins(){const tray=$("surTray"),jack=$("surJack");if(!tray||!jack)re
     if(reduce)continue;const fy=jr.top-tr.top-6,turn=540+Math.random()*540;
     c.animate([{transform:`translateY(${fy}px) rotateY(0)`,opacity:0},{opacity:1,offset:.08},{transform:`translateY(0) rotateY(${turn}deg)`,offset:.78,easing:"ease-in"},
       {transform:`translateY(-7px) rotateY(${turn+90}deg)`,offset:.88,easing:"ease-out"},{transform:`translateY(0) rotateY(${turn+180}deg)`}],{duration:900,delay:i*75,fill:"backwards",easing:"cubic-bezier(.45,0,.9,.6)"});}}
+// ===================== 🎡 רולטת המוצרים: every spin adds one product to the tray; the wheel refills with products that still fit the budget =====================
+let rw={bud:99,tray:[],busy:false,re:-1,pockets:[],imgs:{},wa:0,ba:-Math.PI/2,res:-1,land:null,drag:null,C:null};
+const rwN=()=>rw.bud<=50?2:rw.bud<=149?3:4;
+const rwSum=()=>rw.tray.reduce((t,p)=>t+(p?+p.price:0),0);
+function rwPool(){return P.filter(p=>!p.hidden&&+p.price>0&&(+p.stock>0||+p.incoming>0)&&SUR_W.all[p.cat]&&(p.photo||p.img)&&+p.price<=rw.bud);}
+function rwAllowed(){const n=rwN(),filled=rw.tray.filter(Boolean),after=n-filled.length-1,used=new Set(filled.map(p=>p.cat)),ids=new Set(filled.map(p=>p.id));
+  const cand=rwPool().filter(p=>!used.has(p.cat)&&!ids.has(p.id)),left=rw.bud-rwSum();
+  const cheap=cand.map(p=>+p.price).sort((a,b)=>a-b),reserve=cheap.slice(0,Math.max(0,after)).reduce((t,v)=>t+v,0);
+  return cand.filter(p=>+p.price<=left-reserve);}
+function rwFill(){const a=rwAllowed();if(!a.length){rw.pockets=[];return false;}
+  const W=SUR_W.all,bag=a.map(p=>({p,k:Math.random()**(1/W[p.cat])})).sort((x,y)=>y.k-x.k).map(o=>o.p),out=[];
+  for(let i=0;i<17;i++)out.push(bag[i%bag.length]);
+  rw.pockets=[{gold:true},...out.sort(()=>Math.random()-.5)];rw.res=-1;
+  out.forEach(p=>{if(!rw.imgs[p.id]){rw.imgs[p.id]=null;loadImg(p.photo||p.img).then(im=>rw.imgs[p.id]=im).catch(()=>{});}});return true;}
+function rwOpen(){let d=$("rwModal");if(!d){d=document.createElement("div");d.id="rwModal";d.className="mr-bg";document.body.appendChild(d);
+    d.addEventListener("click",e=>{if(e.target===d){rwClose();return;}const b=e.target.closest("[data-rb],[data-ra],[data-rre]");if(!b)return;
+      if(b.dataset.ra==="close"){rwClose();return;}
+      if(b.dataset.ra==="mute"){surSnd=!surSnd;try{localStorage.setItem("noya_sound",surSnd?"1":"0");}catch(e){}b.textContent=surSnd?"🔊":"🔇";return;}
+      if(rw.busy)return;
+      if(b.dataset.rb){rw.bud=+b.dataset.rb;rw.tray=[];rw.re=-1;rwRender();}
+      else if(b.dataset.rre!==undefined){const k=+b.dataset.rre;rw.tray[k]=null;rw.re=k;rwFill();rwTray();rwMsg("סובבו כדי להחליף את המוצר 🎡");}
+      else if(b.dataset.ra==="spin")rwSpin((Math.random()<.5?-1:1)*(8+Math.random()*3));
+      else if(b.dataset.ra==="take")rwTake();});}
+  rw.tray=[];rw.re=-1;d.hidden=false;rwRender();}
+function rwClose(){if(rw.busy)return;const d=$("rwModal");if(d)d.hidden=true;if(rw.C){cancelAnimationFrame(rw.C.raf);rw.C=null;}}
+function rwMsg(t){const m=$("rwMsg");if(m)m.textContent=t;}
+function rwRender(){const d=$("rwModal"),pill=(v,cur)=>`<button type="button" data-rb="${v}" aria-pressed="${cur}">עד ₪${v}</button>`;
+  rw.tray=Array.from({length:rwN()},(_,i)=>rw.tray[i]||null);rwFill();
+  d.innerHTML=`<div class="mr sur rw" role="dialog" aria-label="רולטת המוצרים"><button type="button" class="sur-x" data-ra="close" aria-label="סגירה">×</button>
+    <button type="button" class="sur-snd" data-ra="mute" aria-label="צלילים">${surSnd?"🔊":"🔇"}</button>
+    <div class="rw-sign">${vegasRect(300,58,"rws",false)}<span>רולטת המוצרים של נויה</span></div>
+    <div class="sur-q"><b>תקציב למארז</b><div>${[50,99,149,199,249].map(v=>pill(v,rw.bud===v)).join("")}</div></div>
+    <div class="rw-wheel"><canvas id="rwCv"></canvas></div>
+    <div class="rw-msg" id="rwMsg">גררו את הגלגל וזרקו אותו, או לחצו "סובבו" 🎡</div>
+    <div class="rw-tray" id="rwTray"></div><div class="rw-sum" id="rwSum"></div><div class="sur-act" id="rwAct"></div></div>`;
+  rwTray();rwCanvas();}
+function rwTray(){const t=$("rwTray");if(!t)return;
+  t.innerHTML=rw.tray.map((p,i)=>p?`<div class="rw-slot full"><img src="${esc(p.photo||p.img)}" alt=""><span class="rw-n">${esc(p.name)}</span><span class="rw-p">${ils(+p.price)}</span><button type="button" class="rw-re" data-rre="${i}" aria-label="החליפו">🔄</button></div>`
+    :`<div class="rw-slot${rw.re===i||(rw.re<0&&rw.tray.indexOf(null)===i)?" next":""}"><span class="rw-q">?</span><span class="rw-n">מוצר ${i+1}</span></div>`).join("");
+  const full=rw.tray.every(Boolean),sum=rwSum();
+  $("rwSum").innerHTML=`סה״כ <b>${ils(r2(sum))}</b> למארז · נשאר <b>${ils(r2(rw.bud-sum))}</b> מתוך ₪${rw.bud}`;
+  $("rwAct").innerHTML=full?`<button type="button" class="go" data-ra="take">הכניסו למארז וחשפו ✨</button>`:`<button type="button" class="go" data-ra="spin" ${rw.pockets.length?"":"disabled"}>🎡 סובבו</button>`;
+  if(!full&&!rw.pockets.length)rwMsg("לא נשארו מוצרים שמתאימים לתקציב. החליפו מוצר או בחרו תקציב אחר");}
+function rwCanvas(){const cv2=$("rwCv"),dpr=Math.min(2,devicePixelRatio||1),S=Math.min(400,Math.round(Math.min(innerWidth*.86,innerHeight*.42)));
+  cv2.style.width=cv2.style.height=S+"px";cv2.width=cv2.height=S*dpr;if(rw.C)cancelAnimationFrame(rw.C.raf);
+  const C={cv:cv2,x:cv2.getContext("2d"),dpr,S,last:performance.now()};rw.C=C;
+  const ang=e=>{const b=cv2.getBoundingClientRect();return Math.atan2(e.clientY-b.top-b.height/2,e.clientX-b.left-b.width/2);};
+  cv2.onpointerdown=e=>{if(rw.busy||rw.tray.every(Boolean)||!rw.pockets.length)return;try{cv2.setPointerCapture(e.pointerId);}catch(_){}rw.drag={a:ang(e),h:[[performance.now(),0]],tot:0};};
+  cv2.onpointermove=e=>{if(!rw.drag)return;const a=ang(e);let d=a-rw.drag.a;if(d>Math.PI)d-=6.2832;if(d<-Math.PI)d+=6.2832;rw.drag.a=a;rw.wa+=d;rw.drag.tot+=d;rw.drag.h.push([performance.now(),rw.drag.tot]);if(rw.drag.h.length>8)rw.drag.h.shift();};
+  cv2.onpointerup=cv2.onpointercancel=()=>{const g=rw.drag;rw.drag=null;if(!g)return;const h=g.h,a=h[0],b=h[h.length-1],dt=(b[0]-a[0])/1000;const w=dt>0?(b[1]-a[1])/dt:0;
+    if(Math.abs(w)>1.5)rwSpin(Math.sign(w)*Math.min(14,Math.max(6,Math.abs(w))));else rwMsg("זרקו חזק יותר, או לחצו \"סובבו\" 🎡");};
+  const fr=now=>{const dt=Math.min(.05,(now-C.last)/1000);C.last=now;
+    if(rw.land){const L=rw.land,u=Math.min(1,(now-L.t0)/L.D);rw.wa=L.wa0+L.w*L.D/1000*(1-Math.pow(1-u,3))/3;rw.ba=L.ba0+L.dB*(1-Math.pow(1-u,2));
+      rw.br=u<.62?null:L.tr-(L.tr-L.pr)*Math.min(1,(u-.62)/.25)+(u>.87?Math.sin((u-.87)/.13*Math.PI*3)*(1-u)*L.R*.35:0);
+      if(u>=1&&!L.done){L.done=true;rw.land=null;rw.br=L.pr;rw.ba=rw.wa+L.t*6.2832/18;rw.res=L.t;tone(950,.05,"square",.06);tone(240,.12,"triangle",.12);buzz(16);setTimeout(()=>rwResult(L.t),350);}}
+    else if(!rw.drag&&!rw.busy){rw.wa+=.12*dt;if(rw.res>=0)rw.ba=rw.wa+rw.res*6.2832/18;}
+    rwDraw(now);C.raf=requestAnimationFrame(fr);};
+  C.raf=requestAnimationFrame(fr);}
+function rwDraw(now){const C=rw.C;if(!C)return;const {x,dpr}=C,S=C.S*dpr,R=S/2*.97,cx=S/2,cy=S/2,N=18,st=6.2832/N,pr=R*.8,pi=R*.5;x.clearRect(0,0,S,S);
+  let g=x.createRadialGradient(cx,cy,R*.82,cx,cy,R);g.addColorStop(0,"#3a1a0c");g.addColorStop(.45,"#6a1426");g.addColorStop(.8,"#e3c58c");g.addColorStop(1,"#8a6a33");x.fillStyle=g;x.beginPath();x.arc(cx,cy,R,0,6.2832);x.fill();
+  const blink=Math.floor(now/(rw.busy?110:450))%2;for(let i=0;i<30;i++){const a=i*6.2832/30;x.fillStyle=(i%2===blink)?"#fff3c4":"rgba(255,243,196,.25)";x.beginPath();x.arc(cx+R*.91*Math.cos(a),cy+R*.91*Math.sin(a),R*.018,0,6.2832);x.fill();}
+  x.fillStyle="#140604";x.beginPath();x.arc(cx,cy,R*.86,0,6.2832);x.fill();
+  rw.pockets.forEach((pk,i)=>{const a=rw.wa+i*st-st/2;x.beginPath();x.arc(cx,cy,pr,a,a+st);x.arc(cx,cy,pi,a+st,a,true);x.closePath();
+    if(pk.gold){const gg=x.createLinearGradient(cx-pr,cy-pr,cx+pr,cy+pr);gg.addColorStop(0,"#fbeec9");gg.addColorStop(.5,"#d8b371");gg.addColorStop(1,"#a9823f");x.fillStyle=gg;}else x.fillStyle=i%2?"#6a1426":"#1a0709";
+    x.fill();x.strokeStyle="#d9b46a";x.lineWidth=1.1*dpr;x.stroke();
+    const ma=rw.wa+i*st,mr=(pr+pi)/2,px=cx+mr*Math.cos(ma),py=cy+mr*Math.sin(ma),pz=Math.min((pr-pi)*.4,mr*st*.42);
+    if(pk.gold){x.save();x.translate(px,py);x.rotate(ma+Math.PI/2);x.fillStyle="#5a0f1c";x.textAlign="center";x.textBaseline="middle";x.font=`900 ${pz*1.3}px Georgia,serif`;x.fillText("N",0,-pz*.2);x.font=`800 ${pz*.42}px Assistant,Arial,sans-serif`;x.fillText("בחירת נויה",0,pz*.75);x.restore();}
+    else{const im=rw.imgs[pk.id];x.save();x.beginPath();x.arc(px,py,pz,0,6.2832);x.clip();if(im){const s=Math.max(2*pz/im.naturalWidth,2*pz/im.naturalHeight);x.drawImage(im,px-im.naturalWidth*s/2,py-im.naturalHeight*s/2,im.naturalWidth*s,im.naturalHeight*s);}else{x.fillStyle="#f3ece2";x.fill();}x.restore();
+      x.strokeStyle="rgba(227,197,140,.85)";x.lineWidth=1.1*dpr;x.beginPath();x.arc(px,py,pz,0,6.2832);x.stroke();}
+    if(i===rw.res&&!rw.busy){x.strokeStyle="rgba(255,236,170,.95)";x.lineWidth=3*dpr;x.beginPath();x.arc(cx,cy,pr+2*dpr,a,a+st);x.stroke();}});
+  g=x.createRadialGradient(cx-R*.1,cy-R*.1,R*.04,cx,cy,pi);g.addColorStop(0,"#fff3cf");g.addColorStop(.35,"#d8b371");g.addColorStop(1,"#5a3a1c");x.fillStyle=g;x.beginPath();x.arc(cx,cy,pi,0,6.2832);x.fill();
+  x.save();x.translate(cx,cy);x.rotate(rw.wa);x.fillStyle="#f7e7bf";for(let k=0;k<4;k++){x.rotate(Math.PI/2);x.beginPath();x.ellipse(0,-pi*.42,pi*.07,pi*.36,0,0,6.2832);x.fill();}x.restore();
+  x.fillStyle="#3f271c";x.beginPath();x.arc(cx,cy,pi*.16,0,6.2832);x.fill();
+  const br=rw.br==null?R*.835:rw.br,bx=cx+br*Math.cos(rw.ba),by=cy+br*Math.sin(rw.ba),bs=R*.04,bg=x.createRadialGradient(bx-bs*.35,by-bs*.35,bs*.1,bx,by,bs);
+  bg.addColorStop(0,"#fff");bg.addColorStop(1,"#c9c4bd");x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=6*dpr;x.fillStyle=bg;x.beginPath();x.arc(bx,by,bs,0,6.2832);x.fill();x.shadowBlur=0;}
+function rwSpin(w){if(rw.busy||!rw.C||!rw.pockets.length||rw.tray.every(Boolean))return;rw.busy=true;rw.res=-1;sAud();
+  const N=18,t=(Math.random()*N)|0,D=Math.min(6200,3400+Math.abs(w)*170),R=rw.C.S*rw.C.dpr/2*.97,wa0=rw.wa,aE=wa0+w*D/1000/3,target=aE+t*6.2832/N,ba0=rw.ba,dir=-Math.sign(w)||-1;
+  let dB=((target-ba0)%6.2832+6.2832)%6.2832;if(dir<0)dB-=6.2832;dB+=dir*6.2832*2;
+  rw.land={t0:performance.now(),D,R,w,wa0,ba0,dB,t,tr:R*.835,pr:(R*.8+R*.5)/2};rw.br=null;
+  rwMsg("הכדור בדרך… 🎡");document.querySelectorAll("#rwAct button,#rwTray .rw-re,[data-rb]").forEach(b=>b.disabled=true);
+  for(let i=0;i<22;i++){const p=i/21,tt=D*(.12+.85*(1-Math.pow(1-p,.45)));setTimeout(()=>tone(1500+Math.random()*300,.025,"square",.035),tt);}buzz(10);}
+function rwResult(t){const pk=rw.pockets[t];let p=pk&&!pk.gold?pk:null;
+  if(!p){const a=rwAllowed().sort((x,y)=>y.price-x.price);p=a[(Math.random()*Math.min(3,a.length))|0];rwMsg("✨ בחירת נויה! מוצר פרימיום בשבילכם");}
+  if(!p){rw.busy=false;rwFill();rwTray();return;}
+  const k=rw.re>=0?rw.re:rw.tray.indexOf(null);rw.tray[k]=p;rw.re=-1;
+  const cvr=rw.C.cv.getBoundingClientRect(),pop=document.createElement("div");pop.className="rw-pop";pop.innerHTML=`<img src="${esc(p.photo||p.img)}" alt=""><b>${esc(p.name)}</b><span>${ils(+p.price)}</span>`;
+  Object.assign(pop.style,{left:(cvr.left+cvr.width/2)+"px",top:(cvr.top+cvr.height/2)+"px"});document.body.appendChild(pop);
+  const full=rw.tray.every(Boolean);sDing(k,full);buzz(14);if(pk&&!pk.gold)rwMsg(`✨ ${p.name}`);
+  setTimeout(()=>{rwTray();const slot=$("rwTray").children[k],sr=slot.getBoundingClientRect(),pr=pop.getBoundingClientRect();
+    pop.animate([{transform:"translate(-50%,-50%) scale(1)",opacity:1},{transform:`translate(calc(-50% + ${sr.left+sr.width/2-(pr.left+pr.width/2)}px),calc(-50% + ${sr.top+sr.height/2-(pr.top+pr.height/2)}px)) scale(.3)`,opacity:.2}],{duration:600,easing:"cubic-bezier(.4,0,.2,1)"}).onfinish=()=>{pop.remove();
+      slot.classList.add("pop");rw.busy=false;if(!full){rwFill();rwMsg("סובבו שוב למוצר הבא 🎡");}else{rwMsg("🎉 המגש מוכן! אפשר להחליף מוצר עם 🔄 או להכניס למארז");}rwTray();};},1100);}
+function rwTake(){if(rw.busy||!rw.tray.every(Boolean))return;rw.busy=true;const items=rw.tray.slice(),prev=[new Map(cart),pack],d=$("rwModal"),box=d.querySelector(".mr");
+  const fl=[...document.querySelectorAll("#rwTray .rw-slot img")].map(im=>({src:im.src,r:im.getBoundingClientRect()}));
+  sPayout();buzz([15,30,15,30,15]);
+  setTimeout(()=>{cart=new Map(items.map(p=>[p.id,1]));items.forEach(p=>fresh.add(p.id));pack=PACKS.find(k=>!k.hidden&&isBag(k))||NO_PACK;manual.clear();renderPacks();update(true);undoSet=prev;const key=comboKey();
+    scene.scrollIntoView({block:"center"});
+    box.animate([{transform:"scale(1)",opacity:1},{transform:"scale(.82)",opacity:0}],{duration:450,easing:"cubic-bezier(.5,0,.75,0)",fill:"forwards"}).finished.then(()=>{rw.busy=false;box.getAnimations().forEach(a=>a.cancel());rwClose();});
+    let n=0;const all=()=>{const sh=document.createElement("div");sh.className="scene-shine";scene.appendChild(sh);setTimeout(()=>sh.remove(),900);showToast("🎡 המארז נכנס! עוד רגע הוא נחשף ✨",true);
+      setTimeout(()=>{if(comboKey()===key&&!aiBusy&&!revealed)generateAi(false);},450);};
+    fl.forEach((o,i)=>setTimeout(()=>cometFly(o,i,fl.length,()=>{sDing(i,i===fl.length-1);if(++n===fl.length)all();}),120+i*160));},380);}
+function rwIcon(){let s="";for(let i=0;i<8;i++){const a=i*Math.PI/4;s+=`<path d="M20 20 L${20+17*Math.cos(a)} ${20+17*Math.sin(a)} A17 17 0 0 1 ${20+17*Math.cos(a+Math.PI/4)} ${20+17*Math.sin(a+Math.PI/4)}Z" fill="${i%2?"#6a1426":"#1a0709"}" stroke="#d9b46a" stroke-width=".6"/>`;}
+  return `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19.5" fill="#e3c58c"/>${s}<circle cx="20" cy="20" r="7" fill="#d8b371"/><circle cx="20" cy="20" r="2.4" fill="#3f271c"/><circle cx="20" cy="5.5" r="2.1" fill="#fff"/></svg>`;}
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("#rwBtn"))rwOpen();});
 // ===== 777: Noya donates 21 hot meals to "האור של אורי" (the owner sends it and marks it in the back office; the site counter shows sent ones)
 function surJackWin(pick,tick){clearInterval(tick);const sl=$("surSlot"),d=$("surModal"),jack=$("surJack"),jw=$("surJW"),demo=pick.jackpot==="demo";
   sl.classList.remove("tense","spinning","win");sl.querySelectorAll(".reel-col.last").forEach(c=>c.classList.remove("last"));
