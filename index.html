@@ -934,6 +934,10 @@ h1.brand{margin:0;line-height:1.2}
 .ar-uniq{text-align:center;font-family:'Frank Ruhl Libre',serif;font-size:17px;color:#8a6a33;margin:2px 0 10px}
 @media (max-width:640px){.combos{font-size:13px;padding:0 10px}.ar-uniq{font-size:15px}}
 .eng-k{color:#8a6a33;font-weight:600}
+.brand-tag{font-size:12.5px;color:#8a6a33;font-weight:600;padding:0 10px;margin:2px 0}
+.brand-opt{display:flex;align-items:center;gap:6px;margin:6px 8px 8px;padding:6px 9px;border:1px dashed #cfab6c;border-radius:10px;background:#fffaf0;font-size:13px;cursor:pointer;line-height:1.3}
+.brand-opt input{accent-color:#b08a4f;width:16px;height:16px;flex:none}
+.brand-opt b{margin-inline-start:auto;color:#8a6a33;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1327,6 +1331,9 @@ function renderBudget(){
   document.getElementById("budFill").style.width=Math.min(100,used/budget*100)+"%";
   document.getElementById("budTxt").textContent=left>=0?`במארז ${ils(used)} · נשארו ${ils(Math.round(left*100)/100)}`:`חריגה של ${ils(Math.round(-left*100)/100)} מהתקציב`;
 }
+let engSel=new Set(), engFiles=[];   // logo branding picks (engraving / sleeve) – chosen on the card or at the summary
+function brandCost(){let c=0;for(const id of engSel)c+=(+byId[id]?.engravePrice||0)*(cart.get(id)||0);return c;}
+const brandKindOf=p=>p&&p.brandKind==="sleeve"?"חבק":"חריטה";
 function renderGrid(){
   let list=P.filter(p=>!p.hidden&&(cat==="sale"?onSale(p):cat==="all"||(!onSale(p)&&p.cat===cat)));
   if(sortBy){const k=p=>+p.price||0;list=list.slice().sort((a,b)=>(!k(a))-(!k(b))||(sortBy==="asc"?k(a)-k(b):k(b)-k(a)));}
@@ -1348,7 +1355,8 @@ function renderGrid(){
       <div class="ph${p.photo?" photo":""}" data-qv role="button" tabindex="0" aria-label="פרטים על ${esc(p.name)}"><img src="${p.photo||p.img}" alt="${esc(p.name)}" loading="lazy">${p.was>p.price?`<span class="salebadge">מבצע -${Math.round((1-p.price/p.was)*100)}%</span>`:""}
         ${q?`<span class="tick">✓ במארז</span><div class="qty" role="group" aria-label="כמות"><button data-a="dec" aria-label="הסרת יחידה">−</button><output>${q}</output><button data-a="inc" aria-label="הוספת יחידה">+</button></div>`
            :`<button class="addc" data-a="inc" aria-label="הוספת ${esc(p.name)} למארז">+</button>`}</div>
-      <div class="nm">${esc(p.name)}</div>${p.desc?`<div class="ds">${esc(p.desc)}</div>`:""}${stockLine(p)}${p.price?(p.was>p.price?`<div class="pr sale"><s>${ils(p.was)}</s> ${ils(p.price)} <span class="off">-${Math.round((1-p.price/p.was)*100)}%</span>${p.saleNote?`<small>${esc(p.saleNote)}</small>`:""}</div>`:`<div class="pr">${ils(p.price)}</div>`):""}
+      <div class="nm">${esc(p.name)}</div>${p.engrave?`<div class="brand-tag">✨ ניתן למיתוג לוגו (${brandKindOf(p)})</div>`:""}${p.desc?`<div class="ds">${esc(p.desc)}</div>`:""}${stockLine(p)}${p.price?(p.was>p.price?`<div class="pr sale"><s>${ils(p.was)}</s> ${ils(p.price)} <span class="off">-${Math.round((1-p.price/p.was)*100)}%</span>${p.saleNote?`<small>${esc(p.saleNote)}</small>`:""}</div>`:`<div class="pr">${ils(p.price)}</div>`):""}
+      ${q&&p.engrave?`<label class="brand-opt"><input type="checkbox" data-brand="${p.id}"${engSel.has(p.id)?" checked":""}> הוסיפו לוגו ב${brandKindOf(p)} <b>+${ils(+p.engravePrice||0)}</b></label>`:""}
     </article>`}).join("");
 }
 document.getElementById("sortSel").onchange=e=>{sortBy=e.target.value;renderGrid();};
@@ -1357,6 +1365,10 @@ document.getElementById("sortSel").onchange=e=>{sortBy=e.target.value;renderGrid
 gridEl.onclick=e=>{const card=e.target.closest(".card");if(!card)return;const id=card.dataset.id,b=e.target.closest("button[data-a]");
   if(b){if(b.dataset.a==="inc"){if(!cart.has(id))flyToBox(card.querySelector(".ph img"));add(id);}else dec(id);return;}
   if(e.target.closest("[data-qv]"))openQv(id);};
+gridEl.addEventListener("change",e=>{const c=e.target.closest("[data-brand]");if(!c)return;const id=c.dataset.brand;
+  c.checked?engSel.add(id):engSel.delete(id);
+  if(c.checked)showToast(`נוסף מיתוג לוגו (${brandKindOf(byId[id])}). את הלוגו מעלים בשלב הסיכום ✨`);
+  update(true);try{renderEng();renderSumLines();renderQty();}catch(err){}});
 gridEl.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-qv]")){e.preventDefault();openQv(e.target.closest(".card").dataset.id);}};
 // 7: the picture "jumps" into the box so the customer feels the add
 function flyToBox(img){
@@ -1377,7 +1389,7 @@ document.getElementById("qv").addEventListener("click",e=>{if(e.target.closest("
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&qvId)closeQv();});
 function renderQv(){const p=byId[qvId];if(!p)return;const q=cart.get(qvId)||0;
   document.getElementById("qvBody").innerHTML=`<div class="qv-ph"><img src="${p.photo||p.img}" alt="${esc(p.name)}"></div>
-    <div class="qv-in"><span class="qv-cat">${esc(CATS[p.cat]||"")}</span><h3>${esc(p.name)}</h3>${p.desc?`<p class="qv-ds">${esc(p.desc)}</p>`:""}${stockLine(p)}
+    <div class="qv-in"><span class="qv-cat">${esc(CATS[p.cat]||"")}</span><h3>${esc(p.name)}</h3>${p.engrave?`<div class="brand-tag">✨ ניתן למיתוג לוגו (${brandKindOf(p)}) +${ils(+p.engravePrice||0)} ליחידה</div>`:""}${p.desc?`<p class="qv-ds">${esc(p.desc)}</p>`:""}${stockLine(p)}
     <p class="qv-meta">${/מידות/.test(p.desc||"")?esc(p.desc):`גובה כ-${(+p.h).toLocaleString("he-IL")} ס"מ`}</p>${p.price?`<div class="qv-pr">${ils(p.price)}</div>`:""}
     ${q?`<div class="qv-q"><div class="stepper"><button data-qa="inc" aria-label="הוספת יחידה">+</button><output>${q}</output><button data-qa="dec" aria-label="הסרת יחידה">−</button></div><span class="qv-ok">✓ במארז</span></div>`
        :`<button class="add qv-add" data-qa="inc">+ הוספה למארז</button>`}</div>`;}
@@ -1710,7 +1722,8 @@ function rowsHTML(){
 }
 function totalsHTML(t){return `<span>אריזה: ${packLabel()} <button class="chg" data-packs>${pack.none?"הוספה":"החלפה"}</button></span><span>${packIsFree(pack)?"ללא חיוב ✓":pi(pack.price)}</span>
   <span>מוצרים (${t.count} פריטים)</span><span>${money(t.items)}</span>
-  <span class="lbl">מחיר למארז</span><span class="big" id="bigP">${money(t.total)}<small class="vatx">לא כולל מע״מ</small></span>`;}
+  ${brandCost()?`<span>✨ מיתוג לוגו</span><span>${ils(brandCost())}</span>`:""}
+  <span class="lbl">מחיר למארז</span><span class="big" id="bigP">${money(t.total+brandCost())}<small class="vatx">לא כולל מע״מ</small></span>`;}
 function onRow(e){const b=e.target.closest("button[data-a]");if(!b)return;const id=b.closest(".row").dataset.id;
   ({inc:()=>add(id),dec:()=>dec(id),del:()=>remove(id)})[b.dataset.a]();}
 ["list","list2"].forEach(i=>document.getElementById(i).onclick=onRow);
@@ -1735,7 +1748,7 @@ function update(flash){
   renderGrid();
   document.getElementById("list").innerHTML=document.getElementById("list2").innerHTML=rowsHTML();
   document.getElementById("totals").innerHTML=document.getElementById("totals2").innerHTML=totalsHTML(t);
-  document.getElementById("barP").innerHTML=money(t.total)+'<small class="vatx">לא כולל מע״מ</small>';
+  document.getElementById("barP").innerHTML=money(t.total+brandCost())+'<small class="vatx">לא כולל מע״מ</small>';
   document.getElementById("barC").innerHTML=`${t.count} מוצרים · <button class="bar-pack" data-packs>${pack.none?"+ הוספת אריזה":"אריזה ✓"}</button>`;
   if(flash) document.querySelectorAll("#bigP,#barP").forEach(el=>{el.classList.remove("priceflash");void el.offsetWidth;el.classList.add("priceflash");});
   document.querySelector(".stage .bgs").hidden=cart.size===0;
@@ -2275,7 +2288,6 @@ function makeOrderCard(){const key=orderKey(),src=$("sumImg").src;if(!src||!shar
 function prepOrderImage(){clearTimeout(orderCardT);orderCardT=setTimeout(makeOrderCard,shareAvailable?2000:3000);}
 ["input","change","click"].forEach(ev=>document.getElementById("sumView").addEventListener(ev,()=>prepOrderImage()));
 // ---- logo engraving (optional upsell, chosen per item at order time) ----
-let engSel=new Set(), engFiles=[];
 const engItems=()=>[...cart.keys()].filter(id=>byId[id]&&byId[id].engrave);
 const engCost=()=>[...engSel].reduce((s,id)=>s+(+byId[id]?.engravePrice||0)*(cart.get(id)||0),0);
 let cardOn=false, cardSelf=false;
