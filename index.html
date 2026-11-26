@@ -943,6 +943,9 @@ h1.brand{margin:0;line-height:1.2}
 .sets-rot>.on{opacity:1;visibility:visible}
 .bar.is-empty{display:none!important}
 .sets-h[hidden]{display:none!important}
+.mr-bg{position:fixed;inset:0;background:rgba(40,25,15,.45);z-index:9999;display:flex;align-items:center;justify-content:center}
+.mr{background:#fffaf3;border-radius:18px;padding:20px;width:min(400px,92vw);box-shadow:0 16px 40px rgba(0,0,0,.25);color:#3f271c;text-align:right}
+.mr h3{margin:0 0 6px;font-family:"Frank Ruhl Libre",Georgia,serif;font-size:21px}.mr p{margin:0 0 12px;color:#7a5a48;font-size:14.5px}.mr button{display:block;width:100%;margin-top:8px}
 .mode-pick{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:2px 0 6px}
 .mode-pick .mp-q{font-weight:700;color:#4a2f22;font-size:14.5px}
 .mode-pick button{border:1px solid #d9c3a0;background:#fffaf3;color:#4a2f22;border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
@@ -2198,9 +2201,10 @@ function renderAiBar(){
   q("aiNextType")&&(q("aiNextType").onclick=()=>{const nx=BTYPES.findIndex((t,i)=>i!==btCur&&!t.cart.size);if(nx>=0){btSwitch(nx);$("boxTabs").scrollIntoView({behavior:"smooth",block:"start"});showToast(`עכשיו בונים את מארז ${BTYPES[nx].name} ✨`);}else btAdd(true);});
   document.body.classList.toggle("revealed",!!q("aiOrder"));
   q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);generateAi(true);});
-  q("aiDl")&&(q("aiDl").onclick=async()=>{const b=q("aiDl");if(b.disabled)return;b.disabled=true;const was=b.textContent;b.textContent="מכין את התמונה…";
-    try{const jpg=await boxCard(currentBoxImage());const a=document.createElement("a");a.href=jpg;a.download="noya-gift-box-"+new Date().toISOString().slice(0,10)+".jpg";document.body.appendChild(a);a.click();a.remove();showToast("התמונה ירדה למכשיר ✓");}
-    catch(e){showToast("לא הצלחנו להוריד את התמונה. אפשר לנסות שוב.");}finally{b.disabled=false;b.textContent=was;}});
+  q("aiDl")&&(q("aiDl").onclick=()=>multiOn()?multiReady(dlNow):dlNow());
+  async function dlNow(){const b=q("aiDl");if(!b||b.disabled)return;b.disabled=true;const was=b.textContent;b.textContent="מכין את התמונה…";
+    try{const jpg=multiOn()?await multiCard():await boxCard(currentBoxImage());const a=document.createElement("a");a.href=jpg;a.download="noya-gift-box-"+new Date().toISOString().slice(0,10)+".jpg";document.body.appendChild(a);a.click();a.remove();showToast("התמונה ירדה למכשיר ✓");}
+    catch(e){showToast("לא הצלחנו להוריד את התמונה. אפשר לנסות שוב.");}finally{b.disabled=false;b.textContent=was;}}
   q("aiView")&&(q("aiView").onclick=()=>{editing=!editing;
     if(editing){showAi(null);showToast("גררו מוצרים בתמונה כדי לתקן את המיקום, ואז לחצו \"חשפו את המארז שלכם\"");}
     else{aiStale=false;showAi(aiCache.get(aiCurrent));}
@@ -2247,8 +2251,10 @@ async function shareLink(jpg,modeOverride,box){ // page with the designed image 
 let shareMode="consult";
 function spreadText(){return "עיצבתי מארז מתנה ב-נויה במתנה ✨\nבוחרים מוצרים, רואים את המארז מיד ומקבלים הצעת מחיר. שווה להציץ 🎁";}
 const msgText=()=>shareMode==="spread"?spreadText():shareText();
-async function shareWhatsApp(src,mode){shareMode=mode||"consult";
+async function shareWhatsApp(src,mode,ready){shareMode=mode||"consult";
   if(sharing||!cart.size)return;
+  if(multiOn()&&shareMode!=="spread"){if(!ready){multiReady(()=>shareWhatsApp(src,mode,true));return;}
+    try{showToast("מכין תמונה אחת של כל המארזים…");src=await multiCard();}catch(e){}}
   const mobile=matchMedia("(pointer:coarse)").matches;
   if(mobile&&shareReady&&shareReady.src===src){const d=shareReady.data; // second tap: share straight away
     try{await navigator.share(d);shareReady=null;}catch(e){if(e.name!=="AbortError")showToast("לא הצלחנו לשתף כרגע. אפשר לנסות שוב.");}return;}
@@ -2331,6 +2337,63 @@ async function boxCard(src,order){
   x.font=`500 30px ${BF}`;x.fillText("✉️ "+CARD_MAIL,W-P,y+100);
   return c.toDataURL("image/jpeg",.9);
 }
+
+// ---- multi box types: ONE picture for the whole order – every box with its own photo, items, quantity and price ----
+const multiOn=()=>!!BTYPES&&btFilled().length>1;
+function typeImg(i){return i===btCur?currentBoxImage():(BTYPES[i].img||"");}
+async function multiCard(){
+  btSnap();const f=btFilled();
+  const data=f.map(i=>withBT(i,()=>({name:BTYPES[i].name,src:typeImg(i),items:[...cart].map(([id,q])=>byId[id]?(byId[id].name+(q>1?` × ${q}`:"")):null).filter(Boolean),
+    pack:pack.none?"":pack.name,boxes,per:unpriced()?0:r2(orderPer())})));
+  const tot=unpriced()?0:orderGoods(),nb=totalBoxes();
+  await (document.fonts&&document.fonts.ready);
+  const [logo,qr,...ims]=await Promise.all([loadImg("img/icon-192.png").catch(()=>null),loadQR().catch(()=>null),...data.map(d=>d.src?loadImg(d.src).catch(()=>null):Promise.resolve(null))]);
+  const W=1200,P=56,IW=430,IH=330,DF='"Frank Ruhl Libre","David Libre",Georgia,serif',BF='"Assistant","Segoe UI",Arial,sans-serif';
+  const c=document.createElement("canvas"),x=c.getContext("2d");const TW=W-2*P-IW-36;
+  const wrap=(t,font,max)=>{x.font=font;const out=[];let cur="";t.split(" ").forEach(w=>{const n=cur?cur+" "+w:w;if(x.measureText(n).width>max&&cur){out.push(cur);cur=w;}else cur=n;});if(cur)out.push(cur);return out;};
+  const blocks=data.map(d=>{let lines=[];d.items.forEach(t=>wrap("• "+t,`500 25px ${BF}`,TW).forEach(l=>lines.push(l)));if(lines.length>8)lines=[...lines.slice(0,7),"…"];
+    const h=Math.max(IH,56+lines.length*36+(d.pack?40:0)+64);return {...d,lines,h};});
+  const head=150,totH=tot?96:60,foot=250,H=head+blocks.reduce((n,b)=>n+b.h+34,0)+totH+foot;
+  c.width=W;c.height=H;x.direction="rtl";x.fillStyle="#f7efe4";x.fillRect(0,0,W,H);
+  let y=P-10;
+  if(logo){x.save();x.beginPath();x.arc(W-P-38,y+38,38,0,Math.PI*2);x.clip();x.drawImage(logo,W-P-76,y,76,76);x.restore();}
+  x.textAlign="right";x.textBaseline="middle";x.fillStyle="#3f271c";x.font=`700 48px ${DF}`;x.fillText("נויה במתנה",W-P-96,y+28);
+  x.font=`500 25px ${BF}`;x.fillStyle="#8a6d55";x.fillText(`${data.length} סוגי מארזים בהזמנה אחת ✨`,W-P-96,y+72);
+  y=head;const g=x.createLinearGradient(0,0,W,0);g.addColorStop(0,"#ead6a6");g.addColorStop(.5,"#cfab6c");g.addColorStop(1,"#b08a4f");x.fillStyle=g;x.fillRect(P,y-14,W-2*P,5);
+  blocks.forEach((b,k)=>{const im=ims[k];
+    // picture on the left (cover-fit, rounded)
+    x.save();const rx=P,ry=y,r=18;x.beginPath();x.moveTo(rx+r,ry);x.arcTo(rx+IW,ry,rx+IW,ry+IH,r);x.arcTo(rx+IW,ry+IH,rx,ry+IH,r);x.arcTo(rx,ry+IH,rx,ry,r);x.arcTo(rx,ry,rx+IW,ry,r);x.closePath();x.clip();
+    x.fillStyle="#efe2cf";x.fillRect(rx,ry,IW,IH);
+    if(im){const sc=Math.max(IW/im.naturalWidth,IH/im.naturalHeight),sw=IW/sc,sh=IH/sc;x.drawImage(im,(im.naturalWidth-sw)/2,(im.naturalHeight-sh)/2,sw,sh,rx,ry,IW,IH);}
+    x.restore();
+    // details on the right
+    let ty=y+26;x.textAlign="right";x.fillStyle="#3f271c";x.font=`700 40px ${DF}`;x.fillText("🎁 מארז "+b.name,W-P,ty);ty+=50;
+    x.font=`500 25px ${BF}`;x.fillStyle="#3f271c";b.lines.forEach(l=>{x.fillText(l,W-P,ty);ty+=36;});
+    if(b.pack){x.font=`400 24px ${BF}`;x.fillStyle="#6e4d3b";x.fillText("אריזה: "+b.pack,W-P,ty+2);ty+=40;}
+    ty+=10;x.font=`700 30px ${BF}`;x.fillStyle="#8a6a33";x.fillText(`${b.boxes} מארזים${b.per?` × ${ils(b.per)}`:""}`,W-P,ty+8);
+    if(b.per){const t1=`= ${ils(r2(b.per*b.boxes))}`;x.textAlign="left";x.font=`700 30px ${DF}`;x.fillStyle="#3f271c";x.fillText(t1,P+IW+36,ty+8);}
+    y+=b.h+34;if(k<blocks.length-1){x.fillStyle="rgba(176,138,79,.35)";x.fillRect(P,y-18,W-2*P,2);}});
+  // total
+  if(tot){x.fillStyle="#efe2cf";x.fillRect(P,y,W-2*P,74);x.fillStyle="#3f271c";x.textAlign="right";x.font=`700 32px ${BF}`;x.fillText(`סה״כ ${nb} מארזים · לפני מע״מ`,W-P-20,y+38);
+    x.textAlign="left";x.font=`700 42px ${DF}`;x.fillText(ils(tot),P+20,y+38);y+=totH;}
+  else{x.textAlign="right";x.font=`600 28px ${BF}`;x.fillStyle="#3f271c";x.fillText(`סה״כ ${nb} מארזים · המחיר בהצעת מחיר`,W-P,y+30);y+=totH;}
+  // footer: contact + QR
+  x.fillStyle="rgba(176,138,79,.35)";x.fillRect(P,y,W-2*P,2);y+=36;const qs=150;
+  if(qr){try{const q=qr(0,"M");q.addData(SITE_LINK.replace("/?v=2","/"));q.make();const n=q.getModuleCount(),cell=qs/n,qx=P+48;x.fillStyle="#fff";x.fillRect(qx-10,y-10,qs+20,qs+20);x.fillStyle="#3f271c";
+    for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))x.fillRect(qx+k*cell,y+r*cell,Math.ceil(cell),Math.ceil(cell));
+    x.textAlign="center";x.font=`600 21px ${BF}`;x.fillStyle="#6e4d3b";x.fillText("סרקו ועצבו מארז משלכם",qx+qs/2,y+qs+34);}catch(e){}}
+  x.textAlign="right";x.fillStyle="#3f271c";x.font=`700 36px ${BF}`;x.fillText("📞 "+CARD_PHONE,W-P,y+40);x.font=`500 30px ${BF}`;x.fillText("✉️ "+CARD_MAIL,W-P,y+100);
+  x.font=`400 22px ${BF}`;x.fillStyle="#8a6d55";x.fillText("המחירים לפני מע״מ · המחיר הסופי יאושר מול נציג",W-P,y+150);
+  return c.toDataURL("image/jpeg",.9);}
+// before sharing / downloading all box types: offer to reveal a box that wasn't designed yet, so the picture looks its best
+function unrevealedTypes(){if(!BTYPES||!aiAvailable)return [];btSnap();return btFilled().filter(i=>i===btCur?!revealed:!(BTYPES[i].revealed&&BTYPES[i].revealedKey===withBT(i,contentKey)));}
+function multiReady(go){const u=unrevealedTypes();if(!u.length){go();return;}
+  const i=u[0],nm=BTYPES[i].name,d=document.createElement("div");d.className="mr-bg";
+  d.innerHTML=`<div class="mr" role="dialog"><h3>מארז ${esc(nm)} עוד לא נחשף</h3><p>כדי שבתמונה של ההזמנה כל המארזים ייראו מעוצבים, כדאי לחשוף קודם את מארז ${esc(nm)}${u.length>1?` (ועוד ${u.length-1})`:""}.</p>
+    <button type="button" class="go" data-r="reveal">✨ לחשוף את מארז ${esc(nm)} עכשיו</button><button type="button" class="ghost" data-r="go">להמשיך בכל זאת</button></div>`;
+  document.body.appendChild(d);
+  d.addEventListener("click",e=>{const b=e.target.closest("[data-r]");if(!b&&e.target!==d)return;d.remove();if(!b)return;
+    if(b.dataset.r==="go")go();else{showView("build");btSwitch(i);setTimeout(()=>{scene.scrollIntoView({behavior:"smooth",block:"center"});generateAi(false);},250);showToast(`חושפים את מארז ${nm} ✨ אחרי זה לוחצים שוב על שיתוף או הורדה`);}});}
 // ===================== Stage 2: summary, details, send =====================
 // Set these for the business. orderEmail empty = email button asks the customer to use WhatsApp or copy.
 let boxes=1, orderText="", lastSend=null, orderRef="", lateKey="";   // one order number per box: sending again updates the same order
