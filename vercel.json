@@ -59,6 +59,46 @@
       "source": "/p/p75a/",
       "destination": "/c/serve/",
       "permanent": true
+    },
+    {
+      "source": "/guides",
+      "destination": "/gifts/",
+      "permanent": true
+    },
+    {
+      "source": "/guides/",
+      "destination": "/gifts/",
+      "permanent": true
+    },
+    {
+      "source": "/c",
+      "destination": "/gifts/",
+      "permanent": true
+    },
+    {
+      "source": "/c/",
+      "destination": "/gifts/",
+      "permanent": true
+    },
+    {
+      "source": "/kelim",
+      "destination": "/gifts/",
+      "permanent": true
+    },
+    {
+      "source": "/kelim/",
+      "destination": "/gifts/",
+      "permanent": true
+    },
+    {
+      "source": "/p",
+      "destination": "/gifts/",
+      "permanent": true
+    },
+    {
+      "source": "/p/",
+      "destination": "/gifts/",
+      "permanent": true
     }
   ]
 }
