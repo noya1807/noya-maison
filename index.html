@@ -2342,14 +2342,17 @@ async function boxCard(src,order){
 
 // ---- multi box types: ONE picture for the whole order – every box with its own photo, items, quantity and price ----
 const multiOn=()=>!!BTYPES&&btFilled().length>1;
-function typeImg(i){return i===btCur?currentBoxImage():(BTYPES[i].img||"");}
+// the designed (AI) picture of a box type, if it was revealed; otherwise "" and the card shows the products' own photos
+function typeImg(i){if(i===btCur)return revealed&&!aiImg.hidden&&aiImg.src?aiImg.src:"";const t=BTYPES[i];
+  return t.revealed&&t.revealedKey===withBT(i,contentKey)&&t.aiCurrent&&aiCache.get(t.aiCurrent)||"";}
 async function multiCard(){
   btSnap();const f=btFilled();
-  const data=f.map(i=>withBT(i,()=>({name:BTYPES[i].name,src:typeImg(i),items:[...cart].map(([id,q])=>byId[id]?(byId[id].name+(q>1?` × ${q}`:"")):null).filter(Boolean),
+  const data=f.map(i=>withBT(i,()=>({name:BTYPES[i].name,src:typeImg(i),photos:[...cart.keys()].map(id=>byId[id]&&(byId[id].photo||byId[id].img)).filter(Boolean).slice(0,4),items:[...cart].map(([id,q])=>byId[id]?(byId[id].name+(q>1?` × ${q}`:"")):null).filter(Boolean),
     pack:pack.none?"":pack.name,boxes,per:unpriced()?0:r2(orderPer())})));
   const tot=unpriced()?0:orderGoods(),nb=totalBoxes();
   await (document.fonts&&document.fonts.ready);
   const [logo,qr,...ims]=await Promise.all([loadImg("img/icon-192.png").catch(()=>null),loadQR().catch(()=>null),...data.map(d=>d.src?loadImg(d.src).catch(()=>null):Promise.resolve(null))]);
+  const phs=await Promise.all(data.map((d,k)=>ims[k]?Promise.resolve([]):Promise.all(d.photos.map(u=>loadImg(u).catch(()=>null))).then(a=>a.filter(Boolean))));
   const W=1200,P=56,IW=430,IH=330,DF='"Frank Ruhl Libre","David Libre",Georgia,serif',BF='"Assistant","Segoe UI",Arial,sans-serif';
   const c=document.createElement("canvas"),x=c.getContext("2d");const TW=W-2*P-IW-36;
   const wrap=(t,font,max)=>{x.font=font;const out=[];let cur="";t.split(" ").forEach(w=>{const n=cur?cur+" "+w:w;if(x.measureText(n).width>max&&cur){out.push(cur);cur=w;}else cur=n;});if(cur)out.push(cur);return out;};
@@ -2366,7 +2369,11 @@ async function multiCard(){
     // picture on the left (cover-fit, rounded)
     x.save();const rx=P,ry=y,r=18;x.beginPath();x.moveTo(rx+r,ry);x.arcTo(rx+IW,ry,rx+IW,ry+IH,r);x.arcTo(rx+IW,ry+IH,rx,ry+IH,r);x.arcTo(rx,ry+IH,rx,ry,r);x.arcTo(rx,ry,rx+IW,ry,r);x.closePath();x.clip();
     x.fillStyle="#efe2cf";x.fillRect(rx,ry,IW,IH);
-    if(im){const sc=Math.max(IW/im.naturalWidth,IH/im.naturalHeight),sw=IW/sc,sh=IH/sc;x.drawImage(im,(im.naturalWidth-sw)/2,(im.naturalHeight-sh)/2,sw,sh,rx,ry,IW,IH);}
+    const cover=(img,X,Y,w,h)=>{const sc=Math.max(w/img.naturalWidth,h/img.naturalHeight),sw=w/sc,sh=h/sc;x.drawImage(img,(img.naturalWidth-sw)/2,(img.naturalHeight-sh)/2,sw,sh,X,Y,w,h);};
+    if(im)cover(im,rx,ry,IW,IH);
+    else{const ph=phs[k]||[],n=ph.length;   // not revealed yet: the products' own photos, side by side
+      if(n===1)cover(ph[0],rx,ry,IW,IH);else if(n===2){cover(ph[0],rx,ry,IW/2-2,IH);cover(ph[1],rx+IW/2+2,ry,IW/2-2,IH);}
+      else if(n>=3){const cw=IW/2-2,ch=IH/2-2;ph.slice(0,4).forEach((p2,m)=>cover(p2,rx+(m%2)*(cw+4),ry+Math.floor(m/2)*(ch+4),m===2&&n===3?IW:cw,ch));}}
     x.restore();
     // details on the right
     let ty=y+26;x.textAlign="right";x.fillStyle="#3f271c";x.font=`700 40px ${DF}`;x.fillText("🎁 מארז "+b.name,W-P,ty);ty+=50;
