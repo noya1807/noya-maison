@@ -707,7 +707,7 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .hold{width:100%!important;margin:0!important;font:inherit;font-size:12px;font-weight:800;padding:4px 0!important;border-radius:8px;border:0;cursor:pointer;color:#3f271c;background:linear-gradient(180deg,#f1dca8,#b08a4f);box-shadow:0 2px 0 #6e4d3b}
 .hold[aria-pressed="true"]{background:linear-gradient(180deg,#e2463a,#8e1f14);color:#fff;box-shadow:0 2px 0 #5a0f08}.hold:disabled{opacity:.4;cursor:default}
 .jackpot{direction:rtl;margin-top:8px;background:#120b07;border-radius:10px;padding:8px;text-align:center;color:#ffd76a;font-weight:900;font-size:18px;text-shadow:0 0 8px rgba(255,200,80,.7);box-shadow:inset 0 2px 8px rgba(0,0,0,.7)}
-.slot.win .jackpot{animation:jp .5s ease 3}@keyframes jp{50%{transform:scale(1.05);color:#fff6d8}}
+.slot.win .jackpot{animation:jpFlash .34s steps(1) 6}.jackpot.lit{box-shadow:inset 0 2px 8px rgba(0,0,0,.8),0 0 0 3px #e3c58c,0 0 16px rgba(255,214,106,.75)}@keyframes jpFlash{0%{box-shadow:inset 0 2px 8px rgba(0,0,0,.8),0 0 0 3px #fff6d2,0 0 22px rgba(255,214,106,1)}50%{box-shadow:inset 0 2px 8px rgba(0,0,0,.8),0 0 0 3px #b08a4f,0 0 3px rgba(255,214,106,.3)}}
 .lever{position:relative;flex:0 0 44px;width:44px;height:220px;touch-action:none;cursor:grab;--p:0}
 .lv-base{position:absolute;left:0;top:132px;width:28px;height:48px;border-radius:0 12px 12px 0;background:linear-gradient(90deg,#3f271c,#7a5440);box-shadow:inset 0 0 0 2px #c9a14e}
 .lv-rod{position:absolute;left:17px;width:8px;bottom:64px;top:calc(26px + var(--p)*100px);border-radius:4px;background:linear-gradient(90deg,#9c7740,#f7e7bf,#9c7740);transition:top .4s cubic-bezier(.3,1.8,.5,1)}
@@ -2156,17 +2156,17 @@ function surPull(){if(sur.busy)return;const lv=$("surLever");if(!lv){surSpin();r
 function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(sur.held.size?"אין שילוב בתקציב עם המוצרים הנעולים. בטלו נעילה ונסו שוב":"לא מצאנו מוצרים בתקציב הזה. נסו תקציב אחר");return;}
   const d=$("surModal"),slot=$("surSlot"),reels=$("surReels");sur.busy=true;sur.pick=null;slot.classList.remove("win");
   d.querySelectorAll(".hold").forEach(b=>b.disabled=true);d.querySelectorAll("#surAct button").forEach(b=>b.disabled=true);
-  $("surJack").innerHTML="<b>מגרילים… 🎰</b>";slot.classList.add("spinning");$("surTray").innerHTML="";
+  $("surJack").innerHTML="<b>מגרילים… 🎰</b>";$("surJack").classList.remove("lit");slot.classList.add("spinning");$("surTray").innerHTML="";
   const all=P.filter(p=>!p.hidden&&(p.photo||p.img)),rnd=()=>all[(Math.random()*all.length)|0];
   const ch=parseFloat(reels.style.getPropertyValue("--ch"))||100,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
   const cols=[...reels.querySelectorAll(".reel-col")];let order=0,todo=0,done=0;
   const tick=setInterval(sTick,70);
-  const live=cols.map((c,k)=>k).filter(k=>!sur.held.has(k)),lastK=live[live.length-1],slot2=slot;
+  const live=cols.map((c,k)=>k).filter(k=>!sur.held.has(k)),cand=live.length>1?live.filter(k=>k!==sur.lastTense):live,lastK=cand[(Math.random()*cand.length)|0],slot2=slot;sur.lastTense=lastK;
   const finishCol=(col,k)=>{const strip=col.querySelector(".strip");strip.getAnimations().forEach(a=>a.cancel());strip.innerHTML=`<div class="cell"><img src="${surImg(pick.items[k])}" alt=""></div>`;strip.style.transform="";
     col.querySelector(".reel-name").textContent=pick.items[k].name;if(++done===todo)surWin(pick,tick);};
   cols.forEach((col,k)=>{if(sur.held.has(k))return;todo++;
     // ---- the LAST reel keeps rolling alone, slows down item by item, almost stops… and lands (tension!)
-    if(!reduce&&k===lastK){const ord=order++,K=5,strip=col.querySelector(".strip");col.querySelector(".reel-name").textContent="";
+    if(!reduce&&k===lastK){const ord=live.length-1,K=5,strip=col.querySelector(".strip");col.querySelector(".reel-name").textContent="";
       const cells=[rnd(),pick.items[k],...Array.from({length:16+ord*6+K},rnd),sur.cur[k]||rnd()];
       strip.innerHTML=cells.map(p=>`<div class="cell"><img src="${surImg(p)}" alt=""></div>`).join("");
       const start=-(cells.length-1)*ch,end=-ch,mid=-(1+K)*ch,T1=ord?1500+(ord-1)*560+250:1300,wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -2202,7 +2202,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
 function surWin(pick,tick){clearInterval(tick);{const sl=$("surSlot");if(sl){sl.classList.remove("tense");sl.querySelectorAll(".reel-col.last").forEach(c=>c.classList.remove("last"));}}sur.cur=pick.items;sur.pick=pick;sur.busy=false;
   const d=$("surModal"),slot=$("surSlot"),jack=$("surJack");
   d.querySelectorAll(".reel-col").forEach((c,k)=>{c.querySelector(".reel-name").textContent=pick.items[k].name;const h=c.querySelector(".hold");h.disabled=false;});
-  jack.innerHTML=`<b>🎉 בינגו! פגעתם באחד מ־${combosShort()}</b><small>${ils(r2(pick.sum))} למארז · הכניסו למארז וחשפו ✨</small>`;$("surAct").innerHTML=surActs();
+  jack.classList.add("lit");jack.innerHTML=`<b>🎉 בינגו! פגעתם באחד מ־${combosShort()}</b><small>${ils(r2(pick.sum))} למארז · הכניסו למארז וחשפו ✨</small>`;$("surAct").innerHTML=surActs();
   const box=d.querySelector(".mr.sur");slot.classList.remove("spinning");slot.classList.add("win");box.classList.add("win");sWin();buzz([12,50,12,50,30]);
   surCoins();surFountain();
   setTimeout(()=>{slot.classList.remove("win");box.classList.remove("win");},2800);}
@@ -2214,12 +2214,12 @@ function surCoins(){const tray=$("surTray"),jack=$("surJack");if(!tray||!jack)re
 // "הכניסו למארז וחשפו": the reel products fly into the box one by one, then the reveal starts by itself (no extra click)
 // ===== Bellagio-style fountain: golden jets dance behind the bingo (outer jets first, then all together high, then a soft golden spray falls)
 function surFountain(){if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;const cab=document.querySelector("#surSlot .slot-cab");if(!cab)return;
-  const r=cab.getBoundingClientRect(),c=document.createElement("canvas"),dpr=Math.min(2,devicePixelRatio||1);
-  const T=Math.max(0,r.top-r.height*.22),W=r.width+20,H=r.bottom-T;
+  const r=cab.getBoundingClientRect(),jr=($("surJack")||cab).getBoundingClientRect(),c=document.createElement("canvas"),dpr=Math.min(2,devicePixelRatio||1);
+  const T=Math.max(0,r.top-r.height*.22),W=r.width+20,H=jr.top-T+14;
   Object.assign(c.style,{position:"fixed",left:(r.left-10)+"px",top:T+"px",width:W+"px",height:H+"px",pointerEvents:"none",zIndex:10050});
   c.width=W*dpr;c.height=H*dpr;c.setAttribute("aria-hidden","true");document.body.appendChild(c);const x=c.getContext("2d");x.scale(dpr,dpr);
-  const lite=matchMedia("(pointer:coarse)").matches||(navigator.hardwareConcurrency||8)<=4,rate=lite?42:85,J=7,g=2300,base=H-16,ctr=(J-1)/2,parts=[],acc=new Array(J).fill(0);
-  const jetX=i=>W*(.08+.84*i/(J-1));
+  const lite=matchMedia("(pointer:coarse)").matches||(navigator.hardwareConcurrency||8)<=4,rate=lite?42:85,J=7,g=2300,base=H-14,ctr=(J-1)/2,parts=[],acc=new Array(J).fill(0);
+  const jx=jr.left-(r.left-10)+14,jw=Math.max(40,jr.width-28),jetX=i=>jx+jw*i/(J-1);
   const power=(i,t)=>{const d=(ctr-Math.abs(i-ctr))*.13;if(t<d)return 0;if(t<.85)return .48+.1*Math.sin((t-d)*8+i);if(t<.98)return 0;if(t<1.9)return .95;return 0;};
   const t0=performance.now();let last=t0;
   const step=now=>{const t=(now-t0)/1000,dt=Math.min(.05,(now-last)/1000);last=now;
