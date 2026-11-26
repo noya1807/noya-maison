@@ -642,6 +642,21 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
   .stage-top .scene{margin:0!important;flex:0 1 auto;width:min(calc(100% - 212px),1000px,calc((100vh - 230px)*1.5))}
   .sets-rot{margin:0 0 8px}
 }
+.surprise-btn{display:flex;flex-direction:column;align-items:center;gap:1px;width:100%;margin:0 0 8px;padding:9px 10px;border:0;border-radius:14px;cursor:pointer;font:inherit;font-weight:800;font-size:15px;color:#3f271c;
+  background:linear-gradient(135deg,#f5e6c4,#e3c58c 55%,#cfab6c);box-shadow:0 4px 14px rgba(176,138,79,.3);transition:transform .2s,box-shadow .2s}
+.surprise-btn small{font-weight:500;font-size:11.5px;color:#6e4d3b}.surprise-btn:hover{transform:translateY(-2px) rotate(-1deg);box-shadow:0 8px 20px rgba(176,138,79,.4)}
+@media (max-width:1099px){.surprise-btn{flex-direction:row;justify-content:center;gap:8px;max-width:420px;margin:0 auto 8px}}
+.mr.sur{position:relative;width:min(520px,94vw)}.sur-x{position:absolute;top:8px;left:12px;border:0;background:none;font-size:22px;color:#a08670;cursor:pointer;width:auto!important;margin:0!important}
+.sur-q{margin:10px 0}.sur-q b{display:block;font-size:14px;margin-bottom:6px}.sur-q div{display:flex;flex-wrap:wrap;gap:6px}
+.sur-q button{width:auto!important;margin:0!important;border:1px solid #d9c3a0;background:#fffaf3;color:#4a2f22;border-radius:999px;padding:6px 13px;font:inherit;font-size:14px;cursor:pointer}
+.sur-q button[aria-pressed="true"]{background:linear-gradient(135deg,#3f271c,#6e4d3b 60%,#b08a4f);color:#fffaf3;border-color:transparent}
+.sur-reels{display:flex;gap:8px;justify-content:center;margin:14px 0 6px;min-height:150px;align-items:stretch}
+.sur-hint{align-self:center;color:#8a6d55;font-size:14px}
+.reel{flex:1 1 0;max-width:130px;background:#fff;border:1px solid #eadcc6;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;align-items:center}
+.reel img{width:100%;aspect-ratio:1;object-fit:cover;background:#f3ece2}.reel span{font-size:11.5px;padding:4px 6px;text-align:center;line-height:1.25;color:#4a2f22}
+.reel.spin img{filter:blur(1.5px);transform:translateY(-2px)}.reel.stop{animation:reelStop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes reelStop{0%{transform:translateY(-10px)}60%{transform:translateY(4px)}100%{transform:none}}
+.sur-sum{text-align:center;font-weight:800;color:#8a6a33;margin:4px 0 8px}.sur-act{display:flex;gap:8px}.sur-act button{flex:1}
 .cl-more{flex:1 1 100%;text-align:center;font-size:12.5px;color:var(--cocoa);margin-top:3px}.cl-more b{color:#8a6a33}
 .cl-item img{max-height:18px;max-width:72px;object-fit:contain;filter:grayscale(1);opacity:.8;transition:filter .3s,opacity .3s}
 .cl-item:hover img{filter:none;opacity:1}
@@ -1854,7 +1869,7 @@ function update(flash){
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
-setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><button type="button" class="surprise-btn" id="surpriseBtn">🎲 הפתיעו אותי <small>מארז אקראי בתקציב שלכם</small></button><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
 (function(){const el=document.getElementById("setsProof");if(!el)return;const t=el.querySelector(".sp-txt");
   const L=[["🏦","בנק מזרחי טפחות"],["🎖️","צה״ל"],["🛡️","משטרת ישראל"],["🏦","בנק הפועלים"],["🏛️","עיריית תל אביב"],["⚙️","אלביט"],["📱","פרטנר"],["🏦","בנק דיסקונט"],["🏛️","כנסת ישראל"],["🩺","כללית"],["🏛️","עיריית הרצליה"],["🌿","המשרד להגנת הסביבה"],["🏦","בנק יהב"],["🏗️", "אפריקה ישראל"],["🚗", "שלמה סיקסט"],["🍳", "מטבחי רגבה"],["🍳", "מטבחי דקל קמילה"],["🩺", "מאוחדת"],["🏭", "בתי הזיקוק"],["🏅", "מכון וינגייט"],["🛡️", "הראל חברה לביטוח"],["🤝", "ההסתדרות"],["🏥", "בית החולים שיבא"],["✈️", "פספורטכארד"],["💊", "אלטמן"]];
   let i=0,hold=false;const show=()=>{const [e,n]=L[i%L.length];t.innerHTML=`${e} גם <b>${n}</b> בחרו בנויה במתנה`;};
@@ -1916,6 +1931,48 @@ setsEl.onclick=e=>{const b=e.target.closest(".set");if(!b)return;const x=SETS[+b
   pack=PACKS.find(k=>k.id===x.pack)||NO_PACK;manual.clear();renderPacks();update(true);
   lastRemoved=null;undoSet=prev;showToast(`נטען מארז השראה "${x.name}"`,true);};
 let undoSet=null;
+// ===================== 🎲 "הפתיעו אותי": two quick taps (for whom + budget) → a slot-machine spin lands on a ready box =====================
+const SUR_W={emp:{candle:3,holder:3,kitchen:2,decor:2,serve:2,textile:2,diffuser:2,drink:2,gift:1},
+  mgr:{diffuser:3,gift:3,serve:3,kitchen:2,candle:2,textile:2,holder:1,drink:1,decor:1},
+  cli:{diffuser:3,serve:3,kitchen:3,gift:2,candle:2,textile:2,holder:1,decor:1,drink:1}};
+let sur={who:"emp",bud:99,pick:null,spin:null};
+function surPick(){const B=sur.bud,W=SUR_W[sur.who],pool=P.filter(p=>!p.hidden&&+p.price>0&&(+p.stock>0||+p.incoming>0)&&W[p.cat]&&+p.price<=B);
+  if(!pool.length)return null;const want=B<=50?2:B<=99?(Math.random()<.5?2:3):B<=149?3:(Math.random()<.5?3:4);let best=null;
+  for(let a=0;a<260;a++){const used=new Set(),items=[];let sum=0;
+    for(let k=0;k<want;k++){const opts=pool.filter(p=>!used.has(p.cat)&&!items.includes(p)&&sum+ +p.price<=B);if(!opts.length)break;
+      const tw=opts.reduce((t,p)=>t+W[p.cat],0);let r=Math.random()*tw,c=opts[0];for(const p of opts){r-=W[p.cat];if(r<=0){c=p;break;}}
+      items.push(c);used.add(c.cat);sum+= +c.price;}
+    if(items.length<2&&pool.length>1)continue;const sc=sum/B+(items.length===want?.15:0);if(!best||sc>best.sc)best={items,sum,sc};
+    if(sum>=B*.85&&items.length===want&&Math.random()<.35)break;}
+  return best;}
+function surOpen(){let d=$("surModal");if(!d){d=document.createElement("div");d.id="surModal";d.className="mr-bg";document.body.appendChild(d);
+    d.addEventListener("click",e=>{if(e.target===d){surClose();return;}const b=e.target.closest("[data-sw],[data-sb],[data-sa]");if(!b)return;
+      if(b.dataset.sw){sur.who=b.dataset.sw;surRender();}else if(b.dataset.sb){sur.bud=+b.dataset.sb;surRender();}
+      else if(b.dataset.sa==="spin")surSpin();else if(b.dataset.sa==="take")surTake();else if(b.dataset.sa==="close")surClose();});}
+  sur.pick=null;d.hidden=false;surRender();}
+function surClose(){clearInterval(sur.spin);const d=$("surModal");if(d)d.hidden=true;}
+function surRender(){const d=$("surModal"),pill=(k,v,l,cur)=>`<button type="button" data-${k}="${v}" aria-pressed="${cur}">${l}</button>`;
+  d.innerHTML=`<div class="mr sur" role="dialog" aria-label="הפתיעו אותי"><button type="button" class="sur-x" data-sa="close" aria-label="סגירה">×</button>
+    <h3>🎲 הפתיעו אותי</h3>
+    <div class="sur-q"><b>למי?</b><div>${pill("sw","emp","עובדים",sur.who==="emp")}${pill("sw","mgr","מנהלים",sur.who==="mgr")}${pill("sw","cli","לקוחות",sur.who==="cli")}</div></div>
+    <div class="sur-q"><b>תקציב למארז</b><div>${[50,99,149,199,249].map(v=>pill("sb",v,"עד ₪"+v,sur.bud===v)).join("")}</div></div>
+    <div class="sur-reels" id="surReels">${sur.pick?sur.pick.items.map(p=>`<div class="reel"><img src="${esc(p.photo||p.img)}" alt=""><span>${esc(p.name)}</span></div>`).join(""):'<p class="sur-hint">בחרו למי ותקציב, ולחצו "הגרילו" ✨</p>'}</div>
+    ${sur.pick?`<p class="sur-sum">${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</p>`:""}
+    <div class="sur-act">${sur.pick?`<button type="button" class="go" data-sa="take">הכניסו למארז ✓</button><button type="button" class="ghost" data-sa="spin">🎲 עוד אחד</button>`:`<button type="button" class="go" data-sa="spin">🎲 הגרילו לי מארז</button>`}</div></div>`;}
+function surSpin(){const pick=surPick();if(!pick){showToast("לא מצאנו מוצרים בתקציב הזה. נסו תקציב אחר");return;}
+  const n=pick.items.length,pool=P.filter(p=>!p.hidden&&(p.photo||p.img));sur.pick=null;surRender();
+  const box=$("surReels");box.innerHTML=Array.from({length:n},()=>`<div class="reel spin"><img alt=""><span>…</span></div>`).join("");
+  $("surModal").querySelector(".sur-act").innerHTML=`<button type="button" class="go" disabled>מגרילים… ✨</button>`;
+  const reels=[...box.children];let t=0;clearInterval(sur.spin);
+  sur.spin=setInterval(()=>{t+=1;reels.forEach((r,k)=>{if(r.classList.contains("spin")){const q=pool[(Math.random()*pool.length)|0];r.querySelector("img").src=q.photo||q.img;}});
+    reels.forEach((r,k)=>{if(r.classList.contains("spin")&&t>=10+k*7){r.classList.remove("spin");r.classList.add("stop");const p=pick.items[k];r.querySelector("img").src=p.photo||p.img;r.querySelector("span").textContent=p.name;try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}}});
+    if(reels.every(r=>!r.classList.contains("spin"))){clearInterval(sur.spin);setTimeout(()=>{sur.pick=pick;surRender();},420);}},90);}
+function surTake(){const pick=sur.pick;if(!pick)return;const prev=[new Map(cart),pack];
+  cart=new Map(pick.items.map(p=>[p.id,1]));pick.items.forEach(p=>fresh.add(p.id));
+  pack=PACKS.find(k=>!k.hidden&&isBag(k))||NO_PACK;manual.clear();renderPacks();update(true);
+  undoSet=prev;surClose();showToast("🎲 המארז שלכם מוכן! אפשר לשנות אותו כרצונכם",true);
+  setTimeout(()=>scene.scrollIntoView({behavior:"smooth",block:"center"}),150);}
+document.addEventListener("click",e=>{if(e.target.closest("#surpriseBtn"))surOpen();});
 // ---- Showcase: up to 12 recent boxes the owner chose to show; rotates while the customer's box is empty ----
 const SHOW_EP=window.NOYA_OFFICE_ENDPOINT||"api/office";
 var SHOW=[],showI=0,showTimer=null,showFlip=false,isOwner=false;
