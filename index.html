@@ -626,6 +626,22 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .cl-view{padding:0 16px}
 .cl-track{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:700px;margin:0 auto}
 .cl-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;height:24px;min-width:66px;margin:0;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#fff;direction:rtl;font-size:10px;font-weight:600;color:var(--cocoa-soft);white-space:nowrap}
+/* computer: the ready-made boxes (עד ₪50…₪249) stand in a narrow column on the right of the gallery */
+.sets-col-h{display:none}
+@media (min-width:1100px){
+  .stage-top{display:flex;gap:16px;align-items:stretch;justify-content:center}
+  .stage-top .sets{flex:0 0 196px;display:flex!important;flex-direction:column;min-height:0;overflow:hidden!important}
+  .stage-top .sets-col-h{display:block;font-weight:700;font-size:13.5px;color:var(--cocoa);margin:0 0 8px;text-align:center}
+  .stage-top .sets .sets-h{font-size:13px;margin:0 0 6px;text-align:center}
+  .stage-top .sets-row{flex:1 1 auto;flex-direction:column;overflow-y:auto;overflow-x:hidden;gap:8px;padding:2px 4px 2px 2px;scroll-snap-type:none}
+  .stage-top .set{flex:0 0 auto;padding:8px 10px;border-radius:14px;gap:1px}
+  .stage-top .set .set-img{display:none}
+  .stage-top .set .set-b{margin-top:0;font-size:11.5px;padding:2px 10px}
+  .stage-top .set .set-n{font-size:14px}.stage-top .set .set-p{font-size:12.5px}.stage-top .set .set-go{font-size:11px}
+  .stage-top .set:hover{transform:none;box-shadow:0 0 0 2px #cfab6c,0 6px 16px rgba(176,138,79,.22)}
+  .stage-top .scene{margin:0;flex:0 1 auto;width:min(calc(100% - 212px),1000px,calc((100vh - 230px)*1.5))}
+  .sets-rot{margin:0 0 8px}
+}
 .cl-more{flex:1 1 100%;text-align:center;font-size:12.5px;color:var(--cocoa);margin-top:3px}.cl-more b{color:#8a6a33}
 .cl-item img{max-height:18px;max-width:72px;object-fit:contain;filter:grayscale(1);opacity:.8;transition:filter .3s,opacity .3s}
 .cl-item:hover img{filter:none;opacity:1}
@@ -1017,8 +1033,9 @@ h1.brand{margin:0;line-height:1.2}
 
   <section class="stage" aria-labelledby="st-h">
     <h2 id="st-h">המארז שלכם</h2>
-    <div class="sets" id="sets" aria-label="מארזי השראה"></div>
     <div class="packs" id="packs" aria-label="בחירת אריזה" hidden></div>
+    <div class="stage-top" id="stageTop">
+    <div class="sets" id="sets" aria-label="מארזי השראה"></div>
     <div class="scene" id="scene" aria-label="תצוגת המארז">
       <canvas id="cv" aria-hidden="true"></canvas><div class="empty" id="emptyMsg" hidden>בחרו מוצרים והם יסתדרו כאן</div>
       <img id="aiImg" class="ai-img" alt="עיצוב המארז שנוצר על ידי מעצב ה-AI" hidden>
@@ -1031,6 +1048,7 @@ h1.brand{margin:0;line-height:1.2}
       <div class="ai-load" id="aiLoad" hidden><div id="noyaHost"></div><b id="aiStep">נויה עובדת על העיצוב…</b><span id="aiTime"></span></div>
       <span class="ai-tag" id="aiTag" hidden>✦ <span dir="ltr">Styled by Noya</span></span>
       <div class="veil" id="veil" hidden><div class="veil-in"><span class="veil-mark">✦</span><b>המארז שלכם מחכה לחשיפה</b><em class="veil-quote">"אין גבול למה שאפשר ליצור כשמעזים לחשוב אחרת." ✨</em><small id="veilCount"></small></div></div>
+    </div>
     </div>
     <div class="bgs"><span class="lbl">רקע:</span><span id="bgs" style="display:flex;gap:8px"></span>
       <label class="tog"><input type="checkbox" id="props" checked> אביזרי סטיילינג <span class="muted">(לא כלולים במארז)</span></label>
@@ -1835,8 +1853,9 @@ function update(flash){
 // ---- Inspiration boxes & styling tip ----
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
+{const rot=document.getElementById("setsRot"),top=document.getElementById("stageTop");if(rot&&top)top.before(rot);}   // the rotating stats line sits above the gallery row
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
-setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
 (function(){const el=document.getElementById("setsProof");if(!el)return;const t=el.querySelector(".sp-txt");
   const L=[["🏦","בנק מזרחי טפחות"],["🎖️","צה״ל"],["🛡️","משטרת ישראל"],["🏦","בנק הפועלים"],["🏛️","עיריית תל אביב"],["⚙️","אלביט"],["📱","פרטנר"],["🏦","בנק דיסקונט"],["🏛️","כנסת ישראל"],["🩺","כללית"],["🏛️","עיריית הרצליה"],["🌿","המשרד להגנת הסביבה"],["🏦","בנק יהב"],["🏗️", "אפריקה ישראל"],["🚗", "שלמה סיקסט"],["🍳", "מטבחי רגבה"],["🍳", "מטבחי דקל קמילה"],["🩺", "מאוחדת"],["🏭", "בתי הזיקוק"],["🏅", "מכון וינגייט"],["🛡️", "הראל חברה לביטוח"],["🤝", "ההסתדרות"],["🏥", "בית החולים שיבא"],["✈️", "פספורטכארד"],["💊", "אלטמן"]];
   let i=0,hold=false;const show=()=>{const [e,n]=L[i%L.length];t.innerHTML=`${e} גם <b>${n}</b> בחרו בנויה במתנה`;};
