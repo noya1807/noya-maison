@@ -626,6 +626,7 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .cl-view{padding:0 16px}
 .cl-track{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:700px;margin:0 auto}
 .cl-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;height:24px;min-width:66px;margin:0;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#fff;direction:rtl;font-size:10px;font-weight:600;color:var(--cocoa-soft);white-space:nowrap}
+.cl-more{flex:1 1 100%;text-align:center;font-size:12.5px;color:var(--cocoa);margin-top:3px}.cl-more b{color:#8a6a33}
 .cl-item img{max-height:18px;max-width:72px;object-fit:contain;filter:grayscale(1);opacity:.8;transition:filter .3s,opacity .3s}
 .cl-item:hover img{filter:none;opacity:1}
 .clients.mini{background:transparent;border:0;padding:2px 0 1px;margin:2px 0 8px}
@@ -2823,15 +2824,15 @@ $("newBox").onclick=()=>{orderRef="";lateKey="";if(BTYPES){BTYPES=null;btCur=0;c
 // ===================== "בין לקוחותינו" (fixed, all names shown) + downloadable quote (PDF) =====================
 // Organisations that ordered from us. To show a real logo, put the file in img/clients/ and set logo:"img/clients/<file>".
 // Without a logo the name is shown in the site's own font.
-const CLIENTS=[
-  {name:"בנק מזרחי טפחות"},{name:"בנק דיסקונט"},{name:"המשרד להגנת הסביבה"},{name:"כללית"},
-  {name:"פמי פרימיום"},{name:'צה"ל'},{name:"משטרת ישראל"},{name:"עיריית תל אביב-יפו"},
-  {name:"עיריית הרצליה"},{name:"אלביט"},{name:"מדטרוניק"},{name:"כנסת ישראל"},
-  {name:"בנק הפועלים"},{name:"בנק יהב"}];
+const CLIENTS=[   // the 12 shown in the order summary (chosen by Moshe), then "ועוד 606+ ארגונים, ועדים ועסקים"
+  {name:"בנק מזרחי טפחות"},{name:"בנק הפועלים"},{name:"בנק דיסקונט"},{name:'צה"ל'},
+  {name:"כנסת ישראל"},{name:"אלביט"},{name:"פרטנר"},{name:"כללית"},
+  {name:"הראל ביטוח"},{name:"עיריית תל אביב-יפו"},{name:"ישראייר"},{name:"פספורטכארד"}];
 function renderClients(){
   const one=c=>`<span class="cl-item">${c.logo?`<img src="${esc(c.logo)}" alt="${esc(c.name)}" loading="lazy">`:esc(c.name)}</span>`;
   const row=CLIENTS.map(one).join("");
-  document.querySelectorAll(".clients .cl-track").forEach(t=>{t.innerHTML=row;});
+  const more=`<span class="cl-more">ועוד <b>${(+document.getElementById("orgsCount")?.dataset?.to||606).toLocaleString("he-IL")}+</b> ארגונים, ועדים ועסקים</span>`;
+  document.querySelectorAll(".clients .cl-track").forEach(t=>{t.innerHTML=row+more;});
 }
 renderClients();
 
