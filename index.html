@@ -684,7 +684,7 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .mr.sur{position:relative;width:min(580px,96vw);max-height:94vh;overflow:auto}
 .sur-x{position:absolute;top:8px;left:12px;border:0;background:none;font-size:22px;color:#a08670;cursor:pointer;width:auto!important;margin:0!important}
 .sur-snd{position:absolute;top:10px;left:46px;border:0;background:none;font-size:18px;cursor:pointer;width:auto!important;margin:0!important;padding:2px 4px!important}
-.sur-q{margin:8px 0}.sur-q b{display:block;font-size:14px;margin-bottom:6px}.sur-q div{display:flex;flex-wrap:wrap;gap:6px}
+.sur-q{margin:8px 0}.sur-who{margin-top:26px}.sur-q b{display:block;font-size:14px;margin-bottom:6px}.sur-q div{display:flex;flex-wrap:wrap;gap:6px}
 .sur-q button{width:auto!important;margin:0!important;border:1px solid #d9c3a0;background:#fffaf3;color:#4a2f22;border-radius:999px;padding:6px 13px;font:inherit;font-size:14px;cursor:pointer}
 .sur-q button[aria-pressed="true"]{background:linear-gradient(135deg,#3f271c,#6e4d3b 60%,#b08a4f);color:#fffaf3;border-color:transparent}
 .slot{display:flex;direction:ltr;align-items:flex-start;justify-content:center;margin:12px 0 10px}
@@ -2130,7 +2130,7 @@ function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,c
   if(sur.cur.length!==n)sur.cur=Array.from({length:n},()=>pool[(Math.random()*pool.length)|0]).filter(Boolean);
   d.innerHTML=`<div class="mr sur" role="dialog" aria-label="הפתיעו אותי"><button type="button" class="sur-x" data-sa="close" aria-label="סגירה">×</button>
     <button type="button" class="sur-snd" data-sa="mute" aria-label="${surSnd?"השתקת צלילים":"הפעלת צלילים"}">${surSnd?"🔊":"🔇"}</button>
-    <div class="sur-q"><b>למי?</b><div>${pill("sw","emp","עובדים",sur.who==="emp")}${pill("sw","mgr","מנהלים",sur.who==="mgr")}${pill("sw","cli","לקוחות",sur.who==="cli")}</div></div>
+    <div class="sur-q sur-who"><div>${pill("sw","emp","עובדים",sur.who==="emp")}${pill("sw","mgr","מנהלים",sur.who==="mgr")}${pill("sw","cli","לקוחות",sur.who==="cli")}</div></div>
     <div class="sur-q"><b>תקציב למארז</b><div>${[50,99,149,199,249].map(v=>pill("sb",v,"עד ₪"+v,sur.bud===v)).join("")}</div></div>
     <div class="slot" id="surSlot"><div class="slot-cab"><div class="slot-sign vs-wrap">${vegasSVG(300,84,false,"ms")}<span>מכונת המארזים של נויה</span></div>
       <div class="slot-reels" id="surReels">${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip"><div class="cell"><img src="${surImg(p)}" alt=""></div></div></div>
