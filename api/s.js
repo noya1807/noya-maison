@@ -27,8 +27,9 @@ export default async function handler(req, res) {
   const home = `https://${host}/`;
   if (!ok) { res.status(404).setHeader("Content-Type", "text/html; charset=utf-8"); res.end(`<!DOCTYPE html><meta charset="utf-8"><p style="font-family:sans-serif;text-align:center;margin-top:20vh">התמונה לא נמצאה. <a href="${home}">לבניית מארז</a></p>`); return; }
   const page = `https://${host}/s/${boxId}`;
-  const title = approve ? "מארז מתנה לאישורך ✨" : "המארז שבניתי ב-נויה במתנה ✨";
-  const desc = approve ? "הוכן עבורכם מארז מתנה בעיצוב אישי. מאשרים ומזמינים בלחיצה אחת." : "מארז מתנה בעיצוב אישי. בחרו מוצרים, ונויה תעצב לכם מארז משלכם.";
+  const types = Array.isArray(bx?.box?.types) && bx.box.types.length > 1 ? bx.box.types : null;
+  const title = approve ? (types ? "מארזי מתנה לאישורך ✨" : "מארז מתנה לאישורך ✨") : "המארז שבניתי ב-נויה במתנה ✨";
+  const desc = approve ? (types ? `${types.length} סוגי מארזים בהזמנה אחת, בעיצוב אישי. מאשרים ומזמינים בלחיצה אחת.` : "הוכן עבורכם מארז מתנה בעיצוב אישי. מאשרים ומזמינים בלחיצה אחת.") : "מארז מתנה בעיצוב אישי. בחרו מוצרים, ונויה תעצב לכם מארז משלכם.";
   const b = bx?.box || {}, items = Array.isArray(b.items) ? b.items : [];
   const ils = n => "₪" + (+n).toLocaleString("he-IL", { maximumFractionDigits: 2 });
   const per = +b.per || 0, total = per ? Math.round(per * nBoxes * 100) / 100 : 0;
@@ -82,6 +83,11 @@ a{display:block;width:min(480px,100%);box-sizing:border-box;text-align:center;co
 a.alt{background:#fffaf3;color:#4a2f22;border:1px solid #e2d3c0;box-shadow:none;font-size:18px;padding:13px 22px}
 p{margin:0;color:#7a5a48;text-align:center}
 a.ok{background:linear-gradient(135deg,#1f7a4d,#25a85f);font-size:22px}
-p.small{font-size:14px}</style></head>
-<body><h1>${esc(title)}</h1><p>${esc(desc)}</p><img src="${esc(img)}" alt="תמונת מארז מתנה"><div class="btns">${approve ? `${approveBtn}<a class="alt" href="${home}?box=${boxId}">לצפייה ועריכה של המארז</a><p class="small">המחירים לפני מע"מ · המחיר הסופי, משלוח ומיתוג יאושרו מול נציג</p>` : boxId ? `<a href="${home}?box=${boxId}">אני רוצה את המארז הזה ✨</a><a class="alt" href="${home}">עצבו מארז משלכם</a>` : `<a href="${home}">עצבו את המארז שלכם ✨</a>`}</div></body></html>`);
+p.small{font-size:14px}
+.types{width:min(760px,100%);background:#fffaf3;border:1px solid #e2d3c0;border-radius:16px;padding:10px 14px;box-sizing:border-box}.types table{width:100%;border-collapse:collapse;font-size:16px}
+.types th,.types td{text-align:right;padding:7px 5px;border-bottom:1px solid #eee2d2;vertical-align:top}.types th{font-size:13px;color:#7a5a48}.types td small{display:block;color:#8a7563;font-size:12.5px}.types tr.t td{font-weight:700;border-bottom:0}</style></head>
+<body><h1>${esc(title)}</h1><p>${esc(desc)}</p><img src="${esc(img)}" alt="תמונת מארז מתנה">${types && approve ? (() => { const ilsT = n => "₪" + (+n).toLocaleString("he-IL", { maximumFractionDigits: 2 }); let sum = 0, nb = 0;
+  const rows = types.map(t => { const n = Math.max(1, Math.round(+t.boxes || 1)), p = +t.per || 0; sum += p * n; nb += n;
+    return `<tr><td><b>${esc(t.name || "מארז")}</b><small>${esc((t.items || []).map(([id, q]) => (t.names?.[id] || id) + (q > 1 ? " × " + q : "")).join(" · "))}</small></td><td>${n}</td><td>${p ? esc(ilsT(p)) : "—"}</td></tr>`; }).join("");
+  return `<div class="types"><table><tr><th>מארז</th><th>כמות</th><th>למארז</th></tr>${rows}<tr class="t"><td>סה״כ</td><td>${nb}</td><td>${sum ? esc(ilsT(Math.round(sum * 100) / 100)) : ""}</td></tr></table></div>`; })() : ""}<div class="btns">${approve ? `${approveBtn}<a class="alt" href="${home}?box=${boxId}">לצפייה ועריכה של המארז</a><p class="small">המחירים לפני מע"מ · המחיר הסופי, משלוח ומיתוג יאושרו מול נציג</p>` : boxId ? `<a href="${home}?box=${boxId}">אני רוצה את המארז הזה ✨</a><a class="alt" href="${home}">עצבו מארז משלכם</a>` : `<a href="${home}">עצבו את המארז שלכם ✨</a>`}</div></body></html>`);
 }

@@ -7,7 +7,7 @@ import { put, head } from "@vercel/blob";
 
 const txt = v => String(v || "").replace(/[<>\u0000-\u001f]/g, "").slice(0, 120);
 const num = v => { const n = Math.round((+v || 0) * 100) / 100; return n > 0 && n < 1e6 ? n : 0; };
-const cleanBox = b => {
+const cleanBox = (b, nested) => {
   if (!b || typeof b !== "object") return null;
   const items = (Array.isArray(b.items) ? b.items : []).slice(0, 40)
     .filter(x => Array.isArray(x) && /^[a-z0-9]{1,24}$/i.test(String(x[0])))
@@ -18,7 +18,9 @@ const cleanBox = b => {
     mode: b.mode === "spread" || b.mode === "order" ? b.mode : "consult", boxes: Math.max(1, Math.min(100000, Math.round(+b.boxes || 1))),
     // names and prices as shown when the box was shared, for the order card Noya opens after an approval
     names: Object.fromEntries(items.map(([id]) => [id, txt(b.names?.[id])])), prices: Object.fromEntries(items.map(([id]) => [id, num(b.prices?.[id])])),
-    packName: txt(b.packName), per: num(b.per) };
+    packName: txt(b.packName), per: num(b.per),
+    // a multi-type order (עובדים / הנהלה / לקוחות): every box type, so the approver approves the whole order
+    ...(!nested && Array.isArray(b.types) && b.types.length > 1 ? { types: b.types.slice(0, 6).map(t => { const c = cleanBox(t, true); return c ? { name: txt(t.name).slice(0, 18), ...c } : null; }).filter(Boolean) } : {}) };
 };
 
 const DAILY_LIMIT = +(process.env.SHARE_DAILY_LIMIT || 500);

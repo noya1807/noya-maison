@@ -934,6 +934,29 @@ h1.brand{margin:0;line-height:1.2}
 .ar-uniq{text-align:center;font-family:'Frank Ruhl Libre',serif;font-size:17px;color:#8a6a33;margin:2px 0 10px}
 @media (max-width:640px){.combos{font-size:13px;padding:0 10px}.ar-uniq{font-size:15px}}
 .eng-k{color:#8a6a33;font-weight:600}
+.mode-pick{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:2px 0 6px}
+.mode-pick .mp-q{font-weight:700;color:#4a2f22;font-size:14.5px}
+.mode-pick button{border:1px solid #d9c3a0;background:#fffaf3;color:#4a2f22;border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.mode-pick button[aria-pressed="true"]{background:linear-gradient(135deg,#3f271c,#6e4d3b 60%,#b08a4f);color:#fffaf3;border-color:transparent}
+.resume{flex:1 1 100%;text-align:center;margin:0 0 6px;font-size:13.5px;color:#2e6b45}.resume button{border:0;background:none;color:#8a6a33;text-decoration:underline;cursor:pointer;font:inherit}
+.box-tabs{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;justify-content:center;margin:4px 0 8px;position:sticky;top:0;z-index:30;background:rgba(247,239,228,.96);padding:6px 4px;border-radius:14px;backdrop-filter:blur(4px)}
+.bt{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:110px;padding:7px 28px 7px 12px;border:1px solid #e2d3c0;border-radius:12px;background:#fffaf3;cursor:pointer;font-size:14px;color:#4a2f22}
+.bt.on{border:2px solid #b08a4f;box-shadow:0 4px 14px rgba(176,138,79,.25);background:#fff}
+.bt small{color:#8a6d55;font-size:12px}.bt b{font-weight:700}
+.bt-name{border:0;border-bottom:1px dashed #cfab6c;background:transparent;font:inherit;font-weight:700;width:100px;padding:0;color:#3f271c}
+.bt-x{position:absolute;top:3px;left:5px;border:0;background:none;color:#a08670;font-size:16px;cursor:pointer;line-height:1}
+.bt.add{justify-content:center;align-items:center;padding:7px 14px;border-style:dashed;color:#8a6a33;font-weight:700;font-family:inherit}
+.bt-tot{align-self:center;font-size:13px;color:#6e4d3b;font-weight:600}
+.bt-next{margin:6px 0}
+.save-box{display:block;width:100%;margin:8px 0 0;border:1px dashed #cfab6c;background:#fffaf0;color:#6e4d3b;border-radius:12px;padding:9px 12px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer}
+.save-box small{font-weight:400;color:#8a6d55}
+.multi-card table.mt{width:100%;border-collapse:collapse;font-size:14px}.mt th,.mt td{padding:6px 4px;border-bottom:1px solid #eee2d2;text-align:right;vertical-align:middle}
+.mt th{font-size:12.5px;color:#7a5a48}.mt tr.on td{background:#fff8ea}.mt tfoot td{font-weight:700;border-bottom:0}
+.mt-n{display:flex;align-items:center;gap:6px;border:0;background:none;cursor:pointer;font:inherit;text-align:right;padding:0;color:inherit}
+.mt-n img{width:42px;height:42px;object-fit:cover;border-radius:8px}.mt-n small{display:block;color:#8a6d55;font-size:11.5px}
+.mt .stepper{display:inline-flex;align-items:center}.mt .stepper input{width:54px;text-align:center}
+#addSetSum{margin-top:8px}
+@media (max-width:640px){.bt{min-width:92px;font-size:13px}.mode-pick button{font-size:13px;padding:6px 11px}.mt{font-size:13px}}
 .brand-tag{font-size:12.5px;color:#8a6a33;font-weight:600;padding:0 10px;margin:2px 0}
 .brand-opt{display:flex;align-items:center;gap:6px;margin:6px 8px 8px;padding:6px 9px;border:1px dashed #cfab6c;border-radius:10px;background:#fffaf0;font-size:13px;cursor:pointer;line-height:1.3}
 .brand-opt input{accent-color:#b08a4f;width:16px;height:16px;flex:none}
@@ -950,6 +973,9 @@ h1.brand{margin:0;line-height:1.2}
 
 <div class="intro" id="intro">
   <p class="combos" id="combos" aria-live="off"></p>
+  <p class="resume" id="resumeNote" hidden></p>
+  <div class="mode-pick" id="modePick" role="group" aria-label="למי המארזים"><span class="mp-q">למי המארזים?</span><button type="button" data-mode="one" aria-pressed="true">🎁 מארז אחד לכולם</button><button type="button" data-mode="multi" aria-pressed="false">🎁🎁 כמה רמות: עובדים · הנהלה · לקוחות</button></div>
+  <div class="box-tabs" id="boxTabs" hidden></div>
   <div class="howto" id="howto"><span data-st="1" role="button" tabindex="0"><i>1</i> בוחרים מוצרים</span><span class="arr">←</span><span data-st="2" role="button" tabindex="0"><i>2</i> בוחרים אריזה</span><span class="arr">←</span><span data-st="3" role="button" tabindex="0"><i>3</i> חושפים ✨</span></div>
 </div>
 <div class="layout" id="buildView">
@@ -1000,6 +1026,7 @@ h1.brand{margin:0;line-height:1.2}
       <div class="list" id="list"></div>
       <div class="totals" id="totals"></div>
       <div class="actions"><button class="go" id="go">המשך לסיכום ←</button></div>
+      <button type="button" class="save-box" data-save>💾 שמרו לי את המארז <small>וחזרו אליו מכל מכשיר</small></button>
       <p class="note">המחירים לפני מע"מ. המחיר הסופי יאושר מול נציג.</p>
     </div>
   </section>
@@ -1011,12 +1038,18 @@ h1.brand{margin:0;line-height:1.2}
     <button class="back" id="backBtn">→ חזרה לעריכת המארז</button>
     <div class="sum-img"><img id="sumImg" alt="תמונת המארז שבניתם"></div>
     <button class="wa-share wide" id="sumShare"><svg class="wa-ico" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg>שתפו לאישור בוואטסאפ</button>
-    <h2>המארז שלכם</h2>
+    <button type="button" class="save-box" data-save>💾 שמרו לי את המארז <small>וחזרו אליו מכל מכשיר</small></button>
+    <h2 id="sumH">המארז שלכם</h2>
     <div class="sum-lines" id="sumLines"></div>
   </section>
   <section class="sum-side">
+    <div class="card2 multi-card" id="multiCard" hidden>
+      <h3>🎁🎁 סוגי המארזים בהזמנה</h3>
+      <div id="multiRows"></div>
+      <button type="button" class="ghost small" id="addSetSum">＋ הוספת סוג מארז נוסף</button>
+    </div>
     <div class="card2">
-      <h3>כמה מארזים תרצו?</h3>
+      <h3 id="qtyH">כמה מארזים תרצו?</h3>
       <div class="qty-row">
         <div class="stepper big"><button id="qInc" aria-label="מארז נוסף">+</button><input id="qBoxes" type="number" min="1" value="1" inputmode="numeric" aria-label="מספר מארזים"><button id="qDec" aria-label="מארז אחד פחות">−</button></div>
         <div class="per">מחיר למארז<br><b id="perBox"></b></div>
@@ -1172,6 +1205,27 @@ h1.brand{margin:0;line-height:1.2}
     <label>תיאור קצר<input id="addDesc"></label>
     <p class="err" id="addErr" hidden></p>
     <div class="send"><button class="ghost" id="addCancel">ביטול</button><button class="go" id="addOk">הוספה לקטלוג</button></div>
+  </div>
+</div>
+<div class="modal" id="leadModal" hidden role="dialog" aria-modal="true" aria-labelledby="leadH">
+  <div class="modal-in narrow">
+    <div id="leadForm">
+      <h3 id="leadH">💾 שמרו לי את המארז</h3>
+      <p class="note" style="margin:4px 0 8px">נשמור את המארז ותקבלו קישור אליו, כדי לחזור אליו מכל מכשיר או להעביר למנהל.</p>
+      <label>שם *<input id="lName" autocomplete="name"></label>
+      <label>טלפון *<input id="lPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="050-0000000"></label>
+      <label><span>ארגון <span class="opt">(לא חובה)</span></span><input id="lOrg" autocomplete="organization"></label>
+      <p class="err" id="leadErr" hidden></p>
+      <div class="send" style="margin-top:6px"><button type="button" class="ghost" id="leadCancel">ביטול</button><button type="button" class="go" id="leadSave">שמרו לי את המארז</button></div>
+      <p class="note" style="margin-top:8px">נציג של נויה במתנה עשוי לחזור אליכם כדי לעזור. לא נשלח הודעות אוטומטיות.</p>
+    </div>
+    <div id="leadDone" hidden>
+      <h3>✓ המארז נשמר</h3>
+      <p class="note" style="margin:4px 0 8px">זה הקישור למארז שלכם. אפשר לשמור אותו או לשלוח לעצמכם:</p>
+      <input id="leadUrl" readonly dir="ltr" style="width:100%" onclick="this.select()">
+      <div class="qm-send" style="margin-top:10px"><a class="wa" id="leadWa" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">שליחה לעצמי בוואטסאפ</a><button type="button" class="ghost" id="leadCopy">העתקת הקישור</button></div>
+      <button type="button" class="ghost small" id="leadClose" style="margin-top:10px">סגירה</button>
+    </div>
   </div>
 </div>
 <div class="modal" id="quoteModal" hidden role="dialog" aria-modal="true" aria-labelledby="qmH">
@@ -1331,6 +1385,9 @@ function renderBudget(){
   document.getElementById("budFill").style.width=Math.min(100,used/budget*100)+"%";
   document.getElementById("budTxt").textContent=left>=0?`במארז ${ils(used)} · נשארו ${ils(Math.round(left*100)/100)}`:`חריגה של ${ils(Math.round(-left*100)/100)} מהתקציב`;
 }
+// multi box types in one order (עובדים / הנהלה / לקוחות…). BTYPES=null → one box, exactly as before.
+// The active type always lives in the usual globals (cart, pack, boxes…); the others wait in BTYPES.
+let BTYPES=null, btCur=0;
 let engSel=new Set(), engFiles=[];   // logo branding picks (engraving / sleeve) – chosen on the card or at the summary
 function brandCost(){let c=0;for(const id of engSel)c+=(+byId[id]?.engravePrice||0)*(cart.get(id)||0);return c;}
 const brandKindOf=p=>p&&p.brandKind==="sleeve"?"חבק":"חריטה";
@@ -1755,6 +1812,8 @@ function update(flash){
   layout();
   onCartChanged();
   try{renderShow();}catch(e){}
+  if(BTYPES)renderBT();
+  saveDraft();
 }
 
 // ---- Inspiration boxes & styling tip ----
@@ -2117,6 +2176,7 @@ function renderAiBar(){
       +(editing?`<div class="reveal-more"><button class="ghost small" id="aiView">🖼 הצג את המארז המעוצב</button>${reset}</div>`:"");
   } else {
     b.innerHTML=`<div class="after-reveal"><div class="ar-uniq">אחד מתוך ${combosInfo().txt} שילובים – המארז הזה נבנה רק בשבילכם ✨</div><div class="ar-row"><button class="wa-share" id="aiShare"><svg class="wa-ico" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg>שתפו לאישור בוואטסאפ</button><button class="ai-go" id="aiDl">⬇ הורדת המארז + פרטים</button>${reset}</div>
+      ${BTYPES?(()=>{const nx=BTYPES.findIndex((t,i)=>i!==btCur&&!(t.cart.size));return `<button class="ghost bt-next" id="aiNextType">${nx>=0?`הבא: בניית מארז ${esc(BTYPES[nx].name)} ←`:"＋ סוג מארז נוסף"}</button>`;})():""}
       <button class="reveal-btn order-btn" id="aiOrder">המשך להזמנה ←</button><span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
   }
   if(isOwner&&revealed&&!aiBusy&&!(editing&&aiStale)&&!aiImg.hidden)b.insertAdjacentHTML("beforeend",`<div class="reveal-more"><button class="ghost small" id="aiShow">⭐ הוספה לחלון הראווה (רק אתה רואה את הכפתור)</button></div>`);
@@ -2124,6 +2184,7 @@ function renderAiBar(){
   q("aiGo")&&(q("aiGo").onclick=()=>{const r=scene.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)scene.scrollIntoView({behavior:"smooth",block:"center"});generateAi(false);});
   q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
   q("aiOrder")&&(q("aiOrder").onclick=()=>openSummary());
+  q("aiNextType")&&(q("aiNextType").onclick=()=>{const nx=BTYPES.findIndex((t,i)=>i!==btCur&&!t.cart.size);if(nx>=0){btSwitch(nx);$("boxTabs").scrollIntoView({behavior:"smooth",block:"start"});showToast(`עכשיו בונים את מארז ${BTYPES[nx].name} ✨`);}else btAdd(true);});
   document.body.classList.toggle("revealed",!!q("aiOrder"));
   q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);generateAi(true);});
   q("aiDl")&&(q("aiDl").onclick=async()=>{const b=q("aiDl");if(b.disabled)return;b.disabled=true;const was=b.textContent;b.textContent="מכין את התמונה…";
@@ -2158,13 +2219,19 @@ function toPngBlob(src){return new Promise((ok,no)=>{const im=new Image();im.cro
   c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);const x=c.getContext("2d");x.fillStyle="#f7efe4";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
   c.toBlob(b=>b?ok(b):no(new Error("png")),"image/png");};im.onerror=no;im.src=src;});}
 function shareText(){const t=totals();
+  if(BTYPES&&btFilled().length>1){btSnap();const f=btFilled();return `מארזי מתנה לאישורך ✨ (נויה במתנה)\n${f.length} סוגי מארזים בהזמנה אחת:\n\n${f.map(i=>withBT(i,()=>`🎁 ${BTYPES[i].name} – ${boxes} מארזים${unpriced()?"":` × ${ils(orderPer())}`}\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}`)).join("\n\n")}\n\nסה״כ: ${totalBoxes()} מארזים${unpriced()?"":` · ${ils(orderGoods())} (לפני מע״מ)`}`;}
   const per=orderPer(),many=boxes>1;
   return `מארז מתנה לאישורך ✨ (נויה במתנה)\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${unpriced()?"בהצעת מחיר":ils(per)+" (לפני מע״מ)"}${many?`\nכמות: ${boxes} מארזים${unpriced()?"":` · סה״כ: ${ils(r2(per*boxes))} (לפני מע״מ)`}`:""}`;}
 let sharing=false, shareReady=null; // shareReady: a prepared phone share, so a second tap can share instantly
 const ctaLine=()=>shareMode==="spread"?"עצבו את המארז שלכם ✨":"לצפייה במארז ולאישור:";
-async function shareLink(jpg,modeOverride){ // page with the designed image and one button to start designing; falls back to the site itself
+// the box "recipe" saved next to a shared picture (all box types in multi mode, so the approver gets the whole order)
+function boxPayload(mode){const one=()=>({items:[...cart],pack:pack.id,boxes,names:Object.fromEntries([...cart.keys()].map(id=>[id,byId[id].name])),prices:Object.fromEntries([...cart.keys()].map(id=>[id,+byId[id].price||0])),packName:pack.none?"ללא":pack.name,per:unpriced()?0:r2(orderPer())});
+  const b={...one(),bg:bg.id,variant,mode};
+  if(BTYPES&&mode!=="order"){btSnap();const f=btFilled();if(f.length>1)b.types=f.map(i=>withBT(i,()=>({name:BTYPES[i].name,...one()})));}
+  return b;}
+async function shareLink(jpg,modeOverride,box){ // page with the designed image and one button to start designing; falls back to the site itself
   if(!shareAvailable)return location.origin+"/";
-  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:{items:[...cart],pack:pack.id,bg:bg.id,variant,mode:modeOverride||shareMode,boxes,names:Object.fromEntries([...cart.keys()].map(id=>[id,byId[id].name])),prices:Object.fromEntries([...cart.keys()].map(id=>[id,+byId[id].price||0])),packName:pack.none?"ללא":pack.name,per:unpriced()?0:r2(orderPer())}})});
+  const r=await fetch(SHARE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:jpg,box:box||boxPayload(modeOverride||shareMode)})});
   const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw new Error(j.error||r.status);return j.url;}
 let shareMode="consult";
 function spreadText(){return "עיצבתי מארז מתנה ב-נויה במתנה ✨\nבוחרים מוצרים, רואים את המארז מיד ומקבלים הצעת מחיר. שווה להציץ 🎁";}
@@ -2203,11 +2270,12 @@ const CARD_PHONE="054-3219070", CARD_MAIL="moshe@noyaglobal.com";
 function loadQR(){return window.qrcode?Promise.resolve(window.qrcode):new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="js/qrcode.js";sc.onload=()=>ok(window.qrcode);sc.onerror=no;document.head.appendChild(sc);});}
 function loadImg(src){return new Promise((ok,no)=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>ok(im);im.onerror=no;im.src=src;});}
 async function boxCard(src,order){
+  const snap={items:[...cart].map(([id,q])=>byId[id]?(byId[id].name+(q>1?` × ${q}`:"")):null).filter(Boolean),pack,total:totals().total};   // taken now: the box may change while images load
   await (document.fonts&&document.fonts.ready);
   const [im,logo,qr]=await Promise.all([loadImg(src),loadImg("img/icon-192.png").catch(()=>null),loadQR().catch(()=>null)]);
   const W=1200,P=64,iw=W,ih=Math.round(im.naturalHeight*W/im.naturalWidth);
   const DF='"Frank Ruhl Libre","David Libre",Georgia,serif', BF='"Assistant","Segoe UI",Arial,sans-serif';
-  const items=[...cart].map(([id,q])=>byId[id]?(byId[id].name+(q>1?` × ${q}`:"")):null).filter(Boolean);
+  const items=snap.items,pack=snap.pack;
   const c=document.createElement("canvas"),x=c.getContext("2d");
   // wrap long product names
   x.font=`500 30px ${BF}`;const maxW=W-2*P-40;const lines=[];
@@ -2224,7 +2292,7 @@ async function boxCard(src,order){
   // brand line
   if(logo){x.save();x.beginPath();x.arc(W-P-36,y+36,36,0,Math.PI*2);x.clip();x.drawImage(logo,W-P-72,y,72,72);x.restore();}
   x.textAlign="right";x.textBaseline="middle";x.fillStyle="#3f271c";x.font=`700 46px ${DF}`;x.fillText("נויה במתנה",W-P-(logo?92:0),y+28);
-  x.font=`400 24px ${BF}`;x.fillStyle="#8a6d55";x.fillText(order?"כרטיס הזמנה":"המארז שעיצבתי ✨",W-P-(logo?92:0),y+70);
+  x.font=`400 24px ${BF}`;x.fillStyle="#8a6d55";x.fillText(order?("כרטיס הזמנה"+(order.setName?` · מארז ${order.setName}`:"")):"המארז שעיצבתי ✨",W-P-(logo?92:0),y+70);
   y+=head;
   // items
   x.font=`500 30px ${BF}`;x.fillStyle="#3f271c";
@@ -2232,7 +2300,7 @@ async function boxCard(src,order){
   if(!pack.none){x.font=`400 27px ${BF}`;x.fillStyle="#6e4d3b";x.fillText("אריזה: "+pack.name,W-P,y+LH/2+6);y+=packH;}
   // price
   y+=22;x.fillStyle="rgba(176,138,79,.35)";x.fillRect(P,y,W-2*P,2);y+=24;
-  const t=totals();x.fillStyle="#3f271c";x.font=`700 54px ${DF}`;x.textAlign="right";const pr=order?(order.per?ils(order.per):"בהצעת מחיר"):ils(t.total);x.fillText(pr,W-P,y+30);
+  const t={total:snap.total};x.fillStyle="#3f271c";x.font=`700 54px ${DF}`;x.textAlign="right";const pr=order?(order.per?ils(order.per):"בהצעת מחיר"):ils(t.total);x.fillText(pr,W-P,y+30);
   const pw=x.measureText(pr).width;x.font=`600 26px ${BF}`;x.fillStyle="#8a6d55";x.fillText("למארז · לא כולל מע״מ",W-P-pw-18,y+34);
   y+=priceH-24;
   if(order){ // order details: organisation, quantity, delivery, total
@@ -2256,6 +2324,87 @@ async function boxCard(src,order){
 // Set these for the business. orderEmail empty = email button asks the customer to use WhatsApp or copy.
 let boxes=1, orderText="", lastSend=null, orderRef="", lateKey="";   // one order number per box: sending again updates the same order
 const $=id=>document.getElementById(id);
+// ===================== Multi box types (עובדים · הנהלה · לקוחות) =====================
+const BT_NAMES=["עובדים","הנהלה","לקוחות","VIP","שותפים","מארז 6"];
+function btNew(name){return {name,cart:new Map(),pack:NO_PACK,manual:new Map(),boxes:1,engSel:new Set(),cardOn:false,cardSelf:false,budget:0,revealed:false,revealedKey:null,aiCurrent:null,img:"",cardUrl:""};}
+function btSnap(){if(!BTYPES)return null;const t=BTYPES[btCur];Object.assign(t,{cart,pack,manual,boxes,engSel,cardOn,cardSelf,budget,revealed,revealedKey,aiCurrent});return t;}
+function btUse(t){cart=t.cart;pack=t.pack;manual=t.manual;boxes=t.boxes;engSel=t.engSel;cardOn=t.cardOn;cardSelf=t.cardSelf;}
+// run fn as if box type i were the active one (no drawing), then put everything back
+function withBT(i,fn){if(!BTYPES||i===btCur)return fn();btSnap();const keep={cart,pack,manual,boxes,engSel,cardOn,cardSelf};btUse(BTYPES[i]);try{return fn();}finally{btUse(keep);}}
+const btFilled=()=>BTYPES?BTYPES.map((t,i)=>i).filter(i=>(i===btCur?cart:BTYPES[i].cart).size>0):[];
+function totalBoxes(){if(!BTYPES)return boxes;btSnap();const f=btFilled();return f.length?f.reduce((n,i)=>n+BTYPES[i].boxes,0):boxes;}
+function orderGoods(){if(!BTYPES)return r2(orderPer()*boxes);btSnap();return r2(btFilled().reduce((n,i)=>n+withBT(i,()=>orderPer()*boxes),0));}
+const anyNeedLogo=()=>BTYPES?btFilled().some(i=>withBT(i,needLogo)):needLogo();
+function btLeave(){const t=btSnap();if(t)t.img=cart.size?boxImage():"";}
+function btEnter(i){btCur=i;const t=BTYPES[i];btUse(t);budget=+t.budget||0;try{$("budIn").value=budget||"";}catch(e){}
+  editing=false;aiStale=false;
+  if(t.revealed&&t.revealedKey===contentKey()){revealed=true;revealedKey=t.revealedKey;aiCurrent=t.aiCurrent;showAi(aiCurrent&&aiCache.get(aiCurrent)||null);}
+  else{revealed=false;revealedKey=null;aiCurrent=null;showAi(null);}
+  renderPacks();update(false);requestAnimationFrame(()=>recompose(false));setVeil();renderAiBar();renderBT();saveDraft();}
+function btSwitch(i){if(!BTYPES||i===btCur||!BTYPES[i])return;btLeave();btEnter(i);}
+function btNextName(){const used=new Set(BTYPES.map(t=>t.name));return BT_NAMES.find(n=>!used.has(n))||("מארז "+(BTYPES.length+1));}
+function btAdd(go){if(!BTYPES)btEnable(false);if(BTYPES.length>=6){showToast("אפשר עד 6 סוגי מארזים בהזמנה אחת");return;}
+  btLeave();BTYPES.push(btNew(btNextName()));btEnter(BTYPES.length-1);
+  showToast(`נפתח מארז חדש: ${BTYPES[btCur].name}. בחרו לו מוצרים ✨`);
+  if(go!==false){showView("build");setTimeout(()=>$("boxTabs").scrollIntoView({behavior:"smooth",block:"start"}),60);}}
+function btEnable(withSecond){if(BTYPES)return;BTYPES=[btNew("עובדים")];btCur=0;btSnap();if(withSecond)BTYPES.push(btNew("הנהלה"));renderBT();renderModePick();saveDraft();}
+function btDisable(){if(!BTYPES)return true;btSnap();const others=btFilled().filter(i=>i!==btCur);
+  if(others.length){showToast("יש בהזמנה כמה סוגי מארזים. כדי לחזור למארז אחד, הסירו קודם את הלשוניות הנוספות (×)");return false;}
+  BTYPES=null;btCur=0;renderBT();renderModePick();saveDraft();return true;}
+function btRemove(i){if(!BTYPES)return;const t=BTYPES[i];if(BTYPES.length<=1){btDisable();return;}
+  if(i===btCur){BTYPES.splice(i,1);btCur=-1;btEnter(Math.max(0,i-1));}else{btSnap();BTYPES.splice(i,1);if(i<btCur)btCur--;renderBT();saveDraft();}
+  showToast(`הלשונית "${t.name}" הוסרה`);if(BTYPES.length===1){BTYPES=null;btCur=0;renderBT();renderModePick();saveDraft();}}
+function renderModePick(){document.querySelectorAll("#modePick [data-mode]").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.mode==="multi")===!!BTYPES)));}
+function renderBT(){const el=$("boxTabs");if(!el)return;if(!BTYPES){el.hidden=true;el.innerHTML="";renderSetsHint();return;}btSnap();el.hidden=false;
+  el.innerHTML=BTYPES.map((t,i)=>{const on=i===btCur,n=t.cart.size,per=n?withBT(i,()=>unpriced()?0:orderPer()):0;
+    return `<div class="bt${on?" on":""}" data-bt="${i}" role="tab" aria-selected="${on}" tabindex="0">${on?`<input class="bt-name" value="${esc(t.name)}" maxlength="18" aria-label="שם סוג המארז">`:`<b>${esc(t.name)}</b>`}
+      <small>${n?`${per?ils(per)+" · ":""}${t.boxes} יח׳`:"עוד ריק"}</small>${BTYPES.length>1?`<button type="button" class="bt-x" data-btx="${i}" aria-label="הסרת ${esc(t.name)}">×</button>`:""}</div>`;}).join("")
+    +(BTYPES.length<6?`<button type="button" class="bt add" data-btadd>＋ סוג מארז נוסף</button>`:"")
+    +`<span class="bt-tot">${btFilled().length} סוגים · ${totalBoxes()} מארזים${unpriced()?"":` · ${ils(orderGoods())}`}</span>`;
+  renderSetsHint();}
+function renderSetsHint(){const h=document.querySelector("#sets .sets-h small");if(h)h.textContent=BTYPES?`בחרו מארז השראה לכל קהל · עכשיו ממלאים: ${BTYPES[btCur].name}`:"לחצו על מארז, ושנו אותו כרצונכם";}
+$("boxTabs").addEventListener("click",e=>{const x=e.target.closest("[data-btx]");if(x){e.stopPropagation();btRemove(+x.dataset.btx);return;}
+  if(e.target.closest("[data-btadd]")){btAdd(false);return;}if(e.target.closest(".bt-name"))return;const t=e.target.closest("[data-bt]");if(t)btSwitch(+t.dataset.bt);});
+$("boxTabs").addEventListener("keydown",e=>{const t=e.target.closest("[data-bt]");if(t&&!e.target.closest(".bt-name")&&(e.key==="Enter"||e.key===" ")){e.preventDefault();btSwitch(+t.dataset.bt);}});
+$("boxTabs").addEventListener("input",e=>{const n=e.target.closest(".bt-name");if(!n||!BTYPES)return;BTYPES[btCur].name=n.value.trim()||("מארז "+(btCur+1));renderSetsHint();saveDraft();});
+$("modePick").addEventListener("click",e=>{const b=e.target.closest("[data-mode]");if(!b)return;
+  if(b.dataset.mode==="multi"){if(!BTYPES){btEnable(true);showToast("מעולה! בונים קודם את מארז העובדים, ואז עוברים ללשונית הנהלה ✨");}}
+  else btDisable();});
+// ---- autosave: the box (or all box types) waits in this browser until the customer comes back ----
+var draftT=null;
+function draftData(){const one=()=>({items:[...cart],pack:pack.id,boxes,eng:[...engSel],cardOn});
+  if(BTYPES){btSnap();return {v:1,at:Date.now(),cur:btCur,types:BTYPES.map((t,i)=>withBT(i,()=>({name:t.name,budget:+t.budget||0,...one()})))};}
+  return {v:1,at:Date.now(),one:one()};}
+function saveDraft(){clearTimeout(draftT);draftT=setTimeout(()=>{try{const d=draftData();const empty=d.one?!d.one.items.length:!d.types.some(t=>t.items.length);
+  if(empty&&!d.types)localStorage.removeItem("noya_draft");else localStorage.setItem("noya_draft",JSON.stringify(d));}catch(e){}},400);}
+function restoreDraft(){let d=null;try{d=JSON.parse(localStorage.getItem("noya_draft")||"null");}catch(e){}
+  if(!d||d.v!==1||Date.now()-(+d.at||0)>45*864e5)return false;
+  const fix=o=>{const items=(o.items||[]).filter(([id,q])=>byId[id]&&!byId[id].hidden&&+q>0);const t=btNew(o.name||"");t.cart=new Map(items.map(([id,q])=>[id,Math.min(99,+q)]));
+    t.pack=o.pack&&o.pack!=="none"?(PACKS.find(k=>k.id===o.pack&&!k.hidden)||NO_PACK):NO_PACK;t.boxes=Math.max(1,Math.min(100000,+o.boxes||1));t.engSel=new Set((o.eng||[]).filter(id=>t.cart.has(id)&&byId[id].engrave));t.cardOn=!!o.cardOn;t.budget=+o.budget||0;return t;};
+  if(d.types&&d.types.length>1){const ts=d.types.map(fix);if(!ts.some(t=>t.cart.size))return false;BTYPES=ts;btCur=Math.min(ts.length-1,Math.max(0,+d.cur||0));btEnter(btCur);renderModePick();}
+  else{const t=fix(d.one||(d.types||[])[0]||{});if(!t.cart.size)return false;btUse(t);renderPacks();update(false);}
+  const n=$("resumeNote");n.hidden=false;n.innerHTML=`✓ המשכנו מהמקום שעצרתם${BTYPES?` (${BTYPES.length} סוגי מארזים)`:""} · <button type="button" id="resumeNew">התחלה מחדש</button>`;
+  $("resumeNew").onclick=()=>{BTYPES=null;btCur=0;cart=new Map();manual=new Map();pack=NO_PACK;boxes=1;engSel=new Set();cardOn=false;revealed=false;showAi(null);renderPacks();update(true);renderBT();renderModePick();n.hidden=true;try{localStorage.removeItem("noya_draft");}catch(e){}};
+  return true;}
+// ---- "save my box": a link back to the box(es) + a warm lead in the back office (nothing is sent automatically) ----
+function openLead(){if(!cart.size&&!(BTYPES&&btFilled().length)){showToast("הוסיפו קודם מוצר אחד לפחות");return;}
+  ["lName","lPhone","lOrg"].forEach((id,k)=>{const f=["fName","fPhone","fOrg"][k];if(!$(id).value&&$(f).value)$(id).value=$(f).value;});
+  $("leadForm").hidden=false;$("leadDone").hidden=true;$("leadErr").hidden=true;$("leadModal").hidden=false;setTimeout(()=>$("lName").focus(),50);}
+function closeLead(){$("leadModal").hidden=true;}
+async function saveLead(){const nm=$("lName").value.trim(),ph=$("lPhone").value.trim(),org=$("lOrg").value.trim();
+  if(!nm||!/^(\+?972|0)\d{8,9}$/.test(ph.replace(/[^\d+]/g,""))){$("leadErr").hidden=false;$("leadErr").textContent="נא למלא שם ומספר טלפון תקין";return;}
+  const b=$("leadSave");b.disabled=true;b.textContent="שומר…";
+  try{let url=location.origin+"/";
+    try{const jpg=await toJpeg(boxImage(),1280,.82);url=await shareLink(jpg,"consult");}catch(e){}
+    const d=new Date(),ref="NOYA-L"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
+    const lines=BTYPES?btFilled().map(i=>withBT(i,()=>`🎁 ${BTYPES[i].name}: ${boxes} מארזים × ${unpriced()?"בהצעת מחיר":ils(orderPer())}\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}`)).join("\n\n")
+      :`${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${unpriced()?"בהצעת מחיר":ils(orderPer())}`;
+    const text=`💾 לקוח שמר מארז בבונה (${ref})\nשם: ${nm}\nטלפון: ${ph}${org?`\nארגון: ${org}`:""}\n\n${lines}\n\nקישור למארז: ${url}`;
+    fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({...orderPayload(ref,"lead"),kind:"lead",customer:{name:nm,phone:ph,org},link:url,text})}).catch(()=>{});
+    $("leadUrl").value=url;$("leadWa").href="https://wa.me/?text="+encodeURIComponent(`המארז שלי מנויה במתנה 🎁\n${url}`);
+    $("leadForm").hidden=true;$("leadDone").hidden=false;saveDraft();
+  }finally{b.disabled=false;b.textContent="שמרו לי את המארז";}}
+
 function setStep(n){[...$("steps").children].forEach((s,i)=>s.classList.toggle("on",i===n));}
 function showView(v){
   $("buildView").hidden=v!=="build";$("intro").hidden=v!=="build";$("sumView").hidden=v!=="sum";$("doneView").hidden=v!=="done";$("admView").hidden=v!=="admin";
@@ -2265,7 +2414,9 @@ function showView(v){
 }
 function boxImage(){return (!aiImg.hidden&&aiImg.src)?aiImg.src:cv.toDataURL("image/jpeg",.9);}
 function openSummary(){
+  if(BTYPES&&!cart.size){const f=btFilled();if(f.length){btSwitch(f[0]);}}
   if(!cart.size){showToast("הוסיפו לפחות מוצר אחד למארז");return;}
+  if(BTYPES)btLeave();
   $("sumImg").src=boxImage();
   renderEng();renderSumLines();syncDlv();
   boxes=Math.max(1,boxes);renderQty();showView("sum");
@@ -2279,7 +2430,7 @@ function dlvDetail(){const v=id=>($(id).value||"").trim();if(!dlvPicked())return
   if(m==="ship"){const a=[v("fStreet"),v("fCity")].filter(Boolean).join(", ");const who=$("rcvSame").checked?[v("fName"),v("fPhone")]:[v("fRcvName"),v("fRcvPhone")];
     return `לכתובת אחת${a?": "+a:""}${who.filter(Boolean).length?` · מקבל: ${who.filter(Boolean).join(" ")}`:""}`;}
   const c=addrFiles.find(x=>x.url)?.count;return `${m==="vip"?"VIP ":""}לכל מקבל · ${c?c+" כתובות בקובץ":"קובץ כתובות יישלח"}`;}
-const orderInfo=()=>({org:($("fOrg").value||"").trim(),boxes,dlv:dlvDetail(),per:unpriced()?0:r2(orderPer()),total:unpriced()?0:grandTotal()});
+const orderInfo=()=>({org:($("fOrg").value||"").trim(),boxes:BTYPES?boxes:totalBoxes(),dlv:dlvDetail(),per:unpriced()?0:r2(orderPer()),total:unpriced()?0:(BTYPES?r2(orderPer()*boxes):grandTotal()),setName:BTYPES?BTYPES[btCur].name:""});
 const orderKey=()=>JSON.stringify([$("sumImg").src.length,$("sumImg").src.slice(-40),[...cart],pack.id,orderInfo()]);
 let orderCardT=null,orderCardP=null;
 function makeOrderCard(){const key=orderKey(),src=$("sumImg").src;if(!src||!shareAvailable)return Promise.resolve();if(orderImg.key===key)return orderCardP||Promise.resolve();
@@ -2314,8 +2465,9 @@ function renderEng(){
 function renderEngFiles(){$("engFiles").innerHTML=engFiles.map((f,i)=>`<div class="eng-f"><span>📎 ${esc(f.name)}</span><span class="st ${f.url?"ok":f.err?"bad":""}">${f.url?"✓ הועלה":f.err?f.err:"מעלה…"}</span><button type="button" data-rmf="${i}" aria-label="הסרת הקובץ">×</button></div>`).join("");}
 $("engList").addEventListener("change",e=>{const c=e.target.closest("[data-eng]");if(!c)return;c.checked?engSel.add(c.dataset.eng):engSel.delete(c.dataset.eng);
   $("engUp").hidden=!engSel.size;renderLogoCard();renderSumLines();renderQty();});
-function renderLogoCard(){$("logoCard").hidden=!needLogo();
-  $("logoFor").textContent="העלו את הלוגו עבור: "+[engSel.size?"המיתוג":null,cardOn&&!cardSelf?"כרטיס הברכה":null].filter(Boolean).join(" ו");}
+function renderLogoCard(){$("logoCard").hidden=!anyNeedLogo();
+  const eng=BTYPES?btFilled().some(i=>withBT(i,()=>engSel.size>0)):engSel.size>0,crd=BTYPES?btFilled().some(i=>withBT(i,()=>cardOn&&!cardSelf)):cardOn&&!cardSelf;
+  $("logoFor").textContent="העלו את הלוגו עבור: "+[eng?"המיתוג":null,crd?"כרטיס הברכה":null].filter(Boolean).join(" ו");}
 document.querySelectorAll('input[name="cardWho"]').forEach(r=>r.addEventListener("change",()=>{cardSelf=document.querySelector('input[name="cardWho"]:checked').value==="self";
   $("cardUs").hidden=cardSelf;$("cardSelfNote").hidden=!cardSelf;renderLogoCard();}));
 $("cardOn").addEventListener("change",e=>{cardOn=e.target.checked;$("cardUp").hidden=!cardOn;renderLogoCard();renderSumLines();renderQty();});
@@ -2336,9 +2488,9 @@ const r2=n=>Math.round(n*100)/100;
 const isIndiv=()=>["indiv","vip"].includes(dlvMode());
 const dlvRate=()=>!dlvPicked()?0:({ship:+CONFIG.shipPerBox||0,indiv:+CONFIG.indivPerBox||0,vip:+CONFIG.vipPerBox||0})[dlvMode()]||0;
 const dlvName=()=>!dlvPicked()?"אספקה: טרם נבחרה":({ship:"משלוח לכתובת אחת",indiv:"משלוח פרטני לכל מקבל",vip:"משלוח פרטני VIP"})[dlvMode()]||"איסוף עצמי מברקן";
-const shipCost=()=>r2(dlvRate()*boxes);
+const shipCost=()=>r2(dlvRate()*totalBoxes());
 let addrFiles=[],addrCount=0;
-const grandTotal=()=>r2(orderPer()*boxes+shipCost());   // all prices are BEFORE VAT
+const grandTotal=()=>r2(orderGoods()+shipCost());   // all prices are BEFORE VAT
 const VAT=0.18,vatOf=n=>r2(n*VAT),withVat=n=>r2(n*(1+VAT));
 function syncDlv(){const p=dlvPicked(),m=dlvMode(),ship=p==="ship",ind=p==="indiv";
   $("shipNote").textContent=`${ils(CONFIG.shipPerBox)} למארז`;$("pickNote").textContent=`ללא עלות · ${CONFIG.pickupAddress||""}`;
@@ -2354,8 +2506,8 @@ function renderAddrFiles(){$("addrFiles").innerHTML=addrFiles.map((f,i)=>`<div c
 function renderAddrCnt(){const el=$("addrCnt");if(!addrCount||!isIndiv()){el.innerHTML="";return;}
   const is=addrFiles[0]?.issues||{},probs=[is.noPhone?`${is.noPhone} שורות בלי טלפון נייד תקין`:"",is.noAddr?`${is.noAddr} שורות בלי עיר או רחוב`:"",is.dup?`${is.dup} שורות כפולות`:""].filter(Boolean);
   const warn=probs.length?`<div class="addr-warn">⚠️ בדקנו את הקובץ: ${probs.join(" · ")}. כדאי לתקן ולהעלות שוב, כדי שכל מארז יגיע בזמן.</div>`:"";
-  el.innerHTML=warn+(addrCount===boxes?`✓ בקובץ ${addrCount} כתובות, בדיוק כמו מספר המארזים`
-    :`בקובץ ${addrCount} כתובות והזמנתם ${boxes} מארזים. <button type="button" id="syncBoxes">לעדכן ל-${addrCount} מארזים</button>`);
+  const tb=totalBoxes();el.innerHTML=warn+(addrCount===tb?`✓ בקובץ ${addrCount} כתובות, בדיוק כמו מספר המארזים`
+    :`בקובץ ${addrCount} כתובות והזמנתם ${tb} מארזים.${BTYPES?" כדאי לבדוק שהכמויות של סוגי המארזים מתאימות לקובץ.":` <button type="button" id="syncBoxes">לעדכן ל-${addrCount} מארזים</button>`}`);
   $("syncBoxes")&&($("syncBoxes").onclick=()=>{boxes=addrCount;renderQty();});}
 // count recipients in the uploaded address file (xlsx read in-browser, no outside library; csv by lines)
 async function zipEntries(buf){const d=new DataView(buf),u=new Uint8Array(buf);let e=-1;
@@ -2398,16 +2550,30 @@ $("addrFile").addEventListener("change",e=>{const file=e.target.files[0];e.targe
     .then(r=>r.json().then(j=>{if(!r.ok||!j.url)throw new Error(j.error||r.status);f.url=j.url;}))
     .catch(()=>{f.err="ההעלאה נכשלה, אפשר לנסות שוב או לשלוח אחרי ההזמנה";}).finally(renderAddrFiles);});
 function renderQty(){
-  const per=orderPer(),sum=per*boxes,need=Math.ceil(CONFIG.minOrder/(per||1)),noP=unpriced(),ok=noP||sum>=CONFIG.minOrder;
+  const per=orderPer(),sum=orderGoods(),rest=sum-per*boxes,need=Math.max(1,Math.ceil((CONFIG.minOrder-rest)/(per||1))),noP=unpriced(),ok=noP||sum>=CONFIG.minOrder;
   $("qBoxes").value=boxes;$("grand").textContent=money(grandTotal());
   $("vatLines").innerHTML=unpriced()?"":`<div><span>מע"מ 18%</span><span>${ils(vatOf(grandTotal()))}</span></div><div class="inc"><span>סה"כ כולל מע"מ</span><span>${ils(withVat(grandTotal()))}</span></div>`;
-  $("shipLine").textContent=!dlvPicked()?"לא כולל משלוח · בוחרים אופן אספקה בטופס למטה":dlvMode()!=="pickup"?`${dlvName()}: ${boxes} מארזים × ${ils(dlvRate())} = ${ils(shipCost())}`:"איסוף עצמי: ללא עלות משלוח";renderAddrCnt();
+  $("shipLine").textContent=!dlvPicked()?"לא כולל משלוח · בוחרים אופן אספקה בטופס למטה":dlvMode()!=="pickup"?`${dlvName()}: ${totalBoxes()} מארזים × ${ils(dlvRate())} = ${ils(shipCost())}`:"איסוף עצמי: ללא עלות משלוח";renderAddrCnt();
   $("minFill").style.width=(noP?100:Math.min(100,sum/CONFIG.minOrder*100))+"%";$("minFill").parentElement.classList.toggle("ok",ok);
   $("minMsg").innerHTML=noP?`המחיר הסופי יישלח אליכם בהצעת מחיר. מינימום הזמנה: ${ils(CONFIG.minOrder)}`:ok?`✓ ההזמנה עומדת במינימום של ${ils(CONFIG.minOrder)}`
-    :`חסרים ${ils(CONFIG.minOrder-sum)} להזמנת מינימום של ${ils(CONFIG.minOrder)}. <button type="button" id="toMin">${need} מארזים יעמדו במינימום</button>`;
+    :`חסרים ${ils(CONFIG.minOrder-sum)} להזמנת מינימום של ${ils(CONFIG.minOrder)}. <button type="button" id="toMin">${need} מארזים${BTYPES?` מסוג "${esc(BTYPES[btCur].name)}"`:""} יעמדו במינימום</button>`;
   $("toMin")&&($("toMin").onclick=()=>{boxes=need;renderQty();});
   ["sendMail","sendWa","copyOrder"].forEach(i=>{$(i).disabled=!ok;$(i).title=ok?"":"ההזמנה צריכה להגיע למינימום"});
+  renderMulti();
 }
+// summary: one table with every box type in the order (only in multi mode)
+function renderMulti(){const c=$("multiCard");if(!c)return;c.hidden=!BTYPES;
+  $("qtyH").textContent=BTYPES?`כמה מארזים מסוג "${BTYPES[btCur].name}"?`:"כמה מארזים תרצו?";$("sumH").textContent=BTYPES?`מארז: ${BTYPES[btCur].name}`:"המארז שלכם";
+  if(!BTYPES)return;btSnap();const f=btFilled();
+  $("multiRows").innerHTML=`<table class="mt"><thead><tr><th>מארז</th><th>מחיר</th><th>כמות</th><th>סה״כ</th></tr></thead><tbody>${f.map(i=>{const t=BTYPES[i],on=i===btCur,per=withBT(i,()=>unpriced()?0:orderPer());
+    return `<tr class="${on?"on":""}"><td><button type="button" class="mt-n" data-mv="${i}">${t.img?`<img src="${t.img}" alt="">`:""}<span><b>${esc(t.name)}</b><small>${on?"מוצג כאן":"לצפייה"}</small></span></button></td>
+      <td>${per?ils(per):"—"}</td><td><div class="stepper"><button type="button" data-mq="${i}" data-d="1" aria-label="עוד מארז">+</button><input type="number" min="1" value="${t.boxes}" data-mi="${i}" inputmode="numeric" aria-label="כמות ${esc(t.name)}"><button type="button" data-mq="${i}" data-d="-1" aria-label="מארז אחד פחות">−</button></div></td>
+      <td>${per?ils(r2(per*t.boxes)):"—"}</td></tr>`;}).join("")}</tbody><tfoot><tr><td>סה״כ</td><td></td><td>${totalBoxes()}</td><td>${unpriced()?"—":ils(orderGoods())}</td></tr></tfoot></table>`;}
+function btSetBoxes(i,v){v=Math.max(1,Math.min(100000,v|0));if(i===btCur)boxes=v;else BTYPES[i].boxes=v;renderQty();renderBT();saveDraft();}
+$("multiRows").addEventListener("click",e=>{const q=e.target.closest("[data-mq]");if(q){const i=+q.dataset.mq;btSetBoxes(i,(i===btCur?boxes:BTYPES[i].boxes)+(+q.dataset.d));return;}
+  const v=e.target.closest("[data-mv]");if(v&&+v.dataset.mv!==btCur){btSwitch(+v.dataset.mv);openSummary();}});
+$("multiRows").addEventListener("change",e=>{const m=e.target.closest("[data-mi]");if(m)btSetBoxes(+m.dataset.mi,parseInt(m.value,10)||1);});
+$("addSetSum").onclick=()=>btAdd(true);
 $("qInc").onclick=()=>{boxes++;renderQty();};
 $("qDec").onclick=()=>{boxes=Math.max(1,boxes-1);renderQty();};
 $("qBoxes").oninput=e=>{const v=parseInt(e.target.value,10);if(v>0){boxes=Math.min(10000,v);renderQty();}};
@@ -2439,11 +2605,32 @@ Object.keys(FCHECK).forEach(id=>{$(id).addEventListener("blur",()=>{if($(id).val
 let giftFor="";
 document.getElementById("forOpts").onclick=e=>{const b=e.target.closest("button[data-for]");if(!b)return;giftFor=giftFor===b.dataset.for?"":b.dataset.for;
   document.querySelectorAll("#forOpts button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.for===giftFor));};
+// the lines that describe one box (the active one): items, packaging, branding, greeting card
+function compLines(f){return [...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""}${byId[id].price?" – "+ils(byId[id].price*q):""}`),(pack.none?"• אריזה: ללא":packIsFree(pack)?`• אריזה: ${pack.name} – ללא חיוב${isBag(pack)?"":` (מארז מעל ₪${FREE_PACK_AT})`}`:`• אריזה: ${pack.name} – ${ils(pack.price)}`),...(BTYPES?[]:[""]),
+    ...(engSel.size?[`✨ מיתוג לוגו: ${engNames()} (+${ils(engCost())} למארז)`,!BTYPES&&f("engNotes")?`הערות למיתוג: ${f("engNotes")}`:null]:[]),
+    ...(cardOn?[`💌 כרטיס ברכה ממותג 10×15 (+${ils(cardCost())} למארז)`,cardSelf?"עיצוב הכרטיס: הלקוח ישלח עיצוב מוכן בהמשך":`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[])].filter(x=>x!==null);}
+// what the private back office receives (orders, quotes and saved boxes)
+function orderPayload(ref,via){const g=id=>($(id)&&$(id).value||"").trim();
+  const one=()=>({items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost()});
+  const base=BTYPES?(()=>{const types=btFilled().map(i=>withBT(i,()=>({name:BTYPES[i].name,cardImg:BTYPES[i].cardUrl||"",...one()})));
+      return {items:types.flatMap(t=>t.items),pack:null,boxes:totalBoxes(),perBox:r2(orderGoods()/(totalBoxes()||1)),engrave:types.reduce((n,t)=>n+t.engrave,0),card:types.reduce((n,t)=>n+t.card,0),types,cardImg:types.find(t=>t.cardImg)?.cardImg||""};})()
+    :{...one(),cardImg:orderImg.url||""};
+  return {ref,via,customer:{name:g("fName"),phone:g("fPhone"),email:g("fEmail"),org:g("fOrg")},...base,
+    dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost()),...(dlvMode()==="ship"?{city:g("fCity"),street:g("fStreet"),addrNote:g("fAddrNote"),
+      rcvName:$("rcvSame").checked?g("fName"):g("fRcvName"),rcvPhone:$("rcvSame").checked?g("fPhone"):g("fRcvPhone")}:{}),files:addrFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url,count:x.count||0}))},
+    lateKey:lateKey||(lateKey=Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10)),engraveFiles:engFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url})),
+    total:withVat(grandTotal()),totalNet:grandTotal(),date:g("fDate"),notes:[...stockAlerts(),g("fNotes")].filter(Boolean).join("\n"),giftFor};}
+// one order card per box type (multi mode), made right before sending
+async function makeTypeCards(){if(!BTYPES||!shareAvailable)return;const org=($("fOrg").value||"").trim(),dl=dlvDetail();
+  const jobs=btFilled().map(i=>withBT(i,()=>{const t=BTYPES[i],src=i===btCur?$("sumImg").src:t.img;if(!src)return null;
+    const info={org,boxes,dlv:dl,per:unpriced()?0:r2(orderPer()),total:unpriced()?0:r2(orderPer()*boxes),setName:t.name},box=boxPayload("order");
+    return boxCard(src,info).then(j=>toJpeg(j,2600,.85)).then(j=>shareLink(j,"order",box)).then(u=>{t.cardUrl=u;}).catch(()=>{});})).filter(Boolean);
+  await Promise.race([Promise.all(jobs),new Promise(r=>setTimeout(r,7000))]);}
 function buildOrder(){
   const t=totals(),d=new Date(),ref=orderRef||(orderRef="NOYA-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase());
   const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
   const sa=stockAlerts();
-  const lines=[`הזמנת מארז – נויה במתנה (${ref})`,"",...(sa.length?["לתשומת לב נויה במתנה:",...sa,""]:[]),
+  const lines=[`הזמנת ${BTYPES?"מארזים":"מארז"} – נויה במתנה (${ref})`,"",...(sa.length?["לתשומת לב נויה במתנה:",...sa,""]:[]),
     `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,giftFor?`🎁 המתנות מיועדות ל: ${giftFor}`:null,"",
     ...(isIndiv()?[dlvMode()==="vip"?`⭐ אספקה: משלוח פרטני VIP לכל מקבל (${ils(CONFIG.vipPerBox)} למארז)`:`📦 אספקה: משלוח פרטני לכל מקבל (${ils(CONFIG.indivPerBox)} למארז)`,
       `📎 קובץ כתובות: ${addrFiles.filter(x=>x.url).map(x=>`${x.name} – ${x.url}${x.count?` (${x.count} כתובות)`:""}`).join(" | ")||"יישלח בהמשך"}`]
@@ -2452,32 +2639,27 @@ function buildOrder(){
       `איש קשר לקבלה: ${$("rcvSame").checked?`${f("fName")}, ${f("fPhone")}`:`${f("fRcvName")}, ${f("fRcvPhone")}`}`]
       :[`🏬 אספקה: איסוף עצמי מ${CONFIG.pickupAddress||""}`]),
     date?`תאריך אספקה רצוי: ${date}`:null,"",
-    "הרכב המארז:",...[...cart].map(([id,q])=>`• ${byId[id].name}${q>1?` × ${q}`:""}${byId[id].price?" – "+ils(byId[id].price*q):""}`),(pack.none?"• אריזה: ללא":packIsFree(pack)?`• אריזה: ${pack.name} – ללא חיוב${isBag(pack)?"":` (מארז מעל ₪${FREE_PACK_AT})`}`:`• אריזה: ${pack.name} – ${ils(pack.price)}`),"",
-    ...(engSel.size?[`✨ מיתוג לוגו: ${engNames()} (+${ils(engCost())} למארז)`,f("engNotes")?`הערות למיתוג: ${f("engNotes")}`:null]:[]),
-    ...(cardOn?[`💌 כרטיס ברכה ממותג 10×15 (+${ils(cardCost())} למארז)`,cardSelf?"עיצוב הכרטיס: הלקוח ישלח עיצוב מוכן בהמשך":`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[]),
-    ...(needLogo()?[`📎 קובץ לוגו: ${engFiles.filter(f=>f.url).map(f=>f.name+" – "+f.url).join(" | ")||"יישלח בהמשך"}`,""]:[]),
-    orderImg.url?`📸 כרטיס ההזמנה (תמונה עם כל הפרטים): ${orderImg.url}`:null,orderImg.url?"":null,
-    `מחיר למארז (לפני מע"מ): ${money(orderPer())}`,`כמות מארזים: ${boxes}`,
-    dlvMode()!=="pickup"?`${dlvName()}: ${boxes} × ${ils(dlvRate())} = ${ils(shipCost())}`:"משלוח: איסוף עצמי (ללא עלות)",
+    ...(BTYPES?[`🎁🎁 ${btFilled().length} סוגי מארזים בהזמנה אחת:`,"",...btFilled().flatMap(i=>withBT(i,()=>[`🎁 ${BTYPES[i].name}: ${boxes} מארזים × ${money(orderPer())}${unpriced()?"":` = ${ils(r2(orderPer()*boxes))}`}`,...compLines(f),BTYPES[i].cardUrl?`📸 כרטיס ההזמנה: ${BTYPES[i].cardUrl}`:null,""]))]
+      :["הרכב המארז:",...compLines(f)]),
+    ...(BTYPES&&f("engNotes")&&btFilled().some(i=>withBT(i,()=>engSel.size>0))?[`הערות למיתוג: ${f("engNotes")}`]:[]),
+    ...(anyNeedLogo()?[`📎 קובץ לוגו: ${engFiles.filter(f=>f.url).map(f=>f.name+" – "+f.url).join(" | ")||"יישלח בהמשך"}`,""]:[]),
+    !BTYPES&&orderImg.url?`📸 כרטיס ההזמנה (תמונה עם כל הפרטים): ${orderImg.url}`:null,!BTYPES&&orderImg.url?"":null,
+    ...(BTYPES?[`סה"כ מארזים: ${totalBoxes()} (${btFilled().length} סוגים)`]:[`מחיר למארז (לפני מע"מ): ${money(orderPer())}`,`כמות מארזים: ${boxes}`]),
+    dlvMode()!=="pickup"?`${dlvName()}: ${totalBoxes()} × ${ils(dlvRate())} = ${ils(shipCost())}`:"משלוח: איסוף עצמי (ללא עלות)",
     ...(unpriced()?[`סה"כ: בהצעת מחיר (לאישור נציג)`]:[`סה"כ לפני מע"מ: ${ils(grandTotal())}`,`מע"מ 18%: ${ils(vatOf(grandTotal()))}`,`סה"כ כולל מע"מ: ${ils(withVat(grandTotal()))} (לאישור נציג)`]),
     f("fNotes")?"":null,f("fNotes")?`הערות: ${f("fNotes")}`:null].filter(x=>x!==null);
   return {ref,text:lines.join("\n")};
 }
 async function send(kind){
   if(!validate()){$("fErr").scrollIntoView({block:"center",behavior:"smooth"});return;}
-  if(shareAvailable&&orderImg.key!==orderKey()){clearTimeout(orderCardT);await Promise.race([makeOrderCard(),new Promise(r=>setTimeout(r,3000))]);}
+  if(BTYPES){btSnap();showToast("מכין את כרטיסי ההזמנה…");await makeTypeCards();}
+  else if(shareAvailable&&orderImg.key!==orderKey()){clearTimeout(orderCardT);await Promise.race([makeOrderCard(),new Promise(r=>setTimeout(r,3000))]);}
   else if(orderCardP&&!orderImg.url)await Promise.race([orderCardP,new Promise(r=>setTimeout(r,3000))]);
-  if(needLogo()&&engFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הלוגו עדיין עולה…");return;}
+  if(anyNeedLogo()&&engFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הלוגו עדיין עולה…");return;}
   if(isIndiv()&&addrFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הכתובות עדיין עולה…");return;}
   const o=buildOrder();orderText=o.text;lastSend=kind;
   // copy of the order for the private back office (profit, stock). Fire-and-forget: never blocks or changes the customer flow.
-  try{const g=id=>($(id)&&$(id).value||"").trim();fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({ref:o.ref,via:kind,
-    customer:{name:g("fName"),phone:g("fPhone"),email:g("fEmail"),org:g("fOrg")},items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),
-    pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
-    dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost()),...(dlvMode()==="ship"?{city:g("fCity"),street:g("fStreet"),addrNote:g("fAddrNote"),
-      rcvName:$("rcvSame").checked?g("fName"):g("fRcvName"),rcvPhone:$("rcvSame").checked?g("fPhone"):g("fRcvPhone")}:{}),files:addrFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url,count:x.count||0}))},
-    lateKey:lateKey||(lateKey=Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10)),cardImg:orderImg.url||"",engraveFiles:engFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url})),
-    total:withVat(grandTotal()),totalNet:grandTotal(),date:g("fDate"),notes:[...stockAlerts(),g("fNotes")].filter(Boolean).join("\n"),giftFor,text:o.text})}).catch(()=>{});}catch(e){}
+  try{fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({...orderPayload(o.ref,kind),text:o.text})}).catch(()=>{});}catch(e){}
   let href;
   if(kind==="wa") href=`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(o.text)}`;
   else if(CONFIG.orderEmail) href=`mailto:${CONFIG.orderEmail}?subject=${encodeURIComponent("הזמנת מארז "+o.ref)}&body=${encodeURIComponent(o.text)}`;
@@ -2487,8 +2669,9 @@ async function send(kind){
   $("doneText").innerHTML=kind==="wa"?"פתחנו הודעת וואטסאפ מוכנה עם כל פרטי ההזמנה. <b>כדי שנקבל אותה, לחצו שליחה בוואטסאפ.</b> נחזור אליכם תוך יום עסקים לאישור סופי, ורק אחריו ההזמנה נכנסת לייצור."
     :`פתחנו מייל מוכן אל ${CONFIG.orderEmail} עם כל פרטי ההזמנה. <b>כדי שנקבל אותו, לחצו שליחה בתוכנת המייל.</b> נחזור אליכם תוך יום עסקים לאישור סופי, ורק אחריו ההזמנה נכנסת לייצור.`;
   $("doneImg").src=$("sumImg").src;
-  $("doneSum").innerHTML=`<b>${boxes} מארזים · ${money(grandTotal())} לפני מע"מ</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
-  const logoLater=needLogo()&&!engFiles.some(f=>f.url), cardLater=cardOn&&cardSelf;
+  $("doneSum").innerHTML=BTYPES?`<b>${totalBoxes()} מארזים · ${btFilled().length} סוגים · ${money(grandTotal())} לפני מע"מ</b><br>${btFilled().map(i=>`${esc(BTYPES[i].name)}: ${BTYPES[i].boxes}`).join(" · ")}`
+    :`<b>${boxes} מארזים · ${money(grandTotal())} לפני מע"מ</b><br>${[...cart].map(([id,q])=>esc(byId[id].name)+(q>1?" × "+q:"")).join(" · ")}<br>אריזה: ${packLabel()}`;
+  const logoLater=anyNeedLogo()&&!engFiles.some(f=>f.url), cardLater=BTYPES?btFilled().some(i=>withBT(i,()=>cardOn&&cardSelf)):cardOn&&cardSelf;
   const addrLater=isIndiv()&&!addrFiles.some(f=>f.url);
   const toSend=[logoLater?"קובץ הלוגו":null,cardLater?"עיצוב כרטיס הברכה (10×15 ס״מ)":null].filter(Boolean);
   $("doneAddr").hidden=!addrLater;
@@ -2501,6 +2684,7 @@ async function send(kind){
     ${CONFIG.orderEmail?`<span class="note">או במייל: ${esc(CONFIG.orderEmail)}</span>`:""}`;
   $("doneRef").textContent="מספר הזמנה: "+o.ref+" · אם ההודעה לא נפתחה, חזרו ולחצו \"העתקת פרטי ההזמנה\".";
   showView("done");
+  try{localStorage.removeItem("noya_draft");}catch(e){}
 }
 $("sendMail").onclick=()=>send("mail");
 $("sendWa").onclick=()=>send("wa");
@@ -2508,7 +2692,7 @@ $("resend").onclick=()=>send(lastSend||"wa");
 $("copyOrder").onclick=async()=>{if(!validate())return;const o=buildOrder();
   try{await navigator.clipboard.writeText(o.text);showToast("פרטי ההזמנה הועתקו. אפשר להדביק במייל או בוואטסאפ ל-054-3219070");}
   catch(e){showToast("ההעתקה נחסמה בדפדפן. שלחו בוואטסאפ ל-054-3219070");}};
-$("newBox").onclick=()=>{orderRef="";lateKey="";cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];addrFiles=[];addrCount=0;renderAddrFiles();cardOn=false;cardSelf=false;$("orderForm").reset();syncDlv();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
+$("newBox").onclick=()=>{orderRef="";lateKey="";if(BTYPES){BTYPES=null;btCur=0;cart=new Map();manual=new Map();pack=NO_PACK;engSel=new Set();renderPacks();renderBT();renderModePick();}cart.clear();manual.clear();boxes=1;engSel.clear();engFiles=[];addrFiles=[];addrCount=0;renderAddrFiles();cardOn=false;cardSelf=false;$("orderForm").reset();syncDlv();$("cardUs").hidden=false;$("cardSelfNote").hidden=true;document.querySelector('input[name="cardWho"][value="us"]').checked=true;$("cardText").value="";$("engNotes").value="";update(true);showView("build");};
 
 
 // ===================== "בין לקוחותינו" (fixed, all names shown) + downloadable quote (PDF) =====================
@@ -2536,15 +2720,16 @@ async function imgAsData(src){
 }
 function quoteHTML(q,img){
   const f=id=>($(id)&&$(id).value||"").trim(),noP=unpriced(),ils=n=>"₪"+(+n||0).toLocaleString("he-IL",{minimumFractionDigits:2,maximumFractionDigits:2}),money=n=>noP?"בהצעת מחיר":ils(n),pr=n=>noP&&!(+n)?"—":ils(n);
-  const rows=[...cart].map(([id,n])=>{const p=byId[id];return `<tr><td>${esc(p.name)}</td><td class="n">${n}</td><td class="n">${pr(p.price)}</td><td class="n">${p.price?ils(p.price*n):"—"}</td></tr>`;});
+  const typeRows=()=>{const rows=[...cart].map(([id,n])=>{const p=byId[id];return `<tr><td>${esc(p.name)}</td><td class="n">${n}</td><td class="n">${pr(p.price)}</td><td class="n">${p.price?ils(p.price*n):"—"}</td></tr>`;});
   if(!pack.none)rows.push(packIsFree(pack)?`<tr><td>אריזה: ${esc(pack.name)}${isBag(pack)?"":` (מארז מעל ₪${FREE_PACK_AT})`}</td><td class="n">1</td><td class="n">${pr(pack.price)}</td><td class="n">ללא חיוב</td></tr>`:`<tr><td>אריזה: ${esc(pack.name)}</td><td class="n">1</td><td class="n">${pr(pack.price)}</td><td class="n">${pr(pack.price)}</td></tr>`);
   if(engSel.size)rows.push(`<tr><td>מיתוג לוגו: ${esc(engNames())}</td><td class="n"></td><td class="n"></td><td class="n">${ils(engCost())}</td></tr>`);
   if(cardOn)rows.push(`<tr><td>כרטיס ברכה ממותג 10×15</td><td class="n">1</td><td class="n">${ils(cardCost())}</td><td class="n">${ils(cardCost())}</td></tr>`);
-  rows.push(`<tr class="sub"><td colspan="3">מחיר למארז</td><td class="n">${money(orderPer())}</td></tr>`);
+  rows.push(`<tr class="sub"><td colspan="3">מחיר למארז</td><td class="n">${money(orderPer())}</td></tr>`);return rows;};
+  const rows=BTYPES?btFilled().flatMap(i=>withBT(i,()=>[`<tr class="sub"><td colspan="4">🎁 מארז ${esc(BTYPES[i].name)} · ${boxes} מארזים</td></tr>`,...typeRows(),`<tr><td colspan="3">סה״כ ${esc(BTYPES[i].name)}: ${boxes} × ${money(orderPer())}</td><td class="n">${noP?"—":ils(r2(orderPer()*boxes))}</td></tr>`])):typeRows();
   const beforeVat=grandTotal(),total=withVat(beforeVat),c=q.client||{},to=c.org||f("fOrg"),who=[c.name||f("fName"),c.phone||f("fPhone"),c.email||f("fEmail")].filter(Boolean).join(" · ");
-  const ship=dlvMode()==="pickup"?`<div><span>איסוף עצמי</span><span>ללא עלות</span></div>`:`<div><span>${esc(dlvName())}: ${boxes} × ${ils(dlvRate())}</span><span>${ils(shipCost())}</span></div>`;
+  const ship=dlvMode()==="pickup"?`<div><span>איסוף עצמי</span><span>ללא עלות</span></div>`:`<div><span>${esc(dlvName())}: ${totalBoxes()} × ${ils(dlvRate())}</span><span>${ils(shipCost())}</span></div>`;
   const tot=noP?`<div class="g"><span>סה"כ</span><span>יימסר ע"י נציג</span></div>`
-    :`<div><span>${boxes} מארזים × ${ils(orderPer())}</span><span>${ils(r2(orderPer()*boxes))}</span></div>${ship}
+    :`<div><span>${BTYPES?`${totalBoxes()} מארזים (${btFilled().length} סוגים)`:`${boxes} מארזים × ${ils(orderPer())}`}</span><span>${ils(orderGoods())}</span></div>${ship}
       <div><span>סה"כ לפני מע"מ</span><span>${ils(r2(beforeVat))}</span></div><div><span>מע"מ 18%</span><span>${ils(r2(total-beforeVat))}</span></div>
       <div class="g"><span>סה"כ לתשלום כולל מע"מ</span><span>${ils(total)}</span></div>`;
   return `<div class="qh"><div class="qbrand">נויה במתנה<small>עולם של מתנות לארגונים ולעסקים. מארזי חג, מתנות לעובדים, ללקוחות ולשותפים עסקיים, בהתאמה אישית.</small></div>
@@ -2571,6 +2756,10 @@ function closeQm(){qm.hidden=true;}
 $("quoteBtn").onclick=()=>{Object.entries(QF).forEach(([q,f])=>{if(!$(q).value)$(q).value=$(f).value;});
   $("qmForm").hidden=false;$("qmDone").hidden=true;qm.hidden=false;setTimeout(()=>$(["qOrg","qName","qPhone"].find(i=>!$(i).value.trim())||"qOrg").focus(),50);};
 $("qmCancel").onclick=$("qmClose").onclick=closeQm;
+document.addEventListener("click",e=>{if(e.target.closest("[data-save]"))openLead();});
+$("leadCancel").onclick=$("leadClose").onclick=closeLead;$("leadSave").onclick=saveLead;
+$("leadModal").addEventListener("click",e=>{if(e.target===$("leadModal"))closeLead();});
+$("leadCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("leadUrl").value);showToast("הקישור הועתק ✓");}catch(e){$("leadUrl").select();}};
 qm.addEventListener("click",e=>{if(e.target===qm)closeQm();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!qm.hidden)closeQm();});
 async function makeQuotePdf(client){
@@ -2656,11 +2845,18 @@ function deepLink(){try{const q=new URLSearchParams(location.search);const c=q.g
 setTimeout(deepLink,600);
 // "אני רוצה את המארז הזה" on a shared link opens the same box, already designed (no new AI run)
 async function loadSharedBox(){
-  const sp=new URLSearchParams(location.search),id=sp.get("box"),toSum=sp.get("go")==="sum";if(!id||!/^[a-z0-9]{6,24}$/.test(id))return;
+  const sp=new URLSearchParams(location.search),id=sp.get("box"),toSum=sp.get("go")==="sum";if(!id||!/^[a-z0-9]{6,24}$/.test(id)){try{restoreDraft();}catch(e){}return;}
   history.replaceState(null,"",location.pathname+location.hash);
   try{
     const r=await fetch(SHARE_ENDPOINT+"?box="+id);const j=await r.json().catch(()=>({}));if(!r.ok||!j.box)throw new Error("not found");
-    const b=j.box,all=Array.isArray(b.items)?b.items:[],items=all.filter(([pid,q])=>byId[pid]&&!byId[pid].hidden&&+q>0);
+    const b=j.box;
+    if(Array.isArray(b.types)&&b.types.length>1){   // a whole multi-type order was shared for approval
+      const ts=b.types.map(x=>{const t=btNew(String(x.name||"מארז").slice(0,18)),it=(x.items||[]).filter(([pid,q])=>byId[pid]&&!byId[pid].hidden&&+q>0);t.cart=new Map(it.map(([pid,q])=>[pid,Math.min(99,+q)]));
+        t.pack=x.pack&&x.pack!=="none"?(PACKS.find(k=>k.id===x.pack)||NO_PACK):NO_PACK;t.boxes=Math.max(1,Math.min(100000,Math.round(+x.boxes||1)));return t;}).filter(t=>t.cart.size);
+      if(ts.length){BTYPES=ts;btCur=0;btEnter(0);renderModePick();
+        if(toSum){openSummary();showToast("ההזמנה שאושרה נטענה ✓ כל סוגי המארזים מחכים. ממלאים פרטים ושולחים");}else showToast(`נטענו ${ts.length} סוגי מארזים ✓`);
+        document.getElementById("scene").scrollIntoView({block:"start"});return;}}
+    const all=Array.isArray(b.items)?b.items:[],items=all.filter(([pid,q])=>byId[pid]&&!byId[pid].hidden&&+q>0);
     if(!items.length){showToast("המארז ששותף כבר לא זמין. אפשר לעצב מארז משלכם ✨");return;}
     cart=new Map(items.map(([pid,q])=>[pid,Math.min(99,+q)]));
     pack=b.pack==="none"||!b.pack?NO_PACK:(PACKS.find(k=>k.id===b.pack)||NO_PACK);
