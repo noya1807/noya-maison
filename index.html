@@ -2428,7 +2428,7 @@ async function storyCard(){
   x.fillStyle="#3f271c";x.font=`700 66px ${DF}`;x.fillText("נויה במתנה",W/2,310);
   x.fillStyle="#8a6d55";x.font=`500 34px ${BF}`;x.fillText("מארזי מתנה לארגונים ולעסקים",W/2,372);
   // the designed box: rounded, with a thin gold frame and soft shadow
-  const IW=920,IH=Math.round(IW*Math.min(1.1,im.naturalHeight/im.naturalWidth)),ix=(W-IW)/2,iy=450,r=36;
+  const IW=920,IH=Math.round(IW*Math.min(1.1,im.naturalHeight/im.naturalWidth)),ix=(W-IW)/2,r=36,iy=Math.max(450,Math.round(420+((H-300)-420-(IH+250))/2));
   const rr=(X,Y,w,h,R)=>{x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+w,Y,X+w,Y+h,R);x.arcTo(X+w,Y+h,X,Y+h,R);x.arcTo(X,Y+h,X,Y,R);x.arcTo(X,Y,X+w,Y,R);x.closePath();};
   x.save();x.shadowColor="rgba(63,39,28,.28)";x.shadowBlur=50;x.shadowOffsetY=18;rr(ix,iy,IW,IH,r);x.fillStyle="#fff";x.fill();x.restore();
   x.save();rr(ix,iy,IW,IH,r);x.clip();const sc=Math.max(IW/im.naturalWidth,IH/im.naturalHeight),sw=IW/sc,sh=IH/sc;x.drawImage(im,(im.naturalWidth-sw)/2,(im.naturalHeight-sh)/2,sw,sh,ix,iy,IW,IH);x.restore();
