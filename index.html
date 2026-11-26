@@ -1032,7 +1032,6 @@ h1.brand{margin:0;line-height:1.2}
       <div class="veil" id="veil" hidden><div class="veil-in"><span class="veil-mark">✦</span><b>המארז שלכם מחכה לחשיפה</b><em class="veil-quote">"אין גבול למה שאפשר ליצור כשמעזים לחשוב אחרת." ✨</em><small id="veilCount"></small></div></div>
     </div>
     <div class="bgs"><span class="lbl">רקע:</span><span id="bgs" style="display:flex;gap:8px"></span>
-      <button class="ghost small" id="restyle">↻ הצעה עיצובית נוספת</button>
       <label class="tog"><input type="checkbox" id="props" checked> אביזרי סטיילינג <span class="muted">(לא כלולים במארז)</span></label>
       <button class="ghost small" id="clear" style="margin-inline-start:auto">ריקון המארז</button></div>
     <div class="aibar" id="aibar"></div>
@@ -1771,7 +1770,7 @@ new ResizeObserver(()=>recompose(false)).observe(scene);
 })();
 function layout(){recompose(true);}
 function applyBg(){recompose(false);}
-document.getElementById("restyle").onclick=()=>{variant=(variant+1)%4;manual.clear();recompose(true);};
+
 document.getElementById("props").onchange=e=>{useProps=e.target.checked;recompose(true);};
 
 // a gentle styling nudge under the scene
