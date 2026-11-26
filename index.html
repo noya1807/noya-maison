@@ -773,6 +773,11 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .reel-col.last .reel-win{animation:lastGlow .55s ease-in-out infinite alternate}
 @keyframes lastGlow{from{box-shadow:0 0 0 2px #e3c58c,0 0 6px rgba(255,214,106,.5)}to{box-shadow:0 0 0 3px #ffd76a,0 0 24px rgba(255,214,106,1)}}
 .slot.tense .vbl,.slot.tense .vbl.b{animation:breathe 1.3s ease-in-out infinite}@keyframes breathe{0%,100%{opacity:.25}50%{opacity:1}}
+.comet{position:fixed;z-index:10060;pointer-events:none;object-fit:cover;border-radius:10px;box-shadow:0 0 0 2px #ffd76a,0 0 18px rgba(255,214,106,.9);will-change:transform}
+.spark.trail{z-index:10055;width:6px;height:6px}
+.slot.payout .reel-win{animation:pwFlash .32s steps(1) 2}@keyframes pwFlash{0%{filter:brightness(1.9) saturate(.6)}50%{filter:none}}
+.scene-shine{position:absolute;inset:0;z-index:7;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,236,180,.0) 38%,rgba(255,236,180,.75) 50%,rgba(255,236,180,0) 62%,transparent 70%);background-size:250% 100%;animation:shine .85s ease-out forwards}
+@keyframes shine{from{background-position:120% 0}to{background-position:-20% 0}}
 @media (prefers-reduced-motion:reduce){.vbl,.vst{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
@@ -2262,17 +2267,44 @@ function btnFountain(){const b=$("surpriseBtn"),fx=b&&b.querySelector(".vb-fx");
       {duration:900+Math.random()*400,delay:j*90+k*70,fill:"backwards"}).onfinish=()=>s.remove();}});}
 setTimeout(btnFountain,2500);setInterval(btnFountain,10000);
 document.addEventListener("mouseover",e=>{if(e.target.closest&&e.target.closest("#surpriseBtn"))btnFountain();});
-function surTake(){const pick=sur.pick;if(!pick||sur.busy)return;const prev=[new Map(cart),pack];
+// ===== "Cash-out": the machine pays — coin cascade + fanfare, reels flash, the machine shrinks away,
+// the products fly out in golden arcs with comet trails into the box, each lands with a rising "ding", the box shines, the reveal starts
+const sPayout=()=>{let t=0,g=.095;for(let i=0;i<20;i++){tone(2500+Math.random()*1300,.08,"triangle",.07,t);tone(5000+Math.random()*900,.04,"sine",.025,t+.01);t+=g;g=Math.max(.03,g*.9);}
+  [523,659,784,1047].forEach((f,i)=>tone(f,.26,"triangle",.12,.08+i*.11));[1047,1319,1568].forEach(f=>tone(f,.55,"triangle",.08,.56));};
+const sDing=(i,last)=>{const f=[1319,1568,1976,2349][Math.min(3,i)];tone(f,.35,"sine",.13);tone(f*2,.2,"sine",.04,.01);if(last)[f*1.25,f*1.5].forEach(x=>tone(x,.5,"sine",.06,.06));};
+function cometFly(o,i,n,onLand){const sc=scene.getBoundingClientRect(),x0=o.r.left+o.r.width/2,y0=o.r.top+o.r.height/2;
+  const x2=sc.left+sc.width*(n>1?.32+.36*i/(n-1):.5),y2=sc.top+sc.height*.62,x1=(x0+x2)/2+(i-(n-1)/2)*40,y1=Math.min(y0,y2)-150;
+  const im=document.createElement("img");im.src=o.src;im.className="comet";Object.assign(im.style,{width:o.r.width+"px",height:o.r.height+"px",left:(x0-o.r.width/2)+"px",top:(y0-o.r.height/2)+"px"});document.body.appendChild(im);
+  const lite=matchMedia("(pointer:coarse)").matches,D=820,t0=performance.now(),ease=u=>u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;
+  const fr=now=>{const u=Math.min(1,(now-t0)/D),e=ease(u),a=1-e,x=a*a*x0+2*a*e*x1+e*e*x2,y=a*a*y0+2*a*e*y1+e*e*y2,sc2=1-.68*e;
+    im.style.transform=`translate(${x-x0}px,${y-y0}px) scale(${sc2}) rotate(${(i-(n-1)/2)*12*e}deg)`;
+    for(let k=0;k<(lite?1:2);k++){const sp=document.createElement("i");sp.className="spark trail";sp.style.left=(x+(Math.random()-.5)*14)+"px";sp.style.top=(y+(Math.random()-.5)*14)+"px";document.body.appendChild(sp);
+      sp.animate([{transform:"translate(-50%,-50%) scale(1)",opacity:1},{transform:`translate(calc(-50% + ${(Math.random()-.5)*16}px),calc(-50% + ${8+Math.random()*14}px)) scale(.2)`,opacity:0}],{duration:420+Math.random()*260,easing:"ease-out"}).onfinish=()=>sp.remove();}
+    if(u<1)requestAnimationFrame(fr);else{im.remove();landFx("scene",x2,y2);onLand&&onLand();}};
+  requestAnimationFrame(fr);}
+function surTake(){const pick=sur.pick;if(!pick||sur.busy)return;sur.busy=true;const prev=[new Map(cart),pack];
+  const d=$("surModal"),box=d.querySelector(".mr.sur"),slot=$("surSlot"),reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
   const fl=[...document.querySelectorAll("#surReels .reel-win img")].map(im=>({src:im.src,r:im.getBoundingClientRect()}));
-  cart=new Map(pick.items.map(p=>[p.id,1]));pick.items.forEach(p=>fresh.add(p.id));
-  pack=PACKS.find(k=>!k.hidden&&isBag(k))||NO_PACK;manual.clear();renderPacks();update(true);
-  undoSet=prev;surClose();const key=comboKey();
-  scene.scrollIntoView({block:"center"});
-  fl.forEach((o,i)=>setTimeout(()=>{const t=document.createElement("img");t.src=o.src;
-    Object.assign(t.style,{position:"fixed",left:o.r.left+"px",top:o.r.top+"px",width:o.r.width+"px",height:o.r.height+"px",opacity:0,pointerEvents:"none"});
-    document.body.appendChild(t);flyToBox(t);t.remove();},150+i*170));
-  showToast("🎰 המארז נכנס! עוד רגע הוא נחשף ✨",true);
-  setTimeout(()=>{if(comboKey()===key&&!aiBusy&&!revealed)generateAi(false);},150+fl.length*170+750);}
+  d.querySelectorAll("#surAct button").forEach(b=>b.disabled=true);
+  // 1) the machine pays out
+  sPayout();buzz([15,30,15,30,15]);slot.classList.add("win","payout");
+  d.querySelectorAll("#surTray .coin").forEach((c,k)=>c.animate([{transform:"translateY(0)"},{transform:`translateY(${-10-Math.random()*16}px)`,offset:.4},{transform:"translateY(0)"}],{duration:420,delay:k*25,easing:"ease-out"}));
+  const T=reduce?0:380;
+  setTimeout(()=>{
+    cart=new Map(pick.items.map(p=>[p.id,1]));pick.items.forEach(p=>fresh.add(p.id));
+    pack=PACKS.find(k=>!k.hidden&&isBag(k))||NO_PACK;manual.clear();renderPacks();update(true);undoSet=prev;const key=comboKey();
+    scene.scrollIntoView({block:"center"});
+    const done=()=>{sur.busy=false;slot.classList.remove("payout");box.getAnimations().forEach(a=>a.cancel());surClose();};
+    if(reduce){done();}else box.animate([{transform:"scale(1)",opacity:1},{transform:"scale(.82)",opacity:0}],{duration:450,easing:"cubic-bezier(.5,0,.75,0)",fill:"forwards"}).finished.then(done);
+    d.style.background=reduce?"":"transparent";setTimeout(()=>d.style.background="",reduce?0:500);
+    // 2) products fly out into the box
+    let landed=0;const n=fl.length;
+    const allIn=()=>{const sh=document.createElement("div");sh.className="scene-shine";scene.appendChild(sh);setTimeout(()=>sh.remove(),900);
+      showToast("🎰 המארז נכנס! עוד רגע הוא נחשף ✨",true);
+      setTimeout(()=>{if(comboKey()===key&&!aiBusy&&!revealed)generateAi(false);},450);};
+    if(reduce){allIn();return;}
+    fl.forEach((o,i)=>setTimeout(()=>cometFly(o,i,n,()=>{sDing(i,i===n-1);buzz(14);if(++landed===n)allIn();}),120+i*160));
+  },T);}
 document.addEventListener("click",e=>{if(e.target.closest("#surpriseBtn"))surOpen();});
 // ---- Showcase: up to 12 recent boxes the owner chose to show; rotates while the customer's box is empty ----
 const SHOW_EP=window.NOYA_OFFICE_ENDPOINT||"api/office";
