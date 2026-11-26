@@ -770,6 +770,7 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .slot.spinning .vbl,.slot.win .vbl{animation-duration:.22s}.slot.win .vbl.b{animation-name:vbA}
 @media (max-width:1099px){.surprise-btn{max-width:320px}}
 .slot.tense .reel-col:not(.last):not(.held) .reel-win{filter:brightness(.85);transition:filter .3s}
+@media (pointer:coarse),(max-width:760px){.strip.blur{filter:none!important}.slot.tense .reel-col .reel-win,.slot.payout .reel-win{filter:none!important}.strip{will-change:auto}}
 .reel-col.last .reel-win{animation:lastGlow .55s ease-in-out infinite alternate}
 @keyframes lastGlow{from{box-shadow:0 0 0 2px #e3c58c,0 0 6px rgba(255,214,106,.5)}to{box-shadow:0 0 0 3px #ffd76a,0 0 24px rgba(255,214,106,1)}}
 .slot.tense .vbl,.slot.tense .vbl.b{animation:breathe 1.3s ease-in-out infinite}@keyframes breathe{0%,100%{opacity:.25}50%{opacity:1}}
@@ -2203,7 +2204,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
   cols.forEach((col,k)=>{if(sur.held.has(k))return;todo++;
     // ---- the LAST reel keeps rolling alone, slows down item by item, almost stops… and lands (tension!)
     if(!reduce&&k===lastK){const ord=live.length-1,K=5,strip=col.querySelector(".strip");col.querySelector(".reel-name").textContent="";
-      const cells=[rnd(),pick.items[k],...Array.from({length:16+ord*6+K},rnd),sur.cur[k]||rnd()];
+      const cells=[rnd(),pick.items[k],...Array.from({length:(matchMedia("(pointer:coarse)").matches?10+ord*4:16+ord*6)+K},rnd),sur.cur[k]||rnd()];
       strip.innerHTML=cells.map(p=>`<div class="cell"><img src="${surImg(p)}" alt=""></div>`).join("");
       const start=-(cells.length-1)*ch,end=-ch,mid=-(1+K)*ch,T1=ord?1500+(ord-1)*560+250:1300,wait=ms=>new Promise(r=>setTimeout(r,ms));
       strip.style.transform=`translateY(${start}px)`;strip.classList.add("blur");
@@ -2216,7 +2217,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
         await strip.animate([{transform:`translateY(${y}px)`,easing:"cubic-bezier(.3,0,.4,1)"},{transform:`translateY(${end+ch*.3}px)`,offset:.55,easing:"ease-out"},{transform:`translateY(${end-ch*.12}px)`,offset:.78,easing:"ease-in-out"},{transform:`translateY(${end+ch*.05}px)`,offset:.92,easing:"ease-in-out"},{transform:`translateY(${end}px)`}],{duration:900,fill:"forwards"}).finished;
         finishCol(col,k);})();
       return;}
-    const L=reduce?3:16+order*6,dur=reduce?500:1500+order*560;order++;
+    const L=reduce?3:(matchMedia("(pointer:coarse)").matches?10+order*4:16+order*6),dur=reduce?500:1500+order*560;order++;
     const strip=col.querySelector(".strip"),name=col.querySelector(".reel-name");name.textContent="";
     // cells top→bottom: [extra, target, …random…, current]. The reel rolls DOWN from "current" to "target", like a real machine
     const cells=[rnd(),pick.items[k],...Array.from({length:L},rnd),sur.cur[k]||rnd()];
