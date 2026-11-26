@@ -212,6 +212,9 @@ header{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-botto
 .bar .p .vatx{display:inline;margin-inline-start:6px;font-size:11.5px}
 .bar-act{display:none;gap:8px;align-items:center;margin-inline-start:auto}
 body.revealed .bar-act{display:flex}body.revealed #barBtn{display:none}
+/* computer: after the reveal the actions sit under the picture only (no repeat in the bottom bar) – the bar keeps the price */
+@media (min-width:761px){body.revealed .bar-act{display:none}}
+.ar-row .ar-order{width:auto;margin:0;padding:12px 22px;font-size:15.5px}
 .bar-act button{border:0;border-radius:12px;padding:11px 16px;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .bar-act .ba-dl{background:var(--paper);color:var(--cocoa);box-shadow:inset 0 0 0 1.5px var(--cocoa)}
 .bar-act .ba-wa{background:#25d366;color:#fff}
@@ -2189,9 +2192,9 @@ function renderAiBar(){
     b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn" id="aiGo">חשפו את המארז שלכם ✨</button><span class="reveal-sub">רגע של הפתעה. תנו לקסם להתגלות.</span></div>`
       +(editing?`<div class="reveal-more"><button class="ghost small" id="aiView">🖼 הצג את המארז המעוצב</button>${reset}</div>`:"");
   } else {
-    b.innerHTML=`<div class="after-reveal"><div class="ar-uniq">אחד מתוך ${combosInfo().txt} שילובים – המארז הזה נבנה רק בשבילכם ✨</div><div class="ar-row"><button class="wa-share" id="aiShare"><svg class="wa-ico" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg>שתפו לאישור בוואטסאפ</button><button class="ai-go" id="aiDl">⬇ הורדת המארז + פרטים</button>${reset}</div>
+    b.innerHTML=`<div class="after-reveal"><div class="ar-uniq">אחד מתוך ${combosInfo().txt} שילובים – המארז הזה נבנה רק בשבילכם ✨</div><div class="ar-row"><button class="wa-share" id="aiShare"><svg class="wa-ico" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg>שתפו לאישור בוואטסאפ</button><button class="ai-go" id="aiDl">⬇ הורדת המארז + פרטים</button><button class="reveal-btn order-btn ar-order" id="aiOrder">המשך להזמנה ←</button>${reset}</div>
       ${BTYPES?(()=>{const nx=BTYPES.findIndex((t,i)=>i!==btCur&&!(t.cart.size));return `<button class="ghost bt-next" id="aiNextType">${nx>=0?`הבא: בניית מארז ${esc(BTYPES[nx].name)} ←`:"＋ סוג מארז נוסף"}</button>`;})():""}
-      <button class="reveal-btn order-btn" id="aiOrder">המשך להזמנה ←</button><span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
+      <span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
   }
   if(isOwner&&revealed&&!aiBusy&&!(editing&&aiStale)&&!aiImg.hidden)b.insertAdjacentHTML("beforeend",`<div class="reveal-more"><button class="ghost small" id="aiShow">⭐ הוספה לחלון הראווה (רק אתה רואה את הכפתור)</button></div>`);
   q("aiShow")&&(q("aiShow").onclick=()=>{q("aiShow").disabled=true;q("aiShow").textContent="שומר…";addToShow();});
