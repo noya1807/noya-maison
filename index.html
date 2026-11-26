@@ -814,6 +814,7 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .scene.casino .ai-load{display:none!important}.scene.casino canvas:not(.rl){filter:blur(7px) brightness(.8)}
 .casino-ov{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(ellipse at 50% 45%,rgba(90,15,28,.55),rgba(20,6,8,.82));animation:fadein .5s ease}
 .rl-wrap{filter:drop-shadow(0 12px 26px rgba(0,0,0,.5))}.scene .rl{display:block;border-radius:50%;filter:none!important;transform:none!important;position:static!important;inset:auto!important;margin:0!important;max-width:none!important;max-height:none!important}.scene.casino #veil{display:none!important}
+.rl-time{color:#fffaf3;font-weight:800;font-size:15px;background:rgba(18,6,8,.6);padding:5px 16px;border-radius:99px;border:1px solid rgba(227,197,140,.5)}.rl-sec{color:#e9d3a8;font-size:12.5px;font-weight:600}
 .rl-txt{color:#ffe6a3;font-weight:800;font-size:15px;text-shadow:0 0 8px rgba(255,200,80,.6);background:rgba(18,6,8,.55);padding:4px 14px;border-radius:99px}
 .scratch{position:absolute;inset:0;z-index:21;transition:opacity .6s}.scratch canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 .scratch.gone{opacity:0}.sc-all{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:auto!important;margin:0!important;padding:6px 16px!important;border-radius:99px;border:1px solid #8a6a33;background:rgba(255,250,243,.9);color:#5a3a2a;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
@@ -2456,13 +2457,14 @@ function onCartChanged(){
 // and the designed box is revealed by a gold scratch card the customer scratches. Only from the machine; the regular build keeps the gift box.
 var CASINO=null;
 function casinoStart(){casinoEnd();const ov=document.createElement("div");ov.className="casino-ov";
-  ov.innerHTML=`<div class="rl-wrap"><canvas class="rl"></canvas></div><div class="rl-txt">הכדור בדרך…</div>`;scene.appendChild(ov);scene.classList.add("casino");
+  ov.innerHTML=`<div class="rl-time">⏱️ עיצוב המארז שלכם לוקח בין 20 ל־40 שניות</div><div class="rl-wrap"><canvas class="rl"></canvas></div><div class="rl-txt">הכדור בדרך…</div><div class="rl-sec">עברו 0 שניות</div>`;scene.appendChild(ov);scene.classList.add("casino");
   const cv2=ov.querySelector("canvas"),x=cv2.getContext("2d"),dpr=Math.min(2,devicePixelRatio||1);
   const C={ov,cv:cv2,x,dpr,wa:0,ba:Math.random()*6.28,wv:1.1,bv:-4.2,land:null,landing:false,imgs:[],last:performance.now(),N:14,txtI:0};
   const sz=()=>{const r=scene.getBoundingClientRect(),S=Math.round(Math.min(r.width,r.height)*.66);cv2.style.width=cv2.style.height=S+"px";cv2.width=cv2.height=S*dpr;C.S=S;};sz();C.rs=sz;addEventListener("resize",sz);
   Promise.all([...cart.keys()].slice(0,6).map(id=>byId[id]&&loadImg(byId[id].photo||byId[id].img).catch(()=>null))).then(a=>C.imgs=a.filter(Boolean));
   const msgs=["הכדור בדרך…","נויה מסדרת את המוצרים במארז…","מכוונים את התאורה…","מלטשים את הפרטים האחרונים…","עוד רגע… ✨"];
-  C.txtT=setInterval(()=>{if(C.landing)return;C.txtI=(C.txtI+1)%msgs.length;ov.querySelector(".rl-txt").textContent=msgs[C.txtI];},3200);
+  C.t0=Date.now();C.txtT=setInterval(()=>{if(C.landing)return;C.txtI=(C.txtI+1)%msgs.length;ov.querySelector(".rl-txt").textContent=msgs[C.txtI];},3200);
+  C.secT=setInterval(()=>{if(C.landing)return;const n=Math.round((Date.now()-C.t0)/1000);ov.querySelector(".rl-sec").textContent=n>40?"עוד רגע… מלטשים את הפרטים האחרונים ✨":`עברו ${n} שניות`;},1000);
   const frame=now=>{const dt=Math.min(.05,(now-C.last)/1000);C.last=now;
     if(C.land){const L=C.land,u=Math.min(1,(now-L.t0)/L.D),e=1-Math.pow(1-u,3);
       C.wa=L.wa0+L.w0*L.D/1000*(1-Math.pow(1-u,3))/3;C.ba=L.ba0+L.dB*(1-Math.pow(1-u,2));
@@ -2500,7 +2502,7 @@ function casinoLand(cb){const C=CASINO;if(!C){cb();return;}C.landing=true;C.ov.q
   let dB=((aE-ba0)%6.2832+6.2832)%6.2832-6.2832;if(dB>-3)dB-=6.2832;
   C.land={t0:performance.now(),D,R,w0,wa0,ba0,dB,tr:R*.84,pr:(R*.8+R*.56)/2*1.04,cb:()=>{C.ov.querySelector(".rl-txt").textContent="🎯 נויה!";setTimeout(cb,550);}};
   [0,.18,.33,.46,.57,.66,.74,.81,.87,.92].forEach((p,i)=>setTimeout(()=>tone(1500-i*40,.03,"square",.04),D*(.45+p*.55)));}
-function casinoEnd(){const C=CASINO;if(!C)return;cancelAnimationFrame(C.raf);clearInterval(C.txtT);removeEventListener("resize",C.rs);C.ov.remove();scene.classList.remove("casino");CASINO=null;}
+function casinoEnd(){const C=CASINO;if(!C)return;cancelAnimationFrame(C.raf);clearInterval(C.txtT);clearInterval(C.secT);removeEventListener("resize",C.rs);C.ov.remove();scene.classList.remove("casino");CASINO=null;}
 // gold scratch card over the designed box
 function casinoScratch(done){const r=scene.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
   const wrap=document.createElement("div");wrap.className="scratch";wrap.innerHTML=`<canvas></canvas><button type="button" class="sc-all">חשפו הכל</button>`;scene.appendChild(wrap);
@@ -2522,7 +2524,7 @@ function casinoScratch(done){const r=scene.getBoundingClientRect(),dpr=Math.min(
   ["pointerup","pointercancel","pointerleave"].forEach(t=>c.addEventListener(t,()=>{down=false;last=null;}));
   wrap.querySelector(".sc-all").onclick=finish;}
 function finishRevealCasino(key,src){sceneToTop();aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();showAi(src);setVeil();
-  casinoEnd();aiBusy=false;renderAiBar();casinoScratch(()=>{STG.flashed=true;playReveal();try{goldRain();}catch(e){}renderAiBar();});}
+  const ov=CASINO&&CASINO.ov;if(ov){ov.style.transition="opacity .6s";ov.style.opacity="0";}aiBusy=false;STG.flashed=true;playReveal();try{goldRain();}catch(e){}renderAiBar();setTimeout(casinoEnd,600);}
 function playReveal(){if(matchMedia("(min-width:761px)").matches){const r=scene.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)scene.scrollIntoView({behavior:"smooth",block:"center"});}scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);if(STG.flashed){STG.flashed=false;}else playUnbox();}
 // 3D gift box opens over the picture: ribbon box spins, lid lifts off, gold sparks, the designed box appears
 // gold rain: gold-leaf flakes and tiny sparkles fall over the whole screen for ~3.5s, then fade (only gold/cream tones)
