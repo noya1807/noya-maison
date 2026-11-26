@@ -1155,7 +1155,7 @@ h1.brand{margin:0;line-height:1.2}
 <div class="intro" id="intro">
   <p class="combos" id="combos" aria-live="off"></p>
   <p class="resume" id="resumeNote" hidden></p>
-  <div class="mode-pick" id="modePick" role="group" aria-label="למי המארזים"><span class="mp-q">למי המארזים?</span><button type="button" data-mode="one" aria-pressed="true">🎁 מארז אחד לכולם</button><button type="button" data-mode="multi" aria-pressed="false">🎁🎁 כמה רמות: עובדים · הנהלה · לקוחות</button></div>
+  <div class="mode-pick" id="modePick" role="group" aria-label="למי המארזים"><span class="mp-q">למי המארזים?</span><button type="button" data-mode="one" aria-pressed="true">🎁 מארז אחד לכולם</button><button type="button" data-mode="multi" aria-pressed="false">🎁🎁 כמה רמות: עובדים · הנהלה · לקוחות ושותפים עסקיים</button></div>
   <div class="box-tabs" id="boxTabs" hidden></div>
   <div class="howto" id="howto"><span data-st="1" role="button" tabindex="0"><i>1</i> בוחרים מוצרים</span><span class="arr">←</span><span data-st="2" role="button" tabindex="0"><i>2</i> בוחרים אריזה</span><span class="arr">←</span><span data-st="3" role="button" tabindex="0"><i>3</i> חושפים ✨</span></div>
 </div>
@@ -2910,7 +2910,7 @@ function multiReady(go){const u=unrevealedTypes();if(!u.length){go();return;}
 let boxes=1, orderText="", lastSend=null, orderRef="", lateKey="";   // one order number per box: sending again updates the same order
 const $=id=>document.getElementById(id);
 // ===================== Multi box types (עובדים · הנהלה · לקוחות) =====================
-const BT_NAMES=["עובדים","הנהלה","לקוחות","VIP","שותפים","מארז 6"];
+const BT_NAMES=["עובדים","הנהלה","לקוחות ושותפים","VIP","ספקים","מארז 6"];
 function btNew(name){return {name,cart:new Map(),pack:NO_PACK,manual:new Map(),boxes:1,engSel:new Set(),cardOn:false,cardSelf:false,budget:0,revealed:false,revealedKey:null,aiCurrent:null,img:"",cardUrl:""};}
 function btSnap(){if(!BTYPES)return null;const t=BTYPES[btCur];Object.assign(t,{cart,pack,manual,boxes,engSel,cardOn,cardSelf,budget,revealed,revealedKey,aiCurrent});return t;}
 function btUse(t){cart=t.cart;pack=t.pack;manual=t.manual;boxes=t.boxes;engSel=t.engSel;cardOn=t.cardOn;cardSelf=t.cardSelf;}
