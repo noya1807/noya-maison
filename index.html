@@ -1853,7 +1853,6 @@ function update(flash){
 // ---- Inspiration boxes & styling tip ----
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
-{const rot=document.getElementById("setsRot"),top=document.getElementById("stageTop");if(rot&&top)top.before(rot);}   // the rotating stats line sits above the gallery row
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
 setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
 (function(){const el=document.getElementById("setsProof");if(!el)return;const t=el.querySelector(".sp-txt");
@@ -1863,6 +1862,7 @@ setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small
   const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
   setInterval(()=>{if(hold||document.hidden)return;if(still){i++;show();return;}t.classList.add("out");setTimeout(()=>{i++;show();t.classList.remove("out");},350);},4000);})();
 {const h=document.querySelector("#sets .sets-h");if(h)h.hidden=true;}
+{const rot=document.getElementById("setsRot"),top=document.getElementById("stageTop");if(rot&&top)top.before(rot);}   // the rotating stats line sits above the gallery row
 // stats, "האור של אורי" and "גם … בחרו" share one line and take turns (pause while the mouse is over it)
 (function(){const r=document.getElementById("setsRot");if(!r)return;const kids=[...r.children];let i=0,hold=false;
   const show=()=>kids.forEach((k,n)=>k.classList.toggle("on",n===i));show();
