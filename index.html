@@ -839,6 +839,21 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .mm-ticket.done{box-shadow:0 0 0 2px #e3c58c,0 0 18px rgba(255,214,106,.8)}
 .mm-grow{position:fixed;z-index:10060;object-fit:cover;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.mm-strip{animation-duration:6s!important}}
+/* the vault of Noya */
+.vt{position:relative;width:270px;height:270px;perspective:900px}
+.vt-frame{position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(circle,#2a2d33 62%,#41454c 66%,#1b1d21 72%,#55595f 74%,#16181b 100%);box-shadow:0 18px 36px rgba(0,0,0,.6),inset 0 0 0 3px #8a6a33}
+.vt-lamp{position:absolute;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:#3a2a14;box-shadow:inset 0 1px 2px rgba(0,0,0,.8);transition:background .3s,box-shadow .3s;z-index:3}
+.vt-lamp.on{background:radial-gradient(circle at 40% 35%,#fff6d2,#ffd36a 55%,#c9932e);box-shadow:0 0 10px 3px rgba(255,214,106,.85)}
+.vt-in{position:absolute;inset:8px;border-radius:50%;overflow:hidden;background:radial-gradient(circle,#fff3cf,#e3c58c 45%,#7a5a2a 100%);box-shadow:inset 0 0 30px rgba(0,0,0,.6)}
+.vt-img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s .9s}.vt.open .vt-img{opacity:1}
+.vt-door{position:absolute;inset:4px;transform-origin:0% 50%;transition:transform 1.4s cubic-bezier(.45,0,.2,1);z-index:2;filter:drop-shadow(6px 6px 10px rgba(0,0,0,.55))}
+.vt-door .vt-face{width:100%;height:100%;display:block}
+.vt.open .vt-door{transform:rotateY(-108deg)}
+.vt-dial{transform-box:view-box;transform-origin:196px 64px;animation:vtDial 4.2s ease-in-out infinite}
+@keyframes vtDial{0%{transform:rotate(0)}25%{transform:rotate(210deg)}45%{transform:rotate(120deg)}70%{transform:rotate(300deg)}100%{transform:rotate(360deg)}}
+.vt-handle{transform-box:view-box;transform-origin:130px 130px;transition:transform .7s cubic-bezier(.4,0,.2,1)}.vt.turn .vt-handle{transform:rotate(-90deg)}
+.vt.open .vt-dial{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.vt-dial{animation:none}.vt-door{transition:none}}
 @media (prefers-reduced-motion:reduce){.vbl,.vst{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
@@ -2474,39 +2489,47 @@ function onCartChanged(){
   if(!cart.size){revealed=false;editing=false;showAi(null);}
   setVeil();renderAiBar();
 }
-// ===== Coming from the slot machine: while the AI designs, a small version of the same machine keeps "working" (reels roll with the chosen products)
-// and slowly prints a gold voucher from its ticket slot (visible progress). When the design is ready the reels lock on N·N·N, the voucher comes out
-// ("המארז שלכם ✨") and the designed box grows out of it. Only from the machine; the regular build keeps the gift box.
+// ===== Coming from the slot machine: "the vault of Noya". While the AI designs, a round vault door: the combination dial turns,
+// and every few seconds a lock clicks and one of six gold lamps lights (visible progress). When the design is ready the last lamp lights,
+// the handle turns, the door swings open in golden light and the designed box grows out of the vault. Only from the machine.
 var CASINO=null;
+function vaultSVG(){const f=n=>Math.round(n*10)/10;let riv="",tk="";for(let i=0;i<24;i++){const a=i*Math.PI/12;riv+=`<circle cx="${f(130+108*Math.cos(a))}" cy="${f(130+108*Math.sin(a))}" r="3.2" fill="url(#vtG)"/>`;}
+  for(let i=0;i<40;i++){const a=i*Math.PI/20,r1=i%5?22:19;tk+=`<line x1="${f(196+r1*Math.cos(a))}" y1="${f(64+r1*Math.sin(a))}" x2="${f(196+26*Math.cos(a))}" y2="${f(64+26*Math.sin(a))}" stroke="#3f271c" stroke-width="${i%5?1:1.8}"/>`;}
+  const sp=[0,1,2,3].map(k=>`<g transform="rotate(${k*90} 130 130)"><rect x="126" y="62" width="8" height="58" rx="4" fill="url(#vtG)"/><circle cx="130" cy="60" r="9" fill="url(#vtG)" stroke="#8a6a33"/></g>`).join("");
+  return `<svg viewBox="0 0 260 260" class="vt-face"><defs><radialGradient id="vtS" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#5a6069"/><stop offset=".6" stop-color="#2b2f35"/><stop offset="1" stop-color="#15171b"/></radialGradient>
+    <linearGradient id="vtG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbeec9"/><stop offset=".5" stop-color="#d8b371"/><stop offset="1" stop-color="#9c7740"/></linearGradient></defs>
+    <circle cx="130" cy="130" r="124" fill="url(#vtS)" stroke="url(#vtG)" stroke-width="5"/><circle cx="130" cy="130" r="96" fill="none" stroke="rgba(227,197,140,.35)" stroke-width="1.5"/>${riv}
+    <g class="vt-handle">${sp}<circle cx="130" cy="130" r="22" fill="url(#vtG)" stroke="#8a6a33" stroke-width="2"/><text x="130" y="138" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="22" fill="#5a0f1c">N</text></g>
+    <g class="vt-dial"><circle cx="196" cy="64" r="27" fill="url(#vtG)" stroke="#5a3a1c" stroke-width="1.5"/>${tk}<circle cx="196" cy="64" r="9" fill="#3f271c"/></g>
+    <path d="M196 33 l-4 -7 h8z" fill="#ffd76a"/></svg>`;}
 function casinoStart(){casinoEnd();const ov=document.createElement("div");ov.className="casino-ov";
-  const ims=[...cart.keys()].map(id=>byId[id]).filter(Boolean).map(p=>p.photo||p.img);while(ims.length&&ims.length<4)ims.push(...ims);
-  const strip=k=>{const a=ims.slice(k%ims.length).concat(ims.slice(0,k%ims.length));return [...a,...a].map(u=>`<div class="mm-c"><img src="${esc(u)}" alt=""></div>`).join("");};
+  const lamps=[0,1,2,3,4,5].map(i=>{const a=-Math.PI/2+i*Math.PI/3;return `<i class="vt-lamp" style="left:${50+46.5*Math.cos(a)}%;top:${50+46.5*Math.sin(a)}%"></i>`;}).join("");
   ov.innerHTML=`<div class="mm-box"><div class="rl-time">⏱️ עיצוב המארז שלכם לוקח בין 20 ל־40 שניות</div>
-    <div class="mm"><div class="mm-sign">${vegasRect(300,58,"mm",false)}<span>מכונת המארזים של נויה</span></div>
-      <div class="mm-reels">${[0,1,2].map(k=>`<div class="mm-win"><div class="mm-strip" style="animation-duration:${1.6+k*.35}s">${strip(k)}</div></div>`).join("")}</div>
-      <div class="mm-slot"></div></div>
-    <div class="mm-tk-wrap"><div class="mm-ticket"><div class="mm-tk-in"><b>NOYA · VOUCHER</b><span class="mm-bar"></span><em>מכינים את המארז שלכם…</em></div></div></div>
-    <div class="rl-txt">המכונה מעצבת את המארז…</div><div class="rl-sec">עברו 0 שניות</div></div>`;
+    <div class="vt"><div class="vt-frame">${lamps}</div><div class="vt-in"><img class="vt-img" alt=""></div><div class="vt-door">${vaultSVG()}</div></div>
+    <div class="rl-txt">המארז שלכם נשמר בכספת של נויה…</div><div class="rl-sec">עברו 0 שניות</div></div>`;
   scene.appendChild(ov);scene.classList.add("casino");
-  const box=ov.querySelector(".mm-box"),fit=()=>{const r=scene.getBoundingClientRect();box.style.transform=`translate(-50%,-50%) scale(${Math.min(1.15,r.width/380,r.height/470)})`;};fit();addEventListener("resize",fit);
-  const C={ov,box,fit,landing:false,t0:Date.now(),txtI:0};const tk=ov.querySelector(".mm-ticket");
-  const msgs=["המכונה מעצבת את המארז…","נויה מסדרת את המוצרים במארז…","מכוונים את התאורה…","מלטשים את הפרטים האחרונים…","עוד רגע… ✨"];
-  C.txtT=setInterval(()=>{if(C.landing)return;C.txtI=(C.txtI+1)%msgs.length;ov.querySelector(".rl-txt").textContent=msgs[C.txtI];},3200);
-  C.secT=setInterval(()=>{if(C.landing)return;const s=(Date.now()-C.t0)/1000,n=Math.round(s);ov.querySelector(".rl-sec").textContent=n>40?"עוד רגע… מלטשים את הפרטים האחרונים ✨":`עברו ${n} שניות`;
-    tk.style.height=Math.round(14+82*(1-Math.exp(-s/16)))+"px";if(n%2===0)tone(820+Math.random()*80,.02,"square",.012);},1000);
+  const box=ov.querySelector(".mm-box"),fit=()=>{const r=scene.getBoundingClientRect();box.style.transform=`translate(-50%,-50%) scale(${Math.min(1.15,r.width/380,r.height/430)})`;};fit();addEventListener("resize",fit);
+  const C={ov,box,fit,landing:false,t0:Date.now(),txtI:0,lit:0};const L=[...ov.querySelectorAll(".vt-lamp")];
+  const light=()=>{if(C.lit>=L.length)return;L[C.lit++].classList.add("on");tone(2100,.02,"square",.05);tone(320,.06,"triangle",.08,.01);buzz(6);};C.light=light;
+  const msgs=["המארז שלכם נשמר בכספת של נויה…","נויה מסדרת את המוצרים במארז…","מכוונים את התאורה…","מלטשים את הפרטים האחרונים…","עוד רגע… ✨"];
+  C.txtT=setInterval(()=>{if(C.landing)return;C.txtI=(C.txtI+1)%msgs.length;ov.querySelector(".rl-txt").textContent=msgs[C.txtI];},3400);
+  C.secT=setInterval(()=>{if(C.landing)return;const n=Math.round((Date.now()-C.t0)/1000);ov.querySelector(".rl-sec").textContent=n>40?"עוד רגע… מלטשים את הפרטים האחרונים ✨":`עברו ${n} שניות`;
+    if(C.lit<5&&n>=(C.lit+1)*6)light();},1000);
   CASINO=C;}
-function casinoLand(cb){const C=CASINO;if(!C){cb();return;}C.landing=true;const ov=C.ov;ov.querySelector(".rl-txt").textContent="המארז מוכן! ✨";ov.querySelector(".rl-sec").textContent="";
-  ov.querySelectorAll(".mm-win").forEach((w,i)=>setTimeout(()=>{w.innerHTML=`<div class="mm-n">N</div>`;w.classList.add("lock");sThud();buzz(12);},250+i*330));
-  setTimeout(()=>{const tk=ov.querySelector(".mm-ticket");tk.style.height="112px";tk.querySelector("em").textContent="המארז שלכם ✨";tk.classList.add("done");tone(1319,.3,"sine",.1);tone(1976,.4,"sine",.05,.08);},1350);
-  setTimeout(cb,2300);}
+function casinoLand(cb,src){const C=CASINO;if(!C){cb();return;}C.landing=true;const ov=C.ov;ov.querySelector(".rl-txt").textContent="הכספת נפתחת… ✨";ov.querySelector(".rl-sec").textContent="";
+  {const rem=6-C.lit;for(let k=0;k<rem;k++)setTimeout(C.light,k*150);}   // light whatever is left, quickly
+  if(src)ov.querySelector(".vt-img").src=src;
+  setTimeout(()=>{ov.querySelector(".vt").classList.add("turn");tone(180,.25,"triangle",.14);},900);
+  setTimeout(()=>{ov.querySelector(".vt").classList.add("open");tone(110,.6,"sine",.1);tone(784,.5,"sine",.05,.3);tone(1175,.6,"sine",.04,.45);buzz(20);},1600);
+  setTimeout(cb,3000);}
 function casinoEnd(){const C=CASINO;if(!C)return;clearInterval(C.txtT);clearInterval(C.secT);removeEventListener("resize",C.fit);C.ov.remove();scene.classList.remove("casino");CASINO=null;}
 function finishRevealCasino(key,src){sceneToTop();aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();showAi(src);setVeil();
-  const C=CASINO,tk=C&&C.ov.querySelector(".mm-ticket"),sr=scene.getBoundingClientRect();
-  if(tk&&!matchMedia("(prefers-reduced-motion:reduce)").matches){const r=tk.getBoundingClientRect(),im=document.createElement("img");im.src=src;im.className="mm-grow";
-    Object.assign(im.style,{left:r.left+"px",top:r.top+"px",width:r.width+"px",height:r.height+"px"});document.body.appendChild(im);
-    im.animate([{left:r.left+"px",top:r.top+"px",width:r.width+"px",height:r.height+"px",borderRadius:"6px"},{left:sr.left+"px",top:sr.top+"px",width:sr.width+"px",height:sr.height+"px",borderRadius:"18px"}],{duration:750,easing:"cubic-bezier(.3,.1,.2,1)",fill:"forwards"}).onfinish=()=>setTimeout(()=>im.remove(),80);
+  const C=CASINO,inn=C&&C.ov.querySelector(".vt-in"),sr=scene.getBoundingClientRect();
+  if(inn&&!matchMedia("(prefers-reduced-motion:reduce)").matches){const r=inn.getBoundingClientRect(),im=document.createElement("img");im.src=src;im.className="mm-grow";
+    Object.assign(im.style,{left:r.left+"px",top:r.top+"px",width:r.width+"px",height:r.height+"px",borderRadius:"50%"});document.body.appendChild(im);
+    im.animate([{left:r.left+"px",top:r.top+"px",width:r.width+"px",height:r.height+"px",borderRadius:"50%"},{left:sr.left+"px",top:sr.top+"px",width:sr.width+"px",height:sr.height+"px",borderRadius:"18px"}],{duration:800,easing:"cubic-bezier(.3,.1,.2,1)",fill:"forwards"}).onfinish=()=>setTimeout(()=>im.remove(),80);
     C.ov.style.transition="opacity .5s";C.ov.style.opacity="0";}
-  aiBusy=false;STG.flashed=true;playReveal();try{goldRain();}catch(e){}renderAiBar();setTimeout(casinoEnd,800);}
+  aiBusy=false;STG.flashed=true;playReveal();try{goldRain();}catch(e){}renderAiBar();setTimeout(casinoEnd,850);}
 function playReveal(){if(matchMedia("(min-width:761px)").matches){const r=scene.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)scene.scrollIntoView({behavior:"smooth",block:"center"});}scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);if(STG.flashed){STG.flashed=false;}else playUnbox();}
 // 3D gift box opens over the picture: ribbon box spins, lid lifts off, gold sparks, the designed box appears
 // gold rain: gold-leaf flakes and tiny sparkles fall over the whole screen for ~3.5s, then fade (only gold/cream tones)
@@ -2557,7 +2580,7 @@ if(matchMedia("(hover:hover) and (pointer:fine)").matches&&!matchMedia("(prefers
     const sh=e.target.closest&&e.target.closest(".show");const show=document.getElementById("show");
     if(show){if(sh)tilt(show,e,6);else if(show.style.getPropertyValue("--rx"))untilt(show);}},{passive:true});
 }
-function finishReveal(key,src){if(CASINO&&!CASINO.landing){casinoLand(()=>finishRevealCasino(key,src));setTimeout(()=>{if(CASINO){aiBusy=true;renderAiBar();}},0);return;}sceneToTop();
+function finishReveal(key,src){if(CASINO&&!CASINO.landing){casinoLand(()=>finishRevealCasino(key,src),src);setTimeout(()=>{if(CASINO){aiBusy=true;renderAiBar();}},0);return;}sceneToTop();
   if(STG.on){STG.flashed=true;stageEnd(true);scene.classList.remove("stg-flash");void scene.offsetWidth;scene.classList.add("stg-flash");setTimeout(()=>scene.classList.remove("stg-flash"),900);}
   aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();
   showAi(src);setVeil();playReveal();renderAiBar();
