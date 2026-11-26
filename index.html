@@ -934,6 +934,14 @@ h1.brand{margin:0;line-height:1.2}
 .ar-uniq{text-align:center;font-family:'Frank Ruhl Libre',serif;font-size:17px;color:#8a6a33;margin:2px 0 10px}
 @media (max-width:640px){.combos{font-size:13px;padding:0 10px}.ar-uniq{font-size:15px}}
 .eng-k{color:#8a6a33;font-weight:600}
+/* compact top: no second steps row; products line and "למי המארזים?" share one row */
+#howto{display:none!important}
+.intro .combos{flex:0 1 auto;margin:0}
+.intro .mode-pick{flex:0 1 auto;margin:0}
+.sets-rot{display:grid;align-items:center;margin:-2px 0 10px;min-height:34px}
+.sets-rot>*{grid-area:1/1;margin:0!important;opacity:0;visibility:hidden;transition:opacity .45s,visibility .45s;justify-content:center;text-align:center}
+.sets-rot>.on{opacity:1;visibility:visible}
+.bar.is-empty{display:none!important}
 .mode-pick{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:2px 0 6px}
 .mode-pick .mp-q{font-weight:700;color:#4a2f22;font-size:14.5px}
 .mode-pick button{border:1px solid #d9c3a0;background:#fffaf3;color:#4a2f22;border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
@@ -1805,6 +1813,7 @@ function update(flash){
   renderGrid();
   document.getElementById("list").innerHTML=document.getElementById("list2").innerHTML=rowsHTML();
   document.getElementById("totals").innerHTML=document.getElementById("totals2").innerHTML=totalsHTML(t);
+  document.getElementById("bar").classList.toggle("is-empty",!cart.size);
   document.getElementById("barP").innerHTML=money(t.total+brandCost())+'<small class="vatx">לא כולל מע״מ</small>';
   document.getElementById("barC").innerHTML=`${t.count} מוצרים · <button class="bar-pack" data-packs>${pack.none?"+ הוספת אריזה":"אריזה ✓"}</button>`;
   if(flash) document.querySelectorAll("#bigP,#barP").forEach(el=>{el.classList.remove("priceflash");void el.offsetWidth;el.classList.add("priceflash");});
@@ -1820,13 +1829,18 @@ function update(flash){
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
-setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
 (function(){const el=document.getElementById("setsProof");if(!el)return;const t=el.querySelector(".sp-txt");
   const L=[["🏦","בנק מזרחי טפחות"],["🎖️","צה״ל"],["🛡️","משטרת ישראל"],["🏦","בנק הפועלים"],["🏛️","עיריית תל אביב"],["⚙️","אלביט"],["📱","פרטנר"],["🏦","בנק דיסקונט"],["🏛️","כנסת ישראל"],["🩺","כללית"],["🏛️","עיריית הרצליה"],["🌿","המשרד להגנת הסביבה"],["🏦","בנק יהב"],["🏗️", "אפריקה ישראל"],["🚗", "שלמה סיקסט"],["🍳", "מטבחי רגבה"],["🍳", "מטבחי דקל קמילה"],["🩺", "מאוחדת"],["🏭", "בתי הזיקוק"],["🏅", "מכון וינגייט"],["🛡️", "הראל חברה לביטוח"],["🤝", "ההסתדרות"],["🏥", "בית החולים שיבא"],["✈️", "פספורטכארד"],["💊", "אלטמן"]];
   let i=0,hold=false;const show=()=>{const [e,n]=L[i%L.length];t.innerHTML=`${e} גם <b>${n}</b> בחרו בנויה במתנה`;};
   show();el.addEventListener("mouseenter",()=>hold=true);el.addEventListener("mouseleave",()=>hold=false);
   const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
   setInterval(()=>{if(hold||document.hidden)return;if(still){i++;show();return;}t.classList.add("out");setTimeout(()=>{i++;show();t.classList.remove("out");},350);},4000);})();
+// stats, "האור של אורי" and "גם … בחרו" share one line and take turns (pause while the mouse is over it)
+(function(){const r=document.getElementById("setsRot");if(!r)return;const kids=[...r.children];let i=0,hold=false;
+  const show=()=>kids.forEach((k,n)=>k.classList.toggle("on",n===i));show();
+  r.addEventListener("mouseenter",()=>hold=true);r.addEventListener("mouseleave",()=>hold=false);
+  setInterval(()=>{if(hold||document.hidden)return;i=(i+1)%kids.length;show();},i===0?6000:5000);})();
 document.getElementById("barAct").addEventListener("click",e=>{const b=e.target.closest("[data-t]");if(!b)return;const t=document.getElementById(b.dataset.t);if(t)t.click();});
 (function(){const h=document.getElementById("howto");if(!h)return;const sp=[...h.querySelectorAll("[data-st]")];
   const step=()=>{const bv=document.getElementById("buildView");if(bv&&bv.hidden)return 0;if(!cart.size)return 1;if(pack.none&&!window._packSeen)return 2;return (document.getElementById("aiImg")&&!document.getElementById("aiImg").hidden)?0:3;};
