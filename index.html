@@ -1978,7 +1978,7 @@ function update(flash){
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
-setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><button type="button" class="surprise-btn" id="surpriseBtn"><span class="vb-777">777</span><span class="vb-t"><b>הפתיעו אותי</b><small>מארז אקראי בתקציב שלכם</small></span></button><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><button type="button" class="surprise-btn" id="surpriseBtn"><span class="vb-777">777</span><span class="vb-t"><b>הפתיעו אותי</b><small>אחד מתוך ${combosShort()} שילובים</small></span></button><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
 (function(){const el=document.getElementById("setsProof");if(!el)return;const t=el.querySelector(".sp-txt");
   const L=[["🏦","בנק מזרחי טפחות"],["🎖️","צה״ל"],["🛡️","משטרת ישראל"],["🏦","בנק הפועלים"],["🏛️","עיריית תל אביב"],["⚙️","אלביט"],["📱","פרטנר"],["🏦","בנק דיסקונט"],["🏛️","כנסת ישראל"],["🩺","כללית"],["🏛️","עיריית הרצליה"],["🌿","המשרד להגנת הסביבה"],["🏦","בנק יהב"],["🏗️", "אפריקה ישראל"],["🚗", "שלמה סיקסט"],["🍳", "מטבחי רגבה"],["🍳", "מטבחי דקל קמילה"],["🩺", "מאוחדת"],["🏭", "בתי הזיקוק"],["🏅", "מכון וינגייט"],["🛡️", "הראל חברה לביטוח"],["🤝", "ההסתדרות"],["🏥", "בית החולים שיבא"],["✈️", "פספורטכארד"],["💊", "אלטמן"]];
   let i=0,hold=false;const show=()=>{const [e,n]=L[i%L.length];t.innerHTML=`${e} גם <b>${n}</b> בחרו בנויה במתנה`;};
@@ -2089,7 +2089,7 @@ function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,c
       <div class="slot-reels" id="surReels"><i class="pay pay-l"></i><i class="pay pay-r"></i>${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip"><div class="cell"><img src="${surImg(p)}" alt=""></div></div></div>
         <span class="reel-name">${sur.pick?esc(p.name):""}</span><button type="button" class="hold" data-hold="${k}" aria-pressed="${sur.held.has(k)}" ${sur.pick?"":"disabled"}>${sur.held.has(k)?"🔒 נעול":"החזיקו"}</button></div>`).join("")}</div>
       <div class="coin-slot" aria-hidden="true"></div>
-      <div class="jackpot" id="surJack">${sur.pick?`<b>${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</b>`:"<b>משכו את הידית! 🎰</b>"}</div>
+      <div class="jackpot" id="surJack">${sur.pick?`<b>${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</b>`:`<b>משכו את הידית! 🎰</b><small>${combosInfo().txt} שילובים</small>`}</div>
       <div class="coin-tray" id="surTray" aria-hidden="true"></div></div>
       <div class="lever" id="surLever" role="button" aria-label="משיכת הידית"><div class="lv-base"></div><div class="lv-rod"></div><div class="lv-ball"></div></div></div>
     <div class="sur-act" id="surAct">${surActs()}</div></div>`;
@@ -2132,7 +2132,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
 function surWin(pick,tick){clearInterval(tick);sur.cur=pick.items;sur.pick=pick;sur.busy=false;
   const d=$("surModal"),slot=$("surSlot"),jack=$("surJack");
   d.querySelectorAll(".reel-col").forEach((c,k)=>{c.querySelector(".reel-name").textContent=pick.items[k].name;const h=c.querySelector(".hold");h.disabled=false;});
-  jack.innerHTML=`<b>🎉 זכיתם במארז!</b><small>${ils(r2(pick.sum))} למארז · בתקציב ✓</small>`;$("surAct").innerHTML=surActs();
+  jack.innerHTML=`<b>🎉 בינגו! פגעתם באחד מ־${combosShort()}</b><small>${ils(r2(pick.sum))} למארז · בתקציב ✓</small>`;$("surAct").innerHTML=surActs();
   const box=d.querySelector(".mr.sur");slot.classList.remove("spinning");slot.classList.add("win");box.classList.add("win");sWin();buzz([12,50,12,50,30]);
   surCoins();
   setTimeout(()=>{slot.classList.remove("win");box.classList.remove("win");},2800);}
@@ -2432,6 +2432,7 @@ async function generateAi(force){
   }catch(e){if(aiSilent){aiSilent=false;}else showToast(e.name==="AbortError"?"העיצוב לקח יותר מדי זמן. המארז נשאר מוסתר, אפשר לנסות שוב.":"לא הצלחנו לעצב את המארז כרגע ("+e.message+"). המארז נשאר מוסתר, אפשר לנסות שוב.");}
   finally{clearInterval(tick);noyaStop();aiLoad.hidden=true;aiBusy=false;scene.classList.remove("busy");renderAiBar();}
 }
+function combosShort(){return combosInfo().txt.replace(/^יותר מ־/,"");}
 function combosInfo(){
   const n=P.filter(p=>!p.hidden).length,m=PACKS.filter(k=>!k.hidden).length;
   const C=(a,b)=>{let r=1;for(let i=1;i<=b;i++)r=r*(a-b+i)/i;return r;};
