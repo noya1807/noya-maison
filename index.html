@@ -759,6 +759,10 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .slot-sign.vs-wrap>span{position:absolute;left:8%;right:8%;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:clamp(13px,6.6cqw,21px);white-space:nowrap}
 .slot.spinning .vbl,.slot.win .vbl{animation-duration:.22s}.slot.win .vbl.b{animation-name:vbA}
 @media (max-width:1099px){.surprise-btn{max-width:320px}}
+.slot.tense .reel-col:not(.last) .reel-win{filter:brightness(.5) saturate(.7);transition:filter .3s}
+.reel-col.last .reel-win{animation:lastGlow .55s ease-in-out infinite alternate}
+@keyframes lastGlow{from{box-shadow:0 0 0 2px #e3c58c,0 0 6px rgba(255,214,106,.5)}to{box-shadow:0 0 0 3px #ffd76a,0 0 24px rgba(255,214,106,1)}}
+.slot.tense .vbl,.slot.tense .vbl.b{animation:breathe 1.3s ease-in-out infinite}@keyframes breathe{0%,100%{opacity:.25}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.vbl,.vst{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
@@ -2157,7 +2161,26 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
   const ch=parseFloat(reels.style.getPropertyValue("--ch"))||100,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
   const cols=[...reels.querySelectorAll(".reel-col")];let order=0,todo=0,done=0;
   const tick=setInterval(sTick,70);
-  cols.forEach((col,k)=>{if(sur.held.has(k))return;todo++;const L=reduce?3:16+order*6,dur=reduce?500:1500+order*560;order++;
+  const live=cols.map((c,k)=>k).filter(k=>!sur.held.has(k)),lastK=live[live.length-1],slot2=slot;
+  const finishCol=(col,k)=>{const strip=col.querySelector(".strip");strip.getAnimations().forEach(a=>a.cancel());strip.innerHTML=`<div class="cell"><img src="${surImg(pick.items[k])}" alt=""></div>`;strip.style.transform="";
+    col.querySelector(".reel-name").textContent=pick.items[k].name;if(++done===todo)surWin(pick,tick);};
+  cols.forEach((col,k)=>{if(sur.held.has(k))return;todo++;
+    // ---- the LAST reel keeps rolling alone, slows down item by item, almost stops… and lands (tension!)
+    if(!reduce&&k===lastK){const ord=order++,K=5,strip=col.querySelector(".strip");col.querySelector(".reel-name").textContent="";
+      const cells=[rnd(),pick.items[k],...Array.from({length:16+ord*6+K},rnd),sur.cur[k]||rnd()];
+      strip.innerHTML=cells.map(p=>`<div class="cell"><img src="${surImg(p)}" alt=""></div>`).join("");
+      const start=-(cells.length-1)*ch,end=-ch,mid=-(1+K)*ch,T1=ord?1500+(ord-1)*560+250:1300,wait=ms=>new Promise(r=>setTimeout(r,ms));
+      strip.style.transform=`translateY(${start}px)`;strip.classList.add("blur");
+      (async()=>{
+        await strip.animate([{transform:`translateY(${start}px)`,easing:"ease-in-out"},{transform:`translateY(${start-ch*.2}px)`,offset:.06,easing:"cubic-bezier(.3,.55,.5,1)"},{transform:`translateY(${mid}px)`}],{duration:T1,fill:"forwards"}).finished;
+        strip.classList.remove("blur");clearInterval(tick);slot2.classList.add("tense");col.classList.add("last");$("surJack").innerHTML="<b>ועכשיו… 🥁</b>";
+        let y=mid;for(const d of [240,320,420,560]){const ny=y+ch;await strip.animate([{transform:`translateY(${y}px)`},{transform:`translateY(${ny}px)`}],{duration:d,easing:"cubic-bezier(.45,0,.3,1)",fill:"forwards"}).finished;y=ny;tone(1500,.045,"square",.07);buzz(8);}
+        await wait(320);   // almost stops on the one before…
+        setTimeout(()=>{sThud();buzz(18);col.classList.remove("last");col.classList.remove("stop");void col.offsetWidth;col.classList.add("stop");},495);
+        await strip.animate([{transform:`translateY(${y}px)`,easing:"cubic-bezier(.3,0,.4,1)"},{transform:`translateY(${end+ch*.3}px)`,offset:.55,easing:"ease-out"},{transform:`translateY(${end-ch*.12}px)`,offset:.78,easing:"ease-in-out"},{transform:`translateY(${end+ch*.05}px)`,offset:.92,easing:"ease-in-out"},{transform:`translateY(${end}px)`}],{duration:900,fill:"forwards"}).finished;
+        finishCol(col,k);})();
+      return;}
+    const L=reduce?3:16+order*6,dur=reduce?500:1500+order*560;order++;
     const strip=col.querySelector(".strip"),name=col.querySelector(".reel-name");name.textContent="";
     // cells top→bottom: [extra, target, …random…, current]. The reel rolls DOWN from "current" to "target", like a real machine
     const cells=[rnd(),pick.items[k],...Array.from({length:L},rnd),sur.cur[k]||rnd()];
@@ -2176,7 +2199,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
     an.onfinish=()=>{strip.innerHTML=`<div class="cell"><img src="${surImg(pick.items[k])}" alt=""></div>`;an.cancel();strip.style.transform="";
       name.textContent=pick.items[k].name;if(++done===todo)surWin(pick,tick);};});
   if(!todo)surWin(pick,tick);}
-function surWin(pick,tick){clearInterval(tick);sur.cur=pick.items;sur.pick=pick;sur.busy=false;
+function surWin(pick,tick){clearInterval(tick);{const sl=$("surSlot");if(sl){sl.classList.remove("tense");sl.querySelectorAll(".reel-col.last").forEach(c=>c.classList.remove("last"));}}sur.cur=pick.items;sur.pick=pick;sur.busy=false;
   const d=$("surModal"),slot=$("surSlot"),jack=$("surJack");
   d.querySelectorAll(".reel-col").forEach((c,k)=>{c.querySelector(".reel-name").textContent=pick.items[k].name;const h=c.querySelector(".hold");h.disabled=false;});
   jack.innerHTML=`<b>🎉 בינגו! פגעתם באחד מ־${combosShort()}</b><small>${ils(r2(pick.sum))} למארז · הכניסו למארז וחשפו ✨</small>`;$("surAct").innerHTML=surActs();
