@@ -2216,7 +2216,7 @@ function surPull(){if(sur.busy)return;sur.dec=sur.held.size?Promise.resolve({jac
 function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(sur.held.size?"אין שילוב בתקציב עם המוצרים הנעולים. בטלו נעילה ונסו שוב":"לא מצאנו מוצרים בתקציב הזה. נסו תקציב אחר");return;}
   const d=$("surModal"),slot=$("surSlot"),reels=$("surReels");sur.busy=true;sur.pick=null;slot.classList.remove("win");
   d.querySelectorAll(".hold").forEach(b=>b.disabled=true);d.querySelectorAll("#surAct button").forEach(b=>b.disabled=true);
-  $("surJack").innerHTML="<b>מגרילים… 🎰</b>";requestAnimationFrame(buildJB);$("surJack").classList.remove("lit","jp-flash","calm");d.querySelector(".jack-card")?.remove();slot.classList.remove("calm","gentle");$("surJW").classList.remove("jp-calm");$("surJW").classList.remove("jp-win","jp-run");sur.winId=(sur.winId||0)+1;slot.classList.add("spinning");$("surTray").innerHTML="";
+  $("surJack").innerHTML="<b>מגרילים… 🎰</b>";requestAnimationFrame(buildJB);$("surJack").classList.remove("lit","jp-flash","calm");d.querySelector(".jack-card")?.remove();slot.classList.remove("calm","gentle");$("surJW").classList.remove("jp-calm");{const sg=slot.querySelector(".slot-sign>span");if(sg)sg.textContent="מכונת המארזים של נויה";}$("surJW").classList.remove("jp-win","jp-run");sur.winId=(sur.winId||0)+1;slot.classList.add("spinning");$("surTray").innerHTML="";
   const all=P.filter(p=>!p.hidden&&(p.photo||p.img)),rnd=()=>Math.random()<.09?"7":all[(Math.random()*all.length)|0];let anyStop=false;
   const ch=parseFloat(reels.style.getPropertyValue("--ch"))||100,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
   const cols=[...reels.querySelectorAll(".reel-col")];let order=0,todo=0,done=0;
@@ -2284,6 +2284,7 @@ function surJackWin(pick,tick){clearInterval(tick);const sl=$("surSlot"),d=$("su
   // calm: lights stay softly lit like candles, a soft lilac glow, one quiet low note
   sl.classList.add("calm");jw.classList.remove("jp-win","jp-run");jw.classList.add("jp-calm");jack.classList.remove("lit","jp-flash");jack.classList.add("calm");
   jack.innerHTML=`<b>💜 יצאו שלושה 7</b><small class="jc-t">לכבוד הרגע הזה, נויה במתנה תעביר <em>21 ארוחות חמות</em> למיזם "האור של אורי", לזכר סמ"ר אורי ג׳רבי הי״ד. התרומה תתווסף למונה כאן באתר.${demo?' (הדגמה – לא נרשמה תרומה)':""}</small><button type="button" class="jc-more">לסיפור של אורי ←</button>`;
+  {const sg=sl.querySelector(".slot-sign>span");if(sg)sg.textContent="האור של אורי חי";}
   requestAnimationFrame(buildJB);
   tone(392,2.2,"sine",.06);tone(784,1.4,"sine",.018,.03);buzz(20);
   d.querySelector(".jack-card")?.remove();
