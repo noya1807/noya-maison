@@ -2284,7 +2284,7 @@ function surJackWin(pick,tick){clearInterval(tick);const sl=$("surSlot"),d=$("su
   d.querySelectorAll(".reel-col").forEach(c=>{c.querySelector(".reel-name").textContent="";c.classList.remove("held");const h=c.querySelector(".hold");h.disabled=true;h.setAttribute("aria-pressed","false");h.textContent="החזיקו";});
   // calm: lights stay softly lit like candles, a soft lilac glow, one quiet low note
   sl.classList.add("calm");jw.classList.remove("jp-win","jp-run");jw.classList.add("jp-calm");jack.classList.remove("lit","jp-flash");jack.classList.add("calm");
-  jack.innerHTML=`<b>💜 יצאו שלושה 7</b><small class="jc-t">לכבוד הרגע הזה, נויה במתנה תעביר <em>21 ארוחות חמות</em> למיזם "האור של אורי", לזכר סמ"ר אורי ג׳רבי הי״ד. התרומה תתווסף למונה כאן באתר.${demo?' (הדגמה – לא נרשמה תרומה)':""}</small><button type="button" class="jc-more">לסיפור של אורי ←</button>`;
+  jack.innerHTML=`<b>💜 יצאו שלושה 7</b><small class="jc-t">לכבוד הרגע הזה, נויה במתנה תעביר <em>21 ארוחות חמות</em> למיזם "האור של אורי", לזכר סמ"ר אורי ג׳רבי הי״ד, שנהרג בפעולה להשבת חטופים בחאן יונס. התרומה תתווסף למונה כאן באתר.${demo?' (הדגמה – לא נרשמה תרומה)':""}</small><button type="button" class="jc-more">לסיפור של אורי ←</button>`;
   {const sg=sl.querySelector(".slot-sign>span");if(sg)sg.textContent="האור של אורי חי";}
   requestAnimationFrame(buildJB);
   tone(392,2.2,"sine",.06);tone(784,1.4,"sine",.018,.03);buzz(20);
