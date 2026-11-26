@@ -662,10 +662,22 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
   .stage-top .scene{margin:0!important;flex:0 1 auto;width:min(calc(100% - 212px),1000px,calc((100vh - 230px)*1.5))}
   .sets-rot{margin:0 0 8px}
 }
-.surprise-btn{display:flex;flex-direction:column;align-items:center;gap:1px;width:100%;margin:0 0 8px;padding:9px 10px;border:0;border-radius:14px;cursor:pointer;font:inherit;font-weight:800;font-size:15px;color:#3f271c;
-  background:linear-gradient(135deg,#f5e6c4,#e3c58c 55%,#cfab6c);box-shadow:0 4px 14px rgba(176,138,79,.3);transition:transform .2s,box-shadow .2s}
-.surprise-btn small{font-weight:500;font-size:11.5px;color:#6e4d3b}.surprise-btn:hover{transform:translateY(-2px) rotate(-1deg);box-shadow:0 8px 20px rgba(176,138,79,.4)}
-@media (max-width:1099px){.surprise-btn{flex-direction:row;justify-content:center;gap:8px;max-width:420px;margin:0 auto 8px}}
+.surprise-btn{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin:0 0 8px;padding:12px 14px;border:1px solid #d9b46a;border-radius:16px;cursor:pointer;font:inherit;
+  background:radial-gradient(ellipse at 50% -10%,#7a1a2c,#3a0a14 55%,#1c0509);box-shadow:0 0 0 2px #1c0509,0 6px 18px rgba(122,26,44,.35),0 0 18px rgba(217,180,106,.25);transition:transform .2s,box-shadow .2s;overflow:visible}
+.surprise-btn::before,.surprise-btn::after,.slot-cab::before,.slot-cab::after,.slot-sign::before,.slot-sign::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:5px;pointer-events:none;
+  background:radial-gradient(circle,#fff6d2 0 1.7px,rgba(255,214,106,.6) 2.5px,transparent 3.3px) 0 0/12px 12px;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:vbA .9s steps(1) infinite}
+.surprise-btn::after,.slot-cab::after,.slot-sign::after{background-position:6px 6px;animation-name:vbB}
+@keyframes vbA{0%{opacity:1}50%{opacity:.12}}@keyframes vbB{0%{opacity:.12}50%{opacity:1}}
+.surprise-btn:hover{transform:translateY(-2px);box-shadow:0 0 0 2px #1c0509,0 10px 24px rgba(122,26,44,.45),0 0 26px rgba(255,214,106,.45)}
+.surprise-btn:hover::before,.surprise-btn:hover::after{animation-duration:.3s}
+.vb-777{font-weight:900;font-size:24px;letter-spacing:1px;font-style:italic;color:#ff3a35;-webkit-text-stroke:1px #ffd76a;text-shadow:0 0 8px rgba(255,58,53,.75),0 2px 0 #5a0d12;line-height:1;direction:ltr}
+.vb-t{display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.vb-t b{font-size:17px;font-weight:900;color:#ffe6a3;text-shadow:0 0 4px #ffcf66,0 0 12px rgba(255,190,80,.8);animation:neon 6s infinite}
+.vb-t small{font-size:11.5px;font-weight:500;color:#e9d3a8}
+@keyframes neon{0%,90%,94%,100%{opacity:1}91%,93%{opacity:.45}92%{opacity:.85}}
+@media (max-width:1099px){.surprise-btn{max-width:420px;margin:0 auto 8px}}
+@media (prefers-reduced-motion:reduce){.surprise-btn::before,.surprise-btn::after,.vb-t b{animation:none}}
 .mr.sur{position:relative;width:min(580px,96vw);max-height:94vh;overflow:auto}
 .sur-x{position:absolute;top:8px;left:12px;border:0;background:none;font-size:22px;color:#a08670;cursor:pointer;width:auto!important;margin:0!important}
 .sur-snd{position:absolute;top:10px;left:46px;border:0;background:none;font-size:18px;cursor:pointer;width:auto!important;margin:0!important;padding:2px 4px!important}
@@ -699,6 +711,35 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .lv-ball{position:absolute;left:4px;top:calc(4px + var(--p)*100px);width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9a8a,#d62d1f 55%,#7d130b);box-shadow:0 4px 8px rgba(0,0,0,.35);transition:top .4s cubic-bezier(.3,1.8,.5,1)}
 .lever.drag{cursor:grabbing}.lever.drag .lv-rod,.lever.drag .lv-ball{transition:none}
 .sur-act{display:flex;gap:8px}.sur-act button{flex:1}
+/* --- luxury-Vegas machine skin --- */
+@property --ra{syntax:"<angle>";inherits:false;initial-value:0deg}
+.mr.sur.win{background:repeating-conic-gradient(from var(--ra) at 50% 58%,rgba(227,197,140,.3) 0 7deg,transparent 7deg 20deg),#fffaf3;animation:raysR 3s linear infinite}
+@keyframes raysR{to{--ra:360deg}}
+.slot-cab{position:relative;background:linear-gradient(180deg,#4a1220,#24070e 55%,#120306);border-radius:24px;padding:14px 14px 12px;
+  box-shadow:inset 0 0 0 2px #e8ebee,inset 0 0 0 4px #8a8f96,inset 0 0 0 6px #1a0508,0 16px 34px rgba(30,6,10,.45)}
+.slot-cab::before,.slot-cab::after{padding:6px}
+.slot.spinning .slot-cab::before,.slot.spinning .slot-cab::after{animation-duration:.22s}
+.slot.win .slot-cab::after,.slot.win .slot-sign::after{animation-name:vbA}.slot.win .slot-cab::before,.slot.win .slot-cab::after,.slot.win .slot-sign::before,.slot.win .slot-sign::after{animation-duration:.24s}
+.slot-sign{position:relative;margin:2px auto 10px;padding:10px 12px 8px;width:86%;border-radius:60px 60px 12px 12px/34px 34px 12px 12px;background:radial-gradient(ellipse at 50% 0,#3a0a14,#14040a);box-shadow:inset 0 0 0 2px #d9b46a,0 0 16px rgba(255,214,106,.35);text-align:center}
+.slot-sign span{position:relative;font-weight:900;font-size:22px;color:#ffe6a3;text-shadow:0 0 4px #ffcf66,0 0 14px rgba(255,190,80,.9),0 0 28px rgba(255,170,60,.5);animation:neon 5s infinite}
+.slot-reels{position:relative;background:#0b0304;box-shadow:inset 0 3px 12px rgba(0,0,0,.8),0 0 0 2px #8a8f96,0 0 0 3px #e8ebee}
+.reel-win{box-shadow:0 0 0 2px #c9ccd1}
+.pay{position:absolute;z-index:3;top:calc(7px + var(--ch,100px)*.625);width:0;height:0;border:7px solid transparent;transform:translateY(-50%);pointer-events:none;filter:drop-shadow(0 0 3px rgba(255,214,106,.9))}
+.pay-l{left:-3px;border-left:9px solid #ffd76a}.pay-r{right:-3px;border-right:9px solid #ffd76a}
+.slot-reels::before{content:"";position:absolute;z-index:2;left:8px;right:8px;top:calc(7px + var(--ch,100px)*.625);height:2px;transform:translateY(-50%);background:rgba(230,40,40,.85);box-shadow:0 0 6px rgba(255,60,60,.9);pointer-events:none}
+.reel-name{color:#f3dfc0}
+.coin-slot{width:58px;height:16px;margin:10px auto 0;border-radius:5px;background:linear-gradient(180deg,#eef0f2,#7c8188);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 0 #000}
+.coin-slot::after{content:"";width:32px;height:4px;border-radius:2px;background:#0b0304}
+.jackpot{margin-top:8px;position:relative;overflow:hidden;font-family:"Courier New",monospace,inherit;color:#ffcf5a;background:#070102;box-shadow:inset 0 2px 8px rgba(0,0,0,.8),0 0 0 2px #8a8f96;display:flex;flex-direction:column;align-items:center;gap:2px}
+.jackpot b{font-size:18px}.jackpot small{font-size:13px;font-weight:700;color:#ffe6a3}
+.jackpot::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,transparent 0 1px,rgba(0,0,0,.4) 1.4px) 0 0/3px 3px}
+.coin-tray{position:relative;height:30px;margin:10px 12% 0;border-radius:4px 4px 20px 20px;background:linear-gradient(180deg,#050102,#2a0c12);box-shadow:inset 0 5px 9px rgba(0,0,0,.85),0 0 0 2px #c9ccd1}
+.coin{position:absolute;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff5bf,#e6b53e 55%,#94660f);box-shadow:inset 0 0 0 2px #c48c1f,0 1px 2px rgba(0,0,0,.5)}
+.lv-rod{background:linear-gradient(90deg,#7c8188,#f4f6f8 50%,#7c8188)}
+.lv-base{background:linear-gradient(90deg,#24070e,#5a1626);box-shadow:inset 0 0 0 2px #c9ccd1}
+.lv-ball{background:radial-gradient(circle at 35% 28%,#fff 0 3px,#ff6b5e 5px,#d81e14 55%,#6e0a05)}
+@media (max-width:480px){.slot-sign span{font-size:18px}.jackpot b{font-size:15px}.jackpot small{font-size:11.5px}}
+@media (prefers-reduced-motion:reduce){.slot-cab::before,.slot-cab::after,.slot-sign::before,.slot-sign::after,.slot-sign span,.mr.sur.win{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
 .cl-more{flex:1 1 100%;text-align:center;font-size:12.5px;color:var(--cocoa);margin-top:3px}.cl-more b{color:#8a6a33}
@@ -1937,7 +1978,7 @@ function update(flash){
 const setsEl=document.getElementById("sets");
 setsEl.hidden=!SETS.length;
 function setPrice(x){const it=x.items.filter(id=>byId[id]).reduce((a,id)=>a+byId[id].price,0);const k=PACKS.find(p=>p.id===x.pack);const pk=!k?0:(isBag(k)||it>FREE_PACK_AT)?0:(+k.price||0);return it+pk;}
-setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><button type="button" class="surprise-btn" id="surpriseBtn">🎲 הפתיעו אותי <small>מארז אקראי בתקציב שלכם</small></button><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
+setsEl.innerHTML=`<b class="sets-h">מארזי ההשראה של נויה <small>לחצו על מארז, ושנו אותו כרצונכם</small></b><div class="sets-rot" id="setsRot" aria-live="off"><div class="sets-stats" id="setsStats"><span><b data-to="48767" id="boxesSold">0</b>+ מארזים נשלחו</span><i></i><span><b data-to="606" id="orgsCount">0</b>+ חברות וארגונים</span><i></i><span>מאז <b>2024</b></span></div><div class="sets-ori" id="setsOri"><span class="ori-heart" aria-hidden="true">💜</span> נתרמו <b data-to="1869">0</b> ארוחות חמות בשווי <b data-to="33228" data-pre="₪">₪0</b> ליוזמת <span class="ori-n">"האור של אורי"</span>, לזכר סמ"ר אורי ג׳רבי הי״ד <span class="ori-more">לסיפור של אורי ←</span></div><div class="sets-proof" id="setsProof" aria-live="polite"><span class="sp-txt"></span></div></div><div class="sets-col-h">מארזים מוכנים לפי תקציב</div><button type="button" class="surprise-btn" id="surpriseBtn"><span class="vb-777">777</span><span class="vb-t"><b>הפתיעו אותי</b><small>מארז אקראי בתקציב שלכם</small></span></button><div class="sets-row">`+SETS.map((x,i)=>`<button class="set" data-i="${i}" title="${x.name}">${x.img?`<span class="set-img"><img src="${x.img}" alt="${x.name}" loading="lazy" decoding="async"></span>`:""}<span class="set-b">עד ₪${x.budget}</span><span class="set-n">${x.name}</span><span class="set-p">${ils(setPrice(x))}</span><span class="set-go">התחילו מהמארז הזה ←</span></button>`).join("")+`</div>`;
 (function(){const el=document.getElementById("setsProof");if(!el)return;const t=el.querySelector(".sp-txt");
   const L=[["🏦","בנק מזרחי טפחות"],["🎖️","צה״ל"],["🛡️","משטרת ישראל"],["🏦","בנק הפועלים"],["🏛️","עיריית תל אביב"],["⚙️","אלביט"],["📱","פרטנר"],["🏦","בנק דיסקונט"],["🏛️","כנסת ישראל"],["🩺","כללית"],["🏛️","עיריית הרצליה"],["🌿","המשרד להגנת הסביבה"],["🏦","בנק יהב"],["🏗️", "אפריקה ישראל"],["🚗", "שלמה סיקסט"],["🍳", "מטבחי רגבה"],["🍳", "מטבחי דקל קמילה"],["🩺", "מאוחדת"],["🏭", "בתי הזיקוק"],["🏅", "מכון וינגייט"],["🛡️", "הראל חברה לביטוח"],["🤝", "ההסתדרות"],["🏥", "בית החולים שיבא"],["✈️", "פספורטכארד"],["💊", "אלטמן"]];
   let i=0,hold=false;const show=()=>{const [e,n]=L[i%L.length];t.innerHTML=`${e} גם <b>${n}</b> בחרו בנויה במתנה`;};
@@ -2023,7 +2064,7 @@ function tone(f,dur,type,vol,when,slide){const a=sAud();if(!a)return;const t=a.c
 const sTick=()=>tone(1700+Math.random()*400,.022,"square",.03);
 const sThud=()=>{tone(170,.18,"triangle",.3,0,70);tone(950,.03,"square",.06);};
 const sLever=()=>{for(let i=0;i<5;i++)tone(720-i*70,.03,"square",.05,i*.04);tone(110,.22,"triangle",.28,.22,55);};
-const sWin=()=>{[523,659,784,1047,1319].forEach((f,i)=>tone(f,.3,"triangle",.13,i*.09));[1568,2093,2637].forEach((f,i)=>tone(f,.55,"sine",.05,.5+i*.08));};
+const sWin=()=>{[784,1047,1319].forEach((f,i)=>tone(f,.22,"triangle",.1,i*.07));for(let i=0;i<16;i++){const t=.25+i*.075+Math.random()*.03;tone(2300+Math.random()*1400,.11,"triangle",.07,t);tone(4200+Math.random()*900,.05,"sine",.03,t+.012);}};
 const surImg=p=>esc(p.photo||p.img);
 function surOpen(){let d=$("surModal");if(!d){d=document.createElement("div");d.id="surModal";d.className="mr-bg";document.body.appendChild(d);
     d.addEventListener("click",e=>{if(e.target===d){surClose();return;}const b=e.target.closest("[data-sw],[data-sb],[data-sa],[data-hold]");if(!b)return;
@@ -2040,15 +2081,16 @@ function surClose(){if(sur.busy)return;const d=$("surModal");if(d)d.hidden=true;
 function surActs(){return sur.pick?`<button type="button" class="go" data-sa="take">הכניסו למארז וחשפו ✨</button><button type="button" class="ghost" data-sa="spin">🎰 סיבוב נוסף</button>`:`<button type="button" class="go" data-sa="spin">🎰 משכו את הידית</button>`;}
 function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,cur)=>`<button type="button" data-${k}="${v}" aria-pressed="${cur}">${l}</button>`;
   if(sur.cur.length!==n)sur.cur=Array.from({length:n},()=>pool[(Math.random()*pool.length)|0]).filter(Boolean);
-  const bulbs=`<div class="bulbs">${"<i></i>".repeat(13)}</div>`;
   d.innerHTML=`<div class="mr sur" role="dialog" aria-label="הפתיעו אותי"><button type="button" class="sur-x" data-sa="close" aria-label="סגירה">×</button>
     <button type="button" class="sur-snd" data-sa="mute" aria-label="${surSnd?"השתקת צלילים":"הפעלת צלילים"}">${surSnd?"🔊":"🔇"}</button>
     <div class="sur-q"><b>למי?</b><div>${pill("sw","emp","עובדים",sur.who==="emp")}${pill("sw","mgr","מנהלים",sur.who==="mgr")}${pill("sw","cli","לקוחות",sur.who==="cli")}</div></div>
     <div class="sur-q"><b>תקציב למארז</b><div>${[50,99,149,199,249].map(v=>pill("sb",v,"עד ₪"+v,sur.bud===v)).join("")}</div></div>
-    <div class="slot" id="surSlot"><div class="slot-cab">${bulbs}<div class="slot-sign">🎰 הפתיעו אותי</div>
-      <div class="slot-reels" id="surReels">${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip"><div class="cell"><img src="${surImg(p)}" alt=""></div></div></div>
+    <div class="slot" id="surSlot"><div class="slot-cab"><div class="slot-sign"><span>הפתיעו אותי</span></div>
+      <div class="slot-reels" id="surReels"><i class="pay pay-l"></i><i class="pay pay-r"></i>${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip"><div class="cell"><img src="${surImg(p)}" alt=""></div></div></div>
         <span class="reel-name">${sur.pick?esc(p.name):""}</span><button type="button" class="hold" data-hold="${k}" aria-pressed="${sur.held.has(k)}" ${sur.pick?"":"disabled"}>${sur.held.has(k)?"🔒 נעול":"החזיקו"}</button></div>`).join("")}</div>
-      <div class="jackpot" id="surJack">${sur.pick?`${ils(r2(sur.pick.sum))} למארז · בתקציב ✓`:"משכו את הידית! 🎰"}</div>${bulbs}</div>
+      <div class="coin-slot" aria-hidden="true"></div>
+      <div class="jackpot" id="surJack">${sur.pick?`<b>${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</b>`:"<b>משכו את הידית! 🎰</b>"}</div>
+      <div class="coin-tray" id="surTray" aria-hidden="true"></div></div>
       <div class="lever" id="surLever" role="button" aria-label="משיכת הידית"><div class="lv-base"></div><div class="lv-rod"></div><div class="lv-ball"></div></div></div>
     <div class="sur-act" id="surAct">${surActs()}</div></div>`;
   surSize();surLeverBind();}
@@ -2063,7 +2105,7 @@ function surPull(){if(sur.busy)return;const lv=$("surLever");if(!lv){surSpin();r
 function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(sur.held.size?"אין שילוב בתקציב עם המוצרים הנעולים. בטלו נעילה ונסו שוב":"לא מצאנו מוצרים בתקציב הזה. נסו תקציב אחר");return;}
   const d=$("surModal"),slot=$("surSlot"),reels=$("surReels");sur.busy=true;sur.pick=null;slot.classList.remove("win");
   d.querySelectorAll(".hold").forEach(b=>b.disabled=true);d.querySelectorAll("#surAct button").forEach(b=>b.disabled=true);
-  $("surJack").textContent="מגרילים… 🎰";
+  $("surJack").innerHTML="<b>מגרילים… 🎰</b>";slot.classList.add("spinning");$("surTray").innerHTML="";
   const all=P.filter(p=>!p.hidden&&(p.photo||p.img)),rnd=()=>all[(Math.random()*all.length)|0];
   const ch=parseFloat(reels.style.getPropertyValue("--ch"))||100,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
   const cols=[...reels.querySelectorAll(".reel-col")];let order=0,todo=0,done=0;
@@ -2090,10 +2132,15 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
 function surWin(pick,tick){clearInterval(tick);sur.cur=pick.items;sur.pick=pick;sur.busy=false;
   const d=$("surModal"),slot=$("surSlot"),jack=$("surJack");
   d.querySelectorAll(".reel-col").forEach((c,k)=>{c.querySelector(".reel-name").textContent=pick.items[k].name;const h=c.querySelector(".hold");h.disabled=false;});
-  jack.textContent=`${ils(r2(pick.sum))} למארז · בתקציב ✓`;$("surAct").innerHTML=surActs();
-  slot.classList.add("win");sWin();buzz([12,50,12,50,30]);
-  const r=jack.getBoundingClientRect();[0,180,360].forEach((t,i)=>setTimeout(()=>landFx("surJack",r.left+r.width*(.25+.25*i),r.top+r.height/2),t));
-  setTimeout(()=>slot.classList.remove("win"),2600);}
+  jack.innerHTML=`<b>🎉 זכיתם במארז!</b><small>${ils(r2(pick.sum))} למארז · בתקציב ✓</small>`;$("surAct").innerHTML=surActs();
+  const box=d.querySelector(".mr.sur");slot.classList.remove("spinning");slot.classList.add("win");box.classList.add("win");sWin();buzz([12,50,12,50,30]);
+  surCoins();
+  setTimeout(()=>{slot.classList.remove("win");box.classList.remove("win");},2800);}
+function surCoins(){const tray=$("surTray"),jack=$("surJack");if(!tray||!jack)return;const tr=tray.getBoundingClientRect(),jr=jack.getBoundingClientRect(),reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  for(let i=0;i<16;i++){const c=document.createElement("i");c.className="coin";c.style.left=(6+Math.random()*Math.max(10,tr.width-30))+"px";c.style.bottom=(3+Math.random()*7)+"px";tray.appendChild(c);
+    if(reduce)continue;const fy=jr.top-tr.top-6,turn=540+Math.random()*540;
+    c.animate([{transform:`translateY(${fy}px) rotateY(0)`,opacity:0},{opacity:1,offset:.08},{transform:`translateY(0) rotateY(${turn}deg)`,offset:.78,easing:"ease-in"},
+      {transform:`translateY(-7px) rotateY(${turn+90}deg)`,offset:.88,easing:"ease-out"},{transform:`translateY(0) rotateY(${turn+180}deg)`}],{duration:900,delay:i*75,fill:"backwards",easing:"cubic-bezier(.45,0,.9,.6)"});}}
 // "הכניסו למארז וחשפו": the reel products fly into the box one by one, then the reveal starts by itself (no extra click)
 function surTake(){const pick=sur.pick;if(!pick||sur.busy)return;const prev=[new Map(cart),pack];
   const fl=[...document.querySelectorAll("#surReels .reel-win img")].map(im=>({src:im.src,r:im.getBoundingClientRect()}));
