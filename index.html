@@ -929,6 +929,10 @@ h1.brand{margin:0;line-height:1.2}
 .ios-tip b{display:block;font-size:16px;margin-bottom:4px}
 .ios-tip button{margin-top:10px;border:0;background:#4a2e20;color:#fffaf3;font:700 14px inherit;padding:8px 18px;border-radius:24px}
 @media (max-width:640px){.inst span{display:none}.inst{padding:5px 10px;font-size:16px}}
+.combos{flex:1 1 100%;margin:0;text-align:center;font-size:14.5px;color:#7a5a48;letter-spacing:.2px}
+.combos b{color:#8a6a33;font-weight:700}
+.ar-uniq{text-align:center;font-family:'Frank Ruhl Libre',serif;font-size:17px;color:#8a6a33;margin:2px 0 10px}
+@media (max-width:640px){.combos{font-size:13px;padding:0 10px}.ar-uniq{font-size:15px}}
 </style>
 </head>
 <body>
@@ -940,6 +944,7 @@ h1.brand{margin:0;line-height:1.2}
 </header>
 
 <div class="intro" id="intro">
+  <p class="combos" id="combos" aria-live="off"></p>
   <div class="howto" id="howto"><span data-st="1" role="button" tabindex="0"><i>1</i> בוחרים מוצרים</span><span class="arr">←</span><span data-st="2" role="button" tabindex="0"><i>2</i> בוחרים אריזה</span><span class="arr">←</span><span data-st="3" role="button" tabindex="0"><i>3</i> חושפים ✨</span></div>
 </div>
 <div class="layout" id="buildView">
@@ -2080,6 +2085,14 @@ async function generateAi(force){
   }catch(e){showToast(e.name==="AbortError"?"העיצוב לקח יותר מדי זמן. המארז נשאר מוסתר, אפשר לנסות שוב.":"לא הצלחנו לעצב את המארז כרגע ("+e.message+"). המארז נשאר מוסתר, אפשר לנסות שוב.");}
   finally{clearInterval(tick);noyaStop();aiLoad.hidden=true;aiBusy=false;scene.classList.remove("busy");renderAiBar();}
 }
+function combosInfo(){
+  const n=P.filter(p=>!p.hidden).length,m=PACKS.filter(k=>!k.hidden).length;
+  const C=(a,b)=>{let r=1;for(let i=1;i<=b;i++)r=r*(a-b+i)/i;return r;};
+  let t=0;for(let k=2;k<=5;k++)t+=C(n,k);t*=Math.max(1,m);
+  const txt=t>=1e9?`יותר מ־${Math.floor(t/1e9)} מיליארד`:t>=1e6?`יותר מ־${Math.floor(t/1e6)} מיליון`:Math.round(t).toLocaleString("he-IL");
+  return {n,m,txt};
+}
+(function(){const el=document.getElementById("combos");if(!el)return;const c=combosInfo();el.innerHTML=`${c.n} מוצרים · ${c.m} אריזות · <b>${c.txt} שילובים אפשריים</b>`;})();
 function renderAiBar(){
   const b=document.getElementById("aibar"),q=id=>document.getElementById(id);
   if(!cart.size){b.innerHTML="";return;}
@@ -2089,7 +2102,7 @@ function renderAiBar(){
     b.innerHTML=`<div class="reveal-cta"><button class="reveal-btn" id="aiGo">חשפו את המארז שלכם ✨</button><span class="reveal-sub">רגע של הפתעה. תנו לקסם להתגלות.</span></div>`
       +(editing?`<div class="reveal-more"><button class="ghost small" id="aiView">🖼 הצג את המארז המעוצב</button>${reset}</div>`:"");
   } else {
-    b.innerHTML=`<div class="after-reveal"><div class="ar-row"><button class="wa-share" id="aiShare"><svg class="wa-ico" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg>שתפו לאישור בוואטסאפ</button><button class="ai-go" id="aiDl">⬇ הורדת המארז + פרטים</button>${reset}</div>
+    b.innerHTML=`<div class="after-reveal"><div class="ar-uniq">אחד מתוך ${combosInfo().txt} שילובים – המארז הזה נבנה רק בשבילכם ✨</div><div class="ar-row"><button class="wa-share" id="aiShare"><svg class="wa-ico" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg>שתפו לאישור בוואטסאפ</button><button class="ai-go" id="aiDl">⬇ הורדת המארז + פרטים</button>${reset}</div>
       <button class="reveal-btn order-btn" id="aiOrder">המשך להזמנה ←</button><span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
   }
   if(isOwner&&revealed&&!aiBusy&&!(editing&&aiStale)&&!aiImg.hidden)b.insertAdjacentHTML("beforeend",`<div class="reveal-more"><button class="ghost small" id="aiShow">⭐ הוספה לחלון הראווה (רק אתה רואה את הכפתור)</button></div>`);
