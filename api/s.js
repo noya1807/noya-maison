@@ -72,7 +72,7 @@ a{display:block;text-align:center;text-decoration:none;border-radius:14px;paddin
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta property="og:type" content="website"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">
-<meta property="og:image" content="${esc(img)}"><meta property="og:image:width" content="1280"><meta property="og:image:alt" content="תמונת מארז מתנה">
+<meta property="og:image" content="${esc(img)}"><meta property="og:image:secure_url" content="${esc(img)}"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:alt" content="תמונת מארז מתנה"><meta property="og:url" content="${esc(page)}"><meta property="og:site_name" content="נויה במתנה">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="${esc(img)}">
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500&family=Assistant:wght@400;700&display=swap" rel="stylesheet">
 <style>body{margin:0;background:#f7efe4;color:#4a2f22;font-family:Assistant,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px 16px 40px}

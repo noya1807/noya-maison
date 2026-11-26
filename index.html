@@ -2258,22 +2258,25 @@ const msgText=()=>shareMode==="spread"?spreadText():shareText();
 async function shareWhatsApp(src,mode,ready){shareMode=mode||"consult";
   if(sharing||!cart.size)return;
   const mobile=matchMedia("(pointer:coarse)").matches;let wide=false;
+  // a computer whose share panel takes pictures (Chrome / Edge on Windows): the picture itself goes straight to the WhatsApp app
+  const canFile=!mobile&&multiOn()&&shareMode!=="spread"&&!!navigator.canShare&&(()=>{try{return navigator.canShare({files:[new File(["x"],"a.jpg",{type:"image/jpeg"})]});}catch(e){return false;}})();
+  const fileShare=mobile||canFile;
   if(multiOn()&&shareMode!=="spread"){if(!ready){multiReady(()=>shareWhatsApp(src,mode,true));return;}
-    // phone: the detailed picture goes as a file; computer: a wide, light picture so WhatsApp shows it on the link
-    try{showToast("מכין תמונה אחת של כל המארזים…");if(mobile)src=await multiCard();else{src=await multiCardWide();wide=true;}}catch(e){}}
-  if(mobile&&shareReady&&shareReady.src===src){const d=shareReady.data; // second tap: share straight away
+    // phone / share panel: the detailed picture goes as a file; otherwise a wide, light picture so WhatsApp shows it on the link
+    try{showToast("מכין תמונה אחת של כל המארזים…");if(fileShare)src=await multiCard();else{src=await multiCardWide();wide=true;}}catch(e){}}
+  if(fileShare&&shareReady&&shareReady.src===src){const d=shareReady.data; // second tap: share straight away
     try{await navigator.share(d);shareReady=null;}catch(e){if(e.name!=="AbortError")showToast("לא הצלחנו לשתף כרגע. אפשר לנסות שוב.");}return;}
   sharing=true;
   // computer: put the picture itself on the clipboard (started right away, inside the click) so it can be pasted into the chat
   try{
     const jpg=wide?src:await toJpeg(src,1280,.82);
-    if(mobile&&navigator.canShare){
+    if(fileShare&&navigator.canShare){
       const file=new File([await (await fetch(jpg)).blob()],"noya-gift-box.jpg",{type:"image/jpeg"});
       if(navigator.canShare({files:[file]})){
         showToast("מכין את התמונה לשיתוף…");
         const data={files:[file],text:msgText()+"\n\n"+ctaLine()+"\n"+await shareLink(jpg)};
         try{await navigator.share(data);}
-        catch(e){if(e.name==="NotAllowedError"){shareReady={src,data};showToast("התמונה מוכנה. לחצו שוב על כפתור השיתוף כדי לשלוח.");}
+        catch(e){if(e.name==="NotAllowedError"){shareReady={src,data};showToast(mobile?"התמונה מוכנה. לחצו שוב על כפתור השיתוף כדי לשלוח.":"התמונה מוכנה. לחצו שוב על \"שתפו לאישור\", ובחלונית בחרו WhatsApp.");}
           else if(e.name!=="AbortError")throw e;}
         return;
       }
