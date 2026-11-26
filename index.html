@@ -2236,7 +2236,9 @@ function toPngBlob(src){return new Promise((ok,no)=>{const im=new Image();im.cro
   c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);const x=c.getContext("2d");x.fillStyle="#f7efe4";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
   c.toBlob(b=>b?ok(b):no(new Error("png")),"image/png");};im.onerror=no;im.src=src;});}
 function shareText(){const t=totals();
-  if(BTYPES&&btFilled().length>1){btSnap();const f=btFilled();return `מארזי מתנה לאישורך ✨ (נויה במתנה)\n${f.length} סוגי מארזים בהזמנה אחת:\n\n${f.map(i=>withBT(i,()=>`🎁 ${BTYPES[i].name} – ${boxes} מארזים${unpriced()?"":` × ${ils(orderPer())}`}\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}`)).join("\n\n")}\n\nסה״כ: ${totalBoxes()} מארזים${unpriced()?"":` · ${ils(orderGoods())} (לפני מע״מ)`}`;}
+  // several box types: a short message (one line per box) – the full details are in the picture and on the approval page.
+  // (WhatsApp on a computer shows the link's picture only for short messages, like the one-box message)
+  if(BTYPES&&btFilled().length>1){btSnap();const f=btFilled();return `מארזי מתנה לאישורך ✨ (נויה במתנה)\n${f.map(i=>withBT(i,()=>`🎁 ${BTYPES[i].name}: ${boxes} מארזים${unpriced()?"":` × ${ils(orderPer())}`}`)).join("\n")}\nסה״כ: ${totalBoxes()} מארזים${unpriced()?"":` · ${ils(orderGoods())} לפני מע״מ`}\nהפירוט המלא של כל מארז בתמונה ובקישור 👇`;}
   const per=orderPer(),many=boxes>1;
   return `מארז מתנה לאישורך ✨ (נויה במתנה)\n${[...cart].map(([id,q])=>"• "+byId[id].name+(q>1?" × "+q:"")).join("\n")}\nאריזה: ${packLabel()}\nמחיר למארז: ${unpriced()?"בהצעת מחיר":ils(per)+" (לפני מע״מ)"}${many?`\nכמות: ${boxes} מארזים${unpriced()?"":` · סה״כ: ${ils(r2(per*boxes))} (לפני מע״מ)`}`:""}`;}
 let sharing=false, shareReady=null; // shareReady: a prepared phone share, so a second tap can share instantly
