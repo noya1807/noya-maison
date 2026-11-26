@@ -2,7 +2,7 @@
 # Run: python3 tools/seo_gen.py   (rewrites /p, /c, /gifts, /guides and sitemap.xml)
 import re, json, os, html, shutil, datetime, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from content_more import AUD, IND, EVT, SIZES, GUIDES2, EN_PAGES, KIND
+from content_more import AUD, IND, EVT, SIZES, GUIDES2, EN_PAGES, KIND, MORE, BUD_MORE
 from product_copy import COPY
 from guides_extra import EXTRA, CAT_MORE
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -453,7 +453,7 @@ for l in LAND + KIND + AUD + IND + EVT:
     body = f"""<h1>{e(l["h1"])}</h1><p class="lead">{e(l["lead"])}</p>
 <div class="cta-row"><a class="btn" href="/?cat={l["cats"][0]}">בונים מארז עכשיו ←</a><a class="btn ghost" href="{WA}" target="_blank" rel="noopener">מדברים איתנו בוואטסאפ</a></div>
 <ul class="facts"><li>מאז 2024 · 48,000+ מארזים</li><li>600+ חברות וארגונים</li><li>מיתוג עם לוגו</li><li>משלוח אישי לכל נמען</li></ul>
-{VIDEO if l["slug"]=="matanot-laovdim" else ""}<div class="prose">{l["body"]}</div>
+{VIDEO if l["slug"]=="matanot-laovdim" else ""}<div class="prose">{l["body"]}{MORE.get(l["slug"], "")}</div>
 <h2>מוצרים מומלצים למארז</h2><div class="grid">{"".join(card(p) for p in pp)}</div>
 {faq_html(faqs)}"""
     ld = [{"@type": "WebPage", "name": l["title"], "description": l["desc"], "inLanguage": "he"},
@@ -558,6 +558,7 @@ for i, (b, slug, lab) in enumerate(BUD):
 <p>מארז השראה של נויה בתקציב של עד ₪{st['budget']} לפני מע״מ. אפשר לפתוח אותו בבונה, להחליף מוצרים ולהוסיף לוגו.</p>
 <div class="grid">{"".join(card(p) for p in items)}</div>
 <h2>מוצרים שנכנסים בתקציב {e(lab)}</h2><div class="grid">{"".join(card(p) for p in singles)}</div>
+<div class="prose">{BUD_MORE.get(b, "")}</div>
 <div class="prose"><h2>טיפים למארז {e(lab)}</h2><ul>
 <li>מוצר מרכזי אחד טוב עדיף על הרבה פריטים קטנים.</li>
 <li>אריזה יפה וכרטיס ברכה ממותג משדרגים כל מארז – גם בתקציב קטן.</li>
