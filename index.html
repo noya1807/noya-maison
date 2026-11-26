@@ -818,6 +818,27 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .rl-txt{color:#ffe6a3;font-weight:800;font-size:15px;text-shadow:0 0 8px rgba(255,200,80,.6);background:rgba(18,6,8,.55);padding:4px 14px;border-radius:99px}
 .scratch{position:absolute;inset:0;z-index:21;transition:opacity .6s}.scratch canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 .scratch.gone{opacity:0}.sc-all{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:auto!important;margin:0!important;padding:6px 16px!important;border-radius:99px;border:1px solid #8a6a33;background:rgba(255,250,243,.9);color:#5a3a2a;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+/* the small machine that keeps working + the voucher it prints */
+.mm-box{position:absolute;left:50%;top:50%;width:360px;display:flex;flex-direction:column;align-items:center;gap:9px;transform-origin:50% 50%}
+.mm{width:300px;padding:9px 10px 8px;border-radius:20px;background:linear-gradient(180deg,#4a1220,#24070e 55%,#120306);box-shadow:inset 0 0 0 2px #e8ebee,inset 0 0 0 4px #8a8f96,inset 0 0 0 6px #1a0508,0 14px 30px rgba(0,0,0,.5)}
+.mm-sign{position:relative;width:100%;aspect-ratio:300/58;margin-bottom:8px;container-type:inline-size}.mm-sign .vsign{position:absolute;inset:0;width:100%;height:100%}
+.mm-sign span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;color:#ffe6a3;text-shadow:0 0 4px #ffcf66,0 0 12px rgba(255,190,80,.8)}
+.mm-reels{display:flex;gap:6px;background:#0b0304;padding:6px;border-radius:10px;box-shadow:inset 0 3px 10px rgba(0,0,0,.8),0 0 0 2px #8a8f96}
+.mm-win{flex:1;height:84px;overflow:hidden;border-radius:7px;background:#fffaf3;position:relative;box-shadow:0 0 0 2px #c9ccd1}
+.mm-win::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(31,19,13,.75),rgba(31,19,13,0) 26%,rgba(31,19,13,0) 74%,rgba(31,19,13,.75))}
+.mm-strip{animation:mmRoll 1.8s linear infinite}.mm-c{height:84px;padding:5px;box-sizing:border-box}.mm-c img{width:100%;height:100%;object-fit:cover;border-radius:5px;display:block}
+@keyframes mmRoll{from{transform:translateY(-50%)}to{transform:translateY(0)}}
+.mm-n{height:100%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#fbeec9,#d8b371 60%,#a9823f);color:#5a0f1c;font:900 46px Georgia,serif;animation:reelStop .45s cubic-bezier(.2,1.6,.4,1)}
+.mm-slot{width:110px;height:10px;margin:9px auto 0;border-radius:5px;background:#050102;box-shadow:0 0 0 2px #c9ccd1,inset 0 2px 4px rgba(0,0,0,.9)}
+.mm-tk-wrap{margin-top:-14px;width:100px;display:flex;justify-content:center;min-height:116px}
+.mm-ticket{width:94px;height:14px;overflow:hidden;transition:height .9s ease;background:linear-gradient(180deg,#fffaf0,#f3e3c6);border-radius:0 0 6px 6px;box-shadow:0 6px 14px rgba(0,0,0,.35);position:relative}
+.mm-ticket::before{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:radial-gradient(circle at 4px 6px,transparent 3px,#f3e3c6 3.5px) 0 0/8px 6px}
+.mm-tk-in{position:absolute;left:0;right:0;bottom:8px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:0 6px}
+.mm-tk-in b{font:800 9px "Assistant",Arial,sans-serif;letter-spacing:1.5px;color:#8a6a33}.mm-bar{width:70px;height:16px;background:repeating-linear-gradient(90deg,#3f271c 0 2px,transparent 2px 4px,#3f271c 4px 5px,transparent 5px 8px)}
+.mm-tk-in em{font-style:normal;font-size:10.5px;font-weight:800;color:#5a3a2a;text-align:center;line-height:1.2}
+.mm-ticket.done{box-shadow:0 0 0 2px #e3c58c,0 0 18px rgba(255,214,106,.8)}
+.mm-grow{position:fixed;z-index:10060;object-fit:cover;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.mm-strip{animation-duration:6s!important}}
 @media (prefers-reduced-motion:reduce){.vbl,.vst{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
@@ -2453,78 +2474,39 @@ function onCartChanged(){
   if(!cart.size){revealed=false;editing=false;showAi(null);}
   setVeil();renderAiBar();
 }
-// ===== Coming from the slot machine: the wait becomes a luxury roulette (it spins as long as the AI works, then the ball drops into the gold "N" pocket),
-// and the designed box is revealed by a gold scratch card the customer scratches. Only from the machine; the regular build keeps the gift box.
+// ===== Coming from the slot machine: while the AI designs, a small version of the same machine keeps "working" (reels roll with the chosen products)
+// and slowly prints a gold voucher from its ticket slot (visible progress). When the design is ready the reels lock on N·N·N, the voucher comes out
+// ("המארז שלכם ✨") and the designed box grows out of it. Only from the machine; the regular build keeps the gift box.
 var CASINO=null;
 function casinoStart(){casinoEnd();const ov=document.createElement("div");ov.className="casino-ov";
-  ov.innerHTML=`<div class="rl-time">⏱️ עיצוב המארז שלכם לוקח בין 20 ל־40 שניות</div><div class="rl-wrap"><canvas class="rl"></canvas></div><div class="rl-txt">הכדור בדרך…</div><div class="rl-sec">עברו 0 שניות</div>`;scene.appendChild(ov);scene.classList.add("casino");
-  const cv2=ov.querySelector("canvas"),x=cv2.getContext("2d"),dpr=Math.min(2,devicePixelRatio||1);
-  const C={ov,cv:cv2,x,dpr,wa:0,ba:Math.random()*6.28,wv:1.1,bv:-4.2,land:null,landing:false,imgs:[],last:performance.now(),N:14,txtI:0};
-  const sz=()=>{const r=scene.getBoundingClientRect(),S=Math.round(Math.min(r.width,r.height)*.66);cv2.style.width=cv2.style.height=S+"px";cv2.width=cv2.height=S*dpr;C.S=S;};sz();C.rs=sz;addEventListener("resize",sz);
-  Promise.all([...cart.keys()].slice(0,6).map(id=>byId[id]&&loadImg(byId[id].photo||byId[id].img).catch(()=>null))).then(a=>C.imgs=a.filter(Boolean));
-  const msgs=["הכדור בדרך…","נויה מסדרת את המוצרים במארז…","מכוונים את התאורה…","מלטשים את הפרטים האחרונים…","עוד רגע… ✨"];
-  C.t0=Date.now();C.txtT=setInterval(()=>{if(C.landing)return;C.txtI=(C.txtI+1)%msgs.length;ov.querySelector(".rl-txt").textContent=msgs[C.txtI];},3200);
-  C.secT=setInterval(()=>{if(C.landing)return;const n=Math.round((Date.now()-C.t0)/1000);ov.querySelector(".rl-sec").textContent=n>40?"עוד רגע… מלטשים את הפרטים האחרונים ✨":`עברו ${n} שניות`;},1000);
-  const frame=now=>{const dt=Math.min(.05,(now-C.last)/1000);C.last=now;
-    if(C.land){const L=C.land,u=Math.min(1,(now-L.t0)/L.D),e=1-Math.pow(1-u,3);
-      C.wa=L.wa0+L.w0*L.D/1000*(1-Math.pow(1-u,3))/3;C.ba=L.ba0+L.dB*(1-Math.pow(1-u,2));
-      C.br=u<.8?L.tr-(L.tr-L.pr)*Math.min(1,u/.8):L.pr+Math.sin((u-.8)/.2*Math.PI*3)*(1-u)*L.R*.12;
-      if(u>=1&&!L.done){L.done=true;C.ba=C.wa;C.br=L.pr;tone(950,.05,"square",.06);tone(240,.12,"triangle",.12);buzz(18);setTimeout(L.cb,650);}}
-    else{C.wa+=C.wv*dt;C.ba+=C.bv*dt;C.br=null;}
-    rlDraw(C);C.raf=requestAnimationFrame(frame);};
-  C.raf=requestAnimationFrame(frame);CASINO=C;}
-function rlDraw(C){const {x,dpr,N}=C,S=C.S*dpr,R=S/2*.96,cx=S/2,cy=S/2;x.clearRect(0,0,S,S);
-  // rim
-  let g=x.createRadialGradient(cx,cy,R*.8,cx,cy,R);g.addColorStop(0,"#3a1a0c");g.addColorStop(.5,"#7a4a22");g.addColorStop(.85,"#e3c58c");g.addColorStop(1,"#8a6a33");
-  x.fillStyle=g;x.beginPath();x.arc(cx,cy,R,0,6.2832);x.fill();
-  // ball track
-  x.fillStyle="#1a0a06";x.beginPath();x.arc(cx,cy,R*.88,0,6.2832);x.fill();
-  // pockets
-  const a0=C.wa,st=6.2832/N,pr=R*.8,pi=R*.56;
-  for(let i=0;i<N;i++){const a=a0+i*st-st/2;x.beginPath();x.moveTo(cx+pi*Math.cos(a),cy+pi*Math.sin(a));x.arc(cx,cy,pr,a,a+st);x.arc(cx,cy,pi,a+st,a,true);x.closePath();
-    if(i===0){const gg=x.createLinearGradient(cx-pr,cy-pr,cx+pr,cy+pr);gg.addColorStop(0,"#fbeec9");gg.addColorStop(.5,"#d8b371");gg.addColorStop(1,"#a9823f");x.fillStyle=gg;}
-    else x.fillStyle=i%2?"#6a1426":"#160608";x.fill();x.strokeStyle="#d9b46a";x.lineWidth=1.2*dpr;x.stroke();
-    const ma=a0+i*st,mr=(pr+pi)/2,px=cx+mr*Math.cos(ma),py=cy+mr*Math.sin(ma),pz=(pr-pi)*.36;
-    if(i===0){x.save();x.translate(px,py);x.rotate(ma+Math.PI/2);x.fillStyle="#5a0f1c";x.font=`900 ${pz*1.5}px Georgia,serif`;x.textAlign="center";x.textBaseline="middle";x.fillText("N",0,0);x.restore();}
-    else if(C.imgs.length){const im=C.imgs[i%C.imgs.length];x.save();x.beginPath();x.arc(px,py,pz,0,6.2832);x.clip();const s=Math.max(2*pz/im.naturalWidth,2*pz/im.naturalHeight);x.drawImage(im,px-im.naturalWidth*s/2,py-im.naturalHeight*s/2,im.naturalWidth*s,im.naturalHeight*s);x.restore();
-      x.strokeStyle="rgba(227,197,140,.8)";x.lineWidth=1.2*dpr;x.beginPath();x.arc(px,py,pz,0,6.2832);x.stroke();}}
-  // cone + turret
-  g=x.createRadialGradient(cx-R*.1,cy-R*.1,R*.05,cx,cy,pi);g.addColorStop(0,"#fff3cf");g.addColorStop(.35,"#d8b371");g.addColorStop(1,"#5a3a1c");x.fillStyle=g;x.beginPath();x.arc(cx,cy,pi,0,6.2832);x.fill();
-  x.save();x.translate(cx,cy);x.rotate(C.wa);x.fillStyle="#f7e7bf";for(let k=0;k<4;k++){x.rotate(Math.PI/2);x.beginPath();x.ellipse(0,-pi*.42,pi*.07,pi*.36,0,0,6.2832);x.fill();}x.restore();
-  x.fillStyle="#3f271c";x.beginPath();x.arc(cx,cy,pi*.16,0,6.2832);x.fill();
-  // ball
-  const br=C.br==null?R*.84:C.br,bx=cx+br*Math.cos(C.ba),by=cy+br*Math.sin(C.ba),bs=R*.045;
-  const bg=x.createRadialGradient(bx-bs*.35,by-bs*.35,bs*.1,bx,by,bs);bg.addColorStop(0,"#fff");bg.addColorStop(1,"#c9c4bd");
-  x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=6*dpr;x.fillStyle=bg;x.beginPath();x.arc(bx,by,bs,0,6.2832);x.fill();x.shadowBlur=0;
-  if(C.land&&C.land.done){x.strokeStyle="rgba(255,236,170,.9)";x.lineWidth=3*dpr;x.beginPath();x.arc(cx,cy,pr+2*dpr,a0-st/2,a0+st/2);x.stroke();}}
-function casinoLand(cb){const C=CASINO;if(!C){cb();return;}C.landing=true;C.ov.querySelector(".rl-txt").textContent="הכדור נוחת… 🎯";
-  const D=2600,R=C.S*C.dpr/2*.96,w0=C.wv,wa0=C.wa,aE=wa0+w0*D/1000/3,ba0=C.ba;
-  let dB=((aE-ba0)%6.2832+6.2832)%6.2832-6.2832;if(dB>-3)dB-=6.2832;
-  C.land={t0:performance.now(),D,R,w0,wa0,ba0,dB,tr:R*.84,pr:(R*.8+R*.56)/2*1.04,cb:()=>{C.ov.querySelector(".rl-txt").textContent="🎯 נויה!";setTimeout(cb,550);}};
-  [0,.18,.33,.46,.57,.66,.74,.81,.87,.92].forEach((p,i)=>setTimeout(()=>tone(1500-i*40,.03,"square",.04),D*(.45+p*.55)));}
-function casinoEnd(){const C=CASINO;if(!C)return;cancelAnimationFrame(C.raf);clearInterval(C.txtT);clearInterval(C.secT);removeEventListener("resize",C.rs);C.ov.remove();scene.classList.remove("casino");CASINO=null;}
-// gold scratch card over the designed box
-function casinoScratch(done){const r=scene.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
-  const wrap=document.createElement("div");wrap.className="scratch";wrap.innerHTML=`<canvas></canvas><button type="button" class="sc-all">חשפו הכל</button>`;scene.appendChild(wrap);
-  const c=wrap.querySelector("canvas"),x=c.getContext("2d",{willReadFrequently:true});c.width=W;c.height=H;
-  let g=x.createLinearGradient(0,0,W,H);["#b08a4f","#f3dc9f","#c9a14e","#fbeec9","#a9823f","#e9cf95"].forEach((col,i,a)=>g.addColorStop(i/(a.length-1),col));x.fillStyle=g;x.fillRect(0,0,W,H);
-  x.globalAlpha=.18;x.strokeStyle="#fff";x.lineWidth=10*dpr;for(let k=-H;k<W;k+=46*dpr){x.beginPath();x.moveTo(k,0);x.lineTo(k+H,H);x.stroke();}x.globalAlpha=1;
-  for(let k=0;k<160;k++){x.fillStyle=`rgba(255,255,255,${Math.random()*.7})`;x.beginPath();x.arc(Math.random()*W,Math.random()*H,Math.random()*1.8*dpr,0,6.2832);x.fill();}
-  x.fillStyle="#5a3a1c";x.textAlign="center";x.textBaseline="middle";x.font=`800 ${Math.round(Math.max(18,r.width*.045))*dpr}px "Assistant","Segoe UI",Arial,sans-serif`;x.fillText("✨ גרדו לחשיפת המארז שלכם ✨",W/2,H/2);
-  x.font=`600 ${Math.round(Math.max(12,r.width*.024))*dpr}px "Assistant","Segoe UI",Arial,sans-serif`;x.fillStyle="#6e4d3b";x.fillText("גררו את האצבע או העכבר על הכרטיס",W/2,H/2+Math.max(26,r.width*.05)*dpr);
-  x.globalCompositeOperation="destination-out";
-  let down=false,last=null,finished=false,lastSnd=0,chk=0;const BR=Math.max(22,r.width*.05)*dpr;
-  const pt=e=>{const b=c.getBoundingClientRect();return [(e.clientX-b.left)*W/b.width,(e.clientY-b.top)*H/b.height];};
-  const scr=p=>{x.lineCap="round";x.lineWidth=BR*2;x.beginPath();x.moveTo(...(last||p));x.lineTo(...p);x.stroke();x.beginPath();x.arc(p[0],p[1],BR,0,6.2832);x.fill();last=p;
-    const now=performance.now();if(now-lastSnd>70){lastSnd=now;tone(180+Math.random()*120,.04,"triangle",.025);buzz(4);}
-    if(now-chk>250){chk=now;const d=x.getImageData(0,0,W,H).data;let clr=0,tot=0;for(let i=3;i<d.length;i+=4*97){tot++;if(d[i]<40)clr++;}if(clr/tot>.5)finish();}};
-  const finish=()=>{if(finished)return;finished=true;wrap.classList.add("gone");setTimeout(()=>{wrap.remove();done&&done();},650);};
-  c.addEventListener("pointerdown",e=>{down=true;last=null;try{c.setPointerCapture(e.pointerId);}catch(_){}scr(pt(e));});
-  c.addEventListener("pointermove",e=>{if(down)scr(pt(e));});
-  ["pointerup","pointercancel","pointerleave"].forEach(t=>c.addEventListener(t,()=>{down=false;last=null;}));
-  wrap.querySelector(".sc-all").onclick=finish;}
+  const ims=[...cart.keys()].map(id=>byId[id]).filter(Boolean).map(p=>p.photo||p.img);while(ims.length&&ims.length<4)ims.push(...ims);
+  const strip=k=>{const a=ims.slice(k%ims.length).concat(ims.slice(0,k%ims.length));return [...a,...a].map(u=>`<div class="mm-c"><img src="${esc(u)}" alt=""></div>`).join("");};
+  ov.innerHTML=`<div class="mm-box"><div class="rl-time">⏱️ עיצוב המארז שלכם לוקח בין 20 ל־40 שניות</div>
+    <div class="mm"><div class="mm-sign">${vegasRect(300,58,"mm",false)}<span>מכונת המארזים של נויה</span></div>
+      <div class="mm-reels">${[0,1,2].map(k=>`<div class="mm-win"><div class="mm-strip" style="animation-duration:${1.6+k*.35}s">${strip(k)}</div></div>`).join("")}</div>
+      <div class="mm-slot"></div></div>
+    <div class="mm-tk-wrap"><div class="mm-ticket"><div class="mm-tk-in"><b>NOYA · VOUCHER</b><span class="mm-bar"></span><em>מכינים את המארז שלכם…</em></div></div></div>
+    <div class="rl-txt">המכונה מעצבת את המארז…</div><div class="rl-sec">עברו 0 שניות</div></div>`;
+  scene.appendChild(ov);scene.classList.add("casino");
+  const box=ov.querySelector(".mm-box"),fit=()=>{const r=scene.getBoundingClientRect();box.style.transform=`translate(-50%,-50%) scale(${Math.min(1.15,r.width/380,r.height/470)})`;};fit();addEventListener("resize",fit);
+  const C={ov,box,fit,landing:false,t0:Date.now(),txtI:0};const tk=ov.querySelector(".mm-ticket");
+  const msgs=["המכונה מעצבת את המארז…","נויה מסדרת את המוצרים במארז…","מכוונים את התאורה…","מלטשים את הפרטים האחרונים…","עוד רגע… ✨"];
+  C.txtT=setInterval(()=>{if(C.landing)return;C.txtI=(C.txtI+1)%msgs.length;ov.querySelector(".rl-txt").textContent=msgs[C.txtI];},3200);
+  C.secT=setInterval(()=>{if(C.landing)return;const s=(Date.now()-C.t0)/1000,n=Math.round(s);ov.querySelector(".rl-sec").textContent=n>40?"עוד רגע… מלטשים את הפרטים האחרונים ✨":`עברו ${n} שניות`;
+    tk.style.height=Math.round(14+82*(1-Math.exp(-s/16)))+"px";if(n%2===0)tone(820+Math.random()*80,.02,"square",.012);},1000);
+  CASINO=C;}
+function casinoLand(cb){const C=CASINO;if(!C){cb();return;}C.landing=true;const ov=C.ov;ov.querySelector(".rl-txt").textContent="המארז מוכן! ✨";ov.querySelector(".rl-sec").textContent="";
+  ov.querySelectorAll(".mm-win").forEach((w,i)=>setTimeout(()=>{w.innerHTML=`<div class="mm-n">N</div>`;w.classList.add("lock");sThud();buzz(12);},250+i*330));
+  setTimeout(()=>{const tk=ov.querySelector(".mm-ticket");tk.style.height="112px";tk.querySelector("em").textContent="המארז שלכם ✨";tk.classList.add("done");tone(1319,.3,"sine",.1);tone(1976,.4,"sine",.05,.08);},1350);
+  setTimeout(cb,2300);}
+function casinoEnd(){const C=CASINO;if(!C)return;clearInterval(C.txtT);clearInterval(C.secT);removeEventListener("resize",C.fit);C.ov.remove();scene.classList.remove("casino");CASINO=null;}
 function finishRevealCasino(key,src){sceneToTop();aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();showAi(src);setVeil();
-  const ov=CASINO&&CASINO.ov;if(ov){ov.style.transition="opacity .6s";ov.style.opacity="0";}aiBusy=false;STG.flashed=true;playReveal();try{goldRain();}catch(e){}renderAiBar();setTimeout(casinoEnd,600);}
+  const C=CASINO,tk=C&&C.ov.querySelector(".mm-ticket"),sr=scene.getBoundingClientRect();
+  if(tk&&!matchMedia("(prefers-reduced-motion:reduce)").matches){const r=tk.getBoundingClientRect(),im=document.createElement("img");im.src=src;im.className="mm-grow";
+    Object.assign(im.style,{left:r.left+"px",top:r.top+"px",width:r.width+"px",height:r.height+"px"});document.body.appendChild(im);
+    im.animate([{left:r.left+"px",top:r.top+"px",width:r.width+"px",height:r.height+"px",borderRadius:"6px"},{left:sr.left+"px",top:sr.top+"px",width:sr.width+"px",height:sr.height+"px",borderRadius:"18px"}],{duration:750,easing:"cubic-bezier(.3,.1,.2,1)",fill:"forwards"}).onfinish=()=>setTimeout(()=>im.remove(),80);
+    C.ov.style.transition="opacity .5s";C.ov.style.opacity="0";}
+  aiBusy=false;STG.flashed=true;playReveal();try{goldRain();}catch(e){}renderAiBar();setTimeout(casinoEnd,800);}
 function playReveal(){if(matchMedia("(min-width:761px)").matches){const r=scene.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)scene.scrollIntoView({behavior:"smooth",block:"center"});}scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);if(STG.flashed){STG.flashed=false;}else playUnbox();}
 // 3D gift box opens over the picture: ribbon box spins, lid lifts off, gold sparks, the designed box appears
 // gold rain: gold-leaf flakes and tiny sparkles fall over the whole screen for ~3.5s, then fade (only gold/cream tones)
