@@ -810,6 +810,13 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .jackpot.calm{animation:jcIn 1.6s ease both;line-height:1.5}.jackpot.calm b{color:#f0e2ff;letter-spacing:0;font-size:17px}
 .jackpot.calm .jc-t{display:block;color:#e7d4ff;font-size:13px;font-weight:600;max-width:420px}.jackpot.calm .jc-t em{font-style:normal;color:#fff}
 .jackpot.calm .jc-more{width:auto!important;margin:4px 0 0!important;padding:0!important;border:0;background:none;color:#d9b8ff;font:inherit;font-size:12.5px;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer;position:relative;z-index:2}
+/* roulette wait + scratch card (only when coming from the slot machine) */
+.scene.casino .ai-load{display:none!important}.scene.casino canvas:not(.rl){filter:blur(7px) brightness(.8)}
+.casino-ov{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(ellipse at 50% 45%,rgba(90,15,28,.55),rgba(20,6,8,.82));animation:fadein .5s ease}
+.rl-wrap{filter:drop-shadow(0 12px 26px rgba(0,0,0,.5))}.rl{display:block;border-radius:50%}
+.rl-txt{color:#ffe6a3;font-weight:800;font-size:15px;text-shadow:0 0 8px rgba(255,200,80,.6);background:rgba(18,6,8,.55);padding:4px 14px;border-radius:99px}
+.scratch{position:absolute;inset:0;z-index:21;transition:opacity .6s}.scratch canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.scratch.gone{opacity:0}.sc-all{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:auto!important;margin:0!important;padding:6px 16px!important;border-radius:99px;border:1px solid #8a6a33;background:rgba(255,250,243,.9);color:#5a3a2a;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.vbl,.vst{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
@@ -2362,7 +2369,7 @@ function surTake(){const pick=sur.pick;if(!pick||sur.busy)return;sur.busy=true;c
     let landed=0;const n=fl.length;
     const allIn=()=>{const sh=document.createElement("div");sh.className="scene-shine";scene.appendChild(sh);setTimeout(()=>sh.remove(),900);
       showToast("🎰 המארז נכנס! עוד רגע הוא נחשף ✨",true);
-      setTimeout(()=>{if(comboKey()===key&&!aiBusy&&!revealed)generateAi(false);},450);};
+      setTimeout(()=>{if(comboKey()===key&&!aiBusy&&!revealed){window._casinoNext=true;generateAi(false);}},450);};
     if(reduce){allIn();return;}
     fl.forEach((o,i)=>setTimeout(()=>cometFly(o,i,n,()=>{sDing(i,i===n-1);buzz(14);if(++landed===n)allIn();}),120+i*160));
   },T);}
@@ -2445,6 +2452,77 @@ function onCartChanged(){
   if(!cart.size){revealed=false;editing=false;showAi(null);}
   setVeil();renderAiBar();
 }
+// ===== Coming from the slot machine: the wait becomes a luxury roulette (it spins as long as the AI works, then the ball drops into the gold "N" pocket),
+// and the designed box is revealed by a gold scratch card the customer scratches. Only from the machine; the regular build keeps the gift box.
+var CASINO=null;
+function casinoStart(){casinoEnd();const ov=document.createElement("div");ov.className="casino-ov";
+  ov.innerHTML=`<div class="rl-wrap"><canvas class="rl"></canvas></div><div class="rl-txt">הכדור בדרך…</div>`;scene.appendChild(ov);scene.classList.add("casino");
+  const cv2=ov.querySelector("canvas"),x=cv2.getContext("2d"),dpr=Math.min(2,devicePixelRatio||1);
+  const C={ov,cv:cv2,x,dpr,wa:0,ba:Math.random()*6.28,wv:1.1,bv:-4.2,land:null,landing:false,imgs:[],last:performance.now(),N:14,txtI:0};
+  const sz=()=>{const r=scene.getBoundingClientRect(),S=Math.round(Math.min(r.width,r.height)*.66);cv2.style.width=cv2.style.height=S+"px";cv2.width=cv2.height=S*dpr;C.S=S;};sz();C.rs=sz;addEventListener("resize",sz);
+  Promise.all([...cart.keys()].slice(0,6).map(id=>byId[id]&&loadImg(byId[id].photo||byId[id].img).catch(()=>null))).then(a=>C.imgs=a.filter(Boolean));
+  const msgs=["הכדור בדרך…","נויה מסדרת את המוצרים במארז…","מכוונים את התאורה…","מלטשים את הפרטים האחרונים…","עוד רגע… ✨"];
+  C.txtT=setInterval(()=>{if(C.landing)return;C.txtI=(C.txtI+1)%msgs.length;ov.querySelector(".rl-txt").textContent=msgs[C.txtI];},3200);
+  const frame=now=>{const dt=Math.min(.05,(now-C.last)/1000);C.last=now;
+    if(C.land){const L=C.land,u=Math.min(1,(now-L.t0)/L.D),e=1-Math.pow(1-u,3);
+      C.wa=L.wa0+L.w0*L.D/1000*(1-Math.pow(1-u,3))/3;C.ba=L.ba0+L.dB*(1-Math.pow(1-u,2));
+      C.br=u<.8?L.tr-(L.tr-L.pr)*Math.min(1,u/.8):L.pr+Math.sin((u-.8)/.2*Math.PI*3)*(1-u)*L.R*.12;
+      if(u>=1&&!L.done){L.done=true;C.ba=C.wa;C.br=L.pr;tone(950,.05,"square",.06);tone(240,.12,"triangle",.12);buzz(18);setTimeout(L.cb,650);}}
+    else{C.wa+=C.wv*dt;C.ba+=C.bv*dt;C.br=null;}
+    rlDraw(C);C.raf=requestAnimationFrame(frame);};
+  C.raf=requestAnimationFrame(frame);CASINO=C;}
+function rlDraw(C){const {x,dpr,N}=C,S=C.S*dpr,R=S/2*.96,cx=S/2,cy=S/2;x.clearRect(0,0,S,S);
+  // rim
+  let g=x.createRadialGradient(cx,cy,R*.8,cx,cy,R);g.addColorStop(0,"#3a1a0c");g.addColorStop(.5,"#7a4a22");g.addColorStop(.85,"#e3c58c");g.addColorStop(1,"#8a6a33");
+  x.fillStyle=g;x.beginPath();x.arc(cx,cy,R,0,6.2832);x.fill();
+  // ball track
+  x.fillStyle="#1a0a06";x.beginPath();x.arc(cx,cy,R*.88,0,6.2832);x.fill();
+  // pockets
+  const a0=C.wa,st=6.2832/N,pr=R*.8,pi=R*.56;
+  for(let i=0;i<N;i++){const a=a0+i*st-st/2;x.beginPath();x.moveTo(cx+pi*Math.cos(a),cy+pi*Math.sin(a));x.arc(cx,cy,pr,a,a+st);x.arc(cx,cy,pi,a+st,a,true);x.closePath();
+    if(i===0){const gg=x.createLinearGradient(cx-pr,cy-pr,cx+pr,cy+pr);gg.addColorStop(0,"#fbeec9");gg.addColorStop(.5,"#d8b371");gg.addColorStop(1,"#a9823f");x.fillStyle=gg;}
+    else x.fillStyle=i%2?"#6a1426":"#160608";x.fill();x.strokeStyle="#d9b46a";x.lineWidth=1.2*dpr;x.stroke();
+    const ma=a0+i*st,mr=(pr+pi)/2,px=cx+mr*Math.cos(ma),py=cy+mr*Math.sin(ma),pz=(pr-pi)*.36;
+    if(i===0){x.save();x.translate(px,py);x.rotate(ma+Math.PI/2);x.fillStyle="#5a0f1c";x.font=`900 ${pz*1.5}px Georgia,serif`;x.textAlign="center";x.textBaseline="middle";x.fillText("N",0,0);x.restore();}
+    else if(C.imgs.length){const im=C.imgs[i%C.imgs.length];x.save();x.beginPath();x.arc(px,py,pz,0,6.2832);x.clip();const s=Math.max(2*pz/im.naturalWidth,2*pz/im.naturalHeight);x.drawImage(im,px-im.naturalWidth*s/2,py-im.naturalHeight*s/2,im.naturalWidth*s,im.naturalHeight*s);x.restore();
+      x.strokeStyle="rgba(227,197,140,.8)";x.lineWidth=1.2*dpr;x.beginPath();x.arc(px,py,pz,0,6.2832);x.stroke();}}
+  // cone + turret
+  g=x.createRadialGradient(cx-R*.1,cy-R*.1,R*.05,cx,cy,pi);g.addColorStop(0,"#fff3cf");g.addColorStop(.35,"#d8b371");g.addColorStop(1,"#5a3a1c");x.fillStyle=g;x.beginPath();x.arc(cx,cy,pi,0,6.2832);x.fill();
+  x.save();x.translate(cx,cy);x.rotate(C.wa);x.fillStyle="#f7e7bf";for(let k=0;k<4;k++){x.rotate(Math.PI/2);x.beginPath();x.ellipse(0,-pi*.42,pi*.07,pi*.36,0,0,6.2832);x.fill();}x.restore();
+  x.fillStyle="#3f271c";x.beginPath();x.arc(cx,cy,pi*.16,0,6.2832);x.fill();
+  // ball
+  const br=C.br==null?R*.84:C.br,bx=cx+br*Math.cos(C.ba),by=cy+br*Math.sin(C.ba),bs=R*.045;
+  const bg=x.createRadialGradient(bx-bs*.35,by-bs*.35,bs*.1,bx,by,bs);bg.addColorStop(0,"#fff");bg.addColorStop(1,"#c9c4bd");
+  x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=6*dpr;x.fillStyle=bg;x.beginPath();x.arc(bx,by,bs,0,6.2832);x.fill();x.shadowBlur=0;
+  if(C.land&&C.land.done){x.strokeStyle="rgba(255,236,170,.9)";x.lineWidth=3*dpr;x.beginPath();x.arc(cx,cy,pr+2*dpr,a0-st/2,a0+st/2);x.stroke();}}
+function casinoLand(cb){const C=CASINO;if(!C){cb();return;}C.landing=true;C.ov.querySelector(".rl-txt").textContent="הכדור נוחת… 🎯";
+  const D=2600,R=C.S*C.dpr/2*.96,w0=C.wv,wa0=C.wa,aE=wa0+w0*D/1000/3,ba0=C.ba;
+  let dB=((aE-ba0)%6.2832+6.2832)%6.2832-6.2832;if(dB>-3)dB-=6.2832;
+  C.land={t0:performance.now(),D,R,w0,wa0,ba0,dB,tr:R*.84,pr:(R*.8+R*.56)/2*1.04,cb:()=>{C.ov.querySelector(".rl-txt").textContent="🎯 נויה!";setTimeout(cb,550);}};
+  [0,.18,.33,.46,.57,.66,.74,.81,.87,.92].forEach((p,i)=>setTimeout(()=>tone(1500-i*40,.03,"square",.04),D*(.45+p*.55)));}
+function casinoEnd(){const C=CASINO;if(!C)return;cancelAnimationFrame(C.raf);clearInterval(C.txtT);removeEventListener("resize",C.rs);C.ov.remove();scene.classList.remove("casino");CASINO=null;}
+// gold scratch card over the designed box
+function casinoScratch(done){const r=scene.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
+  const wrap=document.createElement("div");wrap.className="scratch";wrap.innerHTML=`<canvas></canvas><button type="button" class="sc-all">חשפו הכל</button>`;scene.appendChild(wrap);
+  const c=wrap.querySelector("canvas"),x=c.getContext("2d",{willReadFrequently:true});c.width=W;c.height=H;
+  let g=x.createLinearGradient(0,0,W,H);["#b08a4f","#f3dc9f","#c9a14e","#fbeec9","#a9823f","#e9cf95"].forEach((col,i,a)=>g.addColorStop(i/(a.length-1),col));x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.globalAlpha=.18;x.strokeStyle="#fff";x.lineWidth=10*dpr;for(let k=-H;k<W;k+=46*dpr){x.beginPath();x.moveTo(k,0);x.lineTo(k+H,H);x.stroke();}x.globalAlpha=1;
+  for(let k=0;k<160;k++){x.fillStyle=`rgba(255,255,255,${Math.random()*.7})`;x.beginPath();x.arc(Math.random()*W,Math.random()*H,Math.random()*1.8*dpr,0,6.2832);x.fill();}
+  x.fillStyle="#5a3a1c";x.textAlign="center";x.textBaseline="middle";x.font=`800 ${Math.round(Math.max(18,r.width*.045))*dpr}px "Assistant","Segoe UI",Arial,sans-serif`;x.fillText("✨ גרדו לחשיפת המארז שלכם ✨",W/2,H/2);
+  x.font=`600 ${Math.round(Math.max(12,r.width*.024))*dpr}px "Assistant","Segoe UI",Arial,sans-serif`;x.fillStyle="#6e4d3b";x.fillText("גררו את האצבע או העכבר על הכרטיס",W/2,H/2+Math.max(26,r.width*.05)*dpr);
+  x.globalCompositeOperation="destination-out";
+  let down=false,last=null,finished=false,lastSnd=0,chk=0;const BR=Math.max(22,r.width*.05)*dpr;
+  const pt=e=>{const b=c.getBoundingClientRect();return [(e.clientX-b.left)*W/b.width,(e.clientY-b.top)*H/b.height];};
+  const scr=p=>{x.lineCap="round";x.lineWidth=BR*2;x.beginPath();x.moveTo(...(last||p));x.lineTo(...p);x.stroke();x.beginPath();x.arc(p[0],p[1],BR,0,6.2832);x.fill();last=p;
+    const now=performance.now();if(now-lastSnd>70){lastSnd=now;tone(180+Math.random()*120,.04,"triangle",.025);buzz(4);}
+    if(now-chk>250){chk=now;const d=x.getImageData(0,0,W,H).data;let clr=0,tot=0;for(let i=3;i<d.length;i+=4*97){tot++;if(d[i]<40)clr++;}if(clr/tot>.5)finish();}};
+  const finish=()=>{if(finished)return;finished=true;wrap.classList.add("gone");setTimeout(()=>{wrap.remove();done&&done();},650);};
+  c.addEventListener("pointerdown",e=>{down=true;last=null;try{c.setPointerCapture(e.pointerId);}catch(_){}scr(pt(e));});
+  c.addEventListener("pointermove",e=>{if(down)scr(pt(e));});
+  ["pointerup","pointercancel","pointerleave"].forEach(t=>c.addEventListener(t,()=>{down=false;last=null;}));
+  wrap.querySelector(".sc-all").onclick=finish;}
+function finishRevealCasino(key,src){sceneToTop();aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();showAi(src);setVeil();
+  casinoEnd();aiBusy=false;renderAiBar();casinoScratch(()=>{STG.flashed=true;playReveal();try{goldRain();}catch(e){}renderAiBar();});}
 function playReveal(){if(matchMedia("(min-width:761px)").matches){const r=scene.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)scene.scrollIntoView({behavior:"smooth",block:"center"});}scene.classList.remove("revealing");void scene.offsetWidth;scene.classList.add("revealing");setTimeout(()=>scene.classList.remove("revealing"),2400);if(STG.flashed){STG.flashed=false;}else playUnbox();}
 // 3D gift box opens over the picture: ribbon box spins, lid lifts off, gold sparks, the designed box appears
 // gold rain: gold-leaf flakes and tiny sparkles fall over the whole screen for ~3.5s, then fade (only gold/cream tones)
@@ -2495,7 +2573,7 @@ if(matchMedia("(hover:hover) and (pointer:fine)").matches&&!matchMedia("(prefers
     const sh=e.target.closest&&e.target.closest(".show");const show=document.getElementById("show");
     if(show){if(sh)tilt(show,e,6);else if(show.style.getPropertyValue("--rx"))untilt(show);}},{passive:true});
 }
-function finishReveal(key,src){sceneToTop();
+function finishReveal(key,src){if(CASINO&&!CASINO.landing){casinoLand(()=>finishRevealCasino(key,src));setTimeout(()=>{if(CASINO){aiBusy=true;renderAiBar();}},0);return;}sceneToTop();
   if(STG.on){STG.flashed=true;stageEnd(true);scene.classList.remove("stg-flash");void scene.offsetWidth;scene.classList.add("stg-flash");setTimeout(()=>scene.classList.remove("stg-flash"),900);}
   aiCurrent=key;revealed=true;editing=false;aiStale=false;revealedKey=contentKey();
   showAi(src);setVeil();playReveal();renderAiBar();
@@ -2618,7 +2696,7 @@ async function generateAi(force){
   aiBusy=true;scene.classList.add("busy");renderAiBar();
   sceneToTop();
   const t0=Date.now();let si=1;
-  aiLoad.hidden=false;noyaSetup();const tick=setInterval(()=>{const s=Math.round((Date.now()-t0)/1000);document.getElementById("aiTime").textContent=s<=30?s+" שניות · בדרך כלל 15–30 שניות":s+" שניות · עוד רגע… מלטשים את הפרטים האחרונים ✨";
+  aiLoad.hidden=false;noyaSetup();if(window._casinoNext){window._casinoNext=false;casinoStart();}const tick=setInterval(()=>{const s=Math.round((Date.now()-t0)/1000);document.getElementById("aiTime").textContent=s<=30?s+" שניות · בדרך כלל 15–30 שניות":s+" שניות · עוד רגע… מלטשים את הפרטים האחרונים ✨";
     if(s%3===0){const k=(si++)%STEPS.length;document.getElementById("aiStep").textContent=STEPS[k];noyaStep(k);}},1000);
   document.getElementById("aiStep").textContent=STEPS[0];noyaStep(0);
   try{
@@ -2642,8 +2720,8 @@ async function generateAi(force){
     aiCache.set(key,j.image);
     if(comboKey()===key)finishReveal(key,j.image);
     else showToast("המארז השתנה בזמן העיצוב. לחצו שוב על \"חשפו את המארז שלכם\" לעיצוב התכולה העדכנית.");
-  }catch(e){if(aiSilent){aiSilent=false;}else showToast(e.name==="AbortError"?"העיצוב לקח יותר מדי זמן. המארז נשאר מוסתר, אפשר לנסות שוב.":"לא הצלחנו לעצב את המארז כרגע ("+e.message+"). המארז נשאר מוסתר, אפשר לנסות שוב.");}
-  finally{clearInterval(tick);noyaStop();aiLoad.hidden=true;aiBusy=false;scene.classList.remove("busy");renderAiBar();}
+  }catch(e){if(CASINO&&!CASINO.landing)casinoEnd();if(aiSilent){aiSilent=false;}else showToast(e.name==="AbortError"?"העיצוב לקח יותר מדי זמן. המארז נשאר מוסתר, אפשר לנסות שוב.":"לא הצלחנו לעצב את המארז כרגע ("+e.message+"). המארז נשאר מוסתר, אפשר לנסות שוב.");}
+  finally{clearInterval(tick);noyaStop();aiLoad.hidden=true;aiBusy=false;scene.classList.remove("busy");if(CASINO&&!CASINO.landing)casinoEnd();renderAiBar();}
 }
 function combosShort(){return combosInfo().txt.replace(/^יותר מ־/,"");}
 function combosInfo(){
