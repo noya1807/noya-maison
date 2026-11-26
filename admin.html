@@ -721,6 +721,16 @@ async function pullInbox(){
     if(n||nq||nl||nld)toast([n?`${n} הזמנות חדשות`:"",nq?`${nq} הצעות מחיר חדשות`:"",nld?`${nld} לידים חדשים (מארז שמור)`:"",nl?`${nl} קבצי כתובות חדשים`:""].filter(Boolean).join(" ו-")+" מהבונה",5000);if(view==="dash"||view==="orders")render();
   }catch(e){}
 }
+// ---------- 777 in the builder's slot machine → 21 hot meals to "האור של אורי". Mark each one after you sent the donation: the site counter grows only then ----------
+async function loadJack(){const el=$("#jpBox");if(!el)return;
+  try{const s=await api("jackpots");const w=s.wins||[];if(!w.length&&!s.meals){el.hidden=true;return;}el.hidden=false;
+    const open=w.filter(x=>x.shown&&!x.donated).length;
+    el.innerHTML=`<b>🎰 777 במכונת המארזים – תרומות ל"האור של אורי"</b> · הועברו עד היום דרך המכונה: <b>${num(s.meals)}</b> ארוחות${open?` · <b style="color:#b3261e">${open} ממתינות להעברה (21 ארוחות כל אחת)</b>`:""}`
+      +w.slice(0,20).map(x=>`<div class="row" style="gap:8px;margin-top:6px;align-items:center"><span>${new Date(x.at).toLocaleString("he-IL",{dateStyle:"medium",timeStyle:"short"})}</span>
+        ${x.donated?`<span>✓ הועבר ${x.donatedAt?new Date(x.donatedAt).toLocaleDateString("he-IL"):""}</span>`:x.shown?`<button class="btn sm gold" data-jd="${esc(x.id)}">✓ העברנו את התרומה (21 ארוחות)</button>`:`<span class="muted">לא הוצג ללקוח (נסגר לפני הסוף)</span><button class="btn sm ghost" data-jx="${esc(x.id)}">מחיקה</button>`}</div>`).join("");
+    el.querySelectorAll("[data-jd]").forEach(b=>b.onclick=async()=>{if(!confirm("לסמן שהעברת 21 ארוחות חמות ל\"האור של אורי\"? המונה באתר יעלה ב-21."))return;b.disabled=true;try{await api("jackpotdone",{method:"POST",body:{id:b.dataset.jd}});toast("✓ נרשם. המונה באתר יתעדכן תוך דקה");loadJack();}catch(e){toast(e.message);b.disabled=false;}});
+    el.querySelectorAll("[data-jx]").forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api("jackpotdel",{method:"POST",body:{id:b.dataset.jx}});loadJack();}catch(e){toast(e.message);b.disabled=false;}});
+  }catch(e){el.hidden=true;}}
 function orderFromBuilder(o){
   const boxes=Math.max(1,num(o.boxes)||1);
   const linked=bid=>db.products.filter(x=>!x.alt&&(x.builderIds||[]).includes(String(bid))).map(x=>x.sku); // alt = וריאנט חלופי (ריח B) של אותו פריט – לא נספר כחלק מסט
@@ -842,6 +852,7 @@ function renderOrders(){
   const S=work?stockAll():{};const pickRows=Object.values(pick).sort((a,b)=>b.qty-a.qty);
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>הזמנות</h1><p class="sub">כל הזמנה מהבונה נכנסת לכאן לבד כ"ממתינה". רק הזמנות שאישרת נספרות ברווח ובמלאי.</p></div>
     <div class="row"><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
+  <div id="jpBox" hidden style="margin:0 0 12px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(124,77,160,.10),rgba(124,77,160,.03));border:1px solid rgba(124,77,160,.25);color:#5b3a78"></div>
   <div class="row" style="margin-bottom:8px">${[["pending","ממתינות"],["work","בעבודה"],["done","נשלחו / נאספו"],["quote","הצעות מחיר"],["lead","לידים 💾"],["approved","כל המאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
   <div class="row" style="margin-bottom:12px;gap:6px">${[["all","כל סוגי האספקה"],["pickup","🏬 איסוף"],["ship","🏢 לכתובת אחת"],["indiv","🏠 לכל מקבל"]].map(([k,l])=>`<button class="btn sm ${dlvFilter===k?"":"ghost"}" data-df="${k}">${l}</button>`).join("")}
     ${work?`<span style="flex:1"></span><button class="btn sm gold" id="oExport">⬇ ייצוא משלוחים מוכנים לשליח</button>`:""}</div>
@@ -867,6 +878,7 @@ function renderOrders(){
   if($("#oPickCsv"))$("#oPickCsv").onclick=()=>downloadCsv(`ליקוט-${new Date().toISOString().slice(0,10)}.csv`,[["פריט","מק״ט","כמות לארוז","בהזמנות"],...pickRows.map(r=>[r.name,r.sku||"",r.qty,r.orders])]);
   document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=()=>{selOrder=tr.dataset.oid;view="orders";render();});
   $("#oPull").onclick=async()=>{toast("בודק…");await pullInbox();renderOrders();};
+  loadJack();
   $("#oNew").onclick=()=>{const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:"ידני",createdAt:new Date().toISOString(),status:"pending",customer:{},boxes:1,lines:[],engrave:false,card:false,dlvMode:"ship",gross:0,notes:""};
     db.orders.unshift(o);touch();selOrder=o.id;render();};
 }

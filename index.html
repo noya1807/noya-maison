@@ -789,6 +789,11 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 @media (min-width:1100px){.stage-top .sets-ori.ori-fixed{order:0;width:auto;margin:0 0 12px!important;padding:8px 10px;border-radius:12px;font-size:11.5px;line-height:1.45}
   .stage-top .sets-row{order:2}}
 .stage-top .sets-row{justify-content:flex-start!important}
+.seven{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:6px;background:radial-gradient(circle at 50% 35%,#7a1a2c,#2a0710);font:italic 900 calc(var(--ch,100px)*.62) "Assistant","Segoe UI",Arial,sans-serif;color:#ff3a35;-webkit-text-stroke:1.5px #ffd76a;text-shadow:0 0 10px rgba(255,58,53,.6);line-height:1}
+.jack-card{margin:2px 0 10px;padding:10px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(124,77,160,.12),rgba(124,77,160,.04));border:1px solid rgba(124,77,160,.3);color:#5b3a78;font-size:14px;line-height:1.55;text-align:center}
+.jack-card b{color:#6d3f94}.jack-card .jc-more{width:auto!important;margin:0!important;padding:0!important;border:0;background:none;color:#6d3f94;font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.jackpot small.jp-don{color:#e7c9ff;font-size:11.5px}
+.ori-777{display:block;margin-top:3px;font-size:.92em;font-weight:700;color:#6d3f94}
 @media (prefers-reduced-motion:reduce){.vbl,.vst{animation:none}}
 @media (max-width:480px){.mr.sur{padding:14px 10px!important}.slot-sign{font-size:17px}.jackpot{font-size:15px}.lever{flex-basis:38px;width:38px}.reel-name{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.bulbs i,.slot.win .jackpot,.reel-col.stop .reel-win{animation:none}}
@@ -2146,6 +2151,8 @@ const sThud=()=>{tone(170,.18,"triangle",.3,0,70);tone(950,.03,"square",.06);};
 const sLever=()=>{for(let i=0;i<5;i++)tone(720-i*70,.03,"square",.05,i*.04);tone(110,.22,"triangle",.28,.22,55);};
 const sWin=()=>{[784,1047,1319].forEach((f,i)=>tone(f,.22,"triangle",.1,i*.07));for(let i=0;i<16;i++){const t=.25+i*.075+Math.random()*.03;tone(2300+Math.random()*1400,.11,"triangle",.07,t);tone(4200+Math.random()*900,.05,"sine",.03,t+.012);}};
 const surImg=p=>esc(p.photo||p.img);
+const cellHTML=p=>p==="7"?`<div class="cell"><span class="seven">7</span></div>`:`<div class="cell"><img src="${surImg(p)}" alt=""></div>`;
+const JACK_EP=window.NOYA_OFFICE_ENDPOINT||"api/office";let JACK={meals:0};
 function surOpen(){let d=$("surModal");if(!d){d=document.createElement("div");d.id="surModal";d.className="mr-bg";document.body.appendChild(d);
     d.addEventListener("click",e=>{if(e.target===d){surClose();return;}const b=e.target.closest("[data-sw],[data-sb],[data-sa],[data-hold]");if(!b)return;
       if(b.dataset.sa==="close"){surClose();return;}
@@ -2165,10 +2172,10 @@ function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,c
     <button type="button" class="sur-snd" data-sa="mute" aria-label="${surSnd?"השתקת צלילים":"הפעלת צלילים"}">${surSnd?"🔊":"🔇"}</button>
     <div class="sur-q sur-who"><b>תקציב למארז</b><div>${[50,99,149,199,249].map(v=>pill("sb",v,"עד ₪"+v,sur.bud===v)).join("")}</div></div>
     <div class="slot" id="surSlot"><div class="slot-cab"><div class="slot-sign vs-wrap">${vegasRect(300,72,"ms",false)}<span>מכונת המארזים של נויה</span></div>
-      <div class="slot-reels" id="surReels">${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip"><div class="cell"><img src="${surImg(p)}" alt=""></div></div></div>
-        <span class="reel-name">${sur.pick?esc(p.name):""}</span><button type="button" class="hold" data-hold="${k}" aria-pressed="${sur.held.has(k)}" ${sur.pick?"":"disabled"}>${sur.held.has(k)?"🔒 נעול":"החזיקו"}</button></div>`).join("")}</div>
+      <div class="slot-reels" id="surReels">${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip">${cellHTML(p)}</div></div>
+        <span class="reel-name">${sur.pick&&p!=="7"?esc(p.name):""}</span><button type="button" class="hold" data-hold="${k}" aria-pressed="${sur.held.has(k)}" ${sur.pick?"":"disabled"}>${sur.held.has(k)?"🔒 נעול":"החזיקו"}</button></div>`).join("")}</div>
       <div class="coin-slot" aria-hidden="true"></div>
-      <div class="jackpot-wrap" id="surJW"><div class="jackpot" id="surJack">${sur.pick?`<b>${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</b>`:`<b>משכו את הידית! 🎰</b><small>${combosInfo().txt} שילובים</small>`}</div><svg class="jp-bulbs" id="surJB" aria-hidden="true"></svg></div>
+      <div class="jackpot-wrap" id="surJW"><div class="jackpot" id="surJack">${sur.pick?`<b>${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</b>`:`<b>משכו את הידית! 🎰</b><small>${combosInfo().txt} שילובים</small>${JACK.meals>0?`<small class="jp-don">💜 נתרמו דרך המכונה ${JACK.meals.toLocaleString("he-IL")} ארוחות חמות ל"האור של אורי"</small>`:""}`}</div><svg class="jp-bulbs" id="surJB" aria-hidden="true"></svg></div>
       <div class="coin-tray" id="surTray" aria-hidden="true"></div></div>
       <div class="lever" id="surLever" role="button" aria-label="משיכת הידית"><div class="lv-base"></div><div class="lv-rod"></div><div class="lv-ball"></div></div></div>
     <div class="sur-act" id="surAct">${surActs()}</div></div>`;
@@ -2188,24 +2195,24 @@ function surLeverBind(){const lv=$("surLever");if(!lv)return;let y0=null,p=0;con
   lv.onpointerdown=e=>{if(sur.busy)return;y0=e.clientY;p=0;try{lv.setPointerCapture(e.pointerId);}catch(_){}lv.classList.add("drag");};
   lv.onpointermove=e=>{if(y0===null)return;const old=p;set((e.clientY-y0)/96);if(Math.floor(p*5)!==Math.floor(old*5))tone(700-p*300,.03,"square",.04);};
   lv.onpointerup=lv.onpointercancel=e=>{if(y0===null)return;const moved=Math.abs(e.clientY-y0);y0=null;lv.classList.remove("drag");if(p>.5||moved<6)surPull();else set(0);};}
-function surPull(){if(sur.busy)return;const lv=$("surLever");if(!lv){surSpin();return;}sLever();buzz(20);lv.classList.remove("drag");lv.style.setProperty("--p",1);
+function surPull(){if(sur.busy)return;sur.dec=sur.held.size?Promise.resolve({jackpot:false}):fetch(JACK_EP+"?a=spin",{method:"POST"}).then(r=>r.json()).catch(()=>({jackpot:false}));const lv=$("surLever");if(!lv){surSpin();return;}sLever();buzz(20);lv.classList.remove("drag");lv.style.setProperty("--p",1);
   setTimeout(()=>{lv.style.setProperty("--p",0);surSpin();},300);}
 function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(sur.held.size?"אין שילוב בתקציב עם המוצרים הנעולים. בטלו נעילה ונסו שוב":"לא מצאנו מוצרים בתקציב הזה. נסו תקציב אחר");return;}
   const d=$("surModal"),slot=$("surSlot"),reels=$("surReels");sur.busy=true;sur.pick=null;slot.classList.remove("win");
   d.querySelectorAll(".hold").forEach(b=>b.disabled=true);d.querySelectorAll("#surAct button").forEach(b=>b.disabled=true);
-  $("surJack").innerHTML="<b>מגרילים… 🎰</b>";$("surJack").classList.remove("lit","jp-flash");$("surJW").classList.remove("jp-win","jp-run");sur.winId=(sur.winId||0)+1;slot.classList.add("spinning");$("surTray").innerHTML="";
-  const all=P.filter(p=>!p.hidden&&(p.photo||p.img)),rnd=()=>all[(Math.random()*all.length)|0];
+  $("surJack").innerHTML="<b>מגרילים… 🎰</b>";$("surJack").classList.remove("lit","jp-flash");d.querySelector(".jack-card")?.remove();$("surJW").classList.remove("jp-win","jp-run");sur.winId=(sur.winId||0)+1;slot.classList.add("spinning");$("surTray").innerHTML="";
+  const all=P.filter(p=>!p.hidden&&(p.photo||p.img)),rnd=()=>Math.random()<.09?"7":all[(Math.random()*all.length)|0];let anyStop=false;
   const ch=parseFloat(reels.style.getPropertyValue("--ch"))||100,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
   const cols=[...reels.querySelectorAll(".reel-col")];let order=0,todo=0,done=0;
   const tick=setInterval(sTick,70);
   const live=cols.map((c,k)=>k).filter(k=>!sur.held.has(k)),cand=live.length>1?live.filter(k=>k!==sur.lastTense):live,lastK=cand[(Math.random()*cand.length)|0],slot2=slot;sur.lastTense=lastK;
-  const finishCol=(col,k)=>{const strip=col.querySelector(".strip");strip.getAnimations().forEach(a=>a.cancel());strip.innerHTML=`<div class="cell"><img src="${surImg(pick.items[k])}" alt=""></div>`;strip.style.transform="";
-    col.querySelector(".reel-name").textContent=pick.items[k].name;if(++done===todo)surWin(pick,tick);};
+  const finishCol=(col,k)=>{const strip=col.querySelector(".strip");strip.getAnimations().forEach(a=>a.cancel());strip.innerHTML=cellHTML(pick.jackpot?"7":pick.items[k]);strip.style.transform="";
+    col.querySelector(".reel-name").textContent=pick.jackpot?"":pick.items[k].name;if(++done===todo)surWin(pick,tick);};
   cols.forEach((col,k)=>{if(sur.held.has(k))return;todo++;
     // ---- the LAST reel keeps rolling alone, slows down item by item, almost stops… and lands (tension!)
     if(!reduce&&k===lastK){const ord=live.length-1,K=5,strip=col.querySelector(".strip");col.querySelector(".reel-name").textContent="";
       const cells=[rnd(),pick.items[k],...Array.from({length:(matchMedia("(pointer:coarse)").matches?10+ord*4:16+ord*6)+K},rnd),sur.cur[k]||rnd()];
-      strip.innerHTML=cells.map(p=>`<div class="cell"><img src="${surImg(p)}" alt=""></div>`).join("");
+      strip.innerHTML=cells.map(cellHTML).join("");
       const start=-(cells.length-1)*ch,end=-ch,mid=-(1+K)*ch,T1=ord?1500+(ord-1)*560+250:1300,wait=ms=>new Promise(r=>setTimeout(r,ms));
       strip.style.transform=`translateY(${start}px)`;strip.classList.add("blur");
       (async()=>{
@@ -2221,7 +2228,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
     const strip=col.querySelector(".strip"),name=col.querySelector(".reel-name");name.textContent="";
     // cells top→bottom: [extra, target, …random…, current]. The reel rolls DOWN from "current" to "target", like a real machine
     const cells=[rnd(),pick.items[k],...Array.from({length:L},rnd),sur.cur[k]||rnd()];
-    strip.innerHTML=cells.map(p=>`<div class="cell"><img src="${surImg(p)}" alt=""></div>`).join("");
+    strip.innerHTML=cells.map(cellHTML).join("");
     const start=-(cells.length-1)*ch,end=-ch;strip.style.transform=`translateY(${start}px)`;
     if(!reduce)strip.classList.add("blur");
     const an=strip.animate(reduce?[{transform:`translateY(${start}px)`},{transform:`translateY(${end}px)`}]:[
@@ -2232,11 +2239,14 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
       {transform:`translateY(${end+ch*.06}px)`,offset:.95,easing:"ease-in-out"},                   // …a little down…
       {transform:`translateY(${end}px)`}],{duration:dur,fill:"forwards"});
     setTimeout(()=>strip.classList.remove("blur"),dur*.66);
-    setTimeout(()=>{sThud();buzz(15);col.classList.remove("stop");void col.offsetWidth;col.classList.add("stop");},dur*(reduce?1:.8));
-    an.onfinish=()=>{strip.innerHTML=`<div class="cell"><img src="${surImg(pick.items[k])}" alt=""></div>`;an.cancel();strip.style.transform="";
-      name.textContent=pick.items[k].name;if(++done===todo)surWin(pick,tick);};});
+    setTimeout(()=>{anyStop=true;sThud();buzz(15);col.classList.remove("stop");void col.offsetWidth;col.classList.add("stop");},dur*(reduce?1:.8));
+    an.onfinish=()=>{strip.innerHTML=cellHTML(pick.jackpot?"7":pick.items[k]);an.cancel();strip.style.transform="";
+      name.textContent=pick.jackpot?"":pick.items[k].name;if(++done===todo)surWin(pick,tick);};});
+  (sur.dec||Promise.resolve({jackpot:false})).then(d=>{if(!d||!d.jackpot)return;
+    if(anyStop||done){fetch(JACK_EP+"?a=spinvoid",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:d.id})}).catch(()=>{});return;}
+    pick.jackpot=d.id;cols.forEach(c=>{const t=c.querySelector(".strip").children[1];if(t)t.outerHTML=cellHTML("7");});});
   if(!todo)surWin(pick,tick);}
-function surWin(pick,tick){clearInterval(tick);{const sl=$("surSlot");if(sl){sl.classList.remove("tense");sl.querySelectorAll(".reel-col.last").forEach(c=>c.classList.remove("last"));}}sur.cur=pick.items;sur.pick=pick;sur.busy=false;
+function surWin(pick,tick){if(pick.jackpot)return surJackWin(pick,tick);clearInterval(tick);{const sl=$("surSlot");if(sl){sl.classList.remove("tense");sl.querySelectorAll(".reel-col.last").forEach(c=>c.classList.remove("last"));}}sur.cur=pick.items;sur.pick=pick;sur.busy=false;
   const d=$("surModal"),slot=$("surSlot"),jack=$("surJack");
   d.querySelectorAll(".reel-col").forEach((c,k)=>{c.querySelector(".reel-name").textContent=pick.items[k].name;const h=c.querySelector(".hold");h.disabled=false;});
   {const jw=$("surJW"),id=sur.winId;jack.classList.add("lit","jp-flash");jw.classList.remove("jp-run");jw.classList.add("jp-win");
@@ -2250,6 +2260,27 @@ function surCoins(){const tray=$("surTray"),jack=$("surJack");if(!tray||!jack)re
     if(reduce)continue;const fy=jr.top-tr.top-6,turn=540+Math.random()*540;
     c.animate([{transform:`translateY(${fy}px) rotateY(0)`,opacity:0},{opacity:1,offset:.08},{transform:`translateY(0) rotateY(${turn}deg)`,offset:.78,easing:"ease-in"},
       {transform:`translateY(-7px) rotateY(${turn+90}deg)`,offset:.88,easing:"ease-out"},{transform:`translateY(0) rotateY(${turn+180}deg)`}],{duration:900,delay:i*75,fill:"backwards",easing:"cubic-bezier(.45,0,.9,.6)"});}}
+// ===== 777: Noya donates 21 hot meals to "האור של אורי" (the owner sends it and marks it in the back office; the site counter shows sent ones)
+function surJackWin(pick,tick){clearInterval(tick);const sl=$("surSlot"),d=$("surModal"),jack=$("surJack"),jw=$("surJW"),box=d.querySelector(".mr.sur");
+  sl.classList.remove("tense","spinning");sl.querySelectorAll(".reel-col.last").forEach(c=>c.classList.remove("last"));
+  sur.cur=sur.cur.map(()=>"7");sur.pick=null;sur.busy=false;sur.held.clear();
+  d.querySelectorAll(".reel-col").forEach(c=>{c.querySelector(".reel-name").textContent="";c.classList.remove("held");const h=c.querySelector(".hold");h.disabled=true;h.setAttribute("aria-pressed","false");h.textContent="החזיקו";});
+  sur.winId=(sur.winId||0)+1;const id=sur.winId;jack.classList.add("lit","jp-flash");jw.classList.remove("jp-run");jw.classList.add("jp-win");
+  setTimeout(()=>{if(sur.winId!==id)return;jack.classList.remove("jp-flash");jw.classList.remove("jp-win");jw.classList.add("jp-run");},3000);
+  jack.innerHTML=`<b>🎉 7 · 7 · 7 !</b><small>יצא לכם ג'קפוט אמיתי</small>`;
+  d.querySelector(".jack-card")?.remove();
+  $("surAct").insertAdjacentHTML("beforebegin",`<div class="jack-card">💜 <b>הבאתם מזל!</b> נויה במתנה תעביר <b>21 ארוחות חמות</b> למיזם "האור של אורי", לזכר סמ"ר אורי ג׳רבי הי״ד. התרומה תתווסף למונה כאן באתר. <button type="button" class="jc-more">לסיפור של אורי ←</button></div>`);
+  d.querySelector(".jc-more").onclick=()=>{surClose();setTimeout(()=>$("setsOri")?.click(),120);};
+  $("surAct").innerHTML=`<button type="button" class="go" data-sa="spin">🎰 סובבו שוב למארז שלכם</button>`;
+  sl.classList.add("win");box.classList.add("win");sWin();setTimeout(sWin,700);buzz([20,60,20,60,20,60,40]);surCoins();setTimeout(surCoins,500);surFountain();
+  setTimeout(()=>{sl.classList.remove("win");box.classList.remove("win");},3200);
+  fetch(JACK_EP+"?a=spinshown",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:pick.jackpot})}).catch(()=>{});}
+// meals donated through the machine: shown in the Ori card and on the machine (only donations the owner marked as sent)
+fetch(JACK_EP+"?a=jackpot").then(r=>r.json()).then(j=>{const m=+j.meals||0;if(!m)return;JACK.meals=m;
+  const o=$("setsOri");if(!o)return;const bs=o.querySelectorAll("b[data-to]");
+  if(bs[0]){bs[0].dataset.to=String(+bs[0].dataset.to+m);if(/\d/.test(bs[0].textContent)&&bs[0].textContent!=="0")bs[0].textContent=(+bs[0].dataset.to).toLocaleString("he-IL");}
+  if(bs[1]){bs[1].dataset.to=String(+bs[1].dataset.to+Math.round(m*33228/1869));if(bs[1].textContent!=="₪0")bs[1].textContent="₪"+(+bs[1].dataset.to).toLocaleString("he-IL");}
+  o.insertAdjacentHTML("beforeend",`<span class="ori-777">🎰 מתוכן ${m.toLocaleString("he-IL")} ארוחות דרך מכונת המארזים</span>`);}).catch(()=>{});
 // "הכניסו למארז וחשפו": the reel products fly into the box one by one, then the reveal starts by itself (no extra click)
 // ===== Bellagio-style fountain: golden jets dance behind the bingo (outer jets first, then all together high, then a soft golden spray falls)
 function surFountain(){if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;const cab=document.querySelector("#surSlot .slot-cab");if(!cab)return;

@@ -17,6 +17,10 @@
 // GET  ?a=showcase                   → PUBLIC: the builder's rotating "boxes built with us" (not secret, stored plain)
 // PUT  ?a=showcase {list}            → saves that list (owner only)
 // POST ?a=showcaseimg {image}        → stores one showcase photo (dataURL, JPEG) → {url}
+// GET  ?a=jackpot                    → PUBLIC: meals donated through the slot machine (777) → {meals, perWin}
+// POST ?a=spin                       → PUBLIC: the server decides if this pull is a 777 (1 in 777, at most one per week) → {jackpot, id}
+// POST ?a=spinshown {id} | spinvoid {id} → PUBLIC: the builder showed it / could not show it in time
+// GET  ?a=jackpots                   → owner: all 777s; POST ?a=jackpotdone {id} → donation sent (+21 meals); POST ?a=jackpotdel {id}
 //
 // Encryption key: OFFICE_KEY if set, otherwise derived from the store's BLOB_READ_WRITE_TOKEN.
 // (If you ever rotate the blob token, set OFFICE_KEY to the OLD token first, or export a backup before.)
@@ -157,6 +161,15 @@ async function extractWithAI(content) {
 }
 
 const SHOW_CURRENT = SHOW_PREFIX + "current.json";   // fixed path → read by URL, no Blob operation
+// ---- 777 on the slot machine → Noya donates 21 hot meals to "האור של אורי" (the owner marks each one as sent; the public counter shows only sent ones)
+const JACK_CUR = "public/jackpot/state.json", JACK_ODDS = +(process.env.JACKPOT_ODDS || 777), JACK_GAP = 7 * 24 * 3600e3, JACK_MEALS = 21;
+let spinDay = "", spinIp = new Map();
+async function readJack() {
+  const host = blobHost();
+  if (host) { try { const r = await fetch(host + JACK_CUR + "?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); return { meals: +j.meals || 0, wins: Array.isArray(j.wins) ? j.wins : [] }; } } catch (e) {} }
+  return { meals: 0, wins: [] };
+}
+const saveJack = s => put(JACK_CUR, JSON.stringify({ meals: s.meals, wins: s.wins.slice(0, 200), savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
 async function readShowcase() {
   const host = blobHost();
   if (host) {
@@ -225,9 +238,42 @@ export default async function handler(req, res) {
       const old = blobs.slice(12).map(x => x.url); if (old.length) await del(old).catch(() => {});
       res.status(200).json({ ok: true, backup: b.pathname, kept: Math.min(blobs.length, 12) }); return;
     }
+    if (a === "jackpot" && req.method === "GET") {
+      res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
+      const s = await readJack(); res.status(200).json({ meals: s.meals, perWin: JACK_MEALS }); return;
+    }
+    if (a === "spin" && req.method === "POST") {
+      const today = new Date().toISOString().slice(0, 10);
+      if (today !== spinDay) { spinDay = today; spinIp = new Map(); }
+      const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "?";
+      const me = spinIp.get(ip) || { n: 0, won: false }; me.n++; spinIp.set(ip, me);
+      if (me.n > 400 || me.won || crypto.randomInt(JACK_ODDS) !== 0) { res.status(200).json({ jackpot: false }); return; }
+      const s = await readJack(), last = s.wins[0];
+      if (last && Date.now() - new Date(last.at).getTime() < JACK_GAP) { res.status(200).json({ jackpot: false }); return; }
+      const id = crypto.randomBytes(5).toString("hex");
+      s.wins.unshift({ id, at: new Date().toISOString(), shown: false, donated: false }); await saveJack(s); me.won = true;
+      res.status(200).json({ jackpot: true, id }); return;
+    }
+    if ((a === "spinshown" || a === "spinvoid") && req.method === "POST") {
+      const { id } = await readBody(req); const s = await readJack(); const w = s.wins.find(x => x.id === String(id || ""));
+      if (w && !w.donated) {
+        if (a === "spinshown") w.shown = true;
+        else if (!w.shown && Date.now() - new Date(w.at).getTime() < 5 * 60e3) s.wins = s.wins.filter(x => x !== w);
+        await saveJack(s);
+      }
+      res.status(200).json({ ok: true }); return;
+    }
     if (a === "logout") { setCookie(res, "", 0); res.status(200).json({ ok: true }); return; }
     if (!authed(req)) { res.status(401).json({ error: "צריך להתחבר" }); return; }
     if (a === "me") { res.status(200).json({ ok: true }); return; }
+    if (a === "jackpots" && req.method === "GET") { res.status(200).json(await readJack()); return; }
+    if ((a === "jackpotdone" || a === "jackpotdel") && req.method === "POST") {
+      const { id } = await readBody(req); const s = await readJack(); const w = s.wins.find(x => x.id === String(id || ""));
+      if (!w) { res.status(404).json({ error: "לא נמצא" }); return; }
+      if (a === "jackpotdone" && !w.donated) { w.donated = true; w.donatedAt = new Date().toISOString(); s.meals += JACK_MEALS; }
+      if (a === "jackpotdel" && !w.donated) s.wins = s.wins.filter(x => x !== w);
+      await saveJack(s); res.status(200).json(s); return;
+    }
 
     if (a === "showcase" && req.method === "PUT") {
       const { list: l } = await readBody(req);
