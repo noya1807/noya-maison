@@ -2259,8 +2259,7 @@ async function shareWhatsApp(src,mode,ready){shareMode=mode||"consult";
   if(sharing||!cart.size)return;
   const mobile=matchMedia("(pointer:coarse)").matches;let wide=false;
   // a computer whose share panel takes pictures (Chrome / Edge on Windows): the picture itself goes straight to the WhatsApp app
-  const canFile=!mobile&&multiOn()&&shareMode!=="spread"&&!!navigator.canShare&&(()=>{try{return navigator.canShare({files:[new File(["x"],"a.jpg",{type:"image/jpeg"})]});}catch(e){return false;}})();
-  const fileShare=mobile||canFile;
+  const fileShare=mobile;   // computers: no share panel (Windows' panel asked to install WhatsApp) – WhatsApp opens with the message, as before
   if(multiOn()&&shareMode!=="spread"){if(!ready){multiReady(()=>shareWhatsApp(src,mode,true));return;}
     // phone / share panel: the detailed picture goes as a file; otherwise a wide, light picture so WhatsApp shows it on the link
     try{showToast("מכין תמונה אחת של כל המארזים…");if(fileShare)src=await multiCard();else{src=await multiCardWide();wide=true;}}catch(e){}}
