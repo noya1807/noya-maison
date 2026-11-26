@@ -297,6 +297,18 @@ body.revealed .bar-act{display:flex}body.revealed #barBtn{display:none}
 @keyframes fadein{from{opacity:0;filter:blur(6px)}to{opacity:1;filter:none}}
 .ai-load{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(247,239,228,.55);backdrop-filter:blur(3px);color:var(--cocoa);font-size:15px;text-align:center}
 .ai-load span{font-size:12px;color:var(--cocoa-soft);font-variant-numeric:tabular-nums}
+.gift-load{width:118px;height:118px}.gift-load svg{width:100%;height:100%;overflow:visible}
+.gl-box{transform-box:view-box;transform-origin:60px 104px;animation:glWob 1.8s ease-in-out infinite}
+.gl-lid{transform-box:view-box;transform-origin:60px 52px;animation:glLid 1.8s ease-in-out infinite}
+.gl-sh{transform-box:fill-box;transform-origin:center;animation:glSh 1.8s ease-in-out infinite}
+.gl-sp path{fill:#e3c58c;transform-box:fill-box;transform-origin:center;animation:glTw 1.6s ease-in-out infinite}
+.gl-sp path:nth-child(2){animation-delay:.4s}.gl-sp path:nth-child(3){animation-delay:.8s}.gl-sp path:nth-child(4){animation-delay:1.2s}
+@keyframes glWob{0%,100%{transform:rotate(0) translateY(0)}20%{transform:rotate(-4deg) translateY(-3px)}40%{transform:rotate(3deg) translateY(-6px)}60%{transform:rotate(-2deg) translateY(-2px)}80%{transform:rotate(0) translateY(0)}}
+@keyframes glLid{0%,30%,100%{transform:translateY(0) rotate(0)}45%{transform:translateY(-9px) rotate(-5deg)}58%{transform:translateY(-4px) rotate(3deg)}70%{transform:translateY(0)}}
+@keyframes glSh{0%,100%{transform:scaleX(1);opacity:1}40%{transform:scaleX(.82);opacity:.7}}
+@keyframes glTw{0%,100%{transform:scale(.3);opacity:0}50%{transform:scale(1.15);opacity:1}}
+@media (prefers-reduced-motion:reduce){.gift-load *{animation:none!important}}
+.story-btn{margin-top:4px}
 .ai-orb{width:54px;height:54px;border-radius:50%;background:conic-gradient(from 0deg,var(--gold),#f3e3c6,var(--cocoa-soft),var(--gold));animation:spin 1.6s linear infinite;mask:radial-gradient(circle,transparent 52%,#000 54%);-webkit-mask:radial-gradient(circle,transparent 52%,#000 54%)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ai-tag{position:absolute;top:10px;inset-inline-start:10px;z-index:7;background:rgba(74,47,34,.82);color:var(--paper);font-size:12px;padding:4px 10px;border-radius:99px}
@@ -2228,7 +2240,7 @@ function stageEnd(silent){STG.timers.forEach(clearTimeout);const nh=document.get
 function noyaStop(){noyaTimers.forEach(clearTimeout);noyaTimers=[];stageEnd();}
 // back to the original: products stay hidden under the veil, the gold orb turns while Noya works (staging kept in code, switched off)
 const STAGING_ON=false;
-function noyaSetup(){noyaStop();const host=document.getElementById("noyaHost");if(!host)return;host.innerHTML=`<div class="ai-orb"></div>`;if(STAGING_ON)stageStart();}
+function noyaSetup(){noyaStop();const host=document.getElementById("noyaHost");if(!host)return;host.innerHTML=`<div class="gift-load" aria-hidden="true"><svg viewBox="0 0 120 120"><defs><linearGradient id="glB" x1="0" x2="1"><stop offset="0" stop-color="#5a3a2a"/><stop offset=".55" stop-color="#7a5440"/><stop offset="1" stop-color="#4a2f22"/></linearGradient><linearGradient id="glR" x1="0" x2="1"><stop offset="0" stop-color="#e9cf95"/><stop offset=".5" stop-color="#f7e7bf"/><stop offset="1" stop-color="#c49a55"/></linearGradient></defs><ellipse class="gl-sh" cx="60" cy="108" rx="34" ry="5" fill="rgba(63,39,28,.18)"/><g class="gl-box"><rect x="24" y="56" width="72" height="48" rx="4" fill="url(#glB)"/><rect x="55" y="56" width="10" height="48" fill="url(#glR)"/><g class="gl-lid"><rect x="19" y="44" width="82" height="15" rx="4" fill="url(#glB)"/><rect x="55" y="44" width="10" height="15" fill="url(#glR)"/><path d="M60 44c-6-12-24-14-24-5 0 7 14 7 24 5z" fill="url(#glR)"/><path d="M60 44c6-12 24-14 24-5 0 7-14 7-24 5z" fill="url(#glR)"/><circle cx="60" cy="43" r="4.5" fill="#c49a55"/></g></g><g class="gl-sp"><path d="M22 30l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M98 22l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z"/><path d="M102 64l1.3 3 3 1.3-3 1.3-1.3 3-1.3-3-3-1.3 3-1.3z"/><path d="M14 74l1.3 3 3 1.3-3 1.3-1.3 3-1.3-3-3-1.3 3-1.3z"/></g></svg></div>`;if(STAGING_ON)stageStart();}
 const STEPS=["נויה בוחרת את המוצר המוביל…","נויה בונה שכבות ועומק…","נויה מאזנת צבעים וצורות…","נויה מעמידה את המוצרים על הבמה…","נויה מכוונת אור וצללים…","נויה מלטשת לצילום קטלוגי…"];
 // bring the whole box picture into view so the reveal is seen (the button sits below it, often off-screen on phones)
 function sceneToTop(){const st=scene.closest(".stage")||scene,y=st.getBoundingClientRect().top+window.scrollY-8;
@@ -2301,6 +2313,7 @@ function renderAiBar(){
   } else {
     b.innerHTML=`<div class="after-reveal"><div class="ar-uniq">אחד מתוך ${combosInfo().txt} שילובים – המארז הזה נבנה רק בשבילכם ✨</div><div class="ar-row"><button class="wa-share" id="aiShare"><svg class="wa-ico" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.3 19.4L3 29l6.8-1.8A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-4 1 1.1-3.9-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.6.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.8 1 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg>שתפו לאישור בוואטסאפ</button><button class="ai-go" id="aiDl">⬇ הורדת המארז + פרטים</button><button class="reveal-btn order-btn ar-order" id="aiOrder">המשך להזמנה ←</button>${reset}</div>
       ${BTYPES?(()=>{const nx=BTYPES.findIndex((t,i)=>i!==btCur&&!(t.cart.size));return `<button class="ghost bt-next" id="aiNextType">${nx>=0?`הבא: בניית מארז ${esc(BTYPES[nx].name)} ←`:"＋ סוג מארז נוסף"}</button>`;})():""}
+      ${!aiImg.hidden&&aiImg.src?`<button class="ghost small story-btn" id="aiStory">📲 שתפו בסטורי</button>`:""}
       <span class="reveal-sub">הבחירה הושלמה, הקסם רק מתחיל ✨</span></div>`; // no "manual fix" button after the reveal: the designed image stays on screen; "design again" gives a new look
   }
   if(isOwner&&revealed&&!aiBusy&&!(editing&&aiStale)&&!aiImg.hidden)b.insertAdjacentHTML("beforeend",`<div class="reveal-more"><button class="ghost small" id="aiShow">⭐ הוספה לחלון הראווה (רק אתה רואה את הכפתור)</button></div>`);
@@ -2308,6 +2321,7 @@ function renderAiBar(){
   q("aiGo")&&(q("aiGo").onclick=()=>{const r=scene.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)scene.scrollIntoView({behavior:"smooth",block:"center"});generateAi(false);});
   q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
   q("aiOrder")&&(q("aiOrder").onclick=()=>openSummary());
+  q("aiStory")&&(q("aiStory").onclick=()=>shareStory(q("aiStory")));
   q("aiNextType")&&(q("aiNextType").onclick=()=>{const nx=BTYPES.findIndex((t,i)=>i!==btCur&&!t.cart.size);if(nx>=0){btSwitch(nx);$("boxTabs").scrollIntoView({behavior:"smooth",block:"start"});showToast(`עכשיו בונים את מארז ${BTYPES[nx].name} ✨`);}else btAdd(true);});
   document.body.classList.toggle("revealed",!!q("aiOrder"));
   q("aiRe")&&(q("aiRe").onclick=()=>{variant=(variant+1)%4;recompose(false);generateAi(true);});
@@ -2402,6 +2416,42 @@ async function shareWhatsApp(src,mode,ready){shareMode=mode||"consult";
 // ---- downloadable "box card": the picture on top, the box details (items, packaging, price, contact, QR) below ----
 const CARD_PHONE="054-3219070", CARD_MAIL="moshe@noyaglobal.com";
 function loadQR(){return window.qrcode?Promise.resolve(window.qrcode):new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="js/qrcode.js";sc.onload=()=>ok(window.qrcode);sc.onerror=no;document.head.appendChild(sc);});}
+// ===== "שתפו בסטורי": a vertical 1080×1920 image (designed box + logo + short line + link) for Instagram/WhatsApp status
+async function storyCard(){
+  await (document.fonts&&document.fonts.ready);
+  const [im,logo]=await Promise.all([loadImg(currentBoxImage()),loadImg("img/icon-192.png").catch(()=>null)]);
+  const W=1080,H=1920,c=document.createElement("canvas"),x=c.getContext("2d"),DF='"Frank Ruhl Libre","David Libre",Georgia,serif',BF='"Assistant","Segoe UI",Arial,sans-serif';
+  c.width=W;c.height=H;x.direction="rtl";x.textAlign="center";x.textBaseline="middle";
+  const bg=x.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#fbf5ec");bg.addColorStop(1,"#efe0c9");x.fillStyle=bg;x.fillRect(0,0,W,H);
+  const glow=x.createRadialGradient(W/2,820,60,W/2,820,760);glow.addColorStop(0,"rgba(255,232,180,.55)");glow.addColorStop(1,"rgba(255,232,180,0)");x.fillStyle=glow;x.fillRect(0,0,W,H);
+  if(logo){x.save();x.beginPath();x.arc(W/2,190,62,0,Math.PI*2);x.clip();x.drawImage(logo,W/2-62,128,124,124);x.restore();}
+  x.fillStyle="#3f271c";x.font=`700 66px ${DF}`;x.fillText("נויה במתנה",W/2,310);
+  x.fillStyle="#8a6d55";x.font=`500 34px ${BF}`;x.fillText("מארזי מתנה לארגונים ולעסקים",W/2,372);
+  // the designed box: rounded, with a thin gold frame and soft shadow
+  const IW=920,IH=Math.round(IW*Math.min(1.1,im.naturalHeight/im.naturalWidth)),ix=(W-IW)/2,iy=450,r=36;
+  const rr=(X,Y,w,h,R)=>{x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+w,Y,X+w,Y+h,R);x.arcTo(X+w,Y+h,X,Y+h,R);x.arcTo(X,Y+h,X,Y,R);x.arcTo(X,Y,X+w,Y,R);x.closePath();};
+  x.save();x.shadowColor="rgba(63,39,28,.28)";x.shadowBlur=50;x.shadowOffsetY=18;rr(ix,iy,IW,IH,r);x.fillStyle="#fff";x.fill();x.restore();
+  x.save();rr(ix,iy,IW,IH,r);x.clip();const sc=Math.max(IW/im.naturalWidth,IH/im.naturalHeight),sw=IW/sc,sh=IH/sc;x.drawImage(im,(im.naturalWidth-sw)/2,(im.naturalHeight-sh)/2,sw,sh,ix,iy,IW,IH);x.restore();
+  const gg=x.createLinearGradient(ix,0,ix+IW,0);gg.addColorStop(0,"#ead6a6");gg.addColorStop(.5,"#cfab6c");gg.addColorStop(1,"#b08a4f");x.strokeStyle=gg;x.lineWidth=6;rr(ix,iy,IW,IH,r);x.stroke();
+  // gold sparkles around the frame
+  const star=(X,Y,s)=>{x.beginPath();x.moveTo(X,Y-s);x.quadraticCurveTo(X,Y,X+s,Y);x.quadraticCurveTo(X,Y,X,Y+s);x.quadraticCurveTo(X,Y,X-s,Y);x.quadraticCurveTo(X,Y,X,Y-s);x.fill();};
+  x.fillStyle="#d9b46a";[[ix+30,iy-34,22],[ix+IW-10,iy-50,30],[ix+IW+14,iy+IH*.45,18],[ix-16,iy+IH*.7,20],[ix+IW-70,iy+IH+40,16],[ix+80,iy+IH+52,24]].forEach(a=>star(...a));
+  let y=iy+IH+150;
+  x.fillStyle="#3f271c";x.font=`700 64px ${DF}`;x.fillText("המארז שעיצבתי ✨",W/2,y);
+  x.fillStyle="#6e4d3b";x.font=`500 36px ${BF}`;x.fillText(`אחד מתוך ${combosInfo().txt} שילובים`,W/2,y+78);
+  // link pill at the bottom
+  const py=H-190,pw=720;const pg=x.createLinearGradient(0,0,W,0);pg.addColorStop(0,"#3f271c");pg.addColorStop(.6,"#6e4d3b");pg.addColorStop(1,"#b08a4f");
+  x.fillStyle=pg;rr((W-pw)/2,py-52,pw,104,52);x.fill();x.fillStyle="#fffaf3";x.font=`700 40px ${BF}`;x.fillText("עצבו גם אתם ← build.noyaglobal.com",W/2,py);
+  return c;}
+async function shareStory(btn){if(btn.disabled)return;btn.disabled=true;const was=btn.textContent;btn.textContent="מכין תמונה לסטורי…";
+  try{const c=await storyCard();const blob=await new Promise(ok=>c.toBlob(ok,"image/jpeg",.9));const name="noya-story-"+new Date().toISOString().slice(0,10)+".jpg";
+    const file=new File([blob],name,{type:"image/jpeg"});
+    if(matchMedia("(pointer:coarse)").matches&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file]});}catch(e){if(e.name!=="AbortError")throw e;}}
+    else{const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+      showToast("תמונת הסטורי ירדה למכשיר ✓ אפשר להעלות אותה לאינסטגרם או לסטטוס בוואטסאפ");}}
+  catch(e){showToast("לא הצלחנו להכין את תמונת הסטורי. אפשר לנסות שוב.");}
+  finally{btn.disabled=false;btn.textContent=was;}}
 function loadImg(src){return new Promise((ok,no)=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>ok(im);im.onerror=no;im.src=src;});}
 async function boxCard(src,order){
   const snap={items:[...cart].map(([id,q])=>byId[id]?(byId[id].name+(q>1?` × ${q}`:"")):null).filter(Boolean),pack,total:totals().total};   // taken now: the box may change while images load
