@@ -1570,7 +1570,8 @@ function add(id){const had=cart.has(id);cart.set(id,(cart.get(id)||0)+1);if(!had
 function dec(id){const q=cart.get(id);if(!q)return;if(q===1)remove(id);else{cart.set(id,q-1);update(true);}}
 function remove(id){undoSet=null;lastRemoved=[id,cart.get(id)];cart.delete(id);update(true);showToast(`${byId[id].name} הוסר מהמארז`,true);}
 function showToast(m,undo){const t=document.getElementById("toast");document.getElementById("toastMsg").textContent=m;document.getElementById("undo").hidden=!undo;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),5000);}
-document.getElementById("undo").onclick=()=>{if(undoSet){cart=undoSet[0];pack=undoSet[1];undoSet=null;renderPacks();update(true);}else if(lastRemoved){cart.set(...lastRemoved);fresh.add(lastRemoved[0]);lastRemoved=null;update(true);}document.getElementById("toast").classList.remove("show");};
+let aiSilent=false;
+document.getElementById("undo").onclick=()=>{if(aiBusy&&aiCtrl){aiSilent=true;try{aiCtrl.abort();}catch(e){}}if(undoSet){cart=undoSet[0];pack=undoSet[1];undoSet=null;renderPacks();update(true);}else if(lastRemoved){cart.set(...lastRemoved);fresh.add(lastRemoved[0]);lastRemoved=null;update(true);}document.getElementById("toast").classList.remove("show");};
 document.getElementById("clear").onclick=()=>{if(!cart.size&&pack.none)return;cart.clear();pack=NO_PACK;packAsked=false;renderPacks();update(true);};   // empties products and packaging
 
 // ---- Packaging & backgrounds ----
@@ -2036,7 +2037,7 @@ function surOpen(){let d=$("surModal");if(!d){d=document.createElement("div");d.
       else if(b.dataset.sa==="spin")surPull();else if(b.dataset.sa==="take")surTake();});}
   sur.pick=null;sur.held.clear();sur.cur=[];d.hidden=false;surRender();}
 function surClose(){if(sur.busy)return;const d=$("surModal");if(d)d.hidden=true;}
-function surActs(){return sur.pick?`<button type="button" class="go" data-sa="take">הכניסו למארז ✓</button><button type="button" class="ghost" data-sa="spin">🎰 סיבוב נוסף</button>`:`<button type="button" class="go" data-sa="spin">🎰 משכו את הידית</button>`;}
+function surActs(){return sur.pick?`<button type="button" class="go" data-sa="take">הכניסו למארז וחשפו ✨</button><button type="button" class="ghost" data-sa="spin">🎰 סיבוב נוסף</button>`:`<button type="button" class="go" data-sa="spin">🎰 משכו את הידית</button>`;}
 function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,cur)=>`<button type="button" data-${k}="${v}" aria-pressed="${cur}">${l}</button>`;
   if(sur.cur.length!==n)sur.cur=Array.from({length:n},()=>pool[(Math.random()*pool.length)|0]).filter(Boolean);
   const bulbs=`<div class="bulbs">${"<i></i>".repeat(13)}</div>`;
@@ -2093,11 +2094,18 @@ function surWin(pick,tick){clearInterval(tick);sur.cur=pick.items;sur.pick=pick;
   slot.classList.add("win");sWin();buzz([12,50,12,50,30]);
   const r=jack.getBoundingClientRect();[0,180,360].forEach((t,i)=>setTimeout(()=>landFx("surJack",r.left+r.width*(.25+.25*i),r.top+r.height/2),t));
   setTimeout(()=>slot.classList.remove("win"),2600);}
+// "הכניסו למארז וחשפו": the reel products fly into the box one by one, then the reveal starts by itself (no extra click)
 function surTake(){const pick=sur.pick;if(!pick||sur.busy)return;const prev=[new Map(cart),pack];
+  const fl=[...document.querySelectorAll("#surReels .reel-win img")].map(im=>({src:im.src,r:im.getBoundingClientRect()}));
   cart=new Map(pick.items.map(p=>[p.id,1]));pick.items.forEach(p=>fresh.add(p.id));
   pack=PACKS.find(k=>!k.hidden&&isBag(k))||NO_PACK;manual.clear();renderPacks();update(true);
-  undoSet=prev;surClose();showToast("🎰 המארז שלכם מוכן! אפשר לשנות אותו כרצונכם",true);
-  setTimeout(()=>scene.scrollIntoView({behavior:"smooth",block:"center"}),150);}
+  undoSet=prev;surClose();const key=comboKey();
+  scene.scrollIntoView({block:"center"});
+  fl.forEach((o,i)=>setTimeout(()=>{const t=document.createElement("img");t.src=o.src;
+    Object.assign(t.style,{position:"fixed",left:o.r.left+"px",top:o.r.top+"px",width:o.r.width+"px",height:o.r.height+"px",opacity:0,pointerEvents:"none"});
+    document.body.appendChild(t);flyToBox(t);t.remove();},150+i*170));
+  showToast("🎰 המארז נכנס! עוד רגע הוא נחשף ✨",true);
+  setTimeout(()=>{if(comboKey()===key&&!aiBusy&&!revealed)generateAi(false);},150+fl.length*170+750);}
 document.addEventListener("click",e=>{if(e.target.closest("#surpriseBtn"))surOpen();});
 // ---- Showcase: up to 12 recent boxes the owner chose to show; rotates while the customer's box is empty ----
 const SHOW_EP=window.NOYA_OFFICE_ENDPOINT||"api/office";
@@ -2374,7 +2382,7 @@ async function generateAi(force){
     aiCache.set(key,j.image);
     if(comboKey()===key)finishReveal(key,j.image);
     else showToast("המארז השתנה בזמן העיצוב. לחצו שוב על \"חשפו את המארז שלכם\" לעיצוב התכולה העדכנית.");
-  }catch(e){showToast(e.name==="AbortError"?"העיצוב לקח יותר מדי זמן. המארז נשאר מוסתר, אפשר לנסות שוב.":"לא הצלחנו לעצב את המארז כרגע ("+e.message+"). המארז נשאר מוסתר, אפשר לנסות שוב.");}
+  }catch(e){if(aiSilent){aiSilent=false;}else showToast(e.name==="AbortError"?"העיצוב לקח יותר מדי זמן. המארז נשאר מוסתר, אפשר לנסות שוב.":"לא הצלחנו לעצב את המארז כרגע ("+e.message+"). המארז נשאר מוסתר, אפשר לנסות שוב.");}
   finally{clearInterval(tick);noyaStop();aiLoad.hidden=true;aiBusy=false;scene.classList.remove("busy");renderAiBar();}
 }
 function combosInfo(){
