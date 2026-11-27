@@ -181,9 +181,12 @@ export async function runDaily(db, store, { today = isoDay(new Date()), fetchImp
   const all = Object.values(reports).flatMap(r => r.items);
   let ceo = null;
   if (all.length || Object.keys(reports).length) {
-    const user = `תאריך: ${today}\nדוחות המנהלים:\n${JSON.stringify(Object.fromEntries(Object.entries(reports).map(([k, r]) => [whoName(k), { summary: r.summary, items: r.items.map(t => ({ id: t.id, kind: t.kind, to: t.to, title: t.title, body: t.body, impact: t.impact, priority: t.priority })) }])))}\n\nהחזר JSON:\n{"brief":"סיכום בוקר למשה, עד 5 שורות","decisions":[{"id":"מזהה פריט מהדוחות","why":"למה זה חשוב היום","recommend":"מה אתה ממליץ למשה להחליט"}],"conflicts":["סתירה בין מנהלים, אם יש"]}\nבחר עד 5 החלטות, הכי חשובות קודם.`;
-    try { const r = await call({ system: RULES + "\n\n" + (await brief("ceo")), user, model: MODEL_TOP(), maxTokens: 2000 }); const out = parseJson(r.text);
-      if (out) { const valid = new Set(all.map(t => t.id));
+    const user = `תאריך: ${today}\nדוחות המנהלים:\n${JSON.stringify(Object.fromEntries(Object.entries(reports).map(([k, r]) => [whoName(k), { summary: r.summary, items: r.items.map(t => ({ id: t.id, kind: t.kind, to: t.to, title: t.title, body: t.body.slice(0, 250), impact: t.impact.amount || undefined, priority: t.priority })) }])))}\n\nהחזר JSON:\n{"brief":"סיכום בוקר למשה, עד 5 שורות","decisions":[{"id":"מזהה פריט מהדוחות","why":"למה זה חשוב היום","recommend":"מה אתה ממליץ למשה להחליט"}],"conflicts":["סתירה בין מנהלים, אם יש"]}\nבחר עד 5 החלטות, הכי חשובות קודם.`;
+    try { const sys = RULES + "\n\n" + (await brief("ceo"));
+      let r = await call({ system: sys, user, model: MODEL_TOP(), maxTokens: 4096 }); let out = parseJson(r.text);
+      if (!out) { r = await call({ system: sys, user: user + "\n\nחשוב: התשובה הקודמת נחתכה. החזר JSON קצר: brief עד 4 שורות, עד 5 החלטות, why ו-recommend עד 150 תווים כל אחד.", model: MODEL_TOP(), maxTokens: 4096 }); out = parseJson(r.text); }
+      if (!out) throw new Error("תשובה לא תקינה" + (r.stop === "max_tokens" ? " (נחתכה)" : ""));
+      { const valid = new Set(all.map(t => t.id));
         ceo = { at, brief: clip(out.brief, 900), conflicts: (out.conflicts || []).slice(0, 5).map(c => clip(c, 200)),
           decisions: (out.decisions || []).filter(d => valid.has(d?.id)).slice(0, 5).map(d => ({ id: d.id, why: clip(d.why, 300), recommend: clip(d.recommend, 300) })) };
         ceo.decisions.forEach(d => { const t = all.find(x => x.id === d.id); if (t) { t.status = "awaiting"; t.ceo = { why: d.why, recommend: d.recommend }; } }); } }
