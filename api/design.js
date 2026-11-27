@@ -14,7 +14,7 @@ const COMPLEXITY = process.env.OPENAI_IMAGE_COMPLEXITY || "high";               
 const QUALITY = process.env.OPENAI_IMAGE_QUALITY || "medium";      // low | medium | high
 const SIZE = process.env.OPENAI_IMAGE_SIZE || "1536x1024";
 const FIDELITY = process.env.OPENAI_INPUT_FIDELITY || "";          // set "high" if the model supports it
-const DAILY_LIMIT = +(process.env.DAILY_LIMIT || 300);             // soft guard per server instance
+const DAILY_LIMIT = +(process.env.DAILY_LIMIT || Infinity);             // soft guard per server instance
 const ROOT = process.cwd();
 let day = "", count = 0;
 // model comparison: only a logged-in admin (back-office session cookie) may ask for another image model, from a fixed list

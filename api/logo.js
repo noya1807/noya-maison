@@ -5,7 +5,7 @@ import { put } from "@vercel/blob";
 
 const MAX = Math.floor(4.3 * 1024 * 1024); // Vercel function body limit is 4.5 MB
 const OK_EXT = /\.(png|jpe?g|webp|svg|pdf|ai|eps|xlsx|xls|csv)$/i; // logos, card designs and address lists
-const DAILY_LIMIT = +(process.env.LOGO_DAILY_LIMIT || 300);
+const DAILY_LIMIT = +(process.env.LOGO_DAILY_LIMIT || Infinity);
 let day = "", count = 0;
 
 export default async function handler(req, res) {

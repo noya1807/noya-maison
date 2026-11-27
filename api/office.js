@@ -32,7 +32,7 @@ const DB_PREFIX = "office/db/";
 const DOC_PREFIX = "office/docs/";
 const INBOX_PREFIX = "office/inbox/";
 const SHOW_PREFIX = "public/showcase/";
-const INBOX_DAILY = +(process.env.INBOX_DAILY_LIMIT || 500);
+const INBOX_DAILY = +(process.env.INBOX_DAILY_LIMIT || Infinity);
 let inboxDay = "", inboxCount = 0;
 const KEEP_VERSIONS = 30;                         // older database versions are pruned (they double as history)
 const MAX_FILE = Math.floor(4.3 * 1024 * 1024);   // Vercel function body limit is 4.5 MB
@@ -184,6 +184,22 @@ const jackMail = (w, test) => notify((test ? "בדיקה: " : "") + "🎰 יצא
    <p>הלקוח ראה את ההודעה שנויה במתנה תעביר <b>21 ארוחות חמות</b> למיזם "האור של אורי".</p>
    <p>זמן: ${new Date(w.at).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" })}</p>
    <p>אחרי שהעברת את התרומה: ממשק הניהול ← הזמנות ← "✓ העברנו את התרומה". רק אז המונה באתר עולה ב-21.</p></div>`);
+// e-mail to the owner on every new order / quote from the builder (same Resend key as the 777 alert)
+const mailedRefs = new Set();
+const escH = v => String(v ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function orderMail(o) {
+  const c = o.customer || {}, q = o.kind === "quote", n = Math.max(1, +o.boxes || 1);
+  const goods = Math.round((+o.perBox || 0) * n);
+  const who = [c.name, c.org].filter(Boolean).join(" · ") || "לקוח";
+  const types = Array.isArray(o.types) && o.types.length > 1 ? o.types.map(t => `${escH(t.name)}: ${+t.boxes || 0} מארזים`).join(" | ") : "";
+  return notify(`${q ? "📝 הצעת מחיר" : "🛒 הזמנה חדשה"} ${o.ref} – ${who} · ${n} מארזים${goods ? ` · ₪${goods.toLocaleString("he-IL")} לפני מע״מ` : ""}`,
+    `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#3f271c">
+     <p style="font-size:17px"><b>${q ? "הצעת מחיר חדשה מהבונה" : "הזמנה חדשה מהבונה"}</b> · ${escH(o.ref)}</p>
+     <p>👤 ${escH(c.name)}${c.org ? ` · ${escH(c.org)}` : ""}<br>📞 ${escH(c.phone)}${c.email ? `<br>✉️ ${escH(c.email)}` : ""}</p>
+     <p>📦 ${n} מארזים${o.perBox ? ` · ₪${escH(o.perBox)} למארז` : ""}${goods ? ` · סה״כ מוצרים ₪${goods.toLocaleString("he-IL")} לפני מע״מ` : ""}${types ? `<br>${types}` : ""}<br>🚚 ${escH(o.dlv?.name || "")}${o.dlv?.city ? ` · ${escH(o.dlv.city)}` : ""}</p>
+     ${o.text ? `<pre style="white-space:pre-wrap;font-family:Arial,sans-serif;background:#faf6f1;padding:10px;border-radius:8px">${escH(String(o.text).slice(0, 4000))}</pre>` : ""}
+     <p>היא כבר ממתינה בממשק הניהול ← הזמנות (לחצו "בדיקת הזמנות חדשות").</p></div>`);
+}
 const saveJack = s => put(JACK_CUR, JSON.stringify({ meals: s.meals, wins: s.wins.slice(0, 200), savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
 async function readShowcase() {
   const host = blobHost();
@@ -232,14 +248,16 @@ export default async function handler(req, res) {
       const raw = JSON.stringify(o || {});
       if (raw.length > 40000 || !/^NOYA-[A-Z0-9-]{4,24}$/i.test(String(o?.ref || ""))) { res.status(400).json({ error: "bad order" }); return; }
       o.receivedAt = new Date().toISOString();
+      if (/^NOYA-LOADTEST/i.test(String(o.ref))) { res.status(200).json({ ok: true, test: true }); return; }   // load test: validated, never stored or mailed
       await put(`${INBOX_PREFIX}${String(o.ref).replace(/[^A-Z0-9-]/gi, "")}.bin`, encrypt(Buffer.from(JSON.stringify(o))), { access: "public", contentType: "application/octet-stream", addRandomSuffix: true });
+      if (o.kind !== "lead" && o.kind !== "addr" && !mailedRefs.has(o.ref)) { mailedRefs.add(o.ref); if (mailedRefs.size > 2000) mailedRefs.clear(); await orderMail(o).catch(() => {}); }
       res.status(200).json({ ok: true }); return;
     }
     if (a === "showcase" && req.method === "GET") {   // public, read by every builder visit
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");   // edge-cached
       res.status(200).json({ list: await readShowcase() }); return;
     }
-    if (a === "backup") {   // weekly Vercel Cron: copy the latest (encrypted) database to office/backups/, kept 12 weeks
+    if (a === "backup") {   // daily Vercel Cron: copy the latest (encrypted) database to office/backups/, kept 30 days
       const cronOk = process.env.CRON_SECRET ? req.headers.authorization === `Bearer ${process.env.CRON_SECRET}` : /vercel-cron/i.test(req.headers["user-agent"] || "");
       if (!cronOk && !authed(req)) { res.status(401).json({ error: "unauthorized" }); return; }
       const v = await dbVersions();
@@ -250,8 +268,8 @@ export default async function handler(req, res) {
       const b = await put(`office/backups/db-${day}.bin`, Buffer.from(await r.arrayBuffer()), { access: "public", contentType: "application/octet-stream", addRandomSuffix: true });
       const { blobs } = await list({ prefix: "office/backups/" });
       blobs.sort((x, y) => new Date(y.uploadedAt) - new Date(x.uploadedAt));
-      const old = blobs.slice(12).map(x => x.url); if (old.length) await del(old).catch(() => {});
-      res.status(200).json({ ok: true, backup: b.pathname, kept: Math.min(blobs.length, 12) }); return;
+      const old = blobs.slice(30).map(x => x.url); if (old.length) await del(old).catch(() => {});
+      res.status(200).json({ ok: true, backup: b.pathname, kept: Math.min(blobs.length, 30) }); return;
     }
     if (a === "jackpot" && req.method === "GET") {
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");

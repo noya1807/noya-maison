@@ -36,7 +36,7 @@
   "crons": [
     {
       "path": "/api/office?a=backup",
-      "schedule": "0 1 * * 0"
+      "schedule": "0 1 * * *"
     }
   ],
   "redirects": [

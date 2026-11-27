@@ -1,0 +1,14 @@
+name: Code check
+# Same check as the local pre-push hook: every page parsed like a browser, every API file compiled.
+on:
+  push:
+    branches: [main]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/check.mjs

@@ -23,7 +23,7 @@ const cleanBox = (b, nested) => {
     ...(!nested && Array.isArray(b.types) && b.types.length > 1 ? { types: b.types.slice(0, 6).map(t => { const c = cleanBox(t, true); return c ? { name: txt(t.name).slice(0, 18), ...c } : null; }).filter(Boolean) } : {}) };
 };
 
-const DAILY_LIMIT = +(process.env.SHARE_DAILY_LIMIT || 500);
+const DAILY_LIMIT = +(process.env.SHARE_DAILY_LIMIT || Infinity);
 let day = "", count = 0;
 
 export default async function handler(req, res) {

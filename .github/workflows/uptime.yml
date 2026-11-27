@@ -1,0 +1,26 @@
+name: Uptime – build.noyaglobal.com
+# Every 5 minutes: checks the builder, the admin page and the order/AI servers.
+# If something is down twice in a row (1 minute apart), this run fails and GitHub e-mails the account owner.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check site and servers
+        run: |
+          check() {
+            for u in "https://build.noyaglobal.com/" "https://build.noyaglobal.com/admin" "https://build.noyaglobal.com/api/office?a=jackpot" "https://build.noyaglobal.com/api/design"; do
+              code=$(curl -s -o /tmp/b -w '%{http_code}' --max-time 20 "$u")
+              if [ "$code" != "200" ]; then echo "DOWN $code $u"; return 1; fi
+            done
+            grep -q '"ok":true' /tmp/b || { echo "AI server: OPENAI key missing"; return 1; }
+            return 0
+          }
+          check && { echo "✓ all up"; exit 0; }
+          sleep 60
+          check && { echo "✓ recovered on retry"; exit 0; }
+          echo "::error::build.noyaglobal.com has a problem – see the lines above"; exit 1
