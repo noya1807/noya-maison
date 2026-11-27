@@ -361,6 +361,10 @@ export default async function handler(req, res) {
     if (a === "icount" && req.method === "GET") {   // connection check (read-only call: the document types of the account)
       const tok = process.env.ICOUNT_TOKEN; if (!tok) { res.status(200).json({ ok: false, error: "no token" }); return; }
       if (!req.query.test) { res.status(200).json({ ok: true }); return; }
+      const probe = String(req.query.probe || "");   // owner-only READ calls (lists), used to plan the item sync
+      if (probe) { if (!/^(inventory\/(get_items|get_list|list|items|info)|item\/(get_list|list|info)|items\/(get_list|list))$/.test(probe)) { res.status(400).json({ ok: false, error: "not allowed" }); return; }
+        const r = await fetch("https://api.icount.co.il/api/v3.php/" + probe, { method: "POST", headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" }, body: JSON.stringify({ limit: 5000, ...(req.query.page ? { page: +req.query.page } : {}) }) });
+        const j = await r.json().catch(() => ({})); res.status(200).json({ http: r.status, ...j }); return; }
       try { const r = await fetch("https://api.icount.co.il/api/v3.php/doc/types", { method: "POST", headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" }, body: "{}" });
         const j = await r.json().catch(() => ({})); res.status(200).json(r.ok && j.status !== false ? { ok: true, live: true, types: j.doctypes || j.data?.doctypes || null } : { ok: false, error: j.reason || j.message || j.error || ("status " + r.status) });
       } catch (e) { res.status(200).json({ ok: false, error: String(e.message || e) }); } return;
