@@ -825,8 +825,8 @@ const shortOf=o=>{const S=stockAll();return orderCalc(o).lines.some(l=>l.sku&&(S
 function waPhone(p){let d=String(p||"").replace(/\D/g,"");if(d.startsWith("0"))d="972"+d.slice(1);return /^972\d{8,9}$/.test(d)?d:"";}
 function lateLink(o){return o.lateKey?`https://build.noyaglobal.com/addr.html?ref=${encodeURIComponent(o.ref)}&k=${o.lateKey}`:"";}
 function customerMsg(o){const first=(o.customer?.name||"").trim().split(" ")[0],org=o.customer?.org?` של ${o.customer.org}`:"",f=fulOf(o);
-  const hi=`שלום${first?" "+first:""},`;const sign="\nנויה במתנה 🎁";
-  const needAddr=["indiv","vip"].includes(o.dlvMode)&&!(o.addrFiles||[]).length&&lateLink(o)?`\nאת קובץ הכתובות אפשר לשלוח מתי שנוח בקישור האישי להזמנה:\n${lateLink(o)}`:"";
+  const hi=`שלום${first?" "+first:""},`;const sign=`${o.status!=="lead"&&lateLink(o)?`\nמצב ההזמנה בכל רגע: ${lateLink(o)}`:""}\nנויה במתנה 🎁`;
+  const needAddr=["indiv","vip"].includes(o.dlvMode)&&!(o.addrFiles||[]).length&&lateLink(o)?`\nאת קובץ הכתובות אפשר לשלוח מתי שנוח דרך הקישור האישי להזמנה (למטה).`:"";
   if(o.status==="lead")return `${hi}\nכאן נויה במתנה 🎁 ראינו ששמרת מארז בבונה${org}.\nאשמח לעזור להשלים את ההזמנה או לענות על כל שאלה.${o.link?`\nהמארז שלך: ${o.link}`:""}${sign}`;
   if(o.status==="pending")return `${hi}\nקיבלנו את ההזמנה ${o.ref}${org} (${o.boxes} מארזים) ✓\nנעבור עליה ונחזור אליך לאישור בהקדם.${needAddr}${sign}`;
   if(f==="engrave"||f==="packing")return `${hi}\nההזמנה ${o.ref}${org} אושרה ✓ (${o.boxes} מארזים) והיא בהכנה.\nנעדכן כשהיא ${o.dlvMode==="pickup"?"מוכנה לאיסוף":"יוצאת לדרך"}.${needAddr}${sign}`;
@@ -835,6 +835,15 @@ function customerMsg(o){const first=(o.customer?.name||"").trim().split(" ")[0],
   if(f==="shipped")return o.dlvMode==="pickup"?`${hi}\nתודה שאספת את ההזמנה ${o.ref} ✓ שיהיה בהצלחה עם המתנות!${sign}`
     :`${hi}\nההזמנה ${o.ref}${org} יצאה למשלוח 🚚\n${["indiv","vip"].includes(o.dlvMode)?"כל מארז יגיע ישירות למקבל שלו.":"נעדכן אם יהיה צורך בתיאום מול איש הקשר."}${sign}`;
   return "";}
+// automatic e-mail to the customer on every stage change (setting, off by default) + a manual button
+const okMail=v=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v||"").trim());
+async function custMail(o,manual){
+  if(!manual&&!db.settings.autoCustMail)return;const to=o.customer?.email;if(!okMail(to)){if(manual)toast("אין ללקוח כתובת מייל תקינה");return;}
+  const text=customerMsg(o);if(!text)return;
+  try{const j=await api("custmail",{method:"POST",body:{to:String(to).trim(),subject:`נויה במתנה · עדכון להזמנה ${o.ref}`,text}});
+    if(j.ok){(o.mailLog??=[]).push({at:new Date().toISOString(),stage:fulOf(o)||o.status});touch();if(manual)toast("✓ המייל נשלח ללקוח");}
+    else toast("המייל ללקוח לא נשלח: "+(j.error||""),6000);}catch(e){toast("המייל ללקוח לא נשלח",5000);}}
+const stageChanged=o=>{custMail(o,false);};
 function waBtn(o,cls="btn sm"){const p=waPhone(o.customer?.phone),m=customerMsg(o);if(!p||!m)return "";
   return `<a class="${cls} wa-up" href="https://wa.me/${p}?text=${encodeURIComponent(m)}" target="_blank" rel="noopener" title="נפתח וואטסאפ עם הודעה מוכנה. שולחים רק אם רוצים">💬 עדכן לקוח</a>`;}
 // printable order sheet (for the warehouse): picture, customer, delivery and items with a ✓ column. No costs or profit.
@@ -979,7 +988,7 @@ function renderOrders(){
   document.querySelectorAll("[data-of]").forEach(b=>b.onclick=()=>{ordFilter=b.dataset.of;renderOrders();});
   document.querySelectorAll("[data-df]").forEach(b=>b.onclick=()=>{dlvFilter=b.dataset.df;renderOrders();});
   document.querySelectorAll("[data-adv]").forEach(b=>b.onclick=e=>{e.stopPropagation();const o=db.orders.find(x=>x.id===b.dataset.adv);if(!o)return;
-    const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrders();toast(`${o.ref}: ${fulLabel(o)[0]}`);});
+    const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrders();toast(`${o.ref}: ${fulLabel(o)[0]}`);stageChanged(o);});
   document.querySelectorAll(".wa-up").forEach(a=>a.addEventListener("click",e=>e.stopPropagation()));
   // bulk: select several orders in work → advance together / print all packing sheets at once
   document.querySelectorAll("td.osel").forEach(td=>td.addEventListener("click",e=>e.stopPropagation()));
@@ -990,7 +999,7 @@ function renderOrders(){
   if($("#oAdvSel"))$("#oAdvSel").onclick=()=>{const sel=list.filter(o=>ordSel.has(o.id)&&fulNext(o));if(!sel.length){toast("אין שלב הבא לנבחרות");return;}
     const by={};sel.forEach(o=>{const k=fulNextLabel(o);by[k]=(by[k]||0)+1;});
     if(!confirm(`להעביר ${sel.length} הזמנות לשלב הבא?\n`+Object.entries(by).map(([k,n])=>`• ${k}: ${n}`).join("\n")))return;
-    const at=new Date().toISOString();sel.forEach(o=>{const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at});});
+    const at=new Date().toISOString();sel.forEach(o=>{const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at});stageChanged(o);});
     ordSel.clear();touch();renderOrders();toast(`✓ ${sel.length} הזמנות הועברו לשלב הבא`);};
   if($("#oExport"))$("#oExport").onclick=()=>exportCourier(list.filter(o=>fulOf(o)==="ready"&&o.dlvMode!=="pickup"));
   if($("#oPickCsv"))$("#oPickCsv").onclick=()=>downloadCsv(`ליקוט-${new Date().toISOString().slice(0,10)}.csv`,[["פריט","מק״ט","כמות לארוז","בהזמנות"],...pickRows.map(r=>[r.name,r.sku||"",r.qty,r.orders])]);
@@ -1007,7 +1016,7 @@ function renderOrder(){
   const prodOpts=db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("");
   $("#view").innerHTML=`<button class="back" id="oBack">→ כל ההזמנות</button>
   <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>${o.quoteRef&&o.quoteRef!==o.ref?` · נוצרה מהצעת מחיר <a href="#" data-goref="${esc(o.quoteRef)}">${esc(o.quoteRef)}</a>`:o.quoteRef?" · נוצרה מהצעת המחיר הזו":""}${o.convertedTo?` · הפכה להזמנה <a href="#" data-goref="${esc(o.convertedTo)}">${esc(o.convertedTo)}</a>`:""}</p></div>
-    <div class="row"><button class="btn ghost" id="oPrint">🖨 הדפסת הזמנה</button>${waBtn(o,"btn ghost")}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn danger" id="oLost">✕ הלקוח ויתר</button><button class="btn gold" id="oQuoteOk">✓ הלקוח אישר – הפוך להזמנה</button>`:o.status==="lost"?`<button class="btn ghost" id="oReopen">פתיחה מחדש כהצעה</button>`:o.status==="won"?"":o.status==="lead"?`<button class="btn danger" id="oCancel">לא רלוונטי</button><button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
+    <div class="row"><button class="btn ghost" id="oPrint">🖨 הדפסת הזמנה</button>${waBtn(o,"btn ghost")}${okMail(o.customer?.email)&&!["lead","quote","won","lost"].includes(o.status)?`<button class="btn ghost" id="oMail" title="שולח ללקוח במייל את ההודעה של השלב הנוכחי">📧 עדכון במייל</button>`:""}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn danger" id="oLost">✕ הלקוח ויתר</button><button class="btn gold" id="oQuoteOk">✓ הלקוח אישר – הפוך להזמנה</button>`:o.status==="lost"?`<button class="btn ghost" id="oReopen">פתיחה מחדש כהצעה</button>`:o.status==="won"?"":o.status==="lead"?`<button class="btn danger" id="oCancel">לא רלוונטי</button><button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
   ${o.status==="pending"?`<p class="warn" style="font-weight:700">🔒 כלל ברזל: ההזמנה לא תיכנס ל"בעבודה", לרשימת הליקוט או לייצוא לשליח עד שתלחץ "✓ אישור סופי".</p>`:""}
   ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:o.status==="quote"?"הצעת מחיר שהלקוח הוריד מהבונה. לא נספרת ברווח ובמלאי. כדאי לחזור אליו, ואם הזמין: \"הלקוח הזמין\".":o.status==="lead"?`💾 הלקוח שמר את המארז בבונה ועוד לא הזמין. לא נספר ברווח ובמלאי. כדאי להתקשר אליו${o.link?` · <a href="${esc(o.link)}" target="_blank" rel="noopener">פתיחת המארז שלו</a>`:""}.`:"ההזמנה בוטלה ולא נספרת."}</p>`:""}
   ${(()=>{const b=num(o.boxes)||0,items=c.lines.filter(l=>!l.isPack),packL=c.lines.find(l=>l.isPack),old=c.fixed.pack===undefined;
@@ -1067,12 +1076,13 @@ function renderOrder(){
     else if(k==="qty"){l.qty=num(el.value);l.perBox=0;}else l.unitCost=el.value.trim()===""?undefined:num(el.value);re();});
   document.querySelectorAll("[data-ldel]").forEach(b=>b.onclick=()=>{o.lines.splice(+b.dataset.ldel,1);re();});
   if($("#oAddLine"))$("#oAddLine").onclick=()=>{(o.lines??=[]).push({sku:"",name:"",qty:num(o.boxes)||1,perBox:1});re();};
-  const setSt=(st,msg)=>{o.status=st;if(st!=="approved")o.ful="";if(st==="approved"){o.frozen=JSON.parse(JSON.stringify(orderCalc({...o,status:"pending"})));o.approvedAt=new Date().toISOString();}else{delete o.frozen;delete o.approvedAt;}touch();renderOrder();toast(msg);};
+  const setSt=(st,msg)=>{const was=o.status;o.status=st;if(st==="approved"&&was!=="approved")setTimeout(()=>stageChanged(o),50);if(st!=="approved")o.ful="";if(st==="approved"){o.frozen=JSON.parse(JSON.stringify(orderCalc({...o,status:"pending"})));o.approvedAt=new Date().toISOString();}else{delete o.frozen;delete o.approvedAt;}touch();renderOrder();toast(msg);};
   if($("#oApprove"))$("#oApprove").onclick=()=>{const short=c.lines.filter(l=>l.sku&&(S[l.sku]?.available??0)<0);
     if(c.missing&&!confirm(`ל-${c.missing} שורות אין עלות, ולכן הרווח שיוקפא יהיה גבוה מהאמת. לאשר בכל זאת?`))return;
     if(!confirm("לאשר סופית? העלות תוקפא, ההזמנה תיספר ברווח והמוצרים יירדו מהמלאי."))return;setSt("approved","ההזמנה אושרה ✓");};
   if($("#oCancel"))$("#oCancel").onclick=()=>{if(confirm("לסמן את ההזמנה כבוטלה?"))setSt("cancelled","ההזמנה סומנה כבוטלה");};
   if($("#oUnapprove"))$("#oUnapprove").onclick=()=>{if(confirm("לבטל את האישור? ההזמנה תחזור ל'ממתינה', המוצרים יחזרו למלאי והעלות תחושב מחדש."))setSt("pending","האישור בוטל");};
+  if($("#oMail"))$("#oMail").onclick=()=>{if(confirm(`לשלוח ללקוח (${o.customer.email}) את העדכון הזה במייל?\n\n${customerMsg(o)}`))custMail(o,true);};
   if($("#oRestore"))$("#oRestore").onclick=()=>setSt("pending","ההזמנה חזרה לממתינה");
   // quote → order: the same record becomes a pending order (contents, customer and consultant kept); final approval stays a separate step
   if($("#oQuoteOk"))$("#oQuoteOk").onclick=()=>{if(!confirm(`להפוך את הצעת המחיר ${o.ref} להזמנה ממתינה?\nאחרי זה עוברים עליה ומאשרים סופית כרגיל.`))return;
@@ -1081,7 +1091,7 @@ function renderOrder(){
   if($("#oReopen"))$("#oReopen").onclick=()=>{delete o.lostAt;setSt("quote","ההצעה נפתחה מחדש");};
   if($("[data-goref]"))document.querySelectorAll("[data-goref]").forEach(a=>a.onclick=e=>{e.preventDefault();const x=db.orders.find(y=>y.ref===a.dataset.goref);if(x){selOrder=x.id;renderOrder();}else toast("לא נמצאה");});
   $("#oPrint").onclick=()=>printOrder(o);
-  if($("#oAdv"))$("#oAdv").onclick=()=>{const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrder();toast(fulLabel(o)[0]);};
+  if($("#oAdv"))$("#oAdv").onclick=()=>{const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrder();toast(fulLabel(o)[0]);stageChanged(o);};
   if($("#oFulBack"))$("#oFulBack").onclick=()=>{const order=[o.engrave?"engrave":null,"packing","ready","shipped"].filter(Boolean);const i=order.indexOf(fulOf(o));if(i>0){o.ful=order[i-1];touch();renderOrder();}};
 }
 
@@ -1098,8 +1108,11 @@ function renderSups(){
 }
 
 // ---------- settings ----------
-function renderSettings(){
+function bindAutoMail(){if($("#setAutoMail"))$("#setAutoMail").onchange=e=>{db.settings.autoCustMail=e.target.checked;touch();toast(e.target.checked?"✓ מייל אוטומטי ללקוחות הופעל":"מייל אוטומטי ללקוחות כבוי");};}
+function renderSettings(){setTimeout(bindAutoMail,0);
   $("#view").innerHTML=`<h1>הגדרות</h1><p class="sub">קטגוריות, גיבוי ויציאה.</p>
+  <h2>עדכונים ללקוחות</h2><div class="panel"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-weight:600"><input type="checkbox" id="setAutoMail" ${db.settings.autoCustMail?"checked":""} style="width:18px;height:18px"> 📧 לשלוח ללקוח מייל אוטומטי בכל מעבר שלב (אושרה · בהכנה · מוכנה · יצאה)</label>
+    <p class="muted" style="margin:6px 0 0">הנוסח זהה להודעת "עדכן לקוח" בוואטסאפ, כולל קישור לדף ההזמנה. נשלח רק ללקוחות שמילאו מייל. דורש דומיין מאומת ב-Resend (noyaglobal.com) – עד אז המייל לא ייצא, ותופיע הודעה.</p></div>
   <h2>קטגוריות וקודי מק״ט</h2><div class="panel"><p class="muted" style="margin-top:0">הקוד הוא החלק הראשון של המק״ט. אחרי שיש מוצרים בקטגוריה, לא כדאי לשנות את הקוד שלה.</p>
     <table><thead><tr><th style="width:90px">קוד</th><th>קטגוריה</th><th class="num">מוצרים</th></tr></thead><tbody>
     ${db.categories.map((c,i)=>{const n=db.products.filter(p=>p.cat===c.code).length;return `<tr data-i="${i}"><td><input data-c="code" value="${esc(c.code)}" dir="ltr" maxlength="3" ${n?"disabled":""}></td><td><input data-c="name" value="${esc(c.name)}"></td><td class="num">${n||""}</td></tr>`;}).join("")}

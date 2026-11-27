@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>שליחת קובץ הכתובות – נויה במתנה</title>
+<title>ההזמנה שלכם – נויה במתנה</title>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 body{margin:0;background:#f7efe4;color:#4a2f22;font-family:Assistant,Arial,sans-serif;display:flex;justify-content:center;padding:28px 14px 48px}
@@ -18,13 +18,22 @@ label.up{display:block;text-align:center;border:2px dashed #cfab6c;border-radius
 label.up input{display:none}
 .st{font-size:16px}.ok{color:#1f7a4d;font-weight:700}.bad{color:#b03a2e}.warn{background:#fff4e5;border:1px solid #f0c27a;border-radius:10px;padding:8px 10px;color:#7a4b12}
 .note{font-size:14px;color:#7a5a48;margin:0}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+.steps li{display:flex;gap:12px;align-items:center;padding:7px 0;color:#a8917f;position:relative}
+.steps li .d{width:26px;height:26px;border-radius:50%;border:2px solid #d9c6ad;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none;z-index:1}
+.steps li:not(:last-child)::after{content:"";position:absolute;right:12px;top:30px;bottom:-8px;width:2px;background:#e4d5c1}
+.steps li.done{color:#4a2f22}.steps li.done .d{background:#2f7d4f;border-color:#2f7d4f;color:#fff}
+.steps li.now{color:#4a2f22;font-weight:700}.steps li.now .d{border-color:#c9a063;background:#fff4e0}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14.5px;color:#6e4d3b}
 </style>
 </head>
 <body>
 <div class="w">
-  <h1>שליחת קובץ הכתובות</h1>
-  <p class="sub">להזמנה <span class="ref" id="ref"></span> · נויה במתנה</p>
+  <h1>ההזמנה שלכם</h1>
+  <p class="sub">הזמנה <span class="ref" id="ref"></span> · נויה במתנה</p>
+  <div class="card" id="track"><div class="note">טוענים את מצב ההזמנה…</div></div>
   <div class="card" id="box">
+    <b style="font-size:18px">📎 קובץ הכתובות למשלוח לכל מקבל</b>
     <p class="note">ממלאים שורה לכל מקבל: שם, טלפון נייד, עיר, רחוב ומספר, דירה, כניסה וקומה.
       <a class="tpl" href="https://w4qizitdfylnksov.public.blob.vercel-storage.com/logos/mwgjtu80kbu6aqqanu1kau8f/%D7%A7%D7%95%D7%91%D7%A5-%D7%9B%D7%AA%D7%95%D7%91%D7%95%D7%AA-%D7%A0%D7%95%D7%99%D7%94-%D7%91%D7%9E%D7%AA%D7%A0%D7%94.xlsx" download>⬇️ הורדת קובץ האקסל</a></p>
     <label class="up">📎 בחירת קובץ הכתובות (אקסל או CSV)<input type="file" id="file" accept=".xlsx,.xls,.csv"></label>
@@ -46,6 +55,25 @@ async function zipEntries(buf){const d=new DataView(buf),u=new Uint8Array(buf);l
   out.read=async name=>{const f=out[name];if(!f)return "";const s=f.lo+30+d.getUint16(f.lo+26,true)+d.getUint16(f.lo+28,true);const raw=u.slice(s,s+f.cs);
     if(f.m===0)return new TextDecoder().decode(raw);return await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();};
   return out;}
+// order status (no personal details: only the order number + its private key from the order confirmation)
+let ORDER=null;
+async function loadTrack(){const el=document.getElementById("track");if(!okRef){el.hidden=true;return;}
+  try{const r=await fetch(`/api/office?a=track&ref=${encodeURIComponent(ref)}&k=${encodeURIComponent(k)}`,{cache:"no-store"});const j=await r.json();ORDER=j;
+    if(!r.ok||j.stage==="unknown"){el.innerHTML='<div class="note">עוד לא מצאנו את ההזמנה במערכת. אם שלחתם אותה עכשיו, זה יתעדכן תוך כמה שעות. אפשר בינתיים לשלוח כאן את קובץ הכתובות.</div>';return;}
+    if(j.stage==="cancelled"){el.innerHTML='<div class="bad"><b>ההזמנה בוטלה.</b> לשאלות: וואטסאפ 054-3219070</div>';document.getElementById("box").hidden=true;return;}
+    const order=j.steps.map(s=>s[0]),cur=order.indexOf(j.stage);
+    const fmt=d=>{try{return new Date(d).toLocaleDateString("he-IL");}catch(e){return "";}};
+    el.innerHTML=`<b style="font-size:18px">📍 מצב ההזמנה</b>
+      ${j.org||j.boxes?`<div class="meta">${j.org?`<span>🏢 ${esc(j.org)}</span>`:""}${j.boxes?`<span>🎁 ${j.boxes} מארזים</span>`:""}${j.date?`<span>📅 תאריך מבוקש: ${fmt(j.date)}</span>`:""}</div>`:""}
+      <ul class="steps">${j.steps.map(([k2,l],i)=>`<li class="${i<cur||j.stage==="shipped"?"done":i===cur?"now":""}"><span class="d">${i<cur||j.stage==="shipped"?"✓":i+1}</span>${l}${i===cur&&j.stage!=="shipped"?" ← כאן אנחנו":""}</li>`).join("")}</ul>
+      ${j.stage==="received"?'<div class="note">נעבור על ההזמנה ונחזור אליכם לאישור סופי. רק אחרי האישור היא נכנסת להכנה.</div>':""}
+      ${j.updatedAt?`<div class="note">עודכן: ${fmt(j.updatedAt)}</div>`:""}`;
+    const box=document.getElementById("box");
+    if(j.needAddr===false)box.hidden=true;
+    else if(j.addrFiles){box.insertAdjacentHTML("afterbegin",`<div class="ok">✓ קובץ הכתובות כבר התקבל${j.addrCount?` (${j.addrCount} כתובות${j.boxes?` מתוך ${j.boxes} מארזים`:""})`:""}. אפשר להעלות קובץ מתוקן, הוא יחליף את הקודם.</div>`);}
+  }catch(e){el.innerHTML='<div class="note">לא הצלחנו לטעון את מצב ההזמנה כרגע. נסו לרענן בעוד רגע.</div>';}}
+const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+loadTrack();
 async function check(file){
   try{const t=v=>String(v??"").trim(),dig=v=>t(v).replace(/\D/g,"");let rows=[];
     if(/\.csv$/i.test(file.name))rows=(await file.text()).split(/\r?\n/).map(l=>l.split(/[,;\t]/));
@@ -69,7 +97,7 @@ document.getElementById("file").addEventListener("change",async e=>{const file=e
     const j=await up.json();if(!up.ok||!j.url)throw 0;
     const s=await fetch("/api/office?a=inbox",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ref,kind:"addr",k,files:[{name:file.name,url:j.url,count:r.n||0}]})});
     if(!s.ok)throw 0;
-    const probs=[r.noPhone?`${r.noPhone} שורות בלי טלפון נייד תקין`:"",r.noAddr?`${r.noAddr} שורות בלי עיר או רחוב`:"",r.dup?`${r.dup} שורות כפולות`:""].filter(Boolean);
+    const probs=[r.noPhone?`${r.noPhone} שורות בלי טלפון נייד תקין`:"",r.noAddr?`${r.noAddr} שורות בלי עיר או רחוב`:"",r.dup?`${r.dup} שורות כפולות`:"",ORDER?.boxes&&r.n&&r.n!==ORDER.boxes?`בקובץ ${r.n} כתובות, וההזמנה היא ל-${ORDER.boxes} מארזים`:""].filter(Boolean);
     st.innerHTML=`<div class="ok">✓ הקובץ התקבל${r.n?` · ${r.n} כתובות`:""}. תודה!</div>`+(probs.length?`<div class="warn" style="margin-top:8px">⚠️ שמנו לב: ${probs.join(" · ")}. אפשר לתקן ולהעלות שוב, הקובץ החדש יחליף את הקודם.</div>`:"");
   }catch(err){st.innerHTML='<span class="bad">השליחה נכשלה. נסו שוב, או שלחו את הקובץ בוואטסאפ ל-054-3219070 עם מספר ההזמנה.</span>';}
 });

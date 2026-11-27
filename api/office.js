@@ -218,6 +218,8 @@ function digestOf(db) {
   const approvedOpen = orders.filter(o => o.status === "approved" && ful(o) !== "shipped").length;
   return { G, approvedOpen, pending: orders.filter(o => o.status === "pending").length };
 }
+const trackIp = new Map();
+const TRACK_STEPS = mode => [["received", "ההזמנה התקבלה"], ["approved", "אושרה סופית"], ["packing", "בהכנה ואריזה"], ["ready", mode === "pickup" ? "מוכנה לאיסוף" : "ארוזה ומוכנה"], ["shipped", mode === "pickup" ? "נאספה" : "יצאה למשלוח"]];
 const saveJack = s => put(JACK_CUR, JSON.stringify({ meals: s.meals, wins: s.wins.slice(0, 200), savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
 async function readShowcase() {
   const host = blobHost();
@@ -306,6 +308,26 @@ export default async function handler(req, res) {
       const r = await notify(`☀️ דורש טיפול היום: ${n} פריטים${blobs.length ? ` · ${blobs.length} חדשים מהבונה` : ""}`, html);
       res.status(200).json({ ok: r.ok, sent: r.ok, items: n, error: r.error }); return;
     }
+    if (a === "track" && req.method === "GET") {   // public: the customer's personal order page (order number + private key from the order)
+      const ref = String(req.query.ref || "").toUpperCase(), k = String(req.query.k || "");
+      if (!/^NOYA-[A-Z0-9-]{4,24}$/.test(ref) || !/^[a-z0-9]{8,32}$/.test(k)) { res.status(400).json({ error: "bad" }); return; }
+      const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+      const t = trackIp.get(ip) || []; const now = Date.now(); const recent = t.filter(x => now - x < 60e3); recent.push(now); trackIp.set(ip, recent); if (trackIp.size > 5000) trackIp.clear();
+      if (recent.length > 30) { res.status(429).json({ error: "slow down" }); return; }
+      res.setHeader("Cache-Control", "no-store");
+      const { db } = await readDb();
+      const o = (db?.orders || []).find(x => String(x.ref).toUpperCase() === ref);
+      if (o && o.lateKey !== k) { res.status(404).json({ error: "not found" }); return; }
+      if (!o) {   // not pulled into the admin yet: it is still waiting in the inbox
+        const { blobs } = await list({ prefix: INBOX_PREFIX + ref.replace(/[^A-Z0-9-]/g, ""), limit: 5 });
+        res.status(200).json(blobs.length ? { stage: "received", steps: TRACK_STEPS("ship"), at: 0 } : { stage: "unknown" }); return;
+      }
+      const ful = o.status !== "approved" ? "" : (o.ful || (o.engrave ? "engrave" : "packing"));
+      const stage = o.status === "cancelled" ? "cancelled" : o.status === "pending" ? "received" : o.status === "approved" ? ({ engrave: "approved", packing: "packing", ready: "ready", shipped: "shipped" }[ful] || "approved") : "received";
+      res.status(200).json({ stage, steps: TRACK_STEPS(o.dlvMode), org: o.customer?.org || "", boxes: +o.boxes || 0, dlvMode: o.dlvMode || "", engrave: !!o.engrave,
+        date: o.date || "", needAddr: ["indiv", "vip"].includes(o.dlvMode), addrCount: (o.addrFiles || []).reduce((t, f) => t + (+f.count || 0), 0), addrFiles: (o.addrFiles || []).length,
+        updatedAt: (o.fulLog || []).slice(-1)[0]?.at || o.approvedAt || o.createdAt || "" }); return;
+    }
     if (a === "jackpot" && req.method === "GET") {
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
       const s = await readJack(); res.status(200).json({ meals: s.meals, perWin: JACK_MEALS }); return;
@@ -336,6 +358,17 @@ export default async function handler(req, res) {
     if (a === "me") { res.status(200).json({ ok: true }); return; }
     if (a === "jackpots" && req.method === "GET") { res.status(200).json({ ...(await readJack()), mail: !!process.env.RESEND_API_KEY }); return; }
     if (a === "notifytest" && req.method === "POST") { const r = await jackMail({ at: new Date().toISOString() }, true); res.status(r.ok ? 200 : 400).json(r); return; }
+    if (a === "custmail" && req.method === "POST") {   // owner only: status update e-mail to a customer (needs a verified sending domain in Resend)
+      const b = await readBody(req); const to = String(b?.to || "").trim(), text = String(b?.text || "").slice(0, 4000), subject = String(b?.subject || "נויה במתנה").slice(0, 150);
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to) || !text) { res.status(400).json({ ok: false, error: "חסר מייל או תוכן" }); return; }
+      const key = process.env.RESEND_API_KEY; if (!key) { res.status(200).json({ ok: false, error: "חסר RESEND_API_KEY" }); return; }
+      const from = process.env.CUSTOMER_FROM || "";
+      if (!from) { res.status(200).json({ ok: false, error: "עוד לא אומת דומיין שליחה (noyaglobal.com) ב-Resend" }); return; }
+      const html = `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;line-height:1.7;color:#3f271c;white-space:pre-wrap">${escH(text).replace(/(https:\/\/[^\s<]+)/g, '<a href="$1">$1</a>')}</div>`;
+      const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from, to: [to], reply_to: process.env.NOTIFY_EMAIL || "moshe@noyaglobal.com", subject, html, text }) });
+      const j = await r.json().catch(() => ({})); res.status(200).json(r.ok ? { ok: true } : { ok: false, error: j.message || ("status " + r.status) }); return;
+    }
     if ((a === "jackpotdone" || a === "jackpotdel") && req.method === "POST") {
       const { id } = await readBody(req); const s = await readJack(); const w = s.wins.find(x => x.id === String(id || ""));
       if (!w) { res.status(404).json({ error: "לא נמצא" }); return; }

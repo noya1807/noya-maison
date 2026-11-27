@@ -3578,6 +3578,7 @@ async function send(kind){
     <a class="wa" href="https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(`${toSend.join(" ו")} להזמנה ${o.ref} (מצורף)`)}" target="_blank" rel="noopener" style="text-decoration:none;border-radius:12px">שליחה בוואטסאפ</a>
     ${CONFIG.orderEmail?`<span class="note">או במייל: ${esc(CONFIG.orderEmail)}</span>`:""}`;
   $("doneRef").textContent="מספר הזמנה: "+o.ref+" · אם ההודעה לא נפתחה, חזרו ולחצו \"העתקת פרטי ההזמנה\".";
+  if(lateKey)$("doneRef").insertAdjacentHTML("beforeend",`<br><a href="${location.origin}/addr.html?ref=${encodeURIComponent(o.ref)}&k=${lateKey}" target="_blank" rel="noopener" style="font-weight:700">📍 דף ההזמנה שלכם – מעקב אחרי מצב ההזמנה</a> <span class="note">(שמרו את הקישור)</span>`);
   showView("done");
   try{localStorage.removeItem("noya_draft");}catch(e){}
 }
