@@ -75,6 +75,7 @@ td input,td select{padding:4px 6px}
 .itm-out{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#7a6656;justify-content:flex-end}.itm-out b{font-size:14px;color:#3b2a20}.itm-out b.gold{color:#8a6a35}
 .itm-more{margin-top:6px;font-size:12px;color:#7a6656}.itm-more input{margin-top:4px;max-width:340px}
 .nbadge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#c0392b;color:#fff;font-size:11.5px;line-height:18px;text-align:center;margin-inline-start:4px}
+#askM{position:fixed;inset:0;background:rgba(40,25,15,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}#askM[hidden]{display:none}#askM .askb{background:#fffaf3;border-radius:14px;padding:18px 20px;max-width:520px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}#askM .askt{white-space:pre-wrap;font-size:15.5px;line-height:1.6;color:#3f271c;max-height:60vh;overflow:auto}
 </style>
 </head>
 <body>
@@ -132,6 +133,11 @@ const emptyDb=()=>({v:1,products:[],shipments:[],suppliers:[],orders:[],stockAdj
 
 let db=null,rev="",dirty=false,saving=false,view="dash",sel=null,selOrder=null;
 
+// in-page confirmation (native confirm() dialogs are blocked in some browsers / in-app panes)
+function askC(msg){return new Promise(res=>{let m=document.getElementById("askM");if(!m){m=document.createElement("div");m.id="askM";m.innerHTML=`<div class="askb"><div class="askt"></div><div class="row" style="justify-content:flex-start;gap:8px;margin-top:14px"><button class="btn gold" data-a="1">אישור</button><button class="btn ghost" data-a="0">ביטול</button></div></div>`;document.body.appendChild(m);}
+  m.querySelector(".askt").textContent=String(msg);m.hidden=false;const done=v=>{m.hidden=true;document.removeEventListener("keydown",key);res(v);};
+  const key=e=>{if(e.key==="Escape")done(false);if(e.key==="Enter")done(true);};document.addEventListener("keydown",key);
+  m.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>done(b.dataset.a==="1"));m.onclick=e=>{if(e.target===m)done(false);};setTimeout(()=>m.querySelector('[data-a="1"]').focus(),30);});}
 async function api(a,opt={}){
   const r=await fetch(API+"?a="+a+(opt.qs||""),{method:opt.method||"GET",credentials:"same-origin",headers:opt.headers||(opt.body?{"Content-Type":"application/json"}:{}),body:opt.raw||(opt.body?JSON.stringify(opt.body):undefined)});
   const j=await r.json().catch(()=>({}));
@@ -256,7 +262,7 @@ function shipPayments(s){
 const daysTo=d=>d?Math.round((new Date(d+"T00:00")-new Date(new Date().toDateString()))/864e5):null;
 
 // ---------- navigation ----------
-$("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;selOrder=null;render();};
+$("#nav").onclick=async e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;selOrder=null;render();};
 function render(){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===(view==="agents"?"orders":view)));
   ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,agents:renderAgents,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
@@ -293,7 +299,7 @@ function exceptionsPanel(){
   ${G.map(x=>`<details ${x.items.length<=6?"open":""} style="margin:6px 0"><summary><b>${x.icon} ${esc(x.title)}</b> <span class="muted">(${x.items.length})</span></summary>
     <ul style="margin:4px 0 0;padding-inline-start:18px">${x.items.slice(0,40).map(i=>`<li><a href="#" data-exo="${esc(i.o.id)}">${esc(i.o.ref||"")}</a> · ${esc(i.t)}</li>`).join("")}</ul></details>`).join("")}</div>`;
 }
-function bindExceptions(){document.querySelectorAll("[data-digest]").forEach(b=>b.onclick=async()=>{b.disabled=true;try{const j=await api("digest",{qs:"&force=1"});toast(j.sent?"✓ נשלח למייל":"לא נשלח: "+(j.error||j.reason||""));}catch(e){toast("שגיאה בשליחה");}b.disabled=false;});document.querySelectorAll("[data-exo]").forEach(a=>a.onclick=e=>{e.preventDefault();view="orders";selOrder=a.dataset.exo;render();});}
+function bindExceptions(){document.querySelectorAll("[data-digest]").forEach(b=>b.onclick=async()=>{b.disabled=true;try{const j=await api("digest",{qs:"&force=1"});toast(j.sent?"✓ נשלח למייל":"לא נשלח: "+(j.error||j.reason||""));}catch(e){toast("שגיאה בשליחה");}b.disabled=false;});document.querySelectorAll("[data-exo]").forEach(a=>a.onclick=async e=>{e.preventDefault();view="orders";selOrder=a.dataset.exo;render();});}
 function navBadge(){const b=document.querySelector('#nav button[data-v="orders"]');if(!b)return;const n=exceptions().reduce((t,x)=>t+x.items.length,0);b.innerHTML=`הזמנות${n?` <span class="nbadge">${n}</span>`:""}`;}
 // ---------- dashboard ----------
 function renderDash(){
@@ -332,8 +338,8 @@ function renderDash(){
   <div class="row" style="margin-bottom:6px"><button class="btn gold" id="dCash">📅 חישוב תזרים: כמה כסף צריך ומתי</button></div>
   <div class="row" style="justify-content:space-between"><h2>מכולות בדרך</h2><button class="btn sm" id="dNew">+ מכולה חדשה</button></div>
   ${open.length?shipTable(open.sort((a,b)=>(a.eta||"9").localeCompare(b.eta||"9"))):`<div class="panel muted">עוד אין מכולות. לחצו "מכולה חדשה" כדי להתחיל ולהעלות מסמכים.</div>`}`;
-  $("#dNew").onclick=newShip;$("#dCash").onclick=()=>{view="cash";render();};bindShipRows();
-  document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=()=>{view="orders";selOrder=tr.dataset.oid;render();});
+  $("#dNew").onclick=newShip;$("#dCash").onclick=async()=>{view="cash";render();};bindShipRows();
+  document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=async()=>{view="orders";selOrder=tr.dataset.oid;render();});
 }
 
 // ---------- cash plan: all open payments grouped by date and month ----------
@@ -375,7 +381,7 @@ function shipTable(list){
   <td><span class="pill st-${esc(s.status)}">${stName(s.status)}</span></td><td>${esc(fmtDate(s.eta))}</td><td class="num">${c.ok?(c.total?money(Math.round(c.total)):""):`<span class="warn">חסר שער</span>`}</td><td>${(s.docs||[]).length||""}</td></tr>`}).join("")}
   </tbody></table></div>`;
 }
-function bindShipRows(){document.querySelectorAll("tr[data-id]").forEach(tr=>tr.onclick=()=>{view="ships";sel=tr.dataset.id;render();});}
+function bindShipRows(){document.querySelectorAll("tr[data-id]").forEach(tr=>tr.onclick=async()=>{view="ships";sel=tr.dataset.id;render();});}
 function newShip(){const n=db.shipments.length+1;const s={id:uid(),name:"מכולה "+n,supplier:"",containerNo:"",type:"40HQ",status:"order",etd:"",eta:"",currency:"USD",fxRates:{},costs:{},items:[],docs:[],notes:"",createdAt:new Date().toISOString()};
   db.shipments.push(s);touch();view="ships";sel=s.id;render();}
 function renderShips(){
@@ -426,20 +432,20 @@ function renderShip(){
   <h2>תשלומים</h2><div class="panel" id="pay"></div>
   <h2>הערות</h2><div class="panel"><textarea data-k="notes" rows="3">${esc(s.notes)}</textarea></div>`;
 
-  $("#back").onclick=()=>{sel=null;render();};
-  $("#sDel").onclick=()=>{if(!confirm(`למחוק את "${s.name}"? המסמכים שלה יימחקו גם הם.`))return;
+  $("#back").onclick=async()=>{sel=null;render();};
+  $("#sDel").onclick=async()=>{if(!await askC(`למחוק את "${s.name}"? המסמכים שלה יימחקו גם הם.`))return;
     (s.docs||[]).forEach(d=>api("delfile",{method:"POST",body:{url:d.url}}).catch(()=>{}));
     db.shipments=db.shipments.filter(x=>x!==s);touch();sel=null;render();};
   document.querySelectorAll("[data-k]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{s[el.dataset.k]=el.value;if(el.dataset.k==="name")$("#sTitle").textContent=el.value;touch();if(["currency","supplier"].includes(el.dataset.k)){drawFx();drawItems();}if(el.dataset.k==="eta")drawPay();}));
   document.querySelectorAll("[data-c]").forEach(el=>el.addEventListener("input",()=>{s.costs[el.dataset.c]=el.value;touch();drawItems();}));
   document.querySelectorAll("[data-cm]").forEach(el=>el.addEventListener("change",()=>{(s.costMethod??={})[el.dataset.cm]=el.value;touch();drawItems();}));
-  const drop=$("#drop");$("#pick").onclick=e=>{e.preventDefault();$("#files").click();};
+  const drop=$("#drop");$("#pick").onclick=async e=>{e.preventDefault();$("#files").click();};
   $("#files").onchange=e=>uploadFiles(s,[...e.target.files]);
   ["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("over");}));
   ["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("over");}));
   drop.addEventListener("drop",e=>uploadFiles(s,[...e.dataTransfer.files]));
-  $("#addItem").onclick=()=>{const last=s.items[s.items.length-1];s.items.push({sku:"",name:"",supplier:last?.supplier||"",currency:last?.currency||"",qty:"",unitPrice:""});touch();drawItems();};
-  $("#applyLanded").onclick=()=>{const c=shipCalc(s);if(!c.ok){toast("חסר שער המרה ל-"+c.missing.join(", "));return;}let n=0;
+  $("#addItem").onclick=async()=>{const last=s.items[s.items.length-1];s.items.push({sku:"",name:"",supplier:last?.supplier||"",currency:last?.currency||"",qty:"",unitPrice:""});touch();drawItems();};
+  $("#applyLanded").onclick=async()=>{const c=shipCalc(s);if(!c.ok){toast("חסר שער המרה ל-"+c.missing.join(", "));return;}let n=0;
     c.lines.forEach(l=>{const p=prodBySku(l.sku);if(p&&l.landed){p.landedCost=Math.round(l.landed*100)/100;p.landedFrom=s.name;n++;}});
     touch();toast(n?`עודכנה עלות נחיתה ב-${n} מוצרים`:"אין שורות שמקושרות למק״ט של מוצר");};
   drawDocs(s);drawFx();drawItems();
@@ -479,7 +485,7 @@ function renderShip(){
       if(el.dataset.f==="currency"&&el.value===s.currency)it.currency="";
       if(el.dataset.f==="sku"){const p=prodBySku(el.value.trim());if(p){it.sku=p.sku;it.name=p.name;if(!it.supplier&&p.supplier)it.supplier=p.supplier;}}
       touch();if(el.dataset.f==="currency")drawFx();drawItems();}));
-    $("#items").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{s.items.splice(+b.dataset.del,1);touch();drawItems();});
+    $("#items").querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{s.items.splice(+b.dataset.del,1);touch();drawItems();});
     drawSum();
   }
   function drawPay(){const P=shipPayments(s);
@@ -516,8 +522,8 @@ function drawDocs(s){
   $("#docList").querySelectorAll("[data-dsup]").forEach(el=>el.onchange=()=>{s.docs[+el.dataset.dsup].supplier=el.value.trim();touch();});
   $("#docList").querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>extractDoc(s,s.docs[+b.dataset.ex],b));
   $("#docList").querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>window.open(link(s.docs[+b.dataset.open]),"_blank"));
-  $("#docList").querySelectorAll("[data-dl]").forEach(b=>b.onclick=()=>{location.href=link(s.docs[+b.dataset.dl],1);});
-  $("#docList").querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{const d=s.docs[+b.dataset.rm];if(!confirm(`למחוק את "${d.name}"?`))return;
+  $("#docList").querySelectorAll("[data-dl]").forEach(b=>b.onclick=async()=>{location.href=link(s.docs[+b.dataset.dl],1);});
+  $("#docList").querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{const d=s.docs[+b.dataset.rm];if(!await askC(`למחוק את "${d.name}"?`))return;
     try{await api("delfile",{method:"POST",body:{url:d.url}});}catch(e){}s.docs=s.docs.filter(x=>x!==d);touch();drawDocs(s);});
 }
 // ---------- AI extraction ----------
@@ -569,7 +575,7 @@ function showExtract(s,d,R){
   const close=()=>$("#modal").hidden=true;$("#mX").onclick=close;$("#mCancel").onclick=close;
   document.querySelectorAll("[data-set]").forEach(c=>c.onchange=()=>{items[+c.dataset.set].isSet=c.checked;});
   $("#exAll").onchange=e=>document.querySelectorAll("[data-x]").forEach(c=>c.checked=e.target.checked);
-  $("#exGo").onclick=()=>{
+  $("#exGo").onclick=async()=>{
     normShip(s);
     const sup=$("#exSup").value.trim(),order=$("#exOrder").value.trim();
     document.querySelectorAll("[data-exfx]").forEach(el=>{if(el.value.trim())s.fxRates[el.dataset.exfx]=el.value.trim();});
@@ -650,11 +656,11 @@ function editProd(p){
    <div class="row" style="justify-content:space-between;margin-top:16px">${isNew?"<span></span>":`<button class="btn danger sm" id="mDel">מחיקת מוצר</button>`}<button class="btn" id="mSave">שמירה</button></div>`;
   $("#modal").hidden=false;
   $("#mX").onclick=()=>$("#modal").hidden=true;
-  $("#mSave").onclick=()=>{const o={...p};document.querySelectorAll("[data-p]").forEach(el=>{o[el.dataset.p]=NUMF.has(el.dataset.p)?(el.value===""?"":num(el.value)):el.value.trim();});
+  $("#mSave").onclick=async()=>{const o={...p};document.querySelectorAll("[data-p]").forEach(el=>{o[el.dataset.p]=NUMF.has(el.dataset.p)?(el.value===""?"":num(el.value)):el.value.trim();});
     if(!o.name){toast("חסר שם מוצר");return;}
     if(isNew){o.sku=nextSku(o.cat);o.createdAt=new Date().toISOString();db.products.push(o);}else{Object.assign(db.products.find(x=>x.sku===p.sku),o);}
     touch();$("#modal").hidden=true;renderProds();toast(isNew?`נוצר מוצר ${o.sku}`:"נשמר");};
-  if(!isNew)$("#mDel").onclick=()=>{if(!confirm(`למחוק את ${p.sku}? המק״ט לא יחזור לשימוש.`))return;if(p.icountId)(db.settings.icountDel??=[]).push(p.icountId);db.products=db.products.filter(x=>x.sku!==p.sku);touch();$("#modal").hidden=true;renderProds();};
+  if(!isNew)$("#mDel").onclick=async()=>{if(!await askC(`למחוק את ${p.sku}? המק״ט לא יחזור לשימוש.`))return;if(p.icountId)(db.settings.icountDel??=[]).push(p.icountId);db.products=db.products.filter(x=>x.sku!==p.sku);touch();$("#modal").hidden=true;renderProds();};
 }
 async function loadXlsx(){if(window.XLSX)return;await new Promise((ok,bad)=>{const s=document.createElement("script");s.src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";s.onload=ok;s.onerror=()=>bad(new Error("טעינת קורא האקסל נכשלה"));document.head.appendChild(s);});}
 async function importXls(file){
@@ -702,10 +708,10 @@ async function exportXls(){
 
 // ---------- selling price = landed cost × markup (default 3), rounded up to a whole shekel ----------
 const suggestPrice=p=>Math.ceil(costOf(p.sku)*num(db.settings.markup||3));
-function fillPrices(){
+async function fillPrices(){
   const todo=db.products.filter(p=>!p.salePrice&&p.cat!=="EQ"&&costOf(p.sku)>0);
   if(!todo.length){toast("לכל המוצרים כבר יש מחיר מכירה (או שחסרה להם עלות)");return;}
-  if(!confirm(`למלא מחיר מכירה ל-${todo.length} מוצרים בלי מחיר, לפי עלות × ${db.settings.markup}? מוצרים שכבר יש להם מחיר לא ישתנו.`))return;
+  if(!await askC(`למלא מחיר מכירה ל-${todo.length} מוצרים בלי מחיר, לפי עלות × ${db.settings.markup}? מוצרים שכבר יש להם מחיר לא ישתנו.`))return;
   todo.forEach(p=>{p.salePrice=suggestPrice(p);p.priceAuto=true;});touch();renderProds();toast(`מולאו מחירים ל-${todo.length} מוצרים`);
 }
 
@@ -762,11 +768,11 @@ function renderStock(){
   </tbody></table></div>
   ${db.stockAdj.length?`<h2>תיקונים אחרונים</h2><div class="tablewrap" style="max-height:300px"><table><thead><tr><th>תאריך</th><th>מק״ט</th><th class="num">כמות</th><th>סיבה</th></tr></thead><tbody>${[...db.stockAdj].reverse().slice(0,50).map(a=>`<tr><td>${esc(new Date(a.at).toLocaleDateString("he-IL"))}</td><td class="sku">${esc(a.sku)}</td><td class="num ${a.qty<0?"bad":"okc"}">${a.qty>0?"+":""}${esc(a.qty)}</td><td>${esc(a.reason)}</td></tr>`).join("")}</tbody></table></div>`:""}`;
   $("#stQ").oninput=e=>{stockQ=e.target.value;const pos=e.target.selectionStart;renderStock();const el=$("#stQ");el.focus();el.setSelectionRange(pos,pos);};
-  if(stockMode==="count"){$("#cCancel").onclick=()=>{stockMode="";renderStock();};
-    $("#cSave").onclick=()=>{let n=0;document.querySelectorAll("[data-cnt]").forEach(el=>{if(el.value.trim()==="")return;const sku=el.dataset.cnt,d=num(el.value)-(S[sku]?.stock||0);
+  if(stockMode==="count"){$("#cCancel").onclick=async()=>{stockMode="";renderStock();};
+    $("#cSave").onclick=async()=>{let n=0;document.querySelectorAll("[data-cnt]").forEach(el=>{if(el.value.trim()==="")return;const sku=el.dataset.cnt,d=num(el.value)-(S[sku]?.stock||0);
       if(d){db.stockAdj.push({sku,qty:d,reason:"ספירת מלאי",at:new Date().toISOString()});n++;}});stockMode="";touch();renderStock();toast(n?`נרשמו ${n} תיקונים מהספירה`:"אין הפרשים");};}
-  else{$("#sCount").onclick=()=>{stockMode="count";renderStock();};
-    document.querySelectorAll("[data-adj]").forEach(b=>b.onclick=()=>{const sku=b.dataset.adj;const v=prompt(`תיקון מלאי ל-${sku}\nכמה להוסיף? (מספר שלילי כדי להוריד, למשל -5)`);if(v===null||!num(v))return;
+  else{$("#sCount").onclick=async()=>{stockMode="count";renderStock();};
+    document.querySelectorAll("[data-adj]").forEach(b=>b.onclick=async()=>{const sku=b.dataset.adj;const v=prompt(`תיקון מלאי ל-${sku}\nכמה להוסיף? (מספר שלילי כדי להוריד, למשל -5)`);if(v===null||!num(v))return;
       const r=prompt("סיבה (שבר, דוגמה ללקוח, מתנה, טעות...)","")??"";db.stockAdj.push({sku,qty:num(v),reason:r||"תיקון ידני",at:new Date().toISOString()});touch();renderStock();});}
 }
 
@@ -798,9 +804,9 @@ async function loadJack(){const el=$("#jpBox");if(!el)return;
       +`<div class="row" style="gap:8px;margin-top:6px;align-items:center"><span class="muted">${s.mail?"📧 מייל יישלח אליך מיד כשיוצא 777":"📧 התראה במייל עוד לא מחוברת (חסר RESEND_API_KEY ב-Vercel)"}</span>${s.mail?`<button class="btn sm ghost" id="jpTest">שליחת מייל בדיקה</button>`:""}${!w.length?`<span class="muted">· עוד לא יצא 777</span>`:""}</div>`
       +w.slice(0,20).map(x=>`<div class="row" style="gap:8px;margin-top:6px;align-items:center"><span>${new Date(x.at).toLocaleString("he-IL",{dateStyle:"medium",timeStyle:"short"})}</span>
         ${x.donated?`<span>✓ הועבר ${x.donatedAt?new Date(x.donatedAt).toLocaleDateString("he-IL"):""}</span>`:x.shown?`<button class="btn sm gold" data-jd="${esc(x.id)}">✓ העברנו את התרומה (21 ארוחות)</button><button class="btn sm ghost" data-jx="${esc(x.id)}" data-shown="1">מחיקה (בדיקה / לא לתרומה)</button>`:`<span class="muted">לא הוצג ללקוח (נסגר לפני הסוף)</span><button class="btn sm ghost" data-jx="${esc(x.id)}">מחיקה</button>`}</div>`).join("");
-    el.querySelectorAll("[data-jd]").forEach(b=>b.onclick=async()=>{if(!confirm("לסמן שהעברת 21 ארוחות חמות ל\"האור של אורי\"? המונה באתר יעלה ב-21."))return;b.disabled=true;try{await api("jackpotdone",{method:"POST",body:{id:b.dataset.jd}});toast("✓ נרשם. המונה באתר יתעדכן תוך דקה");loadJack();}catch(e){toast(e.message);b.disabled=false;}});
+    el.querySelectorAll("[data-jd]").forEach(b=>b.onclick=async()=>{if(!await askC("לסמן שהעברת 21 ארוחות חמות ל\"האור של אורי\"? המונה באתר יעלה ב-21."))return;b.disabled=true;try{await api("jackpotdone",{method:"POST",body:{id:b.dataset.jd}});toast("✓ נרשם. המונה באתר יתעדכן תוך דקה");loadJack();}catch(e){toast(e.message);b.disabled=false;}});
     $("#jpTest")&&($("#jpTest").onclick=async()=>{const b=$("#jpTest");b.disabled=true;try{await api("notifytest",{method:"POST"});toast("נשלח מייל בדיקה ✓ בדוק את תיבת הדואר");}catch(e){toast("המייל לא נשלח: "+e.message,6000);}b.disabled=false;});
-    el.querySelectorAll("[data-jx]").forEach(b=>b.onclick=async()=>{if(b.dataset.shown&&!confirm("למחוק את ה-777 הזה? הוא לא ייספר לתרומה, ומכונת המזל תוכל להוציא 777 חדש השבוע."))return;b.disabled=true;try{await api("jackpotdel",{method:"POST",body:{id:b.dataset.jx}});loadJack();}catch(e){toast(e.message);b.disabled=false;}});
+    el.querySelectorAll("[data-jx]").forEach(b=>b.onclick=async()=>{if(b.dataset.shown&&!await askC("למחוק את ה-777 הזה? הוא לא ייספר לתרומה, ומכונת המזל תוכל להוציא 777 חדש השבוע."))return;b.disabled=true;try{await api("jackpotdel",{method:"POST",body:{id:b.dataset.jx}});loadJack();}catch(e){toast(e.message);b.disabled=false;}});
   }catch(e){el.hidden=true;}}
 function orderFromBuilder(o){
   const boxes=Math.max(1,num(o.boxes)||1);
@@ -1006,12 +1012,12 @@ function renderAgents(){
   <div class="panel"><p class="muted" style="margin-top:0">בטופס ההזמנה בבונה כל לקוח חייב לבחור יועץ/ת מארזים (משה / אפרת / ליגי) או איך הגיע (חבר, פייסבוק/אינסטגרם, גוגל). יועץ/ת שפותח/ת פעם אחת את הקישור האישי – השם כבר בחור אצלו/ה בטופס. יועץ/ת חדש/ה: מוסיפים כאן וגם צריך להוסיף אותו לרשימה בבונה (בקשו ממני).</p>
     ${agList().map((a,i)=>`<div class="row" style="gap:8px;align-items:center;margin-bottom:6px"><b style="min-width:110px">${esc(a.name)}</b><input readonly value="${esc(agentLink(a.name))}" dir="ltr" style="flex:1;min-width:200px;font-size:12.5px" onclick="this.select()"><button class="btn sm ghost" data-agcopy="${i}">📋 העתקה</button><button class="btn sm ghost" data-agdel="${i}" title="הסרה מהרשימה (ההזמנות נשארות)">✕</button></div>`).join("")||'<p class="muted">עוד אין יועצים ברשימה.</p>'}
     <div class="row" style="gap:8px;margin-top:10px"><input id="agNew" placeholder="שם היועץ/ת (כמו שיופיע בהזמנות)" maxlength="40" style="flex:1;max-width:280px"><button class="btn sm" id="agAdd">+ הוספת יועץ/ת</button></div></div>`;
-  $("#agBack").onclick=()=>{view="orders";render();};
-  document.querySelectorAll("[data-ag]").forEach(b=>b.onclick=()=>{agRange=b.dataset.ag;renderAgents();});
+  $("#agBack").onclick=async()=>{view="orders";render();};
+  document.querySelectorAll("[data-ag]").forEach(b=>b.onclick=async()=>{agRange=b.dataset.ag;renderAgents();});
   document.querySelectorAll("[data-pct]").forEach(el=>el.onchange=()=>{agList();let a=db.settings.agents.find(x=>x.name===el.dataset.pct);if(!a)db.settings.agents.push(a={name:el.dataset.pct});a.pct=num(el.value)||0;touch();renderAgents();});
-  $("#agAdd").onclick=()=>{const n=$("#agNew").value.trim().slice(0,40);if(!n)return;agList();if(!db.settings.agents.some(a=>a.name===n))db.settings.agents.push({name:n,pct:0});touch();renderAgents();};
+  $("#agAdd").onclick=async()=>{const n=$("#agNew").value.trim().slice(0,40);if(!n)return;agList();if(!db.settings.agents.some(a=>a.name===n))db.settings.agents.push({name:n,pct:0});touch();renderAgents();};
   document.querySelectorAll("[data-agcopy]").forEach(b=>b.onclick=async()=>{const a=db.settings.agents[+b.dataset.agcopy];try{await navigator.clipboard.writeText(agentLink(a.name));toast("✓ הקישור הועתק");}catch(e){toast("סמנו את הקישור והעתיקו ידנית");}});
-  document.querySelectorAll("[data-agdel]").forEach(b=>b.onclick=()=>{const a=db.settings.agents[+b.dataset.agdel];if(!confirm(`להסיר את ${a.name} מרשימת היועצים? ההזמנות נשארות עם השם.`))return;db.settings.agents.splice(+b.dataset.agdel,1);touch();renderAgents();});
+  document.querySelectorAll("[data-agdel]").forEach(b=>b.onclick=async()=>{const a=db.settings.agents[+b.dataset.agdel];if(!await askC(`להסיר את ${a.name} מרשימת היועצים? ההזמנות נשארות עם השם.`))return;db.settings.agents.splice(+b.dataset.agdel,1);touch();renderAgents();});
   $("#agCsv").onclick=()=>downloadCsv(`יועצים-${rangeLbl[agRange]}-${new Date().toISOString().slice(0,10)}.csv`,[["יועץ/ת","הזמנות מאושרות","מארזים","מכירות לפני מע״מ","רווח גולמי","עמלה %","עמלה ₪","ממתינות","הצעות פתוחות","הצעות שהפכו להזמנות","סה״כ הצעות"],...list.map(r=>{const p=r.name.startsWith("—")?0:agentPct(r.name);return [r.name,r.orders,r.boxes,Math.round(r.sales),Math.round(r.profit),p||"",p?Math.round(r.sales*p/100):"",r.pending,r.quotes,r.qWon,r.qAll];})]);
 }
 function renderOrders(){
@@ -1050,9 +1056,9 @@ function renderOrders(){
     <td>${(()=>{const fl=fulLabel(o);return fl?`<span class="pill ${fl[1]}">${fl[0]}</span>${paidPill(o)}${o.status==="approved"&&fulOf(o)!=="shipped"&&shortOf(o)?' <span class="pill st-port" title="חסר מלאי לחלק מהמוצרים">⚠ חסר מלאי</span>':""}`:`<span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>`;})()}</td>
     ${work?`<td style="white-space:nowrap">${fulNext(o)?`<button class="btn sm gold" data-adv="${esc(o.id)}">${esc(fulNextLabel(o))}</button>`:""} ${waBtn(o,"btn sm ghost")}</td>`:""}</tr>`;}).join("")||`<tr><td colspan="10" class="muted">אין הזמנות כאן.</td></tr>`}
   </tbody></table></div>`;
-  document.querySelectorAll("[data-of]").forEach(b=>b.onclick=()=>{ordFilter=b.dataset.of;renderOrders();});
-  document.querySelectorAll("[data-df]").forEach(b=>b.onclick=()=>{dlvFilter=b.dataset.df;renderOrders();});
-  document.querySelectorAll("[data-adv]").forEach(b=>b.onclick=e=>{e.stopPropagation();const o=db.orders.find(x=>x.id===b.dataset.adv);if(!o)return;
+  document.querySelectorAll("[data-of]").forEach(b=>b.onclick=async()=>{ordFilter=b.dataset.of;renderOrders();});
+  document.querySelectorAll("[data-df]").forEach(b=>b.onclick=async()=>{dlvFilter=b.dataset.df;renderOrders();});
+  document.querySelectorAll("[data-adv]").forEach(b=>b.onclick=async e=>{e.stopPropagation();const o=db.orders.find(x=>x.id===b.dataset.adv);if(!o)return;
     const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrders();toast(`${o.ref}: ${fulLabel(o)[0]}`);stageChanged(o);});
   document.querySelectorAll(".wa-up").forEach(a=>a.addEventListener("click",e=>e.stopPropagation()));
   // bulk: select several orders in work → advance together / print all packing sheets at once
@@ -1061,19 +1067,19 @@ function renderOrders(){
   document.querySelectorAll("[data-sel]").forEach(cb=>cb.onchange=()=>{cb.checked?ordSel.add(cb.dataset.sel):ordSel.delete(cb.dataset.sel);selUi();});
   if($("#oSelAll"))$("#oSelAll").onchange=e=>{ordSel.clear();if(e.target.checked)list.forEach(o=>ordSel.add(o.id));document.querySelectorAll("[data-sel]").forEach(cb=>cb.checked=ordSel.has(cb.dataset.sel));selUi();};
   if($("#oPrintSel"))$("#oPrintSel").onclick=()=>printOrders(list.filter(o=>ordSel.has(o.id)));
-  if($("#oAdvSel"))$("#oAdvSel").onclick=()=>{const sel=list.filter(o=>ordSel.has(o.id)&&fulNext(o));if(!sel.length){toast("אין שלב הבא לנבחרות");return;}
+  if($("#oAdvSel"))$("#oAdvSel").onclick=async()=>{const sel=list.filter(o=>ordSel.has(o.id)&&fulNext(o));if(!sel.length){toast("אין שלב הבא לנבחרות");return;}
     const by={};sel.forEach(o=>{const k=fulNextLabel(o);by[k]=(by[k]||0)+1;});
-    if(!confirm(`להעביר ${sel.length} הזמנות לשלב הבא?\n`+Object.entries(by).map(([k,n])=>`• ${k}: ${n}`).join("\n")))return;
+    if(!await askC(`להעביר ${sel.length} הזמנות לשלב הבא?\n`+Object.entries(by).map(([k,n])=>`• ${k}: ${n}`).join("\n")))return;
     const at=new Date().toISOString();sel.forEach(o=>{const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at});stageChanged(o);});
     ordSel.clear();touch();renderOrders();toast(`✓ ${sel.length} הזמנות הועברו לשלב הבא`);};
   if($("#oExport"))$("#oExport").onclick=()=>exportCourier(list.filter(o=>fulOf(o)==="ready"&&o.dlvMode!=="pickup"));
   if($("#oPickCsv"))$("#oPickCsv").onclick=()=>downloadCsv(`ליקוט-${new Date().toISOString().slice(0,10)}.csv`,[["פריט","מק״ט","כמות לארוז","בהזמנות"],...pickRows.map(r=>[r.name,r.sku||"",r.qty,r.orders])]);
-  document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=()=>{selOrder=tr.dataset.oid;view="orders";render();});
-  $("#oAgents").onclick=()=>{view="agents";render();};
+  document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=async()=>{selOrder=tr.dataset.oid;view="orders";render();});
+  $("#oAgents").onclick=async()=>{view="agents";render();};
   $("#oPay").onclick=()=>checkPayments(true);
   $("#oPull").onclick=async()=>{toast("בודק…");await pullInbox();renderOrders();};
   loadJack();bindExceptions();try{navBadge();}catch(e){}
-  $("#oNew").onclick=()=>{const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:"ידני",createdAt:new Date().toISOString(),status:"pending",customer:{},boxes:1,lines:[],engrave:false,card:false,dlvMode:"ship",gross:0,notes:""};
+  $("#oNew").onclick=async()=>{const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:"ידני",createdAt:new Date().toISOString(),status:"pending",customer:{},boxes:1,lines:[],engrave:false,card:false,dlvMode:"ship",gross:0,notes:""};
     db.orders.unshift(o);touch();selOrder=o.id;render();};
 }
 // ---------- customer card: earlier orders of the same customer (phone or organisation) + duplicate an order ----------
@@ -1113,7 +1119,7 @@ function icountItems(o){
   return items;}
 async function icountCreate(o,forceType){
   const dt=forceType||db.settings.icountType||"deal",items=icountItems(o),tot=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);
-  if(!confirm(`ליצור ${IC_TYPES[dt]} ב-iCount?\n\nלקוח: ${o.customer?.org||o.customer?.name}\n${items.map(i=>`${i.unitprice?"• ":"   "}${i.description} – ${i.quantity}${i.unitprice?` × ₪${i.unitprice}`:""}`).join("\n")}\nסה״כ לפני מע״מ: ₪${Math.round(tot).toLocaleString("he-IL")}`))return;
+  if(!await askC(`ליצור ${IC_TYPES[dt]} ב-iCount?\n\nלקוח: ${o.customer?.org||o.customer?.name}\n${items.map(i=>`${i.unitprice?"• ":"   "}${i.description} – ${i.quantity}${i.unitprice?` × ₪${i.unitprice}`:""}`).join("\n")}\nסה״כ לפני מע״מ: ₪${Math.round(tot).toLocaleString("he-IL")}`))return;
   toast("יוצר מסמך ב-iCount…");
   try{const j=await api("icount",{method:"POST",body:{doctype:dt,client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
     if(!j.ok){toast("iCount: "+(j.error||"שגיאה"),8000);return;}
@@ -1190,7 +1196,7 @@ function renderOrder(){
   ${locked?"":`<button class="btn sm ghost" id="oAddLine" style="margin-top:10px">+ שורה</button>`}
   <p class="muted" style="font-size:12.5px;margin-bottom:0">עלות ריקה = העלות הממוצעת של המוצר מהמכולות. כשבוחרים מוצר לשורה שהגיעה מהבונה, המערכת זוכרת את הקישור להזמנות הבאות.</p></div>
   <h2>הערות</h2><div class="panel"><textarea data-o="notes" rows="3" ${dis}>${esc(o.notes)}</textarea>${o.text?`<details style="margin-top:8px"><summary class="muted">ההודעה המקורית מהבונה</summary><pre style="white-space:pre-wrap;font:inherit;font-size:13px">${esc(o.text)}</pre></details>`:""}</div>`;
-  $("#oBack").onclick=()=>{selOrder=null;render();};
+  $("#oBack").onclick=async()=>{selOrder=null;render();};
   const re=()=>{touch();renderOrder();};
   document.querySelectorAll("[data-cu]").forEach(el=>el.onchange=()=>{(o.customer??={})[el.dataset.cu]=el.value.trim();touch();});
   if($("#oAgent"))$("#oAgent").onchange=e=>{o.agent=e.target.value.trim().slice(0,40);touch();toast(o.agent?`יועץ/ת / מקור: ${o.agent}`:"לא צוין");};
@@ -1200,29 +1206,29 @@ function renderOrder(){
   document.querySelectorAll("[data-l]").forEach(el=>el.onchange=()=>{const l=o.lines[+el.closest("tr").dataset.li],k=el.dataset.l;
     if(k==="sku"){const v=el.value.trim();const p=prodBySku(v)||db.products.find(x=>x.name===v);l.sku=p?p.sku:"";if(p&&l.bid){p.builderIds=[...new Set([...(p.builderIds||[]),l.bid])];}}
     else if(k==="qty"){l.qty=num(el.value);l.perBox=0;}else l.unitCost=el.value.trim()===""?undefined:num(el.value);re();});
-  document.querySelectorAll("[data-ldel]").forEach(b=>b.onclick=()=>{o.lines.splice(+b.dataset.ldel,1);re();});
-  if($("#oAddLine"))$("#oAddLine").onclick=()=>{(o.lines??=[]).push({sku:"",name:"",qty:num(o.boxes)||1,perBox:1});re();};
+  document.querySelectorAll("[data-ldel]").forEach(b=>b.onclick=async()=>{o.lines.splice(+b.dataset.ldel,1);re();});
+  if($("#oAddLine"))$("#oAddLine").onclick=async()=>{(o.lines??=[]).push({sku:"",name:"",qty:num(o.boxes)||1,perBox:1});re();};
   const setSt=(st,msg)=>{const was=o.status;o.status=st;if(st==="approved"&&was!=="approved")setTimeout(()=>stageChanged(o),50);if(st!=="approved")o.ful="";if(st==="approved"){o.frozen=JSON.parse(JSON.stringify(orderCalc({...o,status:"pending"})));o.approvedAt=new Date().toISOString();}else{delete o.frozen;delete o.approvedAt;}touch();renderOrder();toast(msg);};
-  if($("#oApprove"))$("#oApprove").onclick=()=>{const short=c.lines.filter(l=>l.sku&&(S[l.sku]?.available??0)<0);
-    if(c.missing&&!confirm(`ל-${c.missing} שורות אין עלות, ולכן הרווח שיוקפא יהיה גבוה מהאמת. לאשר בכל זאת?`))return;
-    if(!confirm("לאשר סופית? העלות תוקפא, ההזמנה תיספר ברווח והמוצרים יירדו מהמלאי."))return;setSt("approved","ההזמנה אושרה ✓");};
-  if($("#oCancel"))$("#oCancel").onclick=()=>{if(confirm("לסמן את ההזמנה כבוטלה?"))setSt("cancelled","ההזמנה סומנה כבוטלה");};
-  if($("#oUnapprove"))$("#oUnapprove").onclick=()=>{if(confirm("לבטל את האישור? ההזמנה תחזור ל'ממתינה', המוצרים יחזרו למלאי והעלות תחושב מחדש."))setSt("pending","האישור בוטל");};
-  document.querySelectorAll("[data-dup]").forEach(b=>b.onclick=()=>{const src=db.orders.find(x=>x.id===b.dataset.dup);if(!src)return;
-    if(!confirm(`ליצור הזמנה חדשה (ממתינה) לפי ${src.ref}?\nאותם מוצרים, כמויות, לקוח ואספקה. אחרי זה בודקים ומאשרים כרגיל.`))return;const n=duplicateOrder(src);selOrder=n.id;renderOrder();toast("✓ נוצרה הזמנה חדשה – בדקו ואשרו");});
+  if($("#oApprove"))$("#oApprove").onclick=async()=>{const short=c.lines.filter(l=>l.sku&&(S[l.sku]?.available??0)<0);
+    if(c.missing&&!await askC(`ל-${c.missing} שורות אין עלות, ולכן הרווח שיוקפא יהיה גבוה מהאמת. לאשר בכל זאת?`))return;
+    if(!await askC("לאשר סופית? העלות תוקפא, ההזמנה תיספר ברווח והמוצרים יירדו מהמלאי."))return;setSt("approved","ההזמנה אושרה ✓");};
+  if($("#oCancel"))$("#oCancel").onclick=async()=>{if(await askC("לסמן את ההזמנה כבוטלה?"))setSt("cancelled","ההזמנה סומנה כבוטלה");};
+  if($("#oUnapprove"))$("#oUnapprove").onclick=async()=>{if(await askC("לבטל את האישור? ההזמנה תחזור ל'ממתינה', המוצרים יחזרו למלאי והעלות תחושב מחדש."))setSt("pending","האישור בוטל");};
+  document.querySelectorAll("[data-dup]").forEach(b=>b.onclick=async()=>{const src=db.orders.find(x=>x.id===b.dataset.dup);if(!src)return;
+    if(!await askC(`ליצור הזמנה חדשה (ממתינה) לפי ${src.ref}?\nאותם מוצרים, כמויות, לקוח ואספקה. אחרי זה בודקים ומאשרים כרגיל.`))return;const n=duplicateOrder(src);selOrder=n.id;renderOrder();toast("✓ נוצרה הזמנה חדשה – בדקו ואשרו");});
   if($("#oIcount"))$("#oIcount").onclick=()=>icountCreate(o);
   if($("#oDelcert"))$("#oDelcert").onclick=()=>icountCreate(o,"delcert");
-  if($("#oMail"))$("#oMail").onclick=()=>{if(confirm(`לשלוח ללקוח (${o.customer.email}) את העדכון הזה במייל?\n\n${customerMsg(o)}`))custMail(o,true);};
+  if($("#oMail"))$("#oMail").onclick=async()=>{if(await askC(`לשלוח ללקוח (${o.customer.email}) את העדכון הזה במייל?\n\n${customerMsg(o)}`))custMail(o,true);};
   if($("#oRestore"))$("#oRestore").onclick=()=>setSt("pending","ההזמנה חזרה לממתינה");
   // quote → order: the same record becomes a pending order (contents, customer and consultant kept); final approval stays a separate step
-  if($("#oQuoteOk"))$("#oQuoteOk").onclick=()=>{if(!confirm(`להפוך את הצעת המחיר ${o.ref} להזמנה ממתינה?\nאחרי זה עוברים עליה ומאשרים סופית כרגיל.`))return;
+  if($("#oQuoteOk"))$("#oQuoteOk").onclick=async()=>{if(!await askC(`להפוך את הצעת המחיר ${o.ref} להזמנה ממתינה?\nאחרי זה עוברים עליה ומאשרים סופית כרגיל.`))return;
     o.quoteRef=o.ref;o.quoteWonAt=new Date().toISOString();o.source="הזמנה מהצעת מחיר";setSt("pending","✓ ההצעה הפכה להזמנה ממתינה – עברו עליה ואשרו סופית");};
-  if($("#oLost"))$("#oLost").onclick=()=>{o.lostAt=new Date().toISOString();setSt("lost","ההצעה סומנה: הלקוח ויתר");};
-  if($("#oReopen"))$("#oReopen").onclick=()=>{delete o.lostAt;setSt("quote","ההצעה נפתחה מחדש");};
-  if($("[data-goref]"))document.querySelectorAll("[data-goref]").forEach(a=>a.onclick=e=>{e.preventDefault();const x=db.orders.find(y=>y.ref===a.dataset.goref);if(x){selOrder=x.id;renderOrder();}else toast("לא נמצאה");});
+  if($("#oLost"))$("#oLost").onclick=async()=>{o.lostAt=new Date().toISOString();setSt("lost","ההצעה סומנה: הלקוח ויתר");};
+  if($("#oReopen"))$("#oReopen").onclick=async()=>{delete o.lostAt;setSt("quote","ההצעה נפתחה מחדש");};
+  if($("[data-goref]"))document.querySelectorAll("[data-goref]").forEach(a=>a.onclick=async e=>{e.preventDefault();const x=db.orders.find(y=>y.ref===a.dataset.goref);if(x){selOrder=x.id;renderOrder();}else toast("לא נמצאה");});
   $("#oPrint").onclick=()=>printOrder(o);
-  if($("#oAdv"))$("#oAdv").onclick=()=>{const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrder();toast(fulLabel(o)[0]);stageChanged(o);};
-  if($("#oFulBack"))$("#oFulBack").onclick=()=>{const order=[o.engrave?"engrave":null,"packing","ready","shipped"].filter(Boolean);const i=order.indexOf(fulOf(o));if(i>0){o.ful=order[i-1];touch();renderOrder();}};
+  if($("#oAdv"))$("#oAdv").onclick=async()=>{const n=fulNext(o);o.ful=n;(o.fulLog??=[]).push({ful:n,at:new Date().toISOString()});touch();renderOrder();toast(fulLabel(o)[0]);stageChanged(o);};
+  if($("#oFulBack"))$("#oFulBack").onclick=async()=>{const order=[o.engrave?"engrave":null,"packing","ready","shipped"].filter(Boolean);const i=order.indexOf(fulOf(o));if(i>0){o.ful=order[i-1];touch();renderOrder();}};
 }
 
 // ---------- suppliers ----------
@@ -1232,9 +1238,9 @@ function renderSups(){
   ${db.suppliers.map((x,i)=>`<tr data-i="${i}">${["name","country","contact","phone","email","notes"].map(k=>`<td><input data-s="${k}" value="${esc(x[k])}" ${["phone","email"].includes(k)?'dir="ltr"':""}></td>`).join("")}
     <td class="num">${db.shipments.filter(s=>x.name&&shipSuppliers(s).includes(x.name)).length||""}</td><td><button class="btn sm ghost" data-rm="${i}">✕</button></td></tr>`).join("")||`<tr><td colspan="8" class="muted">עוד אין ספקים.</td></tr>`}
   </tbody></table></div>`;
-  $("#supNew").onclick=()=>{db.suppliers.push({id:uid(),name:""});touch();renderSups();};
+  $("#supNew").onclick=async()=>{db.suppliers.push({id:uid(),name:""});touch();renderSups();};
   document.querySelectorAll("[data-s]").forEach(el=>el.oninput=()=>{db.suppliers[+el.closest("tr").dataset.i][el.dataset.s]=el.value;touch();});
-  document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{if(!confirm("למחוק את הספק?"))return;db.suppliers.splice(+b.dataset.rm,1);touch();renderSups();});
+  document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{if(!await askC("למחוק את הספק?"))return;db.suppliers.splice(+b.dataset.rm,1);touch();renderSups();});
 }
 
 // ---------- settings ----------
@@ -1261,11 +1267,11 @@ function renderSettings(){setTimeout(bindAutoMail,0);
   document.querySelectorAll("[data-c]").forEach(el=>el.onchange=()=>{const c=db.categories[+el.closest("tr").dataset.i];let v=el.value.trim();
     if(el.dataset.c==="code"){v=v.toUpperCase().replace(/[^A-Z0-9]/g,"");if(!v||db.categories.some(x=>x!==c&&x.code===v)){toast("קוד ריק או כפול");el.value=c.code;return;}}c[el.dataset.c]=v;touch();});
   document.querySelectorAll("[data-st]").forEach(el=>el.onchange=()=>{db.settings[el.dataset.st]=num(el.value);touch();});
-  $("#catNew").onclick=()=>{db.categories.push({code:newCatCode(),name:"קטגוריה חדשה"});touch();renderSettings();};
-  $("#bkOut").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,1)],{type:"application/json"}));a.download=`noya-office-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();};
+  $("#catNew").onclick=async()=>{db.categories.push({code:newCatCode(),name:"קטגוריה חדשה"});touch();renderSettings();};
+  $("#bkOut").onclick=async()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,1)],{type:"application/json"}));a.download=`noya-office-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();};
   $("#bkIn").onclick=()=>$("#bkFile").click();
   $("#bkFile").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d.products)||!Array.isArray(d.shipments))throw new Error("קובץ לא תקין");
-    if(!confirm("השחזור יחליף את כל הנתונים הנוכחיים. להמשיך?"))return;db=d;touch();toast("שוחזר");render();}catch(err){toast("השחזור נכשל: "+err.message);}};
+    if(!await askC("השחזור יחליף את כל הנתונים הנוכחיים. להמשיך?"))return;db=d;touch();toast("שוחזר");render();}catch(err){toast("השחזור נכשל: "+err.message);}};
   $("#logout").onclick=async()=>{await save();await api("logout",{method:"POST"}).catch(()=>{});location.reload();};
 }
 $("#modal").addEventListener("click",e=>{if(e.target.id==="modal")$("#modal").hidden=true;});
