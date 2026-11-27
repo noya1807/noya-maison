@@ -358,6 +358,25 @@ export default async function handler(req, res) {
     if (a === "me") { res.status(200).json({ ok: true }); return; }
     if (a === "jackpots" && req.method === "GET") { res.status(200).json({ ...(await readJack()), mail: !!process.env.RESEND_API_KEY }); return; }
     if (a === "notifytest" && req.method === "POST") { const r = await jackMail({ at: new Date().toISOString() }, true); res.status(r.ok ? 200 : 400).json(r); return; }
+    if (a === "icount" && req.method === "GET") { res.status(200).json({ ok: !!process.env.ICOUNT_TOKEN }); return; }
+    if (a === "icount" && req.method === "POST") {   // owner only: create a document in iCount from an approved order (token in ICOUNT_TOKEN, set by the owner in Vercel)
+      const tok = process.env.ICOUNT_TOKEN; if (!tok) { res.status(200).json({ ok: false, error: "חסר ICOUNT_TOKEN ב-Vercel" }); return; }
+      const b = await readBody(req) || {};
+      const doctype = ["deal", "offer", "order", "invoice", "invrec"].includes(b.doctype) ? b.doctype : "deal";
+      const items = (Array.isArray(b.items) ? b.items : []).slice(0, 60).map(i => ({ description: String(i.description || "").slice(0, 200), quantity: Math.max(0, +i.quantity || 0), unitprice: Math.round((+i.unitprice || 0) * 100) / 100 })).filter(i => i.description && i.quantity);
+      if (!items.length || !b.client_name) { res.status(400).json({ ok: false, error: "חסרים לקוח או שורות" }); return; }
+      const body = { doctype, lang: "he", currency_code: "ILS", client_name: String(b.client_name).slice(0, 120), items, hwc: String(b.comments || "").slice(0, 500) };
+      if (b.email) body.email = String(b.email).slice(0, 120);
+      if (b.phone) body.client_phone = String(b.phone).slice(0, 30);
+      if (b.vat_id) body.vat_id = String(b.vat_id).slice(0, 20);
+      try {
+        const r = await fetch("https://api.icount.co.il/api/v3.php/doc/create", { method: "POST", headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || j.status === false) { res.status(200).json({ ok: false, error: j.reason || j.message || j.error || ("status " + r.status) }); return; }
+        const d = j.data || j;
+        res.status(200).json({ ok: true, doctype, docnum: d.docnum || d.doc_number || "", url: d.pdf_link || d.doc_url || "" }); return;
+      } catch (e) { res.status(200).json({ ok: false, error: String(e.message || e) }); return; }
+    }
     if (a === "custmail" && req.method === "POST") {   // owner only: status update e-mail to a customer (needs a verified sending domain in Resend)
       const b = await readBody(req); const to = String(b?.to || "").trim(), text = String(b?.text || "").slice(0, 4000), subject = String(b?.subject || "נויה במתנה").slice(0, 150);
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to) || !text) { res.status(400).json({ ok: false, error: "חסר מייל או תוכן" }); return; }

@@ -1064,13 +1064,29 @@ function duplicateOrder(src){
     customer:c.customer||{},agent:c.agent||"",boxes:c.boxes,lines:(c.lines||[]).map(l=>{const n={...l};delete n.unitCost;return n;}),types:c.types||null,engrave:!!c.engrave,card:!!c.card,dlvMode:c.dlvMode||"ship",dlv:c.dlv||{},gross:c.gross||0,shipCharge:c.shipCharge||0,
     notes:`שוכפלה מ-${src.ref} (${new Date(src.createdAt).toLocaleDateString("he-IL")}). לבדוק מחירים, כמויות ותאריך לפני אישור.`};
   db.orders.unshift(o);touch();return o;}
+// ---------- iCount: one click from an approved order (no re-typing); the token lives only in Vercel ----------
+const IC_TYPES={deal:"חשבון עסקה",offer:"הצעת מחיר",order:"הזמנה",invoice:"חשבונית מס",invrec:"חשבונית מס קבלה"};
+function icountItems(o){const c=orderCalc(o),b=num(o.boxes)||1,shipNet=c.shipAtCost?c.fixed.ship:0,goods=c.net-shipNet,items=[];
+  const tps=Array.isArray(o.types)&&o.types.length>1&&o.types.every(t=>num(t.per))?o.types:null;
+  if(tps)tps.forEach(t=>items.push({description:`מארז שי – ${t.name}`,quantity:num(t.boxes),unitprice:num(t.per)}));
+  else items.push({description:`מארזי שי${o.lines?.length?` (${o.lines.filter(l=>!l.isPack).map(l=>l.name).slice(0,6).join(", ")})`:""}`.slice(0,200),quantity:b,unitprice:Math.round(goods/b*100)/100});
+  const sumT=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);if(tps&&Math.abs(sumT-goods)>1)items.push({description:"מיתוג / תוספות",quantity:1,unitprice:Math.round((goods-sumT)*100)/100});
+  if(shipNet>0)items.push({description:`משלוח – ${DLV_SHORT[o.dlvMode]||""}`.trim(),quantity:1,unitprice:Math.round(shipNet*100)/100});
+  return items.filter(i=>i.quantity&&i.unitprice);}
+async function icountCreate(o){
+  const dt=db.settings.icountType||"deal",items=icountItems(o),tot=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);
+  if(!confirm(`ליצור ${IC_TYPES[dt]} ב-iCount?\n\nלקוח: ${o.customer?.org||o.customer?.name}\n${items.map(i=>`• ${i.description} – ${i.quantity} × ₪${i.unitprice}`).join("\n")}\nסה״כ לפני מע״מ: ₪${Math.round(tot).toLocaleString("he-IL")}`))return;
+  toast("יוצר מסמך ב-iCount…");
+  try{const j=await api("icount",{method:"POST",body:{doctype:dt,client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
+    if(!j.ok){toast("iCount: "+(j.error||"שגיאה"),8000);return;}
+    o.icount={doctype:dt,docnum:j.docnum,url:j.url,at:new Date().toISOString()};touch();renderOrder();toast(`✓ נוצר ${IC_TYPES[dt]} ${j.docnum||""} ב-iCount`);}catch(e){toast("iCount: שגיאה בחיבור",6000);}}
 function renderOrder(){
   const o=db.orders.find(x=>x.id===selOrder);if(!o){selOrder=null;return render();}
   const locked=o.status!=="pending";const c=orderCalc(o);const S=stockAll();const dis=locked?"disabled":"";
   const prodOpts=db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("");
   $("#view").innerHTML=`<button class="back" id="oBack">→ כל ההזמנות</button>
   <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>${o.quoteRef&&o.quoteRef!==o.ref?` · נוצרה מהצעת מחיר <a href="#" data-goref="${esc(o.quoteRef)}">${esc(o.quoteRef)}</a>`:o.quoteRef?" · נוצרה מהצעת המחיר הזו":""}${o.convertedTo?` · הפכה להזמנה <a href="#" data-goref="${esc(o.convertedTo)}">${esc(o.convertedTo)}</a>`:""}</p></div>
-    <div class="row"><button class="btn ghost" id="oPrint">🖨 הדפסת הזמנה</button>${o.status==="approved"?`<button class="btn ghost" data-dup="${esc(o.id)}" title="הזמנה חדשה עם אותם מוצרים, כמויות, לקוח ואספקה">📋 שכפול</button>`:""}${waBtn(o,"btn ghost")}${okMail(o.customer?.email)&&!["lead","quote","won","lost"].includes(o.status)?`<button class="btn ghost" id="oMail" title="שולח ללקוח במייל את ההודעה של השלב הנוכחי">📧 עדכון במייל</button>`:""}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn danger" id="oLost">✕ הלקוח ויתר</button><button class="btn gold" id="oQuoteOk">✓ הלקוח אישר – הפוך להזמנה</button>`:o.status==="lost"?`<button class="btn ghost" id="oReopen">פתיחה מחדש כהצעה</button>`:o.status==="won"?"":o.status==="lead"?`<button class="btn danger" id="oCancel">לא רלוונטי</button><button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
+    <div class="row"><button class="btn ghost" id="oPrint">🖨 הדפסת הזמנה</button>${o.status==="approved"?`<button class="btn ghost" data-dup="${esc(o.id)}" title="הזמנה חדשה עם אותם מוצרים, כמויות, לקוח ואספקה">📋 שכפול</button>${o.icount?`<a class="btn ghost" ${o.icount.url?`href="${esc(o.icount.url)}" target="_blank" rel="noopener"`:""}>🧾 ${esc(IC_TYPES[o.icount.doctype]||"")} ${esc(o.icount.docnum||"")}</a>`:`<button class="btn ghost" id="oIcount" title="יוצר מסמך ב-iCount מההזמנה, בלי להקליד">🧾 ל-iCount</button>`}`:""}${waBtn(o,"btn ghost")}${okMail(o.customer?.email)&&!["lead","quote","won","lost"].includes(o.status)?`<button class="btn ghost" id="oMail" title="שולח ללקוח במייל את ההודעה של השלב הנוכחי">📧 עדכון במייל</button>`:""}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn danger" id="oLost">✕ הלקוח ויתר</button><button class="btn gold" id="oQuoteOk">✓ הלקוח אישר – הפוך להזמנה</button>`:o.status==="lost"?`<button class="btn ghost" id="oReopen">פתיחה מחדש כהצעה</button>`:o.status==="won"?"":o.status==="lead"?`<button class="btn danger" id="oCancel">לא רלוונטי</button><button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
   ${o.status==="pending"?`<p class="warn" style="font-weight:700">🔒 כלל ברזל: ההזמנה לא תיכנס ל"בעבודה", לרשימת הליקוט או לייצוא לשליח עד שתלחץ "✓ אישור סופי".</p>`:""}
   ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:o.status==="quote"?"הצעת מחיר שהלקוח הוריד מהבונה. לא נספרת ברווח ובמלאי. כדאי לחזור אליו, ואם הזמין: \"הלקוח הזמין\".":o.status==="lead"?`💾 הלקוח שמר את המארז בבונה ועוד לא הזמין. לא נספר ברווח ובמלאי. כדאי להתקשר אליו${o.link?` · <a href="${esc(o.link)}" target="_blank" rel="noopener">פתיחת המארז שלו</a>`:""}.`:"ההזמנה בוטלה ולא נספרת."}</p>`:""}
   ${(()=>{const b=num(o.boxes)||0,items=c.lines.filter(l=>!l.isPack),packL=c.lines.find(l=>l.isPack),old=c.fixed.pack===undefined;
@@ -1139,6 +1155,7 @@ function renderOrder(){
   if($("#oUnapprove"))$("#oUnapprove").onclick=()=>{if(confirm("לבטל את האישור? ההזמנה תחזור ל'ממתינה', המוצרים יחזרו למלאי והעלות תחושב מחדש."))setSt("pending","האישור בוטל");};
   document.querySelectorAll("[data-dup]").forEach(b=>b.onclick=()=>{const src=db.orders.find(x=>x.id===b.dataset.dup);if(!src)return;
     if(!confirm(`ליצור הזמנה חדשה (ממתינה) לפי ${src.ref}?\nאותם מוצרים, כמויות, לקוח ואספקה. אחרי זה בודקים ומאשרים כרגיל.`))return;const n=duplicateOrder(src);selOrder=n.id;renderOrder();toast("✓ נוצרה הזמנה חדשה – בדקו ואשרו");});
+  if($("#oIcount"))$("#oIcount").onclick=()=>icountCreate(o);
   if($("#oMail"))$("#oMail").onclick=()=>{if(confirm(`לשלוח ללקוח (${o.customer.email}) את העדכון הזה במייל?\n\n${customerMsg(o)}`))custMail(o,true);};
   if($("#oRestore"))$("#oRestore").onclick=()=>setSt("pending","ההזמנה חזרה לממתינה");
   // quote → order: the same record becomes a pending order (contents, customer and consultant kept); final approval stays a separate step
@@ -1165,9 +1182,12 @@ function renderSups(){
 }
 
 // ---------- settings ----------
-function bindAutoMail(){if($("#setAutoMail"))$("#setAutoMail").onchange=e=>{db.settings.autoCustMail=e.target.checked;touch();toast(e.target.checked?"✓ מייל אוטומטי ללקוחות הופעל":"מייל אוטומטי ללקוחות כבוי");};}
+function bindAutoMail(){if($("#setIcType"))$("#setIcType").onchange=e=>{db.settings.icountType=e.target.value;touch();toast("✓ נשמר");};
+  if($("#icStat"))api("icount").then(j=>{$("#icStat").textContent=j.ok?"✓ מחובר ל-iCount":"⚪ עוד לא מחובר (חסר ICOUNT_TOKEN ב-Vercel)";}).catch(()=>{});if($("#setAutoMail"))$("#setAutoMail").onchange=e=>{db.settings.autoCustMail=e.target.checked;touch();toast(e.target.checked?"✓ מייל אוטומטי ללקוחות הופעל":"מייל אוטומטי ללקוחות כבוי");};}
 function renderSettings(){setTimeout(bindAutoMail,0);
   $("#view").innerHTML=`<h1>הגדרות</h1><p class="sub">קטגוריות, גיבוי ויציאה.</p>
+  <h2>iCount</h2><div class="panel"><label class="f" style="max-width:320px">איזה מסמך ליצור מהזמנה מאושרת<select id="setIcType">${Object.entries(IC_TYPES).map(([k,l])=>`<option value="${k}" ${(db.settings.icountType||"deal")===k?"selected":""}>${l}</option>`).join("")}</select></label>
+    <p class="muted" style="margin:6px 0 0" id="icStat">בודק חיבור…</p><p class="muted" style="margin:4px 0 0">ההמלצה: "חשבון עסקה" – לא מסמך מס, ואחרי התשלום ממירים אותו ב-iCount לחשבונית. החיבור דורש מפתח API מ-iCount (הגדרות ← API) שמוכנס ב-Vercel בשם ICOUNT_TOKEN.</p></div>
   <h2>עדכונים ללקוחות</h2><div class="panel"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-weight:600"><input type="checkbox" id="setAutoMail" ${db.settings.autoCustMail?"checked":""} style="width:18px;height:18px"> 📧 לשלוח ללקוח מייל אוטומטי בכל מעבר שלב (אושרה · בהכנה · מוכנה · יצאה)</label>
     <p class="muted" style="margin:6px 0 0">הנוסח זהה להודעת "עדכן לקוח" בוואטסאפ, כולל קישור לדף ההזמנה. נשלח רק ללקוחות שמילאו מייל. דורש דומיין מאומת ב-Resend (noyaglobal.com) – עד אז המייל לא ייצא, ותופיע הודעה.</p></div>
   <h2>קטגוריות וקודי מק״ט</h2><div class="panel"><p class="muted" style="margin-top:0">הקוד הוא החלק הראשון של המק״ט. אחרי שיש מוצרים בקטגוריה, לא כדאי לשנות את הקוד שלה.</p>
