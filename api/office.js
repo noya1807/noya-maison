@@ -200,6 +200,24 @@ function orderMail(o) {
      ${o.text ? `<pre style="white-space:pre-wrap;font-family:Arial,sans-serif;background:#faf6f1;padding:10px;border-radius:8px">${escH(String(o.text).slice(0, 4000))}</pre>` : ""}
      <p>היא כבר ממתינה בממשק הניהול ← הזמנות (לחצו "בדיקת הזמנות חדשות").</p></div>`);
 }
+// ---------- morning digest (Vercel Cron ~07:30 Israel): what is stuck today, by e-mail ----------
+function digestOf(db) {
+  const now = Date.now(), H = 36e5, D = 864e5, orders = Array.isArray(db?.orders) ? db.orders : [];
+  const ful = o => o.status !== "approved" ? "" : (o.ful || (o.engrave ? "engrave" : "packing"));
+  const today = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jerusalem" })); today.setHours(0, 0, 0, 0);
+  const days = o => o.date ? Math.round((new Date(String(o.date).slice(0, 10) + "T00:00") - today) / D) : null;
+  const open = o => !["cancelled", "lead", "won", "lost"].includes(o.status) && ful(o) !== "shipped";
+  const who = o => escH(o.customer?.org || o.customer?.name || "") + ` <span style="color:#8a7563">${escH(o.ref || "")}</span>`;
+  const G = [], g = (icon, title, items) => { if (items.length) G.push({ icon, title, items }); };
+  g("⏳", "ממתינות לאישור שלך יותר מ-24 שעות", orders.filter(o => o.status === "pending" && now - new Date(o.createdAt) > 24 * H).map(o => `${who(o)} · ${o.boxes} מארזים`));
+  g("⏰", "תאריך היעד קרוב (עד 3 ימים) ועוד לא מוכנה", orders.filter(o => o.status === "approved" && ["engrave", "packing"].includes(ful(o)) && days(o) !== null && days(o) <= 3)
+    .sort((a, b) => days(a) - days(b)).map(o => { const d = days(o); return `${who(o)} · ${d < 0 ? `באיחור ${-d} ימים` : d === 0 ? "היום" : d === 1 ? "מחר" : `עוד ${d} ימים`}`; }));
+  g("📎", "משלוח לכל מקבל – קובץ הכתובות עוד לא הגיע", orders.filter(o => ["pending", "approved"].includes(o.status) && open(o) && ["indiv", "vip"].includes(o.dlvMode) && !(o.addrFiles || []).length).map(o => `${who(o)} · ${escH(o.customer?.phone || "")}`));
+  g("📦", "מוכנות יותר מיומיים ועוד לא יצאו", orders.filter(o => o.status === "approved" && ful(o) === "ready" && (() => { const l = [...(o.fulLog || [])].reverse().find(x => x.ful === "ready"); return l && now - new Date(l.at) > 48 * H; })()).map(who));
+  g("📝", "הצעות מחיר שעומדות לפוג או פגו – לחזור ללקוח", orders.filter(o => o.status === "quote" && (() => { const a = (now - new Date(o.createdAt)) / D; return a >= 5 && a <= 14; })()).map(o => `${who(o)} · ${o.boxes} מארזים${o.agent ? ` · ${escH(o.agent)}` : ""} · ${escH(o.customer?.phone || "")}`));
+  const approvedOpen = orders.filter(o => o.status === "approved" && ful(o) !== "shipped").length;
+  return { G, approvedOpen, pending: orders.filter(o => o.status === "pending").length };
+}
 const saveJack = s => put(JACK_CUR, JSON.stringify({ meals: s.meals, wins: s.wins.slice(0, 200), savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
 async function readShowcase() {
   const host = blobHost();
@@ -270,6 +288,23 @@ export default async function handler(req, res) {
       blobs.sort((x, y) => new Date(y.uploadedAt) - new Date(x.uploadedAt));
       const old = blobs.slice(30).map(x => x.url); if (old.length) await del(old).catch(() => {});
       res.status(200).json({ ok: true, backup: b.pathname, kept: Math.min(blobs.length, 30) }); return;
+    }
+    if (a === "digest") {   // daily Vercel Cron (and the owner can trigger it from the admin)
+      const cronOk = process.env.CRON_SECRET ? req.headers.authorization === `Bearer ${process.env.CRON_SECRET}` : /vercel-cron/i.test(req.headers["user-agent"] || "");
+      if (!cronOk && !authed(req)) { res.status(401).json({ error: "unauthorized" }); return; }
+      const { db } = await readDb();
+      const d = digestOf(db || {});
+      const { blobs } = await list({ prefix: INBOX_PREFIX, limit: 300 });
+      const n = d.G.reduce((t, x) => t + x.items.length, 0);
+      if (!n && !blobs.length && !req.query.force) { res.status(200).json({ ok: true, sent: false, reason: "nothing stuck" }); return; }
+      const html = `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#3f271c">
+        <p style="font-size:18px"><b>☀️ בוקר טוב משה – מה דורש טיפול היום</b></p>
+        <p>${blobs.length ? `🆕 <b>${blobs.length}</b> פריטים חדשים מהבונה מחכים בממשק (הזמנות / הצעות / לידים) · ` : ""}ממתינות לאישור: <b>${d.pending}</b> · בעבודה: <b>${d.approvedOpen}</b></p>
+        ${n ? d.G.map(x => `<p style="margin:14px 0 4px"><b>${x.icon} ${x.title} (${x.items.length})</b></p><ul style="margin:0;padding-inline-start:18px">${x.items.slice(0, 30).map(i => `<li>${i}</li>`).join("")}</ul>`).join("") : "<p>✅ שום דבר לא תקוע.</p>"}
+        <p style="margin-top:16px"><a href="https://build.noyaglobal.com/admin" style="background:#7a5230;color:#fff;padding:9px 16px;border-radius:8px;text-decoration:none">פתיחת ממשק הניהול</a></p>
+        <p style="color:#8a7563;font-size:12.5px">חוסרי מלאי מופיעים בממשק עצמו (לוח בקרה ← דורש טיפול היום).</p></div>`;
+      const r = await notify(`☀️ דורש טיפול היום: ${n} פריטים${blobs.length ? ` · ${blobs.length} חדשים מהבונה` : ""}`, html);
+      res.status(200).json({ ok: r.ok, sent: r.ok, items: n, error: r.error }); return;
     }
     if (a === "jackpot" && req.method === "GET") {
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
