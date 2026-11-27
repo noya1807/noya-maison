@@ -1118,13 +1118,25 @@ function icountItems(o){
   else{items.push({description:"מארז בהתאמה אישית הכולל:",quantity:b,unitprice:Math.round(goods/b*100)/100});content(c.lines);}
   if(shipNet>0)items.push({description:`משלוח – ${({ship:"לכתובת אחת",indiv:"לכל מקבל",vip:"VIP לכל מקבל",pickup:"איסוף"})[o.dlvMode]||""}`.trim(),quantity:1,unitprice:Math.round(shipNet*100)/100});
   return items;}
+// ---------- customer card in iCount: the order is linked to the existing card (by e-mail / exact name), or to the one chosen; remembered per customer ----------
+let IC_CLIENTS=null;
+async function icClients(){if(IC_CLIENTS)return IC_CLIENTS;try{const l=await api("icountinv",{method:"POST",body:{method:"client/get_list",body:{}}});IC_CLIENTS=Object.values(l.clients||{}).map(c=>({id:+c.client_id,name:c.client_name||c.company_name||"",email:(c.email||"").trim().toLowerCase(),vat:c.vat_id||""}));}catch(e){IC_CLIENTS=[];}return IC_CLIENTS;}
+const custKey=o=>phoneKey(o.customer?.phone)||orgKey(o.customer?.org)||String(o.customer?.email||"").toLowerCase();
+async function icClientFor(o){
+  if(+o.icountClientId)return +o.icountClientId;const map=db.settings.icountClientMap||{},k=custKey(o);if(k&&+map[k])return +map[k];
+  const L=await icClients(),em=String(o.customer?.email||"").trim().toLowerCase();
+  if(em){const m=L.filter(c=>c.email===em);if(m.length===1)return m[0].id;}
+  const nm=orgKey(o.customer?.org||o.customer?.name);if(nm.length>=3){const m=L.filter(c=>orgKey(c.name)===nm);if(m.length===1)return m[0].id;}
+  return 0;}
+function icRemember(o,id){if(!+id)return;o.icountClientId=+id;const k=custKey(o);if(k){(db.settings.icountClientMap??={})[k]=+id;}touch();}
 // on final approval: an "הזמנה" document is created in iCount (not a tax document). Later, in iCount, it is converted to an invoice / receipt / delivery note as usual – the builder follows that chain for "שולם".
 async function icountAutoOrder(o){
   if(db.settings.icountAutoOrder===false||(o.icountDocs||[]).some(d=>d.doctype==="order"))return;
   try{const items=icountItems(o);if(!items.length)return;
-    const j=await api("icount",{method:"POST",body:{doctype:"order",client_name:o.customer?.org||o.customer?.name||"לקוח",email:o.customer?.email||"",phone:o.customer?.phone||"",items,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}${o.agent?` · ${o.agent}`:""}`}});
+    const cid=await icClientFor(o);
+    const j=await api("icount",{method:"POST",body:{doctype:"order",client_id:cid,client_name:o.customer?.org||o.customer?.name||"לקוח",email:o.customer?.email||"",phone:o.customer?.phone||"",items,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}${o.agent?` · ${o.agent}`:""}`}});
     if(!j.ok){toast("ההזמנה לא נוצרה ב-iCount: "+(j.error||""),7000);return;}
-    const doc={doctype:"order",docnum:j.docnum,url:j.url,at:new Date().toISOString()};(o.icountDocs??=[]).push(doc);if(!o.icount)o.icount=doc;touch();
+    const doc={doctype:"order",docnum:j.docnum,url:j.url,at:new Date().toISOString()};(o.icountDocs??=[]).push(doc);if(!o.icount)o.icount=doc;icRemember(o,j.client_id||cid);touch();
     toast(`✓ נוצרה ב-iCount הזמנה מס׳ ${j.docnum}`);if(selOrder===o.id)renderOrder();setTimeout(icountStockSync,3000);
   }catch(e){toast("ההזמנה לא נוצרה ב-iCount (שגיאת חיבור)",6000);}}
 // choose the document; a tax invoice-receipt also needs how the customer paid
@@ -1159,9 +1171,9 @@ async function icountCreate(o,forceType,pay){
   const dt=forceType||db.settings.icountType||"deal",items=icountItems(o),tot=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);
   if(!await askC(`ליצור ${IC_TYPES[dt]} ב-iCount?\n\nלקוח: ${o.customer?.org||o.customer?.name}\n${items.map(i=>`${i.unitprice?"• ":"   "}${i.description} – ${i.quantity}${i.unitprice?` × ₪${i.unitprice}`:""}`).join("\n")}${pay?`\n\nתשלום: ${({bank:"העברה בנקאית",cc:"כרטיס אשראי",cheque:"צ׳ק",cash:"מזומן"})[pay.method]}${pay.method==="cc"?` ${pay.cardType} ****${pay.last4} · ${pay.payments} תשלומים · אישור ${pay.conf}`:""}${pay.ref?` · אסמכתא ${pay.ref}`:""} · ₪${pay.sum.toLocaleString("he-IL")} · ${pay.date}`:""}\nסה״כ לפני מע״מ: ₪${Math.round(tot).toLocaleString("he-IL")}`))return;
   toast("יוצר מסמך ב-iCount…");
-  try{const j=await api("icount",{method:"POST",body:{doctype:dt,client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,pay,comments:`הזמנה ${o.ref}${pay?.ref?` · אסמכתא העברה: ${pay.ref}`:""}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
+  try{const cid=await icClientFor(o);const j=await api("icount",{method:"POST",body:{doctype:dt,client_id:cid,client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,pay,comments:`הזמנה ${o.ref}${pay?.ref?` · אסמכתא העברה: ${pay.ref}`:""}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
     if(!j.ok){toast("iCount: "+(j.error||"שגיאה"),8000);return;}
-    const doc={doctype:dt,docnum:j.docnum,url:j.url,at:new Date().toISOString()};(o.icountDocs??=[]).push(doc);if(dt!=="delcert"||!o.icount)o.icount=o.icount&&dt==="delcert"?o.icount:doc;touch();renderOrder();setTimeout(icountStockSync,3000);toast(`✓ נוצר ${IC_TYPES[dt]} ${j.docnum||""} ב-iCount`);}catch(e){toast("iCount: שגיאה בחיבור",6000);}}
+    const doc={doctype:dt,docnum:j.docnum,url:j.url,at:new Date().toISOString()};icRemember(o,j.client_id||cid);(o.icountDocs??=[]).push(doc);if(dt!=="delcert"||!o.icount)o.icount=o.icount&&dt==="delcert"?o.icount:doc;touch();renderOrder();setTimeout(icountStockSync,3000);toast(`✓ נוצר ${IC_TYPES[dt]} ${j.docnum||""} ב-iCount`);}catch(e){toast("iCount: שגיאה בחיבור",6000);}}
 // ---------- payments from iCount: an order is "שולם" when a receipt / invoice-receipt was issued from its document chain in iCount ----------
 async function checkPayments(manual){
   if(checkPayments.busy)return;checkPayments.busy=true;let changed=0;
@@ -1215,7 +1227,7 @@ function renderOrder(){
   </div>
   <h2>לקוח</h2><div class="panel"><div class="grid">
     ${[["name","שם"],["org","ארגון"],["phone","טלפון"],["email","מייל"]].map(([k,l])=>`<label class="f">${l}<input data-cu="${k}" value="${esc(o.customer?.[k]||"")}" ${dis} ${["phone","email"].includes(k)?'dir="ltr"':""}></label>`).join("")}
-    <label class="f">🧑‍💼 יועץ/ת מארזים / מקור<input id="oAgent" list="agentNames" value="${esc(o.agent||"")}" placeholder="לא צוין"></label><datalist id="agentNames">${agentNames().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+    <label class="f">🧑‍💼 יועץ/ת מארזים / מקור<input id="oAgent" list="agentNames" value="${esc(o.agent||"")}" placeholder="לא צוין"></label><label class="f">🗂 כרטיס לקוח ב-iCount<input id="oIcCl" list="icClList" placeholder="נבחר לבד לפי מייל / שם, או בחרו" value=""></label><datalist id="icClList"></datalist><datalist id="agentNames">${agentNames().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
     <label class="f">כמות מארזים<input data-o="boxes" inputmode="numeric" dir="ltr" value="${esc(o.boxes)}" ${dis}></label>
     <label class="f">סה״כ לתשלום כולל מע״מ (₪)<input data-o="gross" inputmode="decimal" dir="ltr" value="${esc(o.gross)}" ${dis}></label>
     <label class="f">אספקה<select data-o="dlvMode" ${dis}>${[["ship","משלוח לכתובת אחת"],["indiv","משלוח פרטני לכל מקבל"],["vip","משלוח VIP לכל מקבל"],["pickup","איסוף עצמי"]].map(([k,l])=>`<option value="${k}" ${o.dlvMode===k?"selected":""}>${l}</option>`).join("")}</select></label>
@@ -1254,6 +1266,9 @@ function renderOrder(){
   if($("#oUnapprove"))$("#oUnapprove").onclick=async()=>{if(await askC("לבטל את האישור? ההזמנה תחזור ל'ממתינה', המוצרים יחזרו למלאי והעלות תחושב מחדש."))setSt("pending","האישור בוטל");};
   document.querySelectorAll("[data-dup]").forEach(b=>b.onclick=async()=>{const src=db.orders.find(x=>x.id===b.dataset.dup);if(!src)return;
     if(!await askC(`ליצור הזמנה חדשה (ממתינה) לפי ${src.ref}?\nאותם מוצרים, כמויות, לקוח ואספקה. אחרי זה בודקים ומאשרים כרגיל.`))return;const n=duplicateOrder(src);selOrder=n.id;renderOrder();toast("✓ נוצרה הזמנה חדשה – בדקו ואשרו");});
+  if($("#oIcCl")){(async()=>{const L=await icClients(),id=await icClientFor(o),cur=L.find(c=>c.id===id);const inp=$("#oIcCl");if(!inp)return;inp.value=cur?`${cur.name} #${cur.id}`:"";inp.placeholder=cur?"":"לא נמצא כרטיס – ייפתח כרטיס חדש בשם הארגון";
+    $("#icClList").innerHTML=L.map(c=>`<option value="${esc(c.name)} #${c.id}">`).join("");
+    inp.onchange=()=>{const m=inp.value.match(/#(\d+)\s*$/);if(m){icRemember(o,+m[1]);toast("✓ ההזמנה מקושרת לכרטיס הלקוח ב-iCount");}else if(!inp.value.trim()){delete o.icountClientId;touch();}};})();}
   if($("#oIcount"))$("#oIcount").onclick=async()=>icountChoose(o);
   if($("#oMail"))$("#oMail").onclick=async()=>{if(await askC(`לשלוח ללקוח (${o.customer.email}) את העדכון הזה במייל?\n\n${customerMsg(o)}`))custMail(o,true);};
   if($("#oRestore"))$("#oRestore").onclick=()=>setSt("pending","ההזמנה חזרה לממתינה");

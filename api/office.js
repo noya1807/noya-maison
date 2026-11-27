@@ -384,6 +384,7 @@ export default async function handler(req, res) {
         ...(i.sku ? { sku: String(i.sku).slice(0, 40) } : {}), ...(+i.inventory_item_id ? { inventory_item_id: +i.inventory_item_id } : {}) })).filter(i => i.description && i.quantity);
       if (!items.length || !b.client_name) { res.status(400).json({ ok: false, error: "חסרים לקוח או שורות" }); return; }
       const body = { doctype, lang: "he", currency_code: "ILS", client_name: String(b.client_name).slice(0, 120), items, hwc: String(b.comments || "").slice(0, 500) };
+      if (+b.client_id > 0) body.client_id = +b.client_id;   // existing customer card in iCount
       if (b.email) body.email = String(b.email).slice(0, 120);
       if (b.phone) body.client_phone = String(b.phone).slice(0, 30);
       if (b.vat_id) body.vat_id = String(b.vat_id).slice(0, 20);
@@ -402,7 +403,9 @@ export default async function handler(req, res) {
         const j = await r.json().catch(() => ({}));
         if (!r.ok || j.status === false) { res.status(200).json({ ok: false, error: j.reason || j.message || j.error || ("status " + r.status) }); return; }
         const d = j.data || j;
-        res.status(200).json({ ok: true, doctype, docnum: d.docnum || d.doc_number || "", url: d.pdf_link || d.doc_url || "" }); return;
+        let clientId = +b.client_id || 0;
+        if (!clientId && (d.docnum || d.doc_number)) { try { const ri = await fetch("https://api.icount.co.il/api/v3.php/doc/info", { method: "POST", headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" }, body: JSON.stringify({ doctype, docnum: +(d.docnum || d.doc_number) }) }); const ji = await ri.json(); clientId = +ji?.doc_info?.client_id || 0; } catch (e) {} }
+        res.status(200).json({ ok: true, doctype, docnum: d.docnum || d.doc_number || "", url: d.pdf_link || d.doc_url || "", client_id: clientId }); return;
       } catch (e) { res.status(200).json({ ok: false, error: String(e.message || e) }); return; }
     }
     if (a === "custmail" && req.method === "POST") {   // owner only: status update e-mail to a customer (needs a verified sending domain in Resend)
