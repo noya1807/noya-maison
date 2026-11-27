@@ -2328,13 +2328,18 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
   const cols=[...reels.querySelectorAll(".reel-col")];let order=0,todo=0,done=0;
   const tick=setInterval(sTick,70);
   const live=cols.map((c,k)=>k).filter(k=>!sur.held.has(k)),cand=live.length>1?live.filter(k=>k!==sur.lastTense):live,lastK=cand[(Math.random()*cand.length)|0],slot2=slot;sur.lastTense=lastK;
-  // phone apps: swapping a fresh <img> in at the stop sometimes painted a black tile → keep the strip that already shows the product (it was visible while rolling), just freeze it there
-  const finishCol=(col,k)=>{const strip=col.querySelector(".strip"),item=pick.jackpot?"7":pick.items[k];
-    strip.style.transform=`translateY(${-ch}px)`;strip.getAnimations().forEach(a=>a.cancel());   // rest exactly on cell #1 (the target) – set explicitly, not taken from the animation
-    const imgs=strip.querySelectorAll(".cell"),tgt=imgs[1];   // cells: [extra, target, …]; the strip rests with the target in the window
-    if(!tgt||pick.jackpot){strip.innerHTML=cellHTML(item);strip.style.transform="";}
-    else{const ti=tgt.querySelector("img");if(ti&&(!ti.complete||!ti.naturalWidth)){const src=ti.getAttribute("src");ti.removeAttribute("src");ti.setAttribute("src",src);}}
-    setTimeout(()=>{if(!col.isConnected)return;const ti=strip.querySelectorAll(".cell")[1]?.querySelector("img");if(ti&&!ti.naturalWidth){const src=ti.getAttribute("src");ti.removeAttribute("src");ti.setAttribute("src",src);}},700);
+  // Android / phone apps: the strip that was animated could stay unpainted (black) after the stop → throw it away and put a brand-new strip
+  // (no animation history, its own fresh layer) showing [neighbour, product, neighbour], resting exactly on the product
+  const finishCol=(col,k)=>{const old=col.querySelector(".strip"),item=pick.jackpot?"7":pick.items[k];
+    old.getAnimations().forEach(a=>a.cancel());
+    const nb=old.querySelectorAll(".cell"),above=nb[0]?.outerHTML||"",below=nb[2]?.outerHTML||"";
+    const ns=document.createElement("div");ns.className="strip";ns.innerHTML=above+cellHTML(item)+below;ns.style.transform=above?`translateY(${-ch}px)`:"";
+    old.replaceWith(ns);void ns.offsetHeight;
+    const fix=()=>{if(!ns.isConnected)return;const w=col.querySelector(".reel-win").getBoundingClientRect(),ti=ns.querySelectorAll(".cell")[above?1:0]?.querySelector("img");
+      if(ti&&!ti.naturalWidth){const src=ti.getAttribute("src");ti.removeAttribute("src");ti.setAttribute("src",src);}
+      const r=ns.querySelectorAll(".cell")[above?1:0]?.getBoundingClientRect();if(r&&Math.abs((r.top+r.bottom)/2-(w.top+w.bottom)/2)>r.height*.3){ns.style.transform=above?`translateY(${-ch}px)`:"";}
+      ns.style.opacity=".99";requestAnimationFrame(()=>{ns.style.opacity="";});};
+    requestAnimationFrame(fix);setTimeout(fix,450);setTimeout(fix,1200);
     col.querySelector(".reel-name").textContent=pick.jackpot?"":pick.items[k].name;if(++done===todo)surWin(pick,tick);};
   // warm up the final images while the reels roll
   if(!pick.jackpot)pick.items.forEach(it=>{if(it&&it!=="7"){const im=new Image();im.src=surImg(it);im.decode?.().catch(()=>{});}});
