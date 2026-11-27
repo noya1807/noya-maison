@@ -1,0 +1,22 @@
+name: Load test (manual)
+# Simulates a holiday peak: many visitors at once on the builder, the gift pages and the order server.
+# Orders use NOYA-LOADTEST refs, which the server validates but never stores or e-mails. No AI images (they cost money).
+on:
+  workflow_dispatch:
+    inputs:
+      requests: { description: "total requests", default: "3000" }
+      parallel: { description: "at the same time", default: "100" }
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run
+        run: |
+          chmod +x tools/loadtest.sh
+          start=$(date +%s)
+          seq 1 ${{ inputs.requests }} | xargs -P ${{ inputs.parallel }} -n1 tools/loadtest.sh > out.txt
+          echo "seconds: $(( $(date +%s) - start ))"
+          awk '{c[$1" "$2]++; t[$1]+=$3; n[$1]++; if($3>m[$1])m[$1]=$3} END{for(k in c)print k, c[k]; for(k in t)printf "%s avg %.2fs max %.2fs\n",k,t[k]/n[k],m[k]}' out.txt | tee -a $GITHUB_STEP_SUMMARY
+          sort -k3 -n out.txt | awk '{a[NR]=$3} END{printf "p95 %.2fs\n", a[int(NR*0.95)]}' | tee -a $GITHUB_STEP_SUMMARY
+          ! grep -v ' 200 ' out.txt | grep -q . || { echo "::warning::some requests were not 200"; grep -v ' 200 ' out.txt | sort | uniq -c | head; }
