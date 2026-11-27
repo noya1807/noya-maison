@@ -829,7 +829,7 @@ ${extras?`<div class="box"><div class="k">תוספות</div><div>${extras}</div>
 ${o.notes?`<div class="box" style="margin-top:12px"><div class="k">הערות</div><div>${E(o.notes).replace(/\n/g,"<br>")}</div></div>`:""}
 <div class="sign"><div>נארז על ידי</div><div>נבדק על ידי</div><div>תאריך</div></div>
 <p class="noprint" style="margin-top:20px"><button onclick="print()" style="font-size:18px;padding:10px 22px">🖨 הדפסה</button></p>
-<script>const im=document.querySelector("img.pic");const go=()=>setTimeout(()=>print(),300);if(im&&!im.complete){im.onload=go;im.onerror=go;}else go();<\/script><script src="js/wa-open.js" defer></script>
+<script>const im=document.querySelector("img.pic");const go=()=>setTimeout(()=>print(),300);if(im&&!im.complete){im.onload=go;im.onerror=go;}else go();<\/script><script src="js/wa-open.js" defer><\/script>
 </body></html>`);w.document.close();}
 function csvCell(v){v=String(v??"");return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}
 function downloadCsv(name,rows){const b=new Blob(["\ufeff"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
