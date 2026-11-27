@@ -95,6 +95,7 @@ td input,td select{padding:4px 6px}
 <header>
   <div class="brand">נויה במתנה<small>ניהול פנימי</small></div>
   <nav id="nav">
+    <button data-v="cc">🧭 מרכז שליטה</button>
     <button data-v="dash" class="on">לוח בקרה</button>
     <button data-v="ships">מכולות ויבוא</button>
     <button data-v="cash">תזרים</button>
@@ -266,7 +267,7 @@ const daysTo=d=>d?Math.round((new Date(d+"T00:00")-new Date(new Date().toDateStr
 $("#nav").onclick=async e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;selOrder=null;render();};
 function render(){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===(["agents","links"].includes(view)?"orders":view)));
-  ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,agents:renderAgents,links:renderLinks,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
+  ({cc:renderCC,dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,agents:renderAgents,links:renderLinks,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
   bindExceptions();try{navBadge();}catch(e){}
   if(!render.icDone&&typeof db!=="undefined"&&db.products){render.icDone=true;setTimeout(()=>{icountSync();},4000);setTimeout(()=>checkPayments(false),9000);}
   window.scrollTo(0,0);
@@ -1323,6 +1324,134 @@ function renderSups(){
   $("#supNew").onclick=async()=>{db.suppliers.push({id:uid(),name:""});touch();renderSups();};
   document.querySelectorAll("[data-s]").forEach(el=>el.oninput=()=>{db.suppliers[+el.closest("tr").dataset.i][el.dataset.s]=el.value;touch();});
   document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{if(!await askC("למחוק את הספק?"))return;db.suppliers.splice(+b.dataset.rm,1);touch();renderSups();});
+}
+
+// ---------- 🧭 NOYA AI COMMAND CENTER: one screen for cash, sales, profit, stock, import, tasks, alerts and approvals ----------
+// Reads the same database as every other screen (no copy). Calculations come from js/biz.mjs (checked to match this file).
+// AI managers' proposals live in their own encrypted store (api/office?a=ai); approving one records Moshe's decision only.
+let ccAi=null,ccTab="today";
+const CC_MGR={finance:"כספים ותזרים",stock:"מלאי ויבוא",orders:"הזמנות ורווחיות",sales:"מכירות",marketing:"שיווק",product:"פיתוח מוצרים",ops:"תפעול",service:"שירות לקוחות",ceo:"מנכ״ל AI",moshe:"משה",board:"דירקטוריון"};
+const ccWho=id=>CC_MGR[id]||id;
+const ccPri=p=>p===1?`<span class="pill st-prod">דחוף</span>`:p===2?`<span class="pill st-port">חשוב</span>`:`<span class="pill st-order">לידיעה</span>`;
+const ccStat={open:"פתוח",awaiting:"ממתין להחלטה שלך",approved:"✓ אישרת",rejected:"✕ דחית",done:"בוצע"};
+function ccAskText(msg){return new Promise(res=>{const m=document.createElement("div");m.id="askM";m.innerHTML=`<div class="askb"><div class="askt"></div><textarea rows="3" style="margin-top:10px"></textarea><div class="row" style="justify-content:flex-start;gap:8px;margin-top:12px"><button class="btn gold" data-a="1">שליחה</button><button class="btn ghost" data-a="0">ביטול</button></div></div>`;
+  m.querySelector(".askt").textContent=msg;document.body.appendChild(m);const ta=m.querySelector("textarea");ta.focus();m.onclick=e=>{const b=e.target.closest("[data-a]");if(!b)return;const v=b.dataset.a==="1"?ta.value.trim():"";m.remove();res(v);};});}
+async function ccLoadAi(){try{ccAi=await api("ai");}catch(e){ccAi={error:e.message,store:{tasks:[],ceo:[],board:[],runs:[],reports:{}}};}}
+async function renderCC(){
+  const B=await import("/js/biz.mjs");
+  if(!ccAi)await ccLoadAi();
+  db.settings.ai??={on:false};db.expenses??=[];
+  const today=B.isoDay(new Date()),F=B.cashForecast(JSON.parse(JSON.stringify(db)),{today});
+  const S=stockAll(),st=ccAi.store||{},tasks=st.tasks||[],awaiting=tasks.filter(t=>t.status==="awaiting"),ceo=(st.ceo||[])[0],lastRun=(st.runs||[])[0];
+  const m0=today.slice(0,8)+"01",pm=B.addDays(m0,-1),p0=pm.slice(0,8)+"01",ly0=B.addDays(m0,-365).slice(0,8)+"01",ly1=B.addDays(today,-365);
+  const sNow=B.salesBetween(db,m0,today),sPrev=B.salesBetween(db,p0,pm),sLy=B.salesBetween(db,ly0,ly1);
+  const nextEta=db.shipments.filter(s=>s.status!=="wh"&&s.eta).sort((a,b)=>a.eta.localeCompare(b.eta))[0];
+  const runOut=db.products.map(p=>{const x=S[p.sku]||{};return {p,x};}).filter(({p,x})=>(num(p.minStock)>0&&(x.available||0)<num(p.minStock))||((x.available||0)<0)).slice(0,30);
+  const tabs=[["today","החלטות היום"+(awaiting.length?` (${awaiting.length})`:"")],["cash","תזרים 90 יום"],["biz","מכירות, רווח, מלאי ויבוא"],["team","צוות ה-AI ומשימות"],["board","דירקטוריון"],["setup","הגדרות"]];
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>🧭 מרכז שליטה</h1><p class="sub">כל העסק במסך אחד. הסוכנים רק ממליצים – כל החלטה היא שלך.</p></div>
+    <div class="row">${ccAi.configured?`<span class="pill ${db.settings.ai.on?"st-wh":"st-order"}">${db.settings.ai.on?"🤖 צוות ה-AI פעיל":"🤖 צוות ה-AI כבוי"}</span>`:`<span class="pill st-port">🤖 חסר מפתח Claude</span>`}${lastRun?`<span class="muted" style="font-size:13px">ריצה אחרונה: ${new Date(lastRun.at).toLocaleString("he-IL",{dateStyle:"short",timeStyle:"short"})}</span>`:""}</div></div>
+  <div class="cards">
+    <div class="card"><div class="k">יתרה צפויה בעוד 90 יום${F.hasStart?"":" (בלי יתרת פתיחה)"}</div><div class="v ${F.weeks.at(-1).balance<0?"bad":""}">${money(Math.round(F.weeks.at(-1).balance))||"₪0"}</div></div>
+    <div class="card"><div class="k">השבוע הכי נמוך</div><div class="v ${F.lowest&&F.lowest.balance<0?"bad":""}">${money(Math.round(F.lowest?.balance||0))||"₪0"}</div><div class="k">${F.lowest?fmtDate(F.lowest.from):""}</div></div>
+    <div class="card"><div class="k">לקוחות שחייבים כסף באיחור</div><div class="v ${F.overdue.length?"bad":""}">${money(Math.round(F.overdue.reduce((t,r)=>t+r.amount,0)))||"₪0"}</div><div class="k">${F.overdue.length} הזמנות</div></div>
+    <div class="card"><div class="k">מכירות החודש (לפני מע״מ)</div><div class="v">${money(Math.round(sNow.net))||"₪0"}</div><div class="k">רווח ${money(Math.round(sNow.profit))||"₪0"} · חודש קודם ${money(Math.round(sPrev.net))||"₪0"}</div></div>
+    <div class="card"><div class="k">מחכה להחלטה שלך</div><div class="v ${awaiting.length?"bad":""}">${awaiting.length}</div></div>
+  </div>
+  <div class="row" style="gap:6px;margin-bottom:12px">${tabs.map(([k,l])=>`<button class="btn sm ${ccTab===k?"":"ghost"}" data-cct="${k}">${l}</button>`).join("")}</div>
+  <div id="ccBody"></div>`;
+  document.querySelectorAll("[data-cct]").forEach(b=>b.onclick=()=>{ccTab=b.dataset.cct;renderCC();});
+  const body=$("#ccBody");
+  const card=t=>{const link=t.refs?.order?`<a href="#" data-cco="${esc(t.refs.order)}">פתיחת ההזמנה</a>`:t.refs?.ship?`<a href="#" data-ccs="${esc(t.refs.ship)}">פתיחת המכולה</a>`:t.refs?.sku?`<span class="muted">מק״ט ${esc(t.refs.sku)}</span>`:"";
+    return `<div class="panel" style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><b>${esc(t.title)}</b><span>${ccPri(t.priority)} <span class="muted" style="font-size:13px">${esc(ccWho(t.from))} ← ${esc(ccWho(t.to))}</span></span></div>
+      ${t.body?`<p style="margin:6px 0">${esc(t.body)}</p>`:""}
+      ${t.ceo?`<p style="margin:6px 0;background:#f6efe6;border-radius:8px;padding:6px 10px">🤖 <b>המנכ״ל ממליץ:</b> ${esc(t.ceo.recommend)}<br><span class="muted">${esc(t.ceo.why)}</span></p>`:""}
+      ${(t.evidence||[]).length?`<div class="muted" style="font-size:13px">${t.evidence.map(e=>`${esc(e.label)}: <b>${esc(e.value)}</b>`).join(" · ")}</div>`:""}
+      ${t.impact?.amount?`<div style="font-size:13px">השפעה: <b>${money(t.impact.amount)}</b> ${esc(t.impact.note||"")}</div>`:""}
+      ${(t.thread||[]).length?`<div class="muted" style="font-size:12.5px;margin-top:4px">${t.thread.map(x=>`${esc(ccWho(x.from))}: ${esc(ccStat[{approve:"approved",reject:"rejected",done:"done",reopen:"open"}[x.action]]||"")} ${esc(x.text||"")}`).join("<br>")}</div>`:""}
+      <div class="row" style="margin-top:8px;gap:6px">${link}<span style="flex:1"></span><span class="muted" style="font-size:13px">${esc(ccStat[t.status]||t.status)}</span>
+        ${["open","awaiting"].includes(t.status)?`<button class="btn sm gold" data-cca="approve" data-id="${esc(t.id)}">מאשר</button><button class="btn sm ghost" data-cca="reject" data-id="${esc(t.id)}">דוחה</button><button class="btn sm ghost" data-cca="note" data-id="${esc(t.id)}">הערה</button>`:t.status==="approved"?`<button class="btn sm" data-cca="done" data-id="${esc(t.id)}">ביצעתי</button>`:`<button class="btn sm ghost" data-cca="reopen" data-id="${esc(t.id)}">לפתוח שוב</button>`}</div></div>`;};
+  if(ccTab==="today"){
+    body.innerHTML=`${!ccAi.configured?`<p class="warn">צוות ה-AI עוד לא מחובר: חסר מפתח Claude (ANTHROPIC_API_KEY) ב-Vercel. כל שאר המסך כבר עובד.</p>`:!db.settings.ai.on?`<p class="warn">צוות ה-AI כבוי. אפשר להדליק בלשונית "הגדרות", או להריץ פעם אחת עכשיו לבדיקה.</p>`:""}
+      ${ceo?`<div class="panel" style="background:#f6efe6;margin-bottom:12px"><b>🤖 סיכום הבוקר של מנכ״ל ה-AI</b> <span class="muted" style="font-size:13px">${new Date(ceo.at).toLocaleString("he-IL",{dateStyle:"short",timeStyle:"short"})}</span><p style="margin:6px 0;white-space:pre-line">${esc(ceo.brief)}</p>${(ceo.conflicts||[]).length?`<p class="muted" style="margin:0">⚖️ סתירות בין מנהלים: ${ceo.conflicts.map(esc).join(" · ")}</p>`:""}</div>`:""}
+      ${exceptionsPanel()}
+      <h2>ממתין להחלטה שלך (${awaiting.length})</h2>${awaiting.map(card).join("")||`<div class="panel muted">אין כרגע החלטות פתוחות.</div>`}
+      ${ccAi.configured?`<p><button class="btn ghost" id="ccRun">▶ להריץ את צוות ה-AI עכשיו</button> <span class="muted" style="font-size:13px">לוקח בערך דקה. ${lastRun?.errors?.length?`בריצה האחרונה: ${esc(lastRun.errors.join(" · "))}`:""}</span></p>`:""}`;
+    bindExceptions();
+  }
+  if(ccTab==="cash"){
+    const W=760,H=240,pad=34,maxV=Math.max(1,...F.weeks.flatMap(w=>[w.in,w.out])),bals=F.weeks.map(w=>w.balance),bMin=Math.min(0,...bals),bMax=Math.max(1,...bals);
+    const bw=(W-pad*2)/F.weeks.length,xw=i=>W-pad-(i+1)*bw,yv=v=>H-pad-(v/maxV)*(H-pad*2)*.9,yb=v=>pad+(bMax-v)/(bMax-bMin||1)*(H-pad*2);
+    const chart=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:900px;background:#fff;border:1px solid var(--line);border-radius:12px" role="img" aria-label="תזרים שבועי">
+      ${F.weeks.map((w,i)=>`<rect x="${xw(i)+bw*.12}" y="${yv(w.in)}" width="${bw*.36}" height="${H-pad-yv(w.in)}" fill="#3f7a52" opacity=".8"><title>${fmtDate(w.from)} · נכנס ${money(Math.round(w.in))}</title></rect><rect x="${xw(i)+bw*.52}" y="${yv(w.out)}" width="${bw*.36}" height="${H-pad-yv(w.out)}" fill="#a33b2b" opacity=".75"><title>${fmtDate(w.from)} · יוצא ${money(Math.round(w.out))}</title></rect><text x="${xw(i)+bw/2}" y="${H-pad+14}" font-size="10" text-anchor="middle" fill="#7a5a48">${new Date(w.from+"T12:00").toLocaleDateString("he-IL",{day:"numeric",month:"numeric"})}</text>`).join("")}
+      <polyline fill="none" stroke="#b08a4f" stroke-width="2.5" points="${F.weeks.map((w,i)=>`${xw(i)+bw/2},${yb(w.balance)}`).join(" ")}"/>
+      ${bMin<0?`<line x1="${pad}" x2="${W-pad}" y1="${yb(0)}" y2="${yb(0)}" stroke="#a33b2b" stroke-dasharray="4 4"/>`:""}
+</svg><div class="muted" style="font-size:13px;margin-top:4px"><span style="color:#3f7a52">■</span> נכנס · <span style="color:#a33b2b">■</span> יוצא · <span style="color:#b08a4f">━</span> יתרה צפויה · כל עמודה = שבוע (מימין: השבוע)</div>`;
+    body.innerHTML=`${!F.hasStart?`<p class="warn">כדי לראות יתרה אמיתית, הזינו את יתרת הבנק היום בלשונית "הגדרות". בינתיים הקו מראה רק את ההפרש בין נכנס ליוצא.</p>`:""}${chart}
+      <div class="cards" style="margin-top:12px"><div class="card"><div class="k">ייכנס ב-90 יום</div><div class="v">${money(Math.round(F.totalIn))||"₪0"}</div></div><div class="card"><div class="k">ייצא ב-90 יום</div><div class="v">${money(Math.round(F.totalOut))||"₪0"}</div></div><div class="card"><div class="k">הזמנות שממתינות לאישור (לא נספרות)</div><div class="v">${money(Math.round(F.pipeline))||"₪0"}</div></div></div>
+      ${F.noDate.length?`<p class="warn">⚠ ${F.noDate.length} תשלומי מכולה בלי תאריך ולא נספרים: ${esc(F.noDate.map(i=>i.label).join(", "))}</p>`:""}
+      <h2>כסף שאמור להיכנס (לפי תאריך)</h2><div class="tablewrap"><table><thead><tr><th>לקוח</th><th>הזמנה</th><th class="num">נשאר לשלם</th><th>מתי ישלמו</th><th></th></tr></thead><tbody>
+      ${B.receivables(db,today).sort((a,b)=>a.due.localeCompare(b.due)).map(r=>`<tr><td>${esc(r.who)}</td><td><a href="#" data-cco="${esc(r.id)}">${esc(r.ref)}</a></td><td class="num">${money(Math.round(r.amount))}</td><td><input type="date" data-paydue="${esc(r.id)}" value="${esc(r.due)}" style="max-width:160px"></td><td>${r.late?`<span class="pill st-prod">באיחור</span>`:""}</td></tr>`).join("")||`<tr><td colspan="5" class="muted">אין כסף פתוח מלקוחות.</td></tr>`}</tbody></table></div>
+      <p class="muted" style="font-size:13px">תאריך התשלום מחושב לבד (אישור ההזמנה + ${num(db.settings.payTermsDays)||30} יום). אפשר לשנות כאן לכל הזמנה, וזה נשמר.</p>
+      <h2>שבוע אחר שבוע</h2><div class="tablewrap"><table><thead><tr><th>שבוע</th><th class="num">נכנס</th><th class="num">יוצא</th><th class="num">יתרה</th><th>מה בשבוע הזה</th></tr></thead><tbody>
+      ${F.weeks.map(w=>`<tr><td>${fmtDate(w.from)}</td><td class="num">${money(Math.round(w.in))}</td><td class="num">${money(Math.round(w.out))}</td><td class="num ${w.balance<0?"bad":""}">${money(Math.round(w.balance))}</td><td style="font-size:13px">${w.items.slice(0,6).map(i=>`${i.kind==="in"?"⬅":"➡"} ${esc(i.label)} ${money(Math.round(i.amount))}`).join("<br>")}${w.items.length>6?`<br><span class="muted">ועוד ${w.items.length-6}</span>`:""}</td></tr>`).join("")}</tbody></table></div>`;
+    document.querySelectorAll("[data-paydue]").forEach(el=>el.onchange=()=>{const o=db.orders.find(x=>x.id===el.dataset.paydue);if(o){o.payDue=el.value||"";touch();}});
+  }
+  if(ccTab==="biz"){
+    const ag=Object.entries(sNow.byAgent).sort((a,b)=>b[1].net-a[1].net);
+    body.innerHTML=`<h2>מכירות ורווח</h2><div class="tablewrap"><table><thead><tr><th></th><th class="num">הזמנות</th><th class="num">מארזים</th><th class="num">מכירות (לפני מע״מ)</th><th class="num">רווח</th><th class="num">אחוז רווח</th></tr></thead><tbody>
+      ${[["החודש",sNow],["חודש קודם",sPrev],["אותה תקופה בשנה שעברה",sLy]].map(([l,s])=>`<tr><td>${l}</td><td class="num">${s.orders}</td><td class="num">${s.boxes}</td><td class="num">${money(Math.round(s.net))}</td><td class="num">${money(Math.round(s.profit))}</td><td class="num">${s.net?Math.round(s.margin*100)+"%":""}</td></tr>`).join("")}</tbody></table></div>
+      ${ag.length?`<h2>לפי יועץ/ת וערוץ – החודש</h2><div class="tablewrap"><table><thead><tr><th>יועץ/ת / ערוץ</th><th class="num">הזמנות</th><th class="num">מכירות</th><th class="num">רווח</th></tr></thead><tbody>${ag.map(([k,a])=>`<tr><td>${esc(k)}</td><td class="num">${a.orders}</td><td class="num">${money(Math.round(a.net))}</td><td class="num">${money(Math.round(a.profit))}</td></tr>`).join("")}</tbody></table></div>`:""}
+      <h2>מלאי שדורש תשומת לב (${runOut.length})</h2><div class="tablewrap"><table><thead><tr><th>מק״ט</th><th>מוצר</th><th class="num">זמין</th><th class="num">מינימום</th><th class="num">בדרך</th><th>מגיע</th></tr></thead><tbody>
+      ${runOut.map(({p,x})=>`<tr><td>${esc(p.sku)}</td><td>${esc(p.name)}</td><td class="num bad">${Math.round(x.available||0)}</td><td class="num">${num(p.minStock)||""}</td><td class="num">${Math.round(x.transit||0)||""}</td><td>${x.eta?fmtDate(x.eta):""}</td></tr>`).join("")||`<tr><td colspan="6" class="muted">אין מוצרים מתחת למינימום.</td></tr>`}</tbody></table></div>
+      <h2>יבוא – מכולות בדרך</h2><div class="tablewrap"><table><thead><tr><th>מכולה</th><th>סטטוס</th><th>מגיעה</th><th class="num">עלות כוללת</th><th class="num">נשאר לשלם</th></tr></thead><tbody>
+      ${db.shipments.filter(s=>s.status!=="wh").sort((a,b)=>(a.eta||"9").localeCompare(b.eta||"9")).map(s=>`<tr><td><a href="#" data-ccs="${esc(s.id)}">${esc(s.name)}</a></td><td>${esc(stName(s.status))}</td><td>${s.eta?fmtDate(s.eta):"—"}</td><td class="num">${money(Math.round(shipCalc(s).total))}</td><td class="num">${money(Math.round(shipPayments(s).left))}</td></tr>`).join("")||`<tr><td colspan="5" class="muted">אין מכולות בדרך.</td></tr>`}</tbody></table></div>
+      ${nextEta?`<p class="muted">המכולה הבאה: ${esc(nextEta.name)} · ${fmtDate(nextEta.eta)}</p>`:""}`;
+  }
+  if(ccTab==="team"){
+    const byTo={};tasks.filter(t=>["open","awaiting"].includes(t.status)).forEach(t=>(byTo[t.to]??=[]).push(t));
+    const reps=st.reports||{};
+    body.innerHTML=`<h2>המנהלים</h2><div class="cards">${(ccAi.managers||[]).map(m=>{const r=reps[m.id],on=!(st.settings?.managers)||st.settings.managers.includes(m.id);return `<div class="card"><div class="k">${on?"🟢":"⚪"} ${esc(m.name)}</div><div style="font-size:13.5px;margin-top:4px">${r?esc(r.summary):"<span class='muted'>עוד לא דיווח</span>"}</div>${r?`<div class="k" style="margin-top:4px">${new Date(r.at).toLocaleString("he-IL",{dateStyle:"short",timeStyle:"short"})} · ${r.count} פריטים</div>`:""}</div>`;}).join("")}</div>
+      <h2>להעביר משימה או שאלה</h2><div class="panel"><div class="grid"><label class="f">למי<select id="ccTo">${[["ceo","מנכ״ל AI"],...(ccAi.managers||[]).map(m=>[m.id,m.name])].map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select></label><label class="f">מה לבדוק<input id="ccTitle" placeholder="לדוגמה: האם להזמין עוד קרשי הגשה לפסח?"></label></div><label class="f">פרטים (לא חובה)<textarea id="ccBodyT" rows="2"></textarea></label><button class="btn" id="ccAdd" style="margin-top:8px">שליחה</button> <span class="muted" style="font-size:13px">התשובה תגיע בריצה הבאה של הצוות.</span></div>
+      <h2>משימות פתוחות לפי מי שמטפל</h2>${Object.keys(byTo).length?Object.entries(byTo).map(([to,l])=>`<h3 style="margin:12px 0 6px">${esc(ccWho(to))} (${l.length})</h3>${l.map(card).join("")}`).join(""):`<div class="panel muted">אין משימות פתוחות.</div>`}
+      <h2>היסטוריה</h2>${tasks.filter(t=>!["open","awaiting"].includes(t.status)).slice(0,30).map(card).join("")||`<div class="panel muted">עוד אין.</div>`}`;
+    $("#ccAdd").onclick=async()=>{const title=$("#ccTitle").value.trim();if(!title)return toast("כתבו מה לבדוק");try{await api("aitask",{method:"POST",body:{to:$("#ccTo").value,title,body:$("#ccBodyT").value}});await ccLoadAi();toast("✓ נשלח");renderCC();}catch(e){toast(e.message,5000);}};
+  }
+  if(ccTab==="board"){
+    const b=(st.board||[])[0];
+    const op=(id,name)=>{const o=b?.opinions?.[id];if(!o)return "";return `<div class="panel" style="margin-bottom:10px"><b>${esc(name)}</b><p style="margin:4px 0">${esc(o.verdict)}</p>
+      ${o.challenges?.length?`<div><b>מאתגר:</b><ul>${o.challenges.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}${o.risks?.length?`<div><b>סיכונים:</b><ul>${o.risks.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}${o.questions?.length?`<div><b>שאלות אליך:</b><ul>${o.questions.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}${o.oppose?.length?`<div><b>מתנגד ל:</b><ul>${o.oppose.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}</div>`;};
+    body.innerHTML=`<p class="sub">הדירקטוריון מתכנס כל יום ראשון ב-07:00 ובודק את ההנהלה: איפה טועים, מה הסיכונים, ומה נשאר להחלטתך.</p>
+      ${ccAi.configured?`<div class="panel"><label class="f">נושא מיוחד לדיון (לא חובה)<input id="ccTopic" placeholder="לדוגמה: להזמין מכולה נוספת לפסח בסך ₪180,000?"></label><button class="btn" id="ccBoard" style="margin-top:8px">לכנס את הדירקטוריון עכשיו</button></div>`:`<p class="warn">חסר מפתח Claude.</p>`}
+      ${b?`<h2>ישיבה אחרונה · ${new Date(b.at).toLocaleString("he-IL",{dateStyle:"short",timeStyle:"short"})}${b.topic?` · ${esc(b.topic)}`:""}</h2>${(ccAi.directors||[]).map(d=>op(d.id,d.name)).join("")}`:`<div class="panel muted">עוד לא התקיימה ישיבה.</div>`}`;
+    if($("#ccBoard"))$("#ccBoard").onclick=async e=>{e.target.disabled=true;e.target.textContent="הדירקטוריון דן… (כדקה)";try{const r=await api("aiboard",{method:"POST",body:{topic:$("#ccTopic").value}});await ccLoadAi();toast(r.errors?.length?"⚠ "+r.errors.join(" · "):"✓ הישיבה הסתיימה",6000);renderCC();}catch(err){toast(err.message,6000);e.target.disabled=false;}};
+  }
+  if(ccTab==="setup"){
+    const cs=db.settings.cashStart||{};
+    body.innerHTML=`<h2>צוות ה-AI</h2><div class="panel"><label style="display:flex;gap:8px;align-items:center;font-weight:600;cursor:pointer"><input type="checkbox" id="ccOn" ${db.settings.ai.on?"checked":""} style="width:18px;height:18px" ${ccAi.configured?"":"disabled"}> להריץ את הצוות כל בוקר ב-06:30 (והדירקטוריון בימי ראשון)</label>
+      ${ccAi.configured?"":`<p class="muted">יופעל אחרי שמפתח Claude יוגדר ב-Vercel.</p>`}
+      <p style="margin:10px 0 4px"><b>מי משתתף:</b></p><div class="row">${(ccAi.managers||[]).map(m=>`<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-mg="${m.id}" ${!(st.settings?.managers)||st.settings.managers.includes(m.id)?"checked":""} style="width:auto"> ${esc(m.name)}</label>`).join("")}</div></div>
+      <h2>תזרים</h2><div class="panel"><div class="grid"><label class="f">יתרת הבנק היום (₪)<input id="ccStart" inputmode="decimal" value="${esc(cs.amount??"")}" placeholder="לדוגמה 85000"></label><label class="f">נכון לתאריך<input id="ccStartD" type="date" value="${esc(cs.date||today)}"></label><label class="f">ימי תשלום רגילים של לקוחות<input id="ccTerms" inputmode="numeric" value="${esc(db.settings.payTermsDays??30)}"></label></div></div>
+      <h2>הוצאות קבועות</h2><p class="sub">שכירות, משכורות, פרסום, מנויים, הלוואות – כל מה שיוצא באופן קבוע. נכנס אוטומטית לתזרים.</p>
+      <div class="tablewrap"><table><thead><tr><th>שם</th><th class="num">סכום (₪)</th><th>כל</th><th>ביום</th><th>מתאריך</th><th>עד תאריך</th><th></th></tr></thead><tbody>
+      ${db.expenses.map((e,i)=>`<tr data-ei="${i}"><td><input data-e="name" value="${esc(e.name)}"></td><td><input data-e="amount" inputmode="decimal" value="${esc(e.amount)}" style="max-width:110px"></td><td><select data-e="every">${[["month","חודש"],["week","שבוע"],["year","שנה"],["once","פעם אחת"]].map(([k,l])=>`<option value="${k}" ${e.every===k?"selected":""}>${l}</option>`).join("")}</select></td><td>${e.every==="once"?`<input data-e="date" type="date" value="${esc(e.date)}">`:e.every==="week"?`<select data-e="day">${["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"].map((d,k)=>`<option value="${k}" ${num(e.day)===k?"selected":""}>${d}</option>`).join("")}</select>`:`<input data-e="day" inputmode="numeric" value="${esc(e.day??1)}" style="max-width:70px" title="יום בחודש 1–28">`}</td><td><input data-e="start" type="date" value="${esc(e.start)}"></td><td><input data-e="end" type="date" value="${esc(e.end)}"></td><td><button class="btn sm ghost" data-erm="${i}">✕</button></td></tr>`).join("")||`<tr><td colspan="7" class="muted">עוד אין הוצאות קבועות.</td></tr>`}</tbody></table></div>
+      <button class="btn" id="ccExp" style="margin-top:8px">+ הוצאה קבועה</button>`;
+    $("#ccOn").onchange=e=>{db.settings.ai.on=e.target.checked;touch();renderCC();};
+    document.querySelectorAll("[data-mg]").forEach(el=>el.onchange=async()=>{const ids=[...document.querySelectorAll("[data-mg]")].filter(x=>x.checked).map(x=>x.dataset.mg);try{await api("aiset",{method:"POST",body:{managers:ids}});await ccLoadAi();toast("✓ נשמר");}catch(e){toast(e.message,5000);}});
+    $("#ccStart").onchange=()=>{const v=$("#ccStart").value.trim();if(v==="")delete db.settings.cashStart;else db.settings.cashStart={amount:num(v),date:$("#ccStartD").value||today};touch();};
+    $("#ccStartD").onchange=()=>{if(db.settings.cashStart){db.settings.cashStart.date=$("#ccStartD").value;touch();}};
+    $("#ccTerms").onchange=()=>{db.settings.payTermsDays=Math.max(0,Math.round(num($("#ccTerms").value)))||30;touch();};
+    document.querySelectorAll("[data-e]").forEach(el=>el.onchange=()=>{const e=db.expenses[+el.closest("tr").dataset.ei];const k=el.dataset.e;e[k]=["amount","day"].includes(k)?num(el.value):el.value;touch();if(k==="every")renderCC();});
+    document.querySelectorAll("[data-erm]").forEach(b=>b.onclick=async()=>{if(!await askC("למחוק את ההוצאה הקבועה?"))return;db.expenses.splice(+b.dataset.erm,1);touch();renderCC();});
+    $("#ccExp").onclick=()=>{db.expenses.push({id:uid(),name:"",amount:0,every:"month",day:1});touch();renderCC();};
+  }
+  // shared bindings: approvals, links, run
+  document.querySelectorAll("[data-cca]").forEach(b=>b.onclick=async()=>{const action=b.dataset.cca,id=b.dataset.id;let note="";
+    if(action==="note"){note=await ccAskText("הערה (תעבור למנהל בריצה הבאה):");if(!note)return;}
+    if(action==="approve"&&!await askC("לאשר? האישור נרשם כהחלטה שלך. את הפעולה עצמה (הזמנה, תשלום, הודעה) מבצעים במסך המתאים."))return;
+    try{await api("aiact",{method:"POST",body:{id,action,note}});await ccLoadAi();toast("✓ נרשם");renderCC();}catch(e){toast(e.message,5000);}});
+  document.querySelectorAll("[data-cco]").forEach(a=>a.onclick=e=>{e.preventDefault();view="orders";selOrder=a.dataset.cco;render();});
+  document.querySelectorAll("[data-ccs]").forEach(a=>a.onclick=e=>{e.preventDefault();view="ships";sel=a.dataset.ccs;render();});
+  if($("#ccRun"))$("#ccRun").onclick=async e=>{e.target.disabled=true;e.target.textContent="הצוות עובד… (כדקה)";try{const r=await api("aidaily",{method:"POST"});await ccLoadAi();toast(r.ok?`✓ הסתיים: ${r.tasks} פריטים${r.errors?.length?" · ⚠ "+r.errors.join(" · "):""}`:"⚠ "+(r.error||"שגיאה"),7000);renderCC();}catch(err){toast(err.message,6000);e.target.disabled=false;}};
 }
 
 // ---------- settings ----------

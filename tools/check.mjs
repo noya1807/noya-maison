@@ -33,6 +33,11 @@ for (const f of readdirSync(join(root, "api")).filter(f => f.endsWith(".js"))) {
   catch (e) { fail(`api/${f}`, e.stderr?.toString() || e.message); }
 }
 try { JSON.parse(readFileSync(join(root, "vercel.json"), "utf8")); } catch (e) { fail("vercel.json", e.message); }
+for (const t of ["test-biz.mjs", "test-ai.mjs"]) {   // calculation parity + AI safety tests
+  try { readFileSync(join(root, "tools", t)); } catch (e) { continue; }
+  try { execFileSync(process.execPath, [join(root, "tools", t)], { stdio: "pipe" }); }
+  catch (e) { fail("tools/" + t, e.stderr?.toString() || e.stdout?.toString() || e.message); }
+}
 
 if (bad) { console.error(`\n${bad} error(s) – push blocked.`); process.exit(1); }
 console.log("✓ all pages, scripts and API files are valid");

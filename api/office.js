@@ -27,6 +27,7 @@
 import { put, list, del } from "@vercel/blob";
 import { blobHost } from "./catalog.js";
 import crypto from "node:crypto";
+import * as AI from "./_ai.js";
 
 const DB_PREFIX = "office/db/";
 const DOC_PREFIX = "office/docs/";
@@ -104,6 +105,28 @@ async function readDb() {
   if (!r.ok) throw new Error("db read " + r.status);
   return { db: JSON.parse(decrypt(Buffer.from(await r.arrayBuffer())).toString()), rev: v[0].pathname };
 }
+// ---------- AI management layer: its own encrypted store (office/ai/), never the business database ----------
+const AI_PREFIX = "office/ai/";
+async function aiVersions() { const { blobs } = await list({ prefix: AI_PREFIX + "state", limit: 1000 }); return blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)); }
+async function readAi() {
+  const v = await aiVersions(); if (!v.length) return { store: { tasks: [], reports: {}, ceo: [], board: [], runs: [], settings: {} }, rev: "" };
+  const r = await fetch(v[0].url, { cache: "no-store" }); if (!r.ok) throw new Error("ai read " + r.status);
+  return { store: JSON.parse(decrypt(Buffer.from(await r.arrayBuffer())).toString()), rev: v[0].pathname };
+}
+// read → change → write, retried if another writer (a cron run, another tab) saved in between
+async function updateAi(fn) {
+  for (let i = 0; i < 4; i++) {
+    const { store, rev } = await readAi(); const next = await fn(JSON.parse(JSON.stringify(store)));
+    const v = await aiVersions(); if ((v[0]?.pathname || "") !== rev) continue;
+    next.savedAt = new Date().toISOString();
+    const b = await put(AI_PREFIX + "state.bin", encrypt(Buffer.from(JSON.stringify(next))), { access: "public", contentType: "application/octet-stream", addRandomSuffix: true });
+    const old = v.slice(9).map(x => x.url); if (old.length) await del(old).catch(() => {});
+    return { store: next, rev: b.pathname };
+  }
+  throw new Error("שמירת נתוני ה-AI נכשלה, נסו שוב");
+}
+const cronAuth = req => process.env.CRON_SECRET ? req.headers.authorization === `Bearer ${process.env.CRON_SECRET}` : /vercel-cron/i.test(req.headers["user-agent"] || "");
+
 const blobUrlOk = u => { try { const x = new URL(u); return x.protocol === "https:" && x.hostname.endsWith(".blob.vercel-storage.com") && x.pathname.startsWith("/" + DOC_PREFIX); } catch (e) { return false; } };
 
 // ---------- AI extraction of import documents (uses the OPENAI_API_KEY already set for the designer) ----------
@@ -298,6 +321,23 @@ export default async function handler(req, res) {
       const old = blobs.slice(30).map(x => x.url); if (old.length) await del(old).catch(() => {});
       res.status(200).json({ ok: true, backup: b.pathname, kept: Math.min(blobs.length, 30) }); return;
     }
+    if (a === "aidaily" || a === "aiboard") {   // Vercel Cron (06:30 daily / Sunday 07:00), or the owner's "run now"
+      const owner = authed(req);
+      if (!cronAuth(req) && !owner) { res.status(401).json({ error: "unauthorized" }); return; }
+      if (!process.env.ANTHROPIC_API_KEY) { res.status(200).json({ ok: false, error: "ANTHROPIC_API_KEY לא מוגדר ב-Vercel" }); return; }
+      const { db } = await readDb();
+      if (!owner && !db?.settings?.ai?.on) { res.status(200).json({ ok: true, skipped: "AI כבוי בהגדרות" }); return; }
+      const { store } = await readAi();
+      if (a === "aidaily") {
+        const run = await AI.runDaily(db || {}, store);
+        const saved = await updateAi(s => AI.mergeDaily(s, run));
+        res.status(200).json({ ok: true, tasks: run.tasks.length, ceo: !!run.ceo, calls: run.log.calls, errors: run.log.errors, rev: saved.rev }); return;
+      }
+      const body = req.method === "POST" ? await readBody(req).catch(() => ({})) : {};
+      const b = await AI.runBoard(db || {}, store, { topic: body.topic || "" });
+      const saved = await updateAi(s => { s.board = [b.report, ...(s.board || [])].slice(0, 20); s.runs = [b.log, ...(s.runs || [])].slice(0, 60); return s; });
+      res.status(200).json({ ok: true, directors: Object.keys(b.report.opinions).length, errors: b.log.errors, rev: saved.rev }); return;
+    }
     if (a === "digest") {   // daily Vercel Cron (and the owner can trigger it from the admin)
       const cronOk = process.env.CRON_SECRET ? req.headers.authorization === `Bearer ${process.env.CRON_SECRET}` : /vercel-cron/i.test(req.headers["user-agent"] || "");
       if (!cronOk && !authed(req)) { res.status(401).json({ error: "unauthorized" }); return; }
@@ -305,9 +345,13 @@ export default async function handler(req, res) {
       const d = digestOf(db || {});
       const { blobs } = await list({ prefix: INBOX_PREFIX, limit: 300 });
       const n = d.G.reduce((t, x) => t + x.items.length, 0);
-      if (!n && !blobs.length && !req.query.force) { res.status(200).json({ ok: true, sent: false, reason: "nothing stuck" }); return; }
+      let aiHtml = "";
+      try { const { store } = await readAi(); const c = store.ceo?.[0], today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
+        if (c && String(c.at).slice(0, 10) >= today.slice(0, 10) && (c.brief || c.decisions?.length)) aiHtml = `<div style="background:#f6efe6;border-radius:10px;padding:10px 14px;margin:12px 0"><p style="margin:0 0 6px"><b>🤖 מנכ״ל ה-AI – החלטות להיום</b></p><p style="margin:0 0 6px">${escH(c.brief || "")}</p>${(c.decisions || []).length ? `<ol style="margin:0;padding-inline-start:18px">${c.decisions.map(x => { const t = (store.tasks || []).find(y => y.id === x.id); return `<li><b>${escH(t?.title || "")}</b> – ${escH(x.recommend || "")}</li>`; }).join("")}</ol>` : ""}<p style="margin:6px 0 0;font-size:13px">לאישור או דחייה: ממשק הניהול ← מרכז שליטה</p></div>`; } catch (e) {}
+      if (!n && !blobs.length && !aiHtml && !req.query.force) { res.status(200).json({ ok: true, sent: false, reason: "nothing stuck" }); return; }
       const html = `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#3f271c">
         <p style="font-size:18px"><b>☀️ בוקר טוב משה – מה דורש טיפול היום</b></p>
+        ${aiHtml}
         <p>${blobs.length ? `🆕 <b>${blobs.length}</b> פריטים חדשים מהבונה מחכים בממשק (הזמנות / הצעות / לידים) · ` : ""}ממתינות לאישור: <b>${d.pending}</b> · בעבודה: <b>${d.approvedOpen}</b></p>
         ${n ? d.G.map(x => `<p style="margin:14px 0 4px"><b>${x.icon} ${x.title} (${x.items.length})</b></p><ul style="margin:0;padding-inline-start:18px">${x.items.slice(0, 30).map(i => `<li>${i}</li>`).join("")}</ul>`).join("") : "<p>✅ שום דבר לא תקוע.</p>"}
         <p style="margin-top:16px"><a href="https://build.noyaglobal.com/admin" style="background:#7a5230;color:#fff;padding:9px 16px;border-radius:8px;text-decoration:none">פתיחת ממשק הניהול</a></p>
@@ -384,6 +428,33 @@ export default async function handler(req, res) {
     }
     if (a === "logout") { setCookie(res, "", 0); res.status(200).json({ ok: true }); return; }
     if (!authed(req)) { res.status(401).json({ error: "צריך להתחבר" }); return; }
+    if (a === "ai" && req.method === "GET") {   // the AI store for the Command Center
+      const { store, rev } = await readAi();
+      res.status(200).json({ store, rev, configured: !!process.env.ANTHROPIC_API_KEY, managers: AI.MANAGERS, directors: AI.DIRECTORS }); return;
+    }
+    if (a === "aiact" && req.method === "POST") {   // Moshe decides on a proposal: approve | reject | done | reopen | note. Records the decision only.
+      const { id, action, note } = await readBody(req);
+      if (!["approve", "reject", "done", "reopen", "note"].includes(action)) { res.status(400).json({ error: "bad action" }); return; }
+      const out = await updateAi(s => { const t = (s.tasks || []).find(x => x.id === id); if (!t) throw Object.assign(new Error("not found"), { code: 404 });
+        const at = new Date().toISOString(); t.thread = [...(t.thread || []), { from: "moshe", at, action, text: String(note || "").slice(0, 500) }];
+        if (action !== "note") { t.status = { approve: "approved", reject: "rejected", done: "done", reopen: "open" }[action]; t.decidedAt = at; t.decidedBy = "moshe"; }
+        return s; });
+      res.status(200).json({ ok: true, rev: out.rev }); return;
+    }
+    if (a === "aitask" && req.method === "POST") {   // Moshe adds a task / question for a manager, the CEO or the board
+      const { to, title, body } = await readBody(req);
+      const ok = ["ceo", "board", ...AI.MANAGERS.map(m => m.id)];
+      if (!ok.includes(to) || !String(title || "").trim()) { res.status(400).json({ error: "bad task" }); return; }
+      const at = new Date().toISOString();
+      const out = await updateAi(s => { s.tasks = [{ id: "moshe-" + Date.now().toString(36), at, from: "moshe", to, kind: "handoff", title: String(title).slice(0, 80), body: String(body || "").slice(0, 600), evidence: [], impact: { amount: 0, note: "" }, refs: {}, priority: 2, status: "open", thread: [] }, ...(s.tasks || [])]; return s; });
+      res.status(200).json({ ok: true, rev: out.rev }); return;
+    }
+    if (a === "aiset" && req.method === "POST") {   // which managers run
+      const { managers } = await readBody(req);
+      const ids = (Array.isArray(managers) ? managers : []).filter(m => AI.MANAGERS.some(x => x.id === m));
+      const out = await updateAi(s => { s.settings = { ...(s.settings || {}), managers: ids }; return s; });
+      res.status(200).json({ ok: true, rev: out.rev }); return;
+    }
     if (a === "me") { res.status(200).json({ ok: true }); return; }
     if (a === "jackpots" && req.method === "GET") { res.status(200).json({ ...(await readJack()), mail: !!process.env.RESEND_API_KEY }); return; }
     if (a === "notifytest" && req.method === "POST") { const r = await jackMail({ at: new Date().toISOString() }, true); res.status(r.ok ? 200 : 400).json(r); return; }

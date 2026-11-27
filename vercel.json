@@ -5,7 +5,8 @@
       "includeFiles": "img/{orig,pack,style}/**"
     },
     "api/office.js": {
-      "maxDuration": 300
+      "maxDuration": 300,
+      "includeFiles": "{agents/**,js/biz.mjs}"
     }
   },
   "rewrites": [
@@ -41,6 +42,14 @@
     {
       "path": "/api/office?a=digest",
       "schedule": "30 5 * * *"
+    },
+    {
+      "path": "/api/office?a=aidaily",
+      "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/office?a=aiboard",
+      "schedule": "0 5 * * 0"
     }
   ],
   "redirects": [
