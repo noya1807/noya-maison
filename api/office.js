@@ -25,7 +25,9 @@
 // Encryption key: OFFICE_KEY if set, otherwise derived from the store's BLOB_READ_WRITE_TOKEN.
 // (If you ever rotate the blob token, set OFFICE_KEY to the OLD token first, or export a backup before.)
 import { put, list, del } from "@vercel/blob";
-import { blobHost } from "./catalog.js";
+import { blobHost, readCatalog } from "./catalog.js";
+import { readFile as readFileFs } from "node:fs/promises";
+import pathMod from "node:path";
 import crypto from "node:crypto";
 import * as AI from "./_ai.js";
 
@@ -138,6 +140,12 @@ async function aiAlert(errors) {
   await updateAi(st => { st.alert = alert; return st; });
   await notify(credit ? "⚠️ נגמר הקרדיט של צוות ה-AI" : "⚠️ מפתח Claude לא עובד", `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#3f271c"><p><b>${escH(text)}</b></p><p>${credit ? "מה לעשות: להיכנס ל-platform.claude.com ← Billing ולטעון קרדיט (או להפעיל טעינה אוטומטית). אם המנוי מחובר – הקרדיט יתחדש בתחילת החודש." : "מה לעשות: לבדוק ב-Vercel שהמפתח ANTHROPIC_API_KEY נכון ופעיל ב-platform.claude.com."}</p><p style="color:#8a7563;font-size:13px">ההודעה נשלחת פעם אחת ביום לכל היותר.</p></div>`).catch(() => {});
   return alert;
+}
+// customer prices as the builder shows them (saved catalogue, else the built-in one in index.html): builder id → price before VAT
+async function builderPrices() {
+  try { const c = await readCatalog(); if (c?.products?.length) return Object.fromEntries(c.products.filter(p => +p.price > 0).map(p => [String(p.id), +p.price])); } catch (e) {}
+  try { const html = await readFileFs(pathMod.join(process.cwd(), "index.html"), "utf8"); const m = /const P=(\[.*?\]);\n/s.exec(html); if (m) return Object.fromEntries(JSON.parse(m[1]).filter(p => +p.price > 0).map(p => [String(p.id), +p.price])); } catch (e) {}
+  return {};
 }
 const cronAuth = req => process.env.CRON_SECRET ? req.headers.authorization === `Bearer ${process.env.CRON_SECRET}` : /vercel-cron/i.test(req.headers["user-agent"] || "");
 
@@ -343,13 +351,13 @@ export default async function handler(req, res) {
       if (!owner && !db?.settings?.ai?.on) { res.status(200).json({ ok: true, skipped: "AI כבוי בהגדרות" }); return; }
       const { store } = await readAi();
       if (a === "aidaily") {
-        const run = await AI.runDaily(db || {}, store);
+        const run = await AI.runDaily(db || {}, store, { prices: await builderPrices() });
         const saved = await updateAi(s => { const m = AI.mergeDaily(s, run); if (!run.log.errors.some(e => AI_MONEY.test(e))) delete m.alert; return m; });
         const alert = await aiAlert(run.log.errors).catch(() => null);
         res.status(200).json({ ok: true, alert: alert?.text || "", tasks: run.tasks.length, ceo: !!run.ceo, calls: run.log.calls, errors: run.log.errors, rev: saved.rev }); return;
       }
       const body = req.method === "POST" ? await readBody(req).catch(() => ({})) : {};
-      const b = await AI.runBoard(db || {}, store, { topic: body.topic || "" });
+      const b = await AI.runBoard(db || {}, store, { topic: body.topic || "", prices: await builderPrices() });
       const saved = await updateAi(s => { s.board = [b.report, ...(s.board || [])].slice(0, 20); s.runs = [b.log, ...(s.runs || [])].slice(0, 60); return s; });
       await aiAlert(b.log.errors).catch(() => null);
       res.status(200).json({ ok: true, directors: Object.keys(b.report.opinions).length, errors: b.log.errors, rev: saved.rev }); return;

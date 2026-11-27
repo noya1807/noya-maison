@@ -40,10 +40,12 @@ const daysBetween = (a, b) => Math.round((new Date(b + "T12:00") - new Date(a + 
 const orgOf = o => clip(o.customer?.org || o.customer?.name || "", 60);   // company / customer name only: no phone, e-mail or address
 
 // ---------- the snapshot each manager sees (numbers and ids, no personal contact details) ----------
-export function snapshot(db, today = isoDay(new Date())) {
+export function snapshot(db, today = isoDay(new Date()), prices = {}) {
   db = db || {}; const orders = db.orders || [], products = db.products || [], ships = db.shipments || [];
   const pName = Object.fromEntries(products.map(p => [p.sku, clip(p.name, 60)]));
   const S = stockAll(db), F = cashForecast(db, { today }), LC = skuCosts(db);
+  // sale price: the back-office price if set, else the price the builder shows customers for this product
+  const priceOf = p => num(p.salePrice) > 0 ? num(p.salePrice) : (p.builderIds || []).map(id => num(prices[String(id)])).find(v => v > 0) || 0;
   const monthStart = today.slice(0, 8) + "01", prevStart = addDays(monthStart, -1).slice(0, 8) + "01", prevEnd = addDays(monthStart, -1);
   const lyFrom = addDays(today, -365), lyTo = addDays(today, -365 + 60);
   // sales velocity: units per sku in approved orders of the last 60 days
@@ -86,7 +88,7 @@ export function snapshot(db, today = isoDay(new Date())) {
       note: "אין חיבור לנתוני פרסום (Google/Meta). הערוץ נקבע לפי מה שהלקוח או היועץ בחרו בטופס.",
     },
     product: {
-      items: products.filter(p => !p.hidden).map(p => ({ sku: p.sku, name: pName[p.sku], salePrice: num(p.salePrice), landedCost: +(LC[p.sku] || num(p.landedCost)).toFixed(2), margin: num(p.salePrice) > 0 && (LC[p.sku] || num(p.landedCost)) > 0 ? +((num(p.salePrice) - (LC[p.sku] || num(p.landedCost))) / num(p.salePrice)).toFixed(3) : null, sold60d: r0(vel[p.sku]), available: r0(S[p.sku]?.available) })).slice(0, 160),
+      items: products.filter(p => !p.hidden).map(p => ({ sku: p.sku, name: pName[p.sku], salePrice: priceOf(p), priceSource: num(p.salePrice) > 0 ? "admin" : priceOf(p) ? "builder" : "none", landedCost: +(LC[p.sku] || num(p.landedCost)).toFixed(2), margin: priceOf(p) > 0 && (LC[p.sku] || num(p.landedCost)) > 0 ? +((priceOf(p) - (LC[p.sku] || num(p.landedCost))) / priceOf(p)).toFixed(3) : null, sold60d: r0(vel[p.sku]), available: r0(S[p.sku]?.available) })).slice(0, 160),
     },
     ops: {
       byStage: ["engrave", "packing", "ready"].map(st => ({ stage: st, orders: orders.filter(o => ful(o) === st).length, boxes: orders.filter(o => ful(o) === st).reduce((t, o) => t + num(o.boxes), 0) })),
@@ -111,6 +113,7 @@ const RULES = `אתה חלק מהנהלת AI של "נויה במתנה" – חב
 - מחירים ללקוחות מוצגים לפני מע״מ. מחיר מכירה בסיסי = פי 3 מעלות הקנייה. הזמנה מינימלית ₪3,000.
 - עדיף מעט פריטים חשובים מאשר הרבה רעש. אם אין משהו חשוב – החזר רשימה ריקה.
 - refs: השתמש רק במזהים שמופיעים בנתונים (order / ship / sku).
+- רקע: הבונה והמשרד האחורי פעילים רק מנובמבר 2026. רוב המכירות הקודמות נמצאות בתוכנת הנהלת החשבונות ולא כאן, ולכן מכירות 0 או מעט הזמנות בעבר אינם תקלה במערכת – אל תמליץ "לתקן את המערכת" בגלל זה. מחיר מוצר: salePrice (מקור: admin = נקבע במשרד האחורי, builder = המחיר שהלקוח רואה בבונה, none = באמת חסר).
 החזר JSON בלבד, בלי טקסט מסביב.`;
 
 const ITEM_SCHEMA = `{"summary":"2-3 משפטים על המצב בתחום שלך",
@@ -159,8 +162,8 @@ export function sanitizeItems(out, from, db, at) {
 }
 
 // ---------- the daily run: managers in parallel, then the AI CEO ----------
-export async function runDaily(db, store, { today = isoDay(new Date()), fetchImpl = fetch } = {}) {
-  const at = new Date().toISOString(), snap = snapshot(db, today), log = { at, kind: "daily", calls: 0, errors: [], tokens: 0 };
+export async function runDaily(db, store, { today = isoDay(new Date()), fetchImpl = fetch, prices = {} } = {}) {
+  const at = new Date().toISOString(), snap = snapshot(db, today, prices), log = { at, kind: "daily", calls: 0, errors: [], tokens: 0 };
   const open = (store.tasks || []).filter(t => ["open", "awaiting"].includes(t.status));
   let budget = MAX_CALLS();
   const call = async args => { if (budget-- <= 0) throw new Error("תקרת קריאות לריצה"); log.calls++; const r = await callModel(args, fetchImpl); log.tokens += (r.usage.input_tokens || 0) + (r.usage.output_tokens || 0); return r; };
@@ -197,9 +200,9 @@ export async function runDaily(db, store, { today = isoDay(new Date()), fetchImp
 }
 
 // ---------- weekly board ----------
-export async function runBoard(db, store, { today = isoDay(new Date()), fetchImpl = fetch, topic = "" } = {}) {
+export async function runBoard(db, store, { today = isoDay(new Date()), fetchImpl = fetch, topic = "", prices = {} } = {}) {
   const at = new Date().toISOString(), log = { at, kind: "board", calls: 0, errors: [], tokens: 0 };
-  const snap = snapshot(db, today);
+  const snap = snapshot(db, today, prices);
   const ctx = { today, topic: clip(topic, 400), ceoBriefs: (store.ceo || []).slice(0, 7), openDecisions: (store.tasks || []).filter(t => t.status === "awaiting").slice(0, 15).map(t => ({ id: t.id, from: whoName(t.from), title: t.title, body: t.body, impact: t.impact })),
     kpis: { forecast: snap.finance.forecast, overdue: snap.finance.overdue.length, thisMonth: snap.finance.thisMonth, lastMonth: snap.finance.lastMonth, pipeline: snap.finance.pipeline } };
   const opinions = {};

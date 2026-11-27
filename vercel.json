@@ -6,7 +6,7 @@
     },
     "api/office.js": {
       "maxDuration": 300,
-      "includeFiles": "{agents/**,js/biz.mjs}"
+      "includeFiles": "{agents/**,js/biz.mjs,index.html}"
     }
   },
   "rewrites": [
