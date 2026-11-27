@@ -476,6 +476,8 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .veil::before{content:"";position:absolute;inset:-40%;background:linear-gradient(115deg,transparent 42%,rgba(255,240,210,.45) 50%,transparent 58%);animation:shimmer 4.5s ease-in-out infinite}
 @keyframes shimmer{0%{transform:translateX(-35%)}100%{transform:translateX(35%)}}
 .scene.busy .veil-in{opacity:0}
+.veil-go{pointer-events:auto;margin-top:10px;width:auto!important;padding:12px 26px!important;font-size:16px!important;box-shadow:0 8px 22px rgba(176,138,79,.45)}
+@media (max-width:760px){.veil-go{margin-top:6px;padding:9px 18px!important;font-size:14px!important}.veil-quote{display:none}}
 .veil-in{position:relative;transition:opacity .4s;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--cocoa);text-align:center}
 .veil-in b{font-family:var(--display);font-weight:500;font-size:clamp(18px,2.4vw,26px);letter-spacing:.3px}
 .veil-in small{font-size:13px;color:var(--cocoa-soft)}
@@ -1282,7 +1284,7 @@ h1.brand{margin:0;line-height:1.2}
       </div>
       <div class="ai-load" id="aiLoad" hidden><div id="noyaHost"></div><b id="aiStep">נויה עובדת על העיצוב…</b><span id="aiTime"></span></div>
       <span class="ai-tag" id="aiTag" hidden>✦ <span dir="ltr">Styled by Noya</span></span>
-      <div class="veil" id="veil" hidden><div class="veil-in"><span class="veil-mark">✦</span><b>המארז שלכם מחכה לחשיפה</b><em class="veil-quote">"אין גבול למה שאפשר ליצור כשמעזים לחשוב אחרת." ✨</em><small id="veilCount"></small></div></div>
+      <div class="veil" id="veil" hidden><div class="veil-in"><span class="veil-mark">✦</span><b>המארז שלכם מחכה לחשיפה</b><em class="veil-quote">"אין גבול למה שאפשר ליצור כשמעזים לחשוב אחרת." ✨</em><small id="veilCount"></small><button type="button" class="reveal-btn veil-go" id="veilGo">חשפו את המארז שלכם ✨</button></div></div>
     </div>
     </div>
     <div class="bgs"><span class="lbl">רקע:</span><span id="bgs" style="display:flex;gap:8px"></span>
@@ -2878,6 +2880,7 @@ function renderAiBar(){
   }
   if(isOwner&&revealed&&!aiBusy&&!(editing&&aiStale)&&!aiImg.hidden)b.insertAdjacentHTML("beforeend",`<div class="reveal-more"><button class="ghost small" id="aiShow">⭐ הוספה לחלון הראווה (רק אתה רואה את הכפתור)</button></div>`);
   q("aiShow")&&(q("aiShow").onclick=()=>{q("aiShow").disabled=true;q("aiShow").textContent="שומר…";addToShow();});
+  document.getElementById("veilGo").onclick=()=>{const g=document.getElementById("aiGo");if(g&&!g.disabled)g.click();else generateAi(false);};
   q("aiGo")&&(q("aiGo").onclick=()=>{const r=scene.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)scene.scrollIntoView({behavior:"smooth",block:"center"});generateAi(false);});
   q("aiShare")&&(q("aiShare").onclick=()=>shareWhatsApp(currentBoxImage()));
   q("aiOrder")&&(q("aiOrder").onclick=()=>openSummary());
