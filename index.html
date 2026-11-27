@@ -3555,7 +3555,7 @@ async function loadSeason(){if(!/^https?:/.test(location.protocol))return;try{co
   const dl=j.deadline?day(j.deadline):null,fmt=d=>{const [y,m,dd]=d.split("-");return `${+dd}.${+m}`;};
   const parts=[`🎉 <b>${esc(j.name||"החג")}</b> ${left===0?"היום":left===1?"מחר":`בעוד <b>${left}</b> ימים`}`];
   if(j.deadline&&dl>=0)parts.push(`${esc(j.deadlineLabel||"הזמנות")} עד <b>${fmt(j.deadline)}</b>${dl<=7?` (עוד ${dl===0?"היום":dl+" ימים"})`:""}`);
-  if(j.leftPct!=null&&j.leftPct<=60)parts.push(`<span class="sb-left">נותרו <b>${j.leftPct}%</b> מקומות בייצור <span class="sb-meter"><i style="width:${j.leftPct}%"></i></span></span>`);
+  if(j.leftPct!=null&&j.leftPct<=60)parts.push(j.leftPct<=5?`<span class="sb-left">🔥 <b>נותרו מקומות אחרונים</b> בייצור לחג</span>`:`<span class="sb-left">נותרו <b>${j.leftPct}%</b> מקומות בייצור <span class="sb-meter"><i style="width:${j.leftPct}%"></i></span></span>`);
   const b=$("seasonBar");b.innerHTML=parts.map(p=>`<span>${p}</span>`).join("");b.hidden=false;}catch(e){}}
 setTimeout(()=>{loadClient();loadSeason();},300);
 function orderPayload(ref,via){const g=id=>($(id)&&$(id).value||"").trim();
