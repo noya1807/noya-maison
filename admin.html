@@ -1183,7 +1183,7 @@ function renderSups(){
 
 // ---------- settings ----------
 function bindAutoMail(){if($("#setIcType"))$("#setIcType").onchange=e=>{db.settings.icountType=e.target.value;touch();toast("✓ נשמר");};
-  if($("#icStat"))api("icount").then(j=>{$("#icStat").textContent=j.ok?"✓ מחובר ל-iCount":"⚪ עוד לא מחובר (חסר ICOUNT_TOKEN ב-Vercel)";}).catch(()=>{});if($("#setAutoMail"))$("#setAutoMail").onchange=e=>{db.settings.autoCustMail=e.target.checked;touch();toast(e.target.checked?"✓ מייל אוטומטי ללקוחות הופעל":"מייל אוטומטי ללקוחות כבוי");};}
+  if($("#icStat"))api("icount",{qs:"&test=1"}).then(j=>{$("#icStat").textContent=j.ok?"✓ מחובר ל-iCount":j.error==="no token"?"⚪ עוד לא מחובר (חסר ICOUNT_TOKEN ב-Vercel)":"⚠ iCount דחה את החיבור: "+j.error;}).catch(()=>{});if($("#setAutoMail"))$("#setAutoMail").onchange=e=>{db.settings.autoCustMail=e.target.checked;touch();toast(e.target.checked?"✓ מייל אוטומטי ללקוחות הופעל":"מייל אוטומטי ללקוחות כבוי");};}
 function renderSettings(){setTimeout(bindAutoMail,0);
   $("#view").innerHTML=`<h1>הגדרות</h1><p class="sub">קטגוריות, גיבוי ויציאה.</p>
   <h2>iCount</h2><div class="panel"><label class="f" style="max-width:320px">איזה מסמך ליצור מהזמנה מאושרת<select id="setIcType">${Object.entries(IC_TYPES).map(([k,l])=>`<option value="${k}" ${(db.settings.icountType||"deal")===k?"selected":""}>${l}</option>`).join("")}</select></label>

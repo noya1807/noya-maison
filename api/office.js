@@ -358,7 +358,13 @@ export default async function handler(req, res) {
     if (a === "me") { res.status(200).json({ ok: true }); return; }
     if (a === "jackpots" && req.method === "GET") { res.status(200).json({ ...(await readJack()), mail: !!process.env.RESEND_API_KEY }); return; }
     if (a === "notifytest" && req.method === "POST") { const r = await jackMail({ at: new Date().toISOString() }, true); res.status(r.ok ? 200 : 400).json(r); return; }
-    if (a === "icount" && req.method === "GET") { res.status(200).json({ ok: !!process.env.ICOUNT_TOKEN }); return; }
+    if (a === "icount" && req.method === "GET") {   // connection check (read-only call: the document types of the account)
+      const tok = process.env.ICOUNT_TOKEN; if (!tok) { res.status(200).json({ ok: false, error: "no token" }); return; }
+      if (!req.query.test) { res.status(200).json({ ok: true }); return; }
+      try { const r = await fetch("https://api.icount.co.il/api/v3.php/doc/types", { method: "POST", headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" }, body: "{}" });
+        const j = await r.json().catch(() => ({})); res.status(200).json(r.ok && j.status !== false ? { ok: true, live: true, types: j.doctypes || j.data?.doctypes || null } : { ok: false, error: j.reason || j.message || j.error || ("status " + r.status) });
+      } catch (e) { res.status(200).json({ ok: false, error: String(e.message || e) }); } return;
+    }
     if (a === "icount" && req.method === "POST") {   // owner only: create a document in iCount from an approved order (token in ICOUNT_TOKEN, set by the owner in Vercel)
       const tok = process.env.ICOUNT_TOKEN; if (!tok) { res.status(200).json({ ok: false, error: "חסר ICOUNT_TOKEN ב-Vercel" }); return; }
       const b = await readBody(req) || {};
