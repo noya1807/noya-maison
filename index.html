@@ -717,7 +717,11 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .jackpot-wrap.jp-win .jpb,.jackpot-wrap.jp-win .jpb.b{opacity:1;animation:jpAll .2s steps(1) 15}
 .jackpot-wrap.jp-run .jpb{opacity:1;animation:vbA 1s steps(1) infinite}.jackpot-wrap.jp-run .jpb.b{animation-name:vbB}
 @keyframes jpAll{0%{opacity:1}50%{opacity:.06}}
-.jackpot.jp-flash{animation:jpBg .5s steps(1) 3}.jackpot.jp-flash b,.jackpot.jp-flash small{animation:jpTx .5s steps(1) 3}
+.jackpot.jp-flash{animation:jpBg .5s steps(1) 3}
+.jp-take{position:relative;z-index:2;margin:8px 0 2px!important;width:auto!important;padding:9px 22px!important;border:0;border-radius:99px;font:inherit;font-weight:900;font-size:15px;color:#3f271c;background:linear-gradient(180deg,#fff6d2,#e3c58c 55%,#b08a4f);box-shadow:0 0 0 2px #fff6d2,0 0 16px rgba(255,214,106,.85);cursor:pointer;opacity:0;transform:scale(.85);transition:opacity .45s,transform .45s cubic-bezier(.2,1.5,.4,1);animation:jtPulse 1.6s ease-in-out infinite}
+.jp-take.in{opacity:1;transform:none}.jp-take:disabled{opacity:.6;cursor:default}
+@keyframes jtPulse{50%{box-shadow:0 0 0 2px #fff6d2,0 0 30px rgba(255,214,106,1)}}
+@media (max-width:480px){.jp-take{font-size:13.5px;padding:8px 16px!important}}.jackpot.jp-flash b,.jackpot.jp-flash small{animation:jpTx .5s steps(1) 3}
 @keyframes jpBg{0%{background:#ffd76a;transform:scale(1.04)}50%{background:#070102;transform:scale(1)}}
 @keyframes jpTx{0%{color:#3a0a14;text-shadow:none}50%{color:#ffcf5a}}@keyframes jpFlash{0%{box-shadow:inset 0 2px 8px rgba(0,0,0,.8),0 0 0 3px #fff6d2,0 0 22px rgba(255,214,106,1)}50%{box-shadow:inset 0 2px 8px rgba(0,0,0,.8),0 0 0 3px #b08a4f,0 0 3px rgba(255,214,106,.3)}}
 .lever{position:relative;flex:0 0 44px;width:44px;height:220px;touch-action:none;cursor:grab;--p:0}
@@ -2248,7 +2252,8 @@ function surOpen(){let d=$("surModal");if(!d){d=document.createElement("div");d.
       else if(b.dataset.sa==="spin")surPull();else if(b.dataset.sa==="take")surTake();});}
   sur.pick=null;sur.held.clear();sur.cur=[];d.hidden=false;surRender();}
 function surClose(){if(sur.busy)return;const d=$("surModal");if(d)d.hidden=true;}
-function surActs(){return sur.pick?`<button type="button" class="go" data-sa="take">הכניסו למארז וחשפו ✨</button><button type="button" class="ghost" data-sa="spin">🎰 סיבוב נוסף</button>`:`<button type="button" class="go" data-sa="spin">🎰 משכו את הידית</button>`;}
+const JP_TAKE=`<button type="button" class="jp-take" data-sa="take">✨ הכניסו למארז וחשפו</button>`;
+function surActs(){return sur.pick?`<button type="button" class="ghost" data-sa="spin">🎰 סיבוב נוסף</button>`:`<button type="button" class="go" data-sa="spin">🎰 משכו את הידית</button>`;}
 function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,cur)=>`<button type="button" data-${k}="${v}" aria-pressed="${cur}">${l}</button>`;
   if(sur.cur.length!==n)sur.cur=Array.from({length:n},()=>pool[(Math.random()*pool.length)|0]).filter(Boolean);
   d.innerHTML=`<div class="mr sur" role="dialog" aria-label="הפתיעו אותי"><button type="button" class="sur-x" data-sa="close" aria-label="סגירה">×</button>
@@ -2258,7 +2263,7 @@ function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,c
       <div class="slot-reels" id="surReels">${sur.cur.map((p,k)=>`<div class="reel-col${sur.held.has(k)?" held":""}"><div class="reel-win"><div class="strip">${cellHTML(p)}</div></div>
         <span class="reel-name">${sur.pick&&p!=="7"?esc(p.name):""}</span><button type="button" class="hold" data-hold="${k}" aria-pressed="${sur.held.has(k)}" ${sur.pick?"":"disabled"}>${sur.held.has(k)?"🔒 נעול":"החזיקו"}</button></div>`).join("")}</div>
       <div class="coin-slot" aria-hidden="true"></div>
-      <div class="jackpot-wrap" id="surJW"><div class="jackpot" id="surJack">${sur.pick?`<b>${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</b>`:`<b>משכו את הידית! 🎰</b><small>${combosInfo().txt} שילובים</small>${JACK.meals>0?`<small class="jp-don">💜 נתרמו דרך המכונה ${JACK.meals.toLocaleString("he-IL")} ארוחות חמות ל"האור של אורי"</small>`:""}`}</div><svg class="jp-bulbs" id="surJB" aria-hidden="true"></svg></div>
+      <div class="jackpot-wrap" id="surJW"><div class="jackpot" id="surJack">${sur.pick?`<b>${ils(r2(sur.pick.sum))} למארז · בתקציב ✓</b>${JP_TAKE.replace('class="jp-take"','class="jp-take in"')}`:`<b>משכו את הידית! 🎰</b><small>${combosInfo().txt} שילובים</small>${JACK.meals>0?`<small class="jp-don">💜 נתרמו דרך המכונה ${JACK.meals.toLocaleString("he-IL")} ארוחות חמות ל"האור של אורי"</small>`:""}`}</div><svg class="jp-bulbs" id="surJB" aria-hidden="true"></svg></div>
       <div class="coin-tray" id="surTray" aria-hidden="true"></div></div>
       <div class="lever" id="surLever" role="button" aria-label="משיכת הידית"><div class="lv-base"></div><div class="lv-rod"></div><div class="lv-ball"></div></div></div>
     <div class="sur-act" id="surAct">${surActs()}</div></div>`;
@@ -2335,7 +2340,8 @@ function surWin(pick,tick){if(pick.jackpot)return surJackWin(pick,tick);clearInt
   d.querySelectorAll(".reel-col").forEach((c,k)=>{c.querySelector(".reel-name").textContent=pick.items[k].name;const h=c.querySelector(".hold");h.disabled=false;});
   {const jw=$("surJW"),id=sur.winId;jack.classList.add("lit","jp-flash");jw.classList.remove("jp-run");jw.classList.add("jp-win");
     setTimeout(()=>{if(sur.winId!==id)return;jack.classList.remove("jp-flash");jw.classList.remove("jp-win");jw.classList.add("jp-run");},3000);}
-  jack.innerHTML=`<b>🎉 בינגו! פגעתם באחד מ־${combosShort()}</b><small>${ils(r2(pick.sum))} למארז · הכניסו למארז וחשפו ✨</small>`;$("surAct").innerHTML=surActs();
+  jack.innerHTML=`<b>🎉 בינגו! פגעתם באחד מ־${combosShort()}</b><small>${ils(r2(pick.sum))} למארז</small>${JP_TAKE}`;$("surAct").innerHTML=surActs();
+  requestAnimationFrame(buildJB);setTimeout(()=>{const t=jack.querySelector(".jp-take");if(t)t.classList.add("in");},1500);
   const box=d.querySelector(".mr.sur");slot.classList.remove("spinning");slot.classList.add("win");box.classList.add("win");sWin();buzz([12,50,12,50,30]);
   surCoins();surFountain();
   setTimeout(()=>{slot.classList.remove("win");box.classList.remove("win");},2800);}
@@ -2516,7 +2522,7 @@ function cometFly(o,i,n,onLand){const sc=scene.getBoundingClientRect(),x0=o.r.le
 function surTake(){const pick=sur.pick;if(!pick||sur.busy)return;sur.busy=true;const prev=[new Map(cart),pack];
   const d=$("surModal"),box=d.querySelector(".mr.sur"),slot=$("surSlot"),reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
   const fl=[...document.querySelectorAll("#surReels .reel-win img")].map(im=>({src:im.src,r:im.getBoundingClientRect()}));
-  d.querySelectorAll("#surAct button").forEach(b=>b.disabled=true);
+  d.querySelectorAll("#surAct button,.jp-take").forEach(b=>b.disabled=true);
   // 1) the machine pays out
   sPayout();buzz([15,30,15,30,15]);slot.classList.add("win","payout");
   d.querySelectorAll("#surTray .coin").forEach((c,k)=>c.animate([{transform:"translateY(0)"},{transform:`translateY(${-10-Math.random()*16}px)`,offset:.4},{transform:"translateY(0)"}],{duration:420,delay:k*25,easing:"ease-out"}));
