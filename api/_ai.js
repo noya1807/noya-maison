@@ -176,7 +176,7 @@ export async function runDaily(db, store, { today = isoDay(new Date()), fetchImp
   };
   const ids = (store.settings?.managers || MANAGERS.map(m => m.id));
   const list = MANAGERS.filter(m => ids.includes(m.id));
-  for (let i = 0; i < list.length; i += 4) await Promise.all(list.slice(i, i + 4).map(one));
+  for (let i = 0; i < list.length; i += 8) await Promise.all(list.slice(i, i + 8).map(one));   // all at once: the whole run must fit in the 300 s server limit
 
   const all = Object.values(reports).flatMap(r => r.items);
   let ceo = null;
