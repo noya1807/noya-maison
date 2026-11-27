@@ -74,7 +74,7 @@ const fakeFetch = async (url, opt) => {
 const RealDate = Date; global.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [at])); } static now() { return new RealDate(at).getTime(); } };
 const run = await AI.runDaily(JSON.parse(JSON.stringify(db)), { tasks: [] }, { today, fetchImpl: fakeFetch });
 global.Date = RealDate;
-assert.equal(calls, 9, "8 managers + CEO");
+assert.equal(calls, 9, "8 managers + CEO (no retry when answers are valid)");
 assert.equal(run.log.calls, 9); assert.equal(run.log.errors.length, 0);
 assert.equal(run.tasks.length, 8);
 assert.ok(run.ceo && run.ceo.decisions.length === 1, "CEO decisions limited to real task ids");

@@ -344,7 +344,7 @@ export default async function handler(req, res) {
       const { store } = await readAi();
       if (a === "aidaily") {
         const run = await AI.runDaily(db || {}, store);
-        const saved = await updateAi(s => { const m = AI.mergeDaily(s, run); if (!run.log.errors.length) delete m.alert; return m; });
+        const saved = await updateAi(s => { const m = AI.mergeDaily(s, run); if (!run.log.errors.some(e => AI_MONEY.test(e))) delete m.alert; return m; });
         const alert = await aiAlert(run.log.errors).catch(() => null);
         res.status(200).json({ ok: true, alert: alert?.text || "", tasks: run.tasks.length, ceo: !!run.ceo, calls: run.log.calls, errors: run.log.errors, rev: saved.rev }); return;
       }

@@ -30,7 +30,7 @@ export const whoName = id => WHO[id] || id;
 
 const MODEL = () => process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";            // managers
 const MODEL_TOP = () => process.env.ANTHROPIC_MODEL_TOP || "claude-opus-5-5";      // CEO + board
-const MAX_CALLS = () => +(process.env.AI_MAX_CALLS || 14);                          // hard cap per run (cost guard)
+const MAX_CALLS = () => +(process.env.AI_MAX_CALLS || 20);                          // hard cap per run (cost guard)
 
 // ---------- helpers ----------
 const day = v => String(v || "").slice(0, 10);
@@ -127,7 +127,7 @@ export async function callModel({ system, user, model, maxTokens = 1800 }, fetch
     body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }] }) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j?.error?.message || `Anthropic ${r.status}`);
-  return { text: (j.content || []).filter(c => c.type === "text").map(c => c.text).join(""), usage: j.usage || {} };
+  return { text: (j.content || []).filter(c => c.type === "text").map(c => c.text).join(""), usage: j.usage || {}, stop: j.stop_reason || "" };
 }
 export function parseJson(text) {
   const s = String(text || ""); const a = s.indexOf("{"), b = s.lastIndexOf("}");
@@ -168,8 +168,10 @@ export async function runDaily(db, store, { today = isoDay(new Date()), fetchImp
   const one = async m => {
     const inbox = open.filter(t => t.to === m.id).slice(0, 10).map(t => ({ from: whoName(t.from), title: t.title, body: t.body }));
     const user = `תאריך: ${today}\nהתפקיד שלך: ${m.name}\n\nהנתונים שלך:\n${JSON.stringify(snap[m.id])}\n\nמשימות שמנהלים אחרים העבירו אליך:\n${JSON.stringify(inbox)}\n\nהחזר JSON במבנה:\n${ITEM_SCHEMA}`;
-    try { const r = await call({ system: RULES + "\n\n" + (await brief(m.id)), user, model: MODEL() }); const out = parseJson(r.text);
-      if (!out) throw new Error("תשובה לא תקינה"); reports[m.id] = { summary: clip(out.summary, 600), items: sanitizeItems(out, m.id, db, at) }; }
+    try { const sys = RULES + "\n\n" + (await brief(m.id));
+      let r = await call({ system: sys, user, model: MODEL(), maxTokens: 4096 }); let out = parseJson(r.text);
+      if (!out) { r = await call({ system: sys, user: user + "\n\nחשוב: התשובה הקודמת נחתכה. החזר JSON קצר: summary עד 2 משפטים ועד 4 פריטים, body עד 200 תווים.", model: MODEL(), maxTokens: 4096 }); out = parseJson(r.text); }
+      if (!out) throw new Error("תשובה לא תקינה" + (r.stop === "max_tokens" ? " (נחתכה)" : "")); reports[m.id] = { summary: clip(out.summary, 600), items: sanitizeItems(out, m.id, db, at) }; }
     catch (e) { log.errors.push(`${m.name}: ${clip(e.message, 120)}`); if (e.code === "nokey") throw e; }
   };
   const ids = (store.settings?.managers || MANAGERS.map(m => m.id));
