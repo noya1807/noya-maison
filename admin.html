@@ -1126,26 +1126,31 @@ function icountChoose(o){
     <div style="display:flex;flex-direction:column;gap:6px;margin:12px 0">${[["deal","חשבון עסקה","לא מסמך מס – בקשת תשלום"],["invoice","חשבונית מס",""],["invrec","חשבונית מס קבלה","כשהלקוח כבר שילם"],["delcert","תעודת משלוח",""]].map(([k,l,h],i)=>`<label style="display:flex;gap:8px;align-items:center;cursor:pointer;padding:7px 10px;border:1px solid #e2d3c0;border-radius:10px"><input type="radio" name="icT" value="${k}" ${i===0?"checked":""}> <b>${l}</b>${h?` <span class="muted" style="font-size:13px">${h}</span>`:""}</label>`).join("")}</div>
     <div id="icPay" hidden style="border-top:1px solid #e2d3c0;padding-top:10px">
       <b>איך הלקוח שילם?</b>
-      <div class="grid" style="margin-top:6px"><label class="f">אמצעי תשלום<select id="icPm"><option value="bank">העברה בנקאית</option><option value="cheque">צ׳ק</option><option value="cash">מזומן</option></select></label>
+      <div class="grid" style="margin-top:6px"><label class="f">אמצעי תשלום<select id="icPm"><option value="bank">העברה בנקאית</option><option value="cc">כרטיס אשראי</option><option value="cheque">צ׳ק</option><option value="cash">מזומן</option></select></label>
         <label class="f">סכום (כולל מע״מ)<input id="icSum" inputmode="decimal" dir="ltr" value="${total}"></label><label class="f">תאריך התשלום<input id="icDate" type="date" value="${today}"></label></div>
       <div id="icChq" hidden class="grid"><label class="f">מס׳ בנק<input id="icBank" inputmode="numeric" dir="ltr"></label><label class="f">סניף<input id="icBr" inputmode="numeric" dir="ltr"></label><label class="f">מס׳ חשבון<input id="icAcc" inputmode="numeric" dir="ltr"></label><label class="f">מס׳ צ׳ק<input id="icNum" inputmode="numeric" dir="ltr"></label></div>
-      <p class="muted" style="font-size:12.5px;margin:6px 0 0">תשלום באשראי מפיקים ישירות ב-iCount (דרך מסוף הסליקה).</p></div>
+      <div id="icBt" class="grid"><label class="f">אסמכתא / מס׳ העברה<input id="icRef" dir="ltr" placeholder="לא חובה"></label></div>
+      <div id="icCc" hidden class="grid"><label class="f">סוג כרטיס<select id="icCt"><option value="VISA">ויזה</option><option value="MASTERCARD">מאסטרקארד</option><option value="ISRACARD">ישראכרט</option><option value="AMEX">אמריקן אקספרס</option><option value="DINERS">דיינרס</option></select></label>
+        <label class="f">4 ספרות אחרונות<input id="icL4" inputmode="numeric" maxlength="4" dir="ltr"></label><label class="f">מספר תשלומים<input id="icNp" inputmode="numeric" dir="ltr" value="1"></label><label class="f">מספר אישור (מהמסוף)<input id="icConf" inputmode="numeric" dir="ltr"></label></div>
+      <p class="muted" style="font-size:12.5px;margin:6px 0 0">העברה נרשמת כהופקדה לחשבון הבנק של העסק ב-iCount. באשראי ממלאים רק 4 ספרות אחרונות ומספר אישור מהמסוף – לא את מספר הכרטיס המלא.</p></div>
     <div class="row" style="justify-content:flex-start;gap:8px;margin-top:14px"><button class="btn gold" id="icGo">המשך</button><button class="btn ghost" id="icX">ביטול</button></div></div>`;
   document.body.appendChild(m);
-  const upd=()=>{const t=m.querySelector('[name=icT]:checked').value;m.querySelector("#icPay").hidden=t!=="invrec";m.querySelector("#icChq").hidden=m.querySelector("#icPm").value!=="cheque";};
+  const upd=()=>{const t=m.querySelector('[name=icT]:checked').value;m.querySelector("#icPay").hidden=t!=="invrec";const pm=m.querySelector("#icPm").value;m.querySelector("#icChq").hidden=pm!=="cheque";m.querySelector("#icCc").hidden=pm!=="cc";m.querySelector("#icBt").hidden=pm!=="bank";};
   m.querySelectorAll('[name=icT]').forEach(r=>r.onchange=upd);m.querySelector("#icPm").onchange=upd;
   m.querySelector("#icX").onclick=()=>m.remove();m.onclick=e=>{if(e.target===m)m.remove();};
   m.querySelector("#icGo").onclick=()=>{const t=m.querySelector('[name=icT]:checked').value;let pay=null;
     if(t==="invrec"){const v=id=>m.querySelector(id).value.trim();pay={method:v("#icPm"),sum:num(v("#icSum")),date:v("#icDate")||today};
       if(!(pay.sum>0)){toast("נא למלא סכום");return;}
-      if(pay.method==="cheque"){Object.assign(pay,{bank:v("#icBank"),branch:v("#icBr"),account:v("#icAcc"),number:v("#icNum")});if(!pay.bank||!pay.number){toast("לצ׳ק צריך לפחות מס׳ בנק ומס׳ צ׳ק");return;}}}
+      if(pay.method==="cheque"){Object.assign(pay,{bank:v("#icBank"),branch:v("#icBr"),account:v("#icAcc"),number:v("#icNum")});if(!pay.bank||!pay.number){toast("לצ׳ק צריך לפחות מס׳ בנק ומס׳ צ׳ק");return;}}
+      if(pay.method==="bank")pay.ref=v("#icRef");
+      if(pay.method==="cc"){Object.assign(pay,{cardType:v("#icCt"),last4:v("#icL4").replace(/\D/g,""),payments:Math.max(1,parseInt(v("#icNp"))||1),conf:v("#icConf")});if(pay.last4.length!==4||!pay.conf){toast("באשראי צריך 4 ספרות אחרונות ומספר אישור");return;}}}
     m.remove();icountCreate(o,t,pay);};
 }
 async function icountCreate(o,forceType,pay){
   const dt=forceType||db.settings.icountType||"deal",items=icountItems(o),tot=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);
-  if(!await askC(`ליצור ${IC_TYPES[dt]} ב-iCount?\n\nלקוח: ${o.customer?.org||o.customer?.name}\n${items.map(i=>`${i.unitprice?"• ":"   "}${i.description} – ${i.quantity}${i.unitprice?` × ₪${i.unitprice}`:""}`).join("\n")}${pay?`\n\nתשלום: ${({bank:"העברה בנקאית",cheque:"צ׳ק",cash:"מזומן"})[pay.method]} · ₪${pay.sum.toLocaleString("he-IL")} · ${pay.date}`:""}\nסה״כ לפני מע״מ: ₪${Math.round(tot).toLocaleString("he-IL")}`))return;
+  if(!await askC(`ליצור ${IC_TYPES[dt]} ב-iCount?\n\nלקוח: ${o.customer?.org||o.customer?.name}\n${items.map(i=>`${i.unitprice?"• ":"   "}${i.description} – ${i.quantity}${i.unitprice?` × ₪${i.unitprice}`:""}`).join("\n")}${pay?`\n\nתשלום: ${({bank:"העברה בנקאית",cc:"כרטיס אשראי",cheque:"צ׳ק",cash:"מזומן"})[pay.method]}${pay.method==="cc"?` ${pay.cardType} ****${pay.last4} · ${pay.payments} תשלומים · אישור ${pay.conf}`:""}${pay.ref?` · אסמכתא ${pay.ref}`:""} · ₪${pay.sum.toLocaleString("he-IL")} · ${pay.date}`:""}\nסה״כ לפני מע״מ: ₪${Math.round(tot).toLocaleString("he-IL")}`))return;
   toast("יוצר מסמך ב-iCount…");
-  try{const j=await api("icount",{method:"POST",body:{doctype:dt,client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,pay,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
+  try{const j=await api("icount",{method:"POST",body:{doctype:dt,client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,pay,comments:`הזמנה ${o.ref}${pay?.ref?` · אסמכתא העברה: ${pay.ref}`:""}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
     if(!j.ok){toast("iCount: "+(j.error||"שגיאה"),8000);return;}
     const doc={doctype:dt,docnum:j.docnum,url:j.url,at:new Date().toISOString()};(o.icountDocs??=[]).push(doc);if(dt!=="delcert"||!o.icount)o.icount=o.icount&&dt==="delcert"?o.icount:doc;touch();renderOrder();setTimeout(icountStockSync,3000);toast(`✓ נוצר ${IC_TYPES[dt]} ${j.docnum||""} ב-iCount`);}catch(e){toast("iCount: שגיאה בחיבור",6000);}}
 // ---------- payments from iCount: an order is "שולם" when a receipt / invoice-receipt was issued from its document chain in iCount ----------

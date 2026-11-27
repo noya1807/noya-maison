@@ -392,7 +392,10 @@ export default async function handler(req, res) {
         if (!(sum > 0)) { res.status(400).json({ ok: false, error: "חסר סכום תשלום" }); return; }
         if (p.method === "cash") body.cash = { sum };
         else if (p.method === "cheque") body.cheques = [{ sum, date, bank: +p.bank || 0, branch: +p.branch || 0, account: String(p.account || ""), number: String(p.number || "") }];
-        else body.banktransfer = { sum, date };
+        else if (p.method === "cc") { const n = Math.max(1, Math.min(36, parseInt(p.payments) || 1)), first = Math.round((sum - Math.floor(sum / n * 100) / 100 * (n - 1)) * 100) / 100;
+          if (!/^\d{4}$/.test(String(p.last4 || "")) || !p.conf) { res.status(400).json({ ok: false, error: "באשראי צריך 4 ספרות אחרונות ומספר אישור" }); return; }
+          body.cc = [{ sum, date, num_of_payments: n, first_payment: n > 1 ? first : sum, card_type: ["VISA", "MASTERCARD", "ISRACARD", "AMEX", "DINERS"].includes(p.cardType) ? p.cardType : "VISA", card_number: String(p.last4), confirmation_code: String(p.conf).slice(0, 20) }]; }
+        else body.banktransfer = { sum, date, account: 1 };
       }
       try {
         const r = await fetch("https://api.icount.co.il/api/v3.php/doc/create", { method: "POST", headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
