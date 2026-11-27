@@ -891,14 +891,46 @@ const printOrder=o=>printOrders([o]);
 function csvCell(v){v=String(v??"");return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}
 function downloadCsv(name,rows){const b=new Blob(["\ufeff"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
-function exportCourier(list){
+// address files (xlsx / csv) the customer uploaded → one courier row per recipient, no re-typing
+async function zipEntries(buf){const d=new DataView(buf),u=new Uint8Array(buf);let e=-1;
+  for(let i=buf.byteLength-22;i>=Math.max(0,buf.byteLength-66000);i--)if(d.getUint32(i,true)===0x06054b50){e=i;break;}
+  if(e<0)throw 0;const n=d.getUint16(e+10,true);let p=d.getUint32(e+16,true);const out={};
+  for(let j=0;j<n;j++){if(d.getUint32(p,true)!==0x02014b50)break;const m=d.getUint16(p+10,true),cs=d.getUint32(p+20,true),nl=d.getUint16(p+28,true),xl=d.getUint16(p+30,true),cl=d.getUint16(p+32,true),lo=d.getUint32(p+42,true);
+    out[new TextDecoder().decode(u.subarray(p+46,p+46+nl))]={m,cs,lo};p+=46+nl+xl+cl;}
+  out.read=async name=>{const f=out[name];if(!f)return "";const s=f.lo+30+d.getUint16(f.lo+26,true)+d.getUint16(f.lo+28,true);const raw=u.slice(s,s+f.cs);
+    if(f.m===0)return new TextDecoder().decode(raw);return await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();};
+  return out;}
+async function parseAddrFile(f){
+  const t=v=>String(v??"").trim(),dig=v=>t(v).replace(/\D/g,"");let rows=[];
+  const r=await fetch(f.url,{cache:"no-store"});if(!r.ok)throw new Error("file "+r.status);
+  if(/\.csv$/i.test(f.name||f.url))rows=(await r.text()).split(/\r?\n/).map(l=>l.split(/[,;\t]/));
+  else if(/\.xlsx$/i.test(f.name||f.url)){const z=await zipEntries(await r.arrayBuffer()),X=x=>new DOMParser().parseFromString(x,"application/xml");
+    const sst=[...X(await z.read("xl/sharedStrings.xml")).getElementsByTagName("si")].map(x=>x.textContent);
+    const sh=Object.keys(z).filter(x=>/^xl\/worksheets\/sheet\d+\.xml$/.test(x)).sort()[0];if(!sh)return [];
+    rows=[...X(await z.read(sh)).getElementsByTagName("row")].map(rw=>{const a=[];for(const c of rw.getElementsByTagName("c")){const col=(c.getAttribute("r")||"").replace(/\d+/g,"").split("").reduce((n,ch)=>n*26+ch.charCodeAt(0)-64,0)-1;
+      const v=c.getElementsByTagName("v")[0],ty=c.getAttribute("t");a[col<0?a.length:col]=ty==="s"&&v?sst[+v.textContent]:ty==="inlineStr"?c.textContent:v?v.textContent:"";}return Array.from(a,x=>x??"");});}
+  else throw new Error("format");
+  return rows.slice(1).map(c=>c.map(t)).filter(c=>c.some(Boolean)&&c[0]!=="ישראל ישראלי"&&!/^0?549999999$/.test(dig(c[1]))&&(c[0]||c[1]||c[3]))
+    .map(c=>({name:c[0]||"",phone:c[1]||"",city:c[2]||"",street:c[3]||"",note:[c[4]?`דירה ${c[4]}`:"",c[5]?`כניסה ${c[5]}`:"",c[6]?`קומה ${c[6]}`:""].filter(Boolean).join(" · "),
+      bad:!/^(972)?0?5\d{8}$/.test(dig(c[1]))||!c[2]||!c[3]}));
+}
+async function exportCourier(list){
   list=list.filter(o=>o.status==="approved");   // iron rule: only orders Moshe approved
   const ship=list.filter(o=>o.dlvMode==="ship"),ind=list.filter(o=>["indiv","vip"].includes(o.dlvMode));
-  const rows=[["מספר הזמנה","ארגון","סוג משלוח","שם מקבל","טלפון מקבל","עיר","רחוב ומספר","הערות לשליח","מספר מארזים","קובץ כתובות"]];
+  const rows=[["מספר הזמנה","ארגון","סוג משלוח","שם מקבל","טלפון מקבל","עיר","רחוב ומספר","הערות לשליח","מספר מארזים","בדיקה"]];
   ship.forEach(o=>rows.push([o.ref,o.customer?.org||"","לכתובת אחת",o.dlv?.rcvName||o.customer?.name||"",o.dlv?.rcvPhone||o.customer?.phone||"",o.dlv?.city||"",o.dlv?.street||"",o.dlv?.addrNote||"",o.boxes,""]));
-  ind.forEach(o=>rows.push([o.ref,o.customer?.org||"",o.dlvMode==="vip"?"VIP לכל מקבל":"לכל מקבל","","","","","",o.boxes,(o.addrFiles||[]).map(f=>f.url).join(" | ")||"חסר קובץ"]));
+  if(ind.length)toast("קורא את קובצי הכתובות…");
+  const warn=[];
+  for(const o of ind){const kind=o.dlvMode==="vip"?"VIP לכל מקבל":"לכל מקבל",files=o.addrFiles||[];
+    if(!files.length){rows.push([o.ref,o.customer?.org||"",kind,"","","","","",o.boxes,"⚠ חסר קובץ כתובות"]);warn.push(`${o.ref}: חסר קובץ`);continue;}
+    let rec=[],failed=[];for(const f of files){try{rec.push(...await parseAddrFile(f));}catch(e){failed.push(f);}}
+    failed.forEach(f=>rows.push([o.ref,o.customer?.org||"",kind,"","","","","",o.boxes,`⚠ לא הצלחתי לקרוא: ${f.url}`]));
+    rec.forEach(r=>rows.push([o.ref,o.customer?.org||"",kind,r.name,r.phone,r.city,r.street,r.note,1,r.bad?"⚠ חסר טלפון/כתובת":""]));
+    if(rec.length&&rec.length!==num(o.boxes))warn.push(`${o.ref}: ${rec.length} כתובות מול ${o.boxes} מארזים`);
+    const bad=rec.filter(r=>r.bad).length;if(bad)warn.push(`${o.ref}: ${bad} שורות עם טלפון או כתובת חסרים`);}
   if(rows.length<2){toast("אין הזמנות משלוח מוכנות לייצוא");return;}
-  downloadCsv(`משלוחים-${new Date().toISOString().slice(0,10)}.csv`,rows);toast(`יוצאו ${rows.length-1} הזמנות לקובץ`);}
+  downloadCsv(`משלוחים-${new Date().toISOString().slice(0,10)}.csv`,rows);
+  toast(`יוצאו ${rows.length-1} שורות לשליח${warn.length?` · ⚠ ${warn.join(" · ")}`:""}`,warn.length?12000:4000);}
 const ORD_ST={lead:["ליד – מארז שמור","st-order"],quote:["הצעת מחיר","st-order"],won:["✓ הפכה להזמנה","st-wh"],lost:["הלקוח ויתר","st-order"],pending:["ממתינה לאישור","st-port"],approved:["מאושרת","st-wh"],cancelled:["בוטלה","st-order"]};
 // ---------- sales agents: who brought each order, totals and commission ----------
 const AG_DEFAULT=["משה","אפרת","ליגי"],AG_CHANNELS=["חבר הפנה אותי","פייסבוק / אינסטגרם","גוגל","אחר"];
@@ -1010,13 +1042,35 @@ function renderOrders(){
   $("#oNew").onclick=()=>{const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:"ידני",createdAt:new Date().toISOString(),status:"pending",customer:{},boxes:1,lines:[],engrave:false,card:false,dlvMode:"ship",gross:0,notes:""};
     db.orders.unshift(o);touch();selOrder=o.id;render();};
 }
+// ---------- customer card: earlier orders of the same customer (phone or organisation) + duplicate an order ----------
+const phoneKey=v=>String(v||"").replace(/\D/g,"").slice(-9);
+const orgKey=v=>String(v||"").replace(/["'״׳\-–.,()]/g," ").replace(/\s+/g," ").trim().toLowerCase();
+function sameCustomer(a,b){const pa=phoneKey(a.customer?.phone),pb=phoneKey(b.customer?.phone),oa=orgKey(a.customer?.org),ob=orgKey(b.customer?.org);
+  return (pa.length===9&&pa===pb)||(oa.length>=3&&oa===ob);}
+function custHistory(o){
+  const others=db.orders.filter(x=>x.id!==o.id&&!["lead"].includes(x.status)&&sameCustomer(o,x)).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+  if(!others.length)return "";
+  const appr=others.filter(x=>x.status==="approved"),boxes=appr.reduce((t,x)=>t+num(x.boxes),0),sales=appr.reduce((t,x)=>t+orderCalc(x).net,0);
+  return `<h2>🗂 כרטיס לקוח – הזמנות קודמות</h2><div class="panel">
+    <p class="muted" style="margin-top:0">${appr.length?`${appr.length} הזמנות מאושרות · ${boxes.toLocaleString("he-IL")} מארזים · ${money(Math.round(sales))} לפני מע״מ`:"אין עדיין הזמנות מאושרות"} · מזוהה לפי טלפון או שם הארגון</p>
+    <div class="tablewrap"><table><thead><tr><th>תאריך</th><th>מס׳</th><th>מצב</th><th class="num">מארזים</th><th class="num">כולל מע״מ</th><th>יועץ/ת</th><th></th></tr></thead><tbody>
+    ${others.slice(0,15).map(x=>`<tr><td>${esc(new Date(x.createdAt).toLocaleDateString("he-IL"))}</td><td class="sku"><a href="#" data-goref="${esc(x.ref)}">${esc(x.ref)}</a></td><td><span class="pill ${ORD_ST[x.status]?.[1]||""}">${ORD_ST[x.status]?.[0]||esc(x.status)}</span></td><td class="num">${esc(x.boxes)}</td><td class="num">${money(Math.round(num(x.gross)))}</td><td>${esc(x.agent||"")}</td>
+      <td><button class="btn sm ghost" data-dup="${esc(x.id)}" title="יוצרת הזמנה חדשה ממתינה עם אותם מוצרים, כמויות, לקוח ואספקה">📋 שכפול להזמנה חדשה</button></td></tr>`).join("")}
+    </tbody></table></div></div>`;
+}
+function duplicateOrder(src){
+  const c=JSON.parse(JSON.stringify(src));
+  const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:`שכפול של ${src.ref}`,createdAt:new Date().toISOString(),status:"pending",
+    customer:c.customer||{},agent:c.agent||"",boxes:c.boxes,lines:(c.lines||[]).map(l=>{const n={...l};delete n.unitCost;return n;}),types:c.types||null,engrave:!!c.engrave,card:!!c.card,dlvMode:c.dlvMode||"ship",dlv:c.dlv||{},gross:c.gross||0,shipCharge:c.shipCharge||0,
+    notes:`שוכפלה מ-${src.ref} (${new Date(src.createdAt).toLocaleDateString("he-IL")}). לבדוק מחירים, כמויות ותאריך לפני אישור.`};
+  db.orders.unshift(o);touch();return o;}
 function renderOrder(){
   const o=db.orders.find(x=>x.id===selOrder);if(!o){selOrder=null;return render();}
   const locked=o.status!=="pending";const c=orderCalc(o);const S=stockAll();const dis=locked?"disabled":"";
   const prodOpts=db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("");
   $("#view").innerHTML=`<button class="back" id="oBack">→ כל ההזמנות</button>
   <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>${o.quoteRef&&o.quoteRef!==o.ref?` · נוצרה מהצעת מחיר <a href="#" data-goref="${esc(o.quoteRef)}">${esc(o.quoteRef)}</a>`:o.quoteRef?" · נוצרה מהצעת המחיר הזו":""}${o.convertedTo?` · הפכה להזמנה <a href="#" data-goref="${esc(o.convertedTo)}">${esc(o.convertedTo)}</a>`:""}</p></div>
-    <div class="row"><button class="btn ghost" id="oPrint">🖨 הדפסת הזמנה</button>${waBtn(o,"btn ghost")}${okMail(o.customer?.email)&&!["lead","quote","won","lost"].includes(o.status)?`<button class="btn ghost" id="oMail" title="שולח ללקוח במייל את ההודעה של השלב הנוכחי">📧 עדכון במייל</button>`:""}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn danger" id="oLost">✕ הלקוח ויתר</button><button class="btn gold" id="oQuoteOk">✓ הלקוח אישר – הפוך להזמנה</button>`:o.status==="lost"?`<button class="btn ghost" id="oReopen">פתיחה מחדש כהצעה</button>`:o.status==="won"?"":o.status==="lead"?`<button class="btn danger" id="oCancel">לא רלוונטי</button><button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
+    <div class="row"><button class="btn ghost" id="oPrint">🖨 הדפסת הזמנה</button>${o.status==="approved"?`<button class="btn ghost" data-dup="${esc(o.id)}" title="הזמנה חדשה עם אותם מוצרים, כמויות, לקוח ואספקה">📋 שכפול</button>`:""}${waBtn(o,"btn ghost")}${okMail(o.customer?.email)&&!["lead","quote","won","lost"].includes(o.status)?`<button class="btn ghost" id="oMail" title="שולח ללקוח במייל את ההודעה של השלב הנוכחי">📧 עדכון במייל</button>`:""}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn danger" id="oLost">✕ הלקוח ויתר</button><button class="btn gold" id="oQuoteOk">✓ הלקוח אישר – הפוך להזמנה</button>`:o.status==="lost"?`<button class="btn ghost" id="oReopen">פתיחה מחדש כהצעה</button>`:o.status==="won"?"":o.status==="lead"?`<button class="btn danger" id="oCancel">לא רלוונטי</button><button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
   ${o.status==="pending"?`<p class="warn" style="font-weight:700">🔒 כלל ברזל: ההזמנה לא תיכנס ל"בעבודה", לרשימת הליקוט או לייצוא לשליח עד שתלחץ "✓ אישור סופי".</p>`:""}
   ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:o.status==="quote"?"הצעת מחיר שהלקוח הוריד מהבונה. לא נספרת ברווח ובמלאי. כדאי לחזור אליו, ואם הזמין: \"הלקוח הזמין\".":o.status==="lead"?`💾 הלקוח שמר את המארז בבונה ועוד לא הזמין. לא נספר ברווח ובמלאי. כדאי להתקשר אליו${o.link?` · <a href="${esc(o.link)}" target="_blank" rel="noopener">פתיחת המארז שלו</a>`:""}.`:"ההזמנה בוטלה ולא נספרת."}</p>`:""}
   ${(()=>{const b=num(o.boxes)||0,items=c.lines.filter(l=>!l.isPack),packL=c.lines.find(l=>l.isPack),old=c.fixed.pack===undefined;
@@ -1052,6 +1106,7 @@ function renderOrder(){
     <label class="f">אספקה<select data-o="dlvMode" ${dis}>${[["ship","משלוח לכתובת אחת"],["indiv","משלוח פרטני לכל מקבל"],["vip","משלוח VIP לכל מקבל"],["pickup","איסוף עצמי"]].map(([k,l])=>`<option value="${k}" ${o.dlvMode===k?"selected":""}>${l}</option>`).join("")}</select></label>
     <label class="f">תוספות<span class="row" style="font-weight:400;color:var(--cocoa)"><label class="row" style="gap:4px"><input type="checkbox" data-ob="card" ${o.card?"checked":""} ${dis} style="width:auto"> כרטיס ברכה</label><label class="row" style="gap:4px"><input type="checkbox" data-ob="engrave" ${o.engrave?"checked":""} ${dis} style="width:auto"> חריטה</label></span></label>
   </div></div>
+  ${custHistory(o)}
   <h2>מוצרים בהזמנה (כמות כוללת לכל המארזים)</h2>
   <div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>פריט</th><th style="width:220px">מוצר במערכת (מק״ט)</th><th class="num">כמות</th><th class="num">זמין</th><th class="num">עלות ליחידה</th><th class="num">עלות</th><th></th></tr></thead><tbody>
   ${c.lines.map((l,i)=>{const av=l.sku?(S[l.sku]?.available??0)+(o.status==="pending"?num(l.qty):0):null;return `<tr data-li="${i}"><td>${l.type?`<span class="pill st-port" style="font-size:11px">${esc(l.type)}</span> `:""}${esc(l.name)}${l.bid?` <span class="muted" style="font-size:12px">(בונה ${esc(l.bid)})</span>`:""}</td>
@@ -1082,6 +1137,8 @@ function renderOrder(){
     if(!confirm("לאשר סופית? העלות תוקפא, ההזמנה תיספר ברווח והמוצרים יירדו מהמלאי."))return;setSt("approved","ההזמנה אושרה ✓");};
   if($("#oCancel"))$("#oCancel").onclick=()=>{if(confirm("לסמן את ההזמנה כבוטלה?"))setSt("cancelled","ההזמנה סומנה כבוטלה");};
   if($("#oUnapprove"))$("#oUnapprove").onclick=()=>{if(confirm("לבטל את האישור? ההזמנה תחזור ל'ממתינה', המוצרים יחזרו למלאי והעלות תחושב מחדש."))setSt("pending","האישור בוטל");};
+  document.querySelectorAll("[data-dup]").forEach(b=>b.onclick=()=>{const src=db.orders.find(x=>x.id===b.dataset.dup);if(!src)return;
+    if(!confirm(`ליצור הזמנה חדשה (ממתינה) לפי ${src.ref}?\nאותם מוצרים, כמויות, לקוח ואספקה. אחרי זה בודקים ומאשרים כרגיל.`))return;const n=duplicateOrder(src);selOrder=n.id;renderOrder();toast("✓ נוצרה הזמנה חדשה – בדקו ואשרו");});
   if($("#oMail"))$("#oMail").onclick=()=>{if(confirm(`לשלוח ללקוח (${o.customer.email}) את העדכון הזה במייל?\n\n${customerMsg(o)}`))custMail(o,true);};
   if($("#oRestore"))$("#oRestore").onclick=()=>setSt("pending","ההזמנה חזרה לממתינה");
   // quote → order: the same record becomes a pending order (contents, customer and consultant kept); final approval stays a separate step
