@@ -225,8 +225,8 @@ const daysTo=d=>d?Math.round((new Date(d+"T00:00")-new Date(new Date().toDateStr
 // ---------- navigation ----------
 $("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;selOrder=null;render();};
 function render(){
-  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
-  ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===(view==="agents"?"orders":view)));
+  ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,agents:renderAgents,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
   window.scrollTo(0,0);
 }
 
@@ -745,7 +745,7 @@ function orderFromBuilder(o){
   const typesInfo=types.length>1||types[0].name?types.map(t=>({name:String(t.name||""),boxes:Math.max(1,num(t.boxes)||1),per:num(t.perBox),cardImg:t.cardImg||""})):null;
   const mode=o.dlv?.mode||"ship";
   const isQ=o.kind==="quote",isL=o.kind==="lead";
-  return {id:uid(),ref:o.ref,source:isL?"ליד – לקוח שמר מארז בבונה":isQ?"הצעת מחיר מהבונה":"בונה",createdAt:o.receivedAt||new Date().toISOString(),status:isL?"lead":isQ?"quote":"pending",customer:o.customer||{},boxes,lines,types:typesInfo,link:o.link||"",
+  return {id:uid(),ref:o.ref,agent:String(o.agent||"").slice(0,40),source:isL?"ליד – לקוח שמר מארז בבונה":isQ?"הצעת מחיר מהבונה":"בונה",createdAt:o.receivedAt||new Date().toISOString(),status:isL?"lead":isQ?"quote":"pending",customer:o.customer||{},boxes,lines,types:typesInfo,link:o.link||"",
     engrave:num(o.engrave)>0,card:num(o.card)>0,dlvMode:mode,dlvName:o.dlv?.name||"",shipCharge:num(o.dlv?.total),gross:num(o.total),date:o.date||"",notes:o.notes||"",text:o.text||"",
     dlv:{city:o.dlv?.city||"",street:o.dlv?.street||"",addrNote:o.dlv?.addrNote||"",rcvName:o.dlv?.rcvName||"",rcvPhone:o.dlv?.rcvPhone||""},
     addrFiles:(o.dlv?.files||[]).map(f=>({name:f.name,url:f.url,count:num(f.count)})),engraveFiles:o.engraveFiles||[],cardImg:o.cardImg||"",lateKey:o.lateKey||"",ful:""};
@@ -855,6 +855,43 @@ function exportCourier(list){
   if(rows.length<2){toast("אין הזמנות משלוח מוכנות לייצוא");return;}
   downloadCsv(`משלוחים-${new Date().toISOString().slice(0,10)}.csv`,rows);toast(`יוצאו ${rows.length-1} הזמנות לקובץ`);}
 const ORD_ST={lead:["ליד – מארז שמור","st-order"],quote:["הצעת מחיר","st-order"],pending:["ממתינה לאישור","st-port"],approved:["מאושרת","st-wh"],cancelled:["בוטלה","st-order"]};
+// ---------- sales agents: who brought each order, totals and commission ----------
+const agentNames=()=>[...new Set([...(db.settings.agents||[]).map(a=>a.name),...db.orders.map(o=>o.agent).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,"he"));
+const agentPct=n=>num((db.settings.agents||[]).find(a=>a.name===n)?.pct);
+const agentLink=n=>`https://build.noyaglobal.com/?agent=${encodeURIComponent(n)}`;
+let agRange="month";
+function renderAgents(){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  const R={month:[new Date(y,m,1),new Date(y,m+1,1)],prev:[new Date(y,m-1,1),new Date(y,m,1)],year:[new Date(y,0,1),new Date(y+1,0,1)],all:[new Date(0),new Date(9e15)]}[agRange];
+  const inR=o=>{const d=new Date(o.approvedAt||o.createdAt);return d>=R[0]&&d<R[1];};
+  const rows={};const add=(n,k,v)=>{(rows[n]??={name:n,orders:0,boxes:0,sales:0,profit:0,pending:0,quotes:0})[k]+=v;};
+  db.orders.filter(o=>inR(o)).forEach(o=>{const n=o.agent||"— ללא נציג";
+    if(o.status==="approved"){const c=orderCalc(o);add(n,"orders",1);add(n,"boxes",num(o.boxes));add(n,"sales",c.net-(c.shipAtCost?c.fixed.ship:0));add(n,"profit",c.profit);}
+    else if(o.status==="pending")add(n,"pending",1);else if(o.status==="quote")add(n,"quotes",1);});
+  (db.settings.agents||[]).forEach(a=>rows[a.name]??={name:a.name,orders:0,boxes:0,sales:0,profit:0,pending:0,quotes:0});
+  const list=Object.values(rows).sort((a,b)=>b.sales-a.sales);
+  const T=list.reduce((t,r)=>({orders:t.orders+r.orders,boxes:t.boxes+r.boxes,sales:t.sales+r.sales,profit:t.profit+r.profit,com:t.com+r.sales*agentPct(r.name)/100}),{orders:0,boxes:0,sales:0,profit:0,com:0});
+  const rangeLbl={month:"החודש",prev:"החודש הקודם",year:"השנה",all:"מאז ומעולם"};
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>🧑‍💼 מכירות לפי נציג</h1><p class="sub">רק הזמנות שאישרת נספרות במכירות ובעמלה. מכירות = לפני מע״מ, בלי משלוח.</p></div><button class="btn ghost" id="agBack">← חזרה להזמנות</button></div>
+  <div class="row" style="margin-bottom:12px;gap:6px">${Object.entries(rangeLbl).map(([k,l])=>`<button class="btn sm ${agRange===k?"":"ghost"}" data-ag="${k}">${l}</button>`).join("")}
+    <span style="flex:1"></span><button class="btn sm ghost" id="agCsv">⬇ הורדה לאקסל</button></div>
+  <div class="tablewrap" style="margin-bottom:18px"><table><thead><tr><th>נציג</th><th class="num">הזמנות מאושרות</th><th class="num">מארזים</th><th class="num">מכירות לפני מע״מ</th><th class="num">רווח גולמי</th><th class="num">עמלה %</th><th class="num">עמלה ₪</th><th class="num">ממתינות</th><th class="num">הצעות מחיר</th></tr></thead><tbody>
+  ${list.map(r=>{const real=!r.name.startsWith("—"),pct=agentPct(r.name);return `<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.orders}</td><td class="num">${r.boxes.toLocaleString("he-IL")}</td><td class="num">${money(Math.round(r.sales))}</td><td class="num">${money(Math.round(r.profit))}</td>
+    <td class="num">${real?`<input data-pct="${esc(r.name)}" value="${pct||""}" inputmode="decimal" dir="ltr" style="width:60px;text-align:center" placeholder="0">`:""}</td><td class="num"><b>${real&&pct?money(Math.round(r.sales*pct/100)):""}</b></td><td class="num">${r.pending||""}</td><td class="num">${r.quotes||""}</td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">אין הזמנות בתקופה הזו.</td></tr>`}
+  ${list.length?`<tr style="font-weight:700;background:#faf3e6"><td>סה״כ ${rangeLbl[agRange]}</td><td class="num">${T.orders}</td><td class="num">${T.boxes.toLocaleString("he-IL")}</td><td class="num">${money(Math.round(T.sales))}</td><td class="num">${money(Math.round(T.profit))}</td><td></td><td class="num">${money(Math.round(T.com))}</td><td></td><td></td></tr>`:""}
+  </tbody></table></div>
+  <h2>קישורים אישיים לנציגים</h2>
+  <div class="panel"><p class="muted" style="margin-top:0">כל נציג פותח פעם אחת את הקישור שלו בטלפון או במחשב. מאז הבונה זוכר אותו, ובטופס ההזמנה מופיע שדה "נציג מכירות" עם השם שלו. לקוחות רגילים לא רואים את השדה.</p>
+    ${(db.settings.agents||[]).map((a,i)=>`<div class="row" style="gap:8px;align-items:center;margin-bottom:6px"><b style="min-width:110px">${esc(a.name)}</b><input readonly value="${esc(agentLink(a.name))}" dir="ltr" style="flex:1;min-width:200px;font-size:12.5px" onclick="this.select()"><button class="btn sm ghost" data-agcopy="${i}">📋 העתקה</button><button class="btn sm ghost" data-agdel="${i}" title="הסרה מהרשימה (ההזמנות שלו נשארות)">✕</button></div>`).join("")||'<p class="muted">עוד אין נציגים ברשימה.</p>'}
+    <div class="row" style="gap:8px;margin-top:10px"><input id="agNew" placeholder="שם הנציג (כמו שיופיע בהזמנות)" maxlength="40" style="flex:1;max-width:280px"><button class="btn sm" id="agAdd">+ הוספת נציג</button></div></div>`;
+  $("#agBack").onclick=()=>{view="orders";render();};
+  document.querySelectorAll("[data-ag]").forEach(b=>b.onclick=()=>{agRange=b.dataset.ag;renderAgents();});
+  document.querySelectorAll("[data-pct]").forEach(el=>el.onchange=()=>{db.settings.agents??=[];let a=db.settings.agents.find(x=>x.name===el.dataset.pct);if(!a)db.settings.agents.push(a={name:el.dataset.pct});a.pct=num(el.value)||0;touch();renderAgents();});
+  $("#agAdd").onclick=()=>{const n=$("#agNew").value.trim().slice(0,40);if(!n)return;db.settings.agents??=[];if(!db.settings.agents.some(a=>a.name===n))db.settings.agents.push({name:n,pct:0});touch();renderAgents();};
+  document.querySelectorAll("[data-agcopy]").forEach(b=>b.onclick=async()=>{const a=db.settings.agents[+b.dataset.agcopy];try{await navigator.clipboard.writeText(agentLink(a.name));toast("✓ הקישור הועתק");}catch(e){toast("סמנו את הקישור והעתיקו ידנית");}});
+  document.querySelectorAll("[data-agdel]").forEach(b=>b.onclick=()=>{const a=db.settings.agents[+b.dataset.agdel];if(!confirm(`להסיר את ${a.name} מרשימת הנציגים? ההזמנות שלו נשארות עם השם.`))return;db.settings.agents.splice(+b.dataset.agdel,1);touch();renderAgents();});
+  $("#agCsv").onclick=()=>downloadCsv(`נציגים-${rangeLbl[agRange]}-${new Date().toISOString().slice(0,10)}.csv`,[["נציג","הזמנות מאושרות","מארזים","מכירות לפני מע״מ","רווח גולמי","עמלה %","עמלה ₪","ממתינות","הצעות מחיר"],...list.map(r=>{const p=r.name.startsWith("—")?0:agentPct(r.name);return [r.name,r.orders,r.boxes,Math.round(r.sales),Math.round(r.profit),p||"",p?Math.round(r.sales*p/100):"",r.pending,r.quotes];})]);
+}
 function renderOrders(){
   const inWork=o=>o.status==="approved"&&fulOf(o)!=="shipped",isDone=o=>o.status==="approved"&&fulOf(o)==="shipped";
   const byF=k=>db.orders.filter(o=>k==="all"?true:k==="work"?inWork(o):k==="done"?isDone(o):o.status===k);
@@ -867,7 +904,7 @@ function renderOrders(){
   const pick={};if(work)list.filter(o=>["engrave","packing"].includes(fulOf(o))).forEach(o=>orderCalc(o).lines.forEach(l=>{const k=l.sku||l.name;(pick[k]??={name:l.sku?(prodBySku(l.sku)?.name||l.name):l.name,sku:l.sku,qty:0,orders:0});pick[k].qty+=num(l.qty);pick[k].orders++;}));
   const S=work?stockAll():{};const pickRows=Object.values(pick).sort((a,b)=>b.qty-a.qty);
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>הזמנות</h1><p class="sub">כל הזמנה מהבונה נכנסת לכאן לבד כ"ממתינה". רק הזמנות שאישרת נספרות ברווח ובמלאי.</p></div>
-    <div class="row"><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
+    <div class="row"><button class="btn ghost" id="oAgents">🧑‍💼 לפי נציג</button><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
   <div id="jpBox" hidden style="margin:0 0 12px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(124,77,160,.10),rgba(124,77,160,.03));border:1px solid rgba(124,77,160,.25);color:#5b3a78"></div>
   <div class="row" style="margin-bottom:8px">${[["pending","ממתינות"],["work","בעבודה"],["done","נשלחו / נאספו"],["quote","הצעות מחיר"],["lead","לידים 💾"],["approved","כל המאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
   <div class="row" style="margin-bottom:12px;gap:6px">${[["all","כל סוגי האספקה"],["pickup","🏬 איסוף"],["ship","🏢 לכתובת אחת"],["indiv","🏠 לכל מקבל"]].map(([k,l])=>`<button class="btn sm ${dlvFilter===k?"":"ghost"}" data-df="${k}">${l}</button>`).join("")}
@@ -884,7 +921,7 @@ function renderOrders(){
     <button class="btn sm gold" id="oAdvSel" ${ordSel.size?"":"disabled"}>⏭ העברת הנבחרות לשלב הבא</button></div>`:""}
   <div class="tablewrap"><table><thead><tr>${work?"<th></th>":""}<th>תאריך</th><th>מס׳</th><th>לקוח</th><th>אספקה</th><th class="num">מארזים</th><th class="num">סה״כ כולל מע״מ</th><th class="num">רווח גולמי</th><th>מצב</th>${work?"<th></th>":""}</tr></thead><tbody>
   ${list.map(o=>{const c=orderCalc(o);return `<tr class="click" data-oid="${esc(o.id)}">${work?`<td class="osel" style="width:34px;text-align:center"><input type="checkbox" data-sel="${esc(o.id)}" ${ordSel.has(o.id)?"checked":""} style="width:18px;height:18px"></td>`:""}<td>${esc(new Date(o.createdAt).toLocaleDateString("he-IL"))}${urgPill(o)}</td><td class="sku">${esc(o.ref||"")}</td>
-    <td><b>${esc(o.customer?.org||o.customer?.name||"")}</b>${o.customer?.org&&o.customer?.name?` <span class="muted">${esc(o.customer.name)}</span>`:""}${/בדיקה/.test(o.customer?.org||"")?' <span class="pill st-prod">בדיקה</span>':""}</td>
+    <td><b>${esc(o.customer?.org||o.customer?.name||"")}</b>${o.customer?.org&&o.customer?.name?` <span class="muted">${esc(o.customer.name)}</span>`:""}${/בדיקה/.test(o.customer?.org||"")?' <span class="pill st-prod">בדיקה</span>':""}${o.agent?`<br><span class="muted" style="font-size:12px">🧑‍💼 ${esc(o.agent)}</span>`:""}</td>
     <td style="white-space:nowrap">${esc(DLV_SHORT[o.dlvMode]||"")}${["indiv","vip"].includes(o.dlvMode)&&!(o.addrFiles||[]).length?' <span class="warn" title="עוד לא הגיע קובץ כתובות">📎?</span>':""}</td><td class="num">${esc(o.boxes)}</td><td class="num">${money(Math.round(num(o.gross)))}</td>
     <td class="num ${pfText(c)}">${money(Math.round(c.profit))} (${Math.round(c.margin*100)}%)${num(o.boxes)?`<br><span style="font-size:12px">${money(Math.round(c.profit/num(o.boxes)))} למארז</span>`:""}${c.missing?' <span class="warn" title="חסרה עלות לחלק מהמוצרים – הרווח לא סופי">⚠</span>':""}</td>
     <td>${(()=>{const fl=fulLabel(o);return fl?`<span class="pill ${fl[1]}">${fl[0]}</span>${o.status==="approved"&&fulOf(o)!=="shipped"&&shortOf(o)?' <span class="pill st-port" title="חסר מלאי לחלק מהמוצרים">⚠ חסר מלאי</span>':""}`:`<span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>`;})()}</td>
@@ -909,6 +946,7 @@ function renderOrders(){
   if($("#oExport"))$("#oExport").onclick=()=>exportCourier(list.filter(o=>fulOf(o)==="ready"&&o.dlvMode!=="pickup"));
   if($("#oPickCsv"))$("#oPickCsv").onclick=()=>downloadCsv(`ליקוט-${new Date().toISOString().slice(0,10)}.csv`,[["פריט","מק״ט","כמות לארוז","בהזמנות"],...pickRows.map(r=>[r.name,r.sku||"",r.qty,r.orders])]);
   document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=()=>{selOrder=tr.dataset.oid;view="orders";render();});
+  $("#oAgents").onclick=()=>{view="agents";render();};
   $("#oPull").onclick=async()=>{toast("בודק…");await pullInbox();renderOrders();};
   loadJack();
   $("#oNew").onclick=()=>{const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:"ידני",createdAt:new Date().toISOString(),status:"pending",customer:{},boxes:1,lines:[],engrave:false,card:false,dlvMode:"ship",gross:0,notes:""};
@@ -950,6 +988,7 @@ function renderOrder(){
   </div>
   <h2>לקוח</h2><div class="panel"><div class="grid">
     ${[["name","שם"],["org","ארגון"],["phone","טלפון"],["email","מייל"]].map(([k,l])=>`<label class="f">${l}<input data-cu="${k}" value="${esc(o.customer?.[k]||"")}" ${dis} ${["phone","email"].includes(k)?'dir="ltr"':""}></label>`).join("")}
+    <label class="f">🧑‍💼 נציג מכירות<input id="oAgent" list="agentNames" value="${esc(o.agent||"")}" placeholder="ללא נציג"></label><datalist id="agentNames">${agentNames().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
     <label class="f">כמות מארזים<input data-o="boxes" inputmode="numeric" dir="ltr" value="${esc(o.boxes)}" ${dis}></label>
     <label class="f">סה״כ לתשלום כולל מע״מ (₪)<input data-o="gross" inputmode="decimal" dir="ltr" value="${esc(o.gross)}" ${dis}></label>
     <label class="f">אספקה<select data-o="dlvMode" ${dis}>${[["ship","משלוח לכתובת אחת"],["indiv","משלוח פרטני לכל מקבל"],["vip","משלוח VIP לכל מקבל"],["pickup","איסוף עצמי"]].map(([k,l])=>`<option value="${k}" ${o.dlvMode===k?"selected":""}>${l}</option>`).join("")}</select></label>
@@ -970,6 +1009,7 @@ function renderOrder(){
   $("#oBack").onclick=()=>{selOrder=null;render();};
   const re=()=>{touch();renderOrder();};
   document.querySelectorAll("[data-cu]").forEach(el=>el.onchange=()=>{(o.customer??={})[el.dataset.cu]=el.value.trim();touch();});
+  if($("#oAgent"))$("#oAgent").onchange=e=>{o.agent=e.target.value.trim().slice(0,40);touch();toast(o.agent?`הנציג: ${o.agent}`:"ללא נציג");};
   document.querySelectorAll("[data-o]").forEach(el=>el.onchange=()=>{const k=el.dataset.o;o[k]=["boxes","gross"].includes(k)?num(el.value):el.value;
     if(k==="boxes")(o.lines||[]).forEach(l=>{if(l.perBox)l.qty=l.perBox*num(el.value);});re();});
   document.querySelectorAll("[data-ob]").forEach(el=>el.onchange=()=>{o[el.dataset.ob]=el.checked;re();});

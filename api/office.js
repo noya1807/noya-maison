@@ -190,12 +190,12 @@ const escH = v => String(v ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": 
 function orderMail(o) {
   const c = o.customer || {}, q = o.kind === "quote", n = Math.max(1, +o.boxes || 1);
   const goods = Math.round((+o.perBox || 0) * n);
-  const who = [c.name, c.org].filter(Boolean).join(" · ") || "לקוח";
+  const who = [c.name, c.org].filter(Boolean).join(" · ") || "לקוח", ag = o.agent ? ` · נציג: ${String(o.agent).slice(0, 40)}` : "";
   const types = Array.isArray(o.types) && o.types.length > 1 ? o.types.map(t => `${escH(t.name)}: ${+t.boxes || 0} מארזים`).join(" | ") : "";
-  return notify(`${q ? "📝 הצעת מחיר" : "🛒 הזמנה חדשה"} ${o.ref} – ${who} · ${n} מארזים${goods ? ` · ₪${goods.toLocaleString("he-IL")} לפני מע״מ` : ""}`,
+  return notify(`${q ? "📝 הצעת מחיר" : "🛒 הזמנה חדשה"} ${o.ref} – ${who}${ag} · ${n} מארזים${goods ? ` · ₪${goods.toLocaleString("he-IL")} לפני מע״מ` : ""}`,
     `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#3f271c">
      <p style="font-size:17px"><b>${q ? "הצעת מחיר חדשה מהבונה" : "הזמנה חדשה מהבונה"}</b> · ${escH(o.ref)}</p>
-     <p>👤 ${escH(c.name)}${c.org ? ` · ${escH(c.org)}` : ""}<br>📞 ${escH(c.phone)}${c.email ? `<br>✉️ ${escH(c.email)}` : ""}</p>
+     <p>👤 ${escH(c.name)}${c.org ? ` · ${escH(c.org)}` : ""}${o.agent ? `<br>🧑‍💼 נציג: <b>${escH(o.agent)}</b>` : ""}<br>📞 ${escH(c.phone)}${c.email ? `<br>✉️ ${escH(c.email)}` : ""}</p>
      <p>📦 ${n} מארזים${o.perBox ? ` · ₪${escH(o.perBox)} למארז` : ""}${goods ? ` · סה״כ מוצרים ₪${goods.toLocaleString("he-IL")} לפני מע״מ` : ""}${types ? `<br>${types}` : ""}<br>🚚 ${escH(o.dlv?.name || "")}${o.dlv?.city ? ` · ${escH(o.dlv.city)}` : ""}</p>
      ${o.text ? `<pre style="white-space:pre-wrap;font-family:Arial,sans-serif;background:#faf6f1;padding:10px;border-radius:8px">${escH(String(o.text).slice(0, 4000))}</pre>` : ""}
      <p>היא כבר ממתינה בממשק הניהול ← הזמנות (לחצו "בדיקת הזמנות חדשות").</p></div>`);
