@@ -1071,7 +1071,7 @@ function icountItems(o){const c=orderCalc(o),b=num(o.boxes)||1,shipNet=c.shipAtC
   if(tps)tps.forEach(t=>items.push({description:`מארז שי – ${t.name}`,quantity:num(t.boxes),unitprice:num(t.per)}));
   else items.push({description:`מארזי שי${o.lines?.length?` (${o.lines.filter(l=>!l.isPack).map(l=>l.name).slice(0,6).join(", ")})`:""}`.slice(0,200),quantity:b,unitprice:Math.round(goods/b*100)/100});
   const sumT=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);if(tps&&Math.abs(sumT-goods)>1)items.push({description:"מיתוג / תוספות",quantity:1,unitprice:Math.round((goods-sumT)*100)/100});
-  if(shipNet>0)items.push({description:`משלוח – ${DLV_SHORT[o.dlvMode]||""}`.trim(),quantity:1,unitprice:Math.round(shipNet*100)/100});
+  if(shipNet>0)items.push({description:`משלוח – ${({ship:"לכתובת אחת",indiv:"לכל מקבל",vip:"VIP לכל מקבל",pickup:"איסוף"})[o.dlvMode]||""}`.trim(),quantity:1,unitprice:Math.round(shipNet*100)/100});
   return items.filter(i=>i.quantity&&i.unitprice);}
 async function icountCreate(o){
   const dt=db.settings.icountType||"deal",items=icountItems(o),tot=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);
