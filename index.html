@@ -723,6 +723,12 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .jp-again{position:relative;z-index:2;margin:4px 0 0!important;width:auto!important;padding:6px 16px!important;border:1px solid rgba(227,197,140,.7);border-radius:99px;background:rgba(255,246,210,.06);color:#ffe6a3;font:inherit;font-size:13px;font-weight:800;cursor:pointer;opacity:0;transform:scale(.85);transition:opacity .45s .15s,transform .45s .15s}
 .jp-again:hover{background:rgba(255,246,210,.16)}
 #surAct:empty{display:none}
+/* HOLD buttons: a ring of little bulbs that blinks (steady lit once held) */
+.hold:not(:disabled){border:3px dotted #fff3c4!important;padding:2px 0!important;animation:holdBulb .6s steps(1) infinite}
+.reel-col:nth-child(2) .hold:not(:disabled){animation-delay:.2s}.reel-col:nth-child(3) .hold:not(:disabled){animation-delay:.4s}.reel-col:nth-child(4) .hold:not(:disabled){animation-delay:.1s}
+@keyframes holdBulb{0%{border-color:#fff3c4;box-shadow:0 2px 0 #6e4d3b,0 0 9px rgba(255,214,106,.85)}50%{border-color:#9c7740;box-shadow:0 2px 0 #6e4d3b}}
+.hold[aria-pressed="true"]:not(:disabled){animation:none;border-color:#ffd76a!important;box-shadow:0 2px 0 #5a0f08,0 0 12px rgba(255,214,106,.95)}
+@media (prefers-reduced-motion:reduce){.hold:not(:disabled){animation:none}}
 .jp-btns{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:8px}.jp-btns .jp-take,.jp-btns .jp-again{margin:0!important}.jp-take:disabled{opacity:.6;cursor:default}
 @keyframes jtPulse{50%{box-shadow:0 0 0 2px #fff6d2,0 0 30px rgba(255,214,106,1)}}
 @media (max-width:480px){.jp-take{font-size:13.5px;padding:8px 16px!important}}.jackpot.jp-flash b,.jackpot.jp-flash small{animation:jpTx .5s steps(1) 3}
