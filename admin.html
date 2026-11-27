@@ -1103,7 +1103,7 @@ function icountItems(o){
   // style of Noya's invoices: a box line with the price, then every product of the box at ₪0 (linked to its iCount item by SKU, so iCount deducts stock and reports by product)
   const c=orderCalc(o),b=num(o.boxes)||1,shipNet=c.shipAtCost?c.fixed.ship:0,goods=c.net-shipNet,items=[];
   const pid=sku=>db.products.find(p=>p.sku===sku)?.icountId;
-  const content=ls=>ls.forEach(l=>{const it={description:`· ${l.sku?(prodBySku(l.sku)?.name||l.name):l.name}`.slice(0,200),quantity:num(l.qty),unitprice:0};if(l.sku){it.sku=l.sku;if(pid(l.sku))it.inventory_item_id=+pid(l.sku);}if(it.quantity)items.push(it);});
+  const content=ls=>ls.forEach(l=>{const it={description:`· ${l.name||prodBySku(l.sku)?.name||""}`.slice(0,200),quantity:num(l.qty),unitprice:0};if(l.sku){it.sku=l.sku;if(pid(l.sku))it.inventory_item_id=+pid(l.sku);}if(it.quantity)items.push(it);});
   const tps=Array.isArray(o.types)&&o.types.length>1?o.types:null;
   if(tps){let sum=0;tps.forEach(t=>{const per=num(t.per)||0;sum+=per*num(t.boxes);items.push({description:`מארז ${t.name} בהתאמה אישית הכולל:`,quantity:num(t.boxes),unitprice:per});content(c.lines.filter(l=>l.type===t.name));});
     if(Math.abs(sum-goods)>1)items.push({description:"מיתוג / תוספות",quantity:1,unitprice:Math.round((goods-sum)*100)/100});}
