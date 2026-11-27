@@ -722,7 +722,8 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .jp-take.in,.jp-again.in{opacity:1;transform:none}
 .jp-again{position:relative;z-index:2;margin:4px 0 0!important;width:auto!important;padding:6px 16px!important;border:1px solid rgba(227,197,140,.7);border-radius:99px;background:rgba(255,246,210,.06);color:#ffe6a3;font:inherit;font-size:13px;font-weight:800;cursor:pointer;opacity:0;transform:scale(.85);transition:opacity .45s .15s,transform .45s .15s}
 .jp-again:hover{background:rgba(255,246,210,.16)}
-#surAct:empty{display:none}.jp-take:disabled{opacity:.6;cursor:default}
+#surAct:empty{display:none}
+.jp-btns{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:8px}.jp-btns .jp-take,.jp-btns .jp-again{margin:0!important}.jp-take:disabled{opacity:.6;cursor:default}
 @keyframes jtPulse{50%{box-shadow:0 0 0 2px #fff6d2,0 0 30px rgba(255,214,106,1)}}
 @media (max-width:480px){.jp-take{font-size:13.5px;padding:8px 16px!important}}.jackpot.jp-flash b,.jackpot.jp-flash small{animation:jpTx .5s steps(1) 3}
 @keyframes jpBg{0%{background:#ffd76a;transform:scale(1.04)}50%{background:#070102;transform:scale(1)}}
@@ -2255,7 +2256,7 @@ function surOpen(){let d=$("surModal");if(!d){d=document.createElement("div");d.
       else if(b.dataset.sa==="spin")surPull();else if(b.dataset.sa==="take")surTake();});}
   sur.pick=null;sur.held.clear();sur.cur=[];d.hidden=false;surRender();}
 function surClose(){if(sur.busy)return;const d=$("surModal");if(d)d.hidden=true;}
-const JP_TAKE=`<button type="button" class="jp-take" data-sa="take">✨ הכניסו למארז וחשפו</button><button type="button" class="jp-again" data-sa="spin">🎰 סיבוב נוסף</button>`;
+const JP_TAKE=`<div class="jp-btns"><button type="button" class="jp-take" data-sa="take">✨ הכניסו למארז וחשפו</button><button type="button" class="jp-again" data-sa="spin">🎰 סיבוב נוסף</button></div>`;
 function surActs(){return sur.pick?``:`<button type="button" class="go" data-sa="spin">🎰 משכו את הידית</button>`;}
 function surRender(){const d=$("surModal"),n=surN(),pool=surPool(),pill=(k,v,l,cur)=>`<button type="button" data-${k}="${v}" aria-pressed="${cur}">${l}</button>`;
   if(sur.cur.length!==n)sur.cur=Array.from({length:n},()=>pool[(Math.random()*pool.length)|0]).filter(Boolean);
