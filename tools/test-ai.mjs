@@ -79,8 +79,10 @@ assert.equal(run.log.calls, 9); assert.equal(run.log.errors.length, 0);
 assert.equal(run.tasks.length, 8);
 assert.ok(run.ceo && run.ceo.decisions.length === 1, "CEO decisions limited to real task ids");
 assert.equal(run.tasks.find(t => t.id === "finance-202612010430-0").status, "awaiting");
-const merged = AI.mergeDaily({ tasks: [{ id: "old", from: "finance", status: "open", kind: "finding", at: "2026-11-30T04:30:00Z" }, { id: "dec", from: "stock", status: "approved", kind: "approval", at: "2026-11-30T04:30:00Z", decidedAt: "2026-11-30T09:00:00Z" }] }, run);
+const merged = AI.mergeDaily({ tasks: [{ id: "old", from: "finance", status: "open", kind: "finding", at: "2026-11-30T04:30:00Z" }, { id: "oldAw", from: "finance", status: "awaiting", kind: "approval", at: "2026-11-30T04:30:00Z" }, { id: "touched", from: "finance", status: "awaiting", kind: "approval", at: "2026-11-30T04:30:00Z", thread: [{ from: "moshe", action: "note", text: "?" }] }, { id: "dec", from: "stock", status: "approved", kind: "approval", at: "2026-11-30T04:30:00Z", decidedAt: "2026-11-30T09:00:00Z" }] }, run);
 assert.ok(!merged.tasks.some(t => t.id === "old"), "yesterday's plain findings are replaced");
+assert.ok(!merged.tasks.some(t => t.id === "oldAw"), "untouched old proposals are replaced");
+assert.ok(merged.tasks.some(t => t.id === "touched"), "proposals Moshe touched are kept");
 assert.ok(merged.tasks.some(t => t.id === "dec"), "decisions are kept");
 assert.equal(merged.ceo.length, 1); assert.equal(merged.runs.length, 1);
 

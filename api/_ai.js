@@ -220,7 +220,8 @@ export async function runBoard(db, store, { today = isoDay(new Date()), fetchImp
 // ---------- store maintenance (office/ai/state.bin) ----------
 export function mergeDaily(store, run) {
   const s = { tasks: [], reports: {}, ceo: [], board: [], runs: [], settings: {}, ...store };
-  const keep = s.tasks.filter(t => !(t.status === "open" && t.from !== "moshe" && t.kind !== "handoff" && run.reports[t.from]));   // yesterday's plain findings of a manager that reported again are replaced
+  // yesterday's proposals of a manager that reported again are replaced by today's — unless Moshe already touched them (decided, noted) or Moshe wrote them
+  const keep = s.tasks.filter(t => !(["open", "awaiting"].includes(t.status) && t.from !== "moshe" && !(t.thread || []).length && run.reports[t.from]));
   const cutoff = addDays(isoDay(new Date()), -90);
   s.tasks = [...run.tasks, ...keep].filter(t => ["open", "awaiting"].includes(t.status) || day(t.decidedAt || t.at) >= cutoff).slice(0, 400);
   s.reports = { ...s.reports, ...Object.fromEntries(Object.entries(run.reports).map(([k, r]) => [k, { at: run.log.at, summary: r.summary, count: r.items.length }])) };
