@@ -221,6 +221,11 @@ function digestOf(db) {
 const trackIp = new Map();
 const TRACK_STEPS = mode => [["received", "ההזמנה התקבלה"], ["approved", "אושרה סופית"], ["packing", "בהכנה ואריזה"], ["ready", mode === "pickup" ? "מוכנה לאיסוף" : "ארוזה ומוכנה"], ["shipped", mode === "pickup" ? "נאספה" : "יצאה למשלוח"]];
 const saveJack = s => put(JACK_CUR, JSON.stringify({ meals: s.meals, wins: s.wins.slice(0, 200), savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
+// personal company links (?c=code): name + logo + consultant, readable by the builder (no personal data)
+const CLIENTS_CUR = "public/clients/list.json";
+async function readClients() { const host = blobHost(); if (!host) return []; try { const r = await fetch(host + CLIENTS_CUR + "?t=" + Math.floor(Date.now() / 30000), { cache: "no-store" }); if (r.ok) return (await r.json()).list || []; } catch (e) {} return []; }
+// holiday countdown bar: name, date, order deadline, production capacity → % of places left (from the orders in the database)
+let seasonCache = { at: 0, v: null };
 async function readShowcase() {
   const host = blobHost();
   if (host) {
@@ -328,6 +333,27 @@ export default async function handler(req, res) {
         date: o.date || "", needAddr: ["indiv", "vip"].includes(o.dlvMode), addrCount: (o.addrFiles || []).reduce((t, f) => t + (+f.count || 0), 0), addrFiles: (o.addrFiles || []).length,
         updatedAt: (o.fulLog || []).slice(-1)[0]?.at || o.approvedAt || o.createdAt || "" }); return;
     }
+    if (a === "client" && req.method === "GET") {   // public: one personal link
+      const c = String(req.query.c || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
+      const it = c ? (await readClients()).find(x => x.code === c && !x.off) : null;
+      res.setHeader("Cache-Control", "public, max-age=60");
+      if (!it) { res.status(404).json({ error: "not found" }); return; }
+      res.status(200).json({ code: it.code, name: it.name, logo: it.logo || "", agent: it.agent || "" }); return;
+    }
+    if (a === "season" && req.method === "GET") {   // public: holiday countdown bar
+      if (Date.now() - seasonCache.at > 300e3) {
+        const { db } = await readDb(); const se = db?.settings?.season || null; let v = null;
+        if (se && se.on && se.date) {
+          const from = se.from ? new Date(se.from) : new Date(Date.now() - 120 * 864e5);
+          const used = (db.orders || []).filter(o => ["approved", "pending"].includes(o.status) && new Date(o.createdAt) >= from).reduce((t, o) => t + (+o.boxes || 0), 0);
+          const cap = +se.capacity || 0;
+          v = { name: String(se.name || "").slice(0, 40), date: se.date, deadline: se.deadline || "", deadlineLabel: String(se.deadlineLabel || "").slice(0, 60), leftPct: cap ? Math.max(0, Math.min(100, Math.round((1 - used / cap) * 100))) : null };
+        }
+        seasonCache = { at: Date.now(), v };
+      }
+      res.setHeader("Cache-Control", "public, max-age=120");
+      res.status(200).json(seasonCache.v || { off: true }); return;
+    }
     if (a === "jackpot" && req.method === "GET") {
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
       const s = await readJack(); res.status(200).json({ meals: s.meals, perWin: JACK_MEALS }); return;
@@ -358,6 +384,12 @@ export default async function handler(req, res) {
     if (a === "me") { res.status(200).json({ ok: true }); return; }
     if (a === "jackpots" && req.method === "GET") { res.status(200).json({ ...(await readJack()), mail: !!process.env.RESEND_API_KEY }); return; }
     if (a === "notifytest" && req.method === "POST") { const r = await jackMail({ at: new Date().toISOString() }, true); res.status(r.ok ? 200 : 400).json(r); return; }
+    if (a === "clients" && req.method === "POST") {   // owner only: save the personal links list
+      const b = await readBody(req) || {};
+      const list = (Array.isArray(b.list) ? b.list : []).slice(0, 500).map(x => ({ code: String(x.code || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30), name: String(x.name || "").slice(0, 80), logo: /^https:\/\//.test(x.logo || "") ? String(x.logo).slice(0, 400) : "", agent: String(x.agent || "").slice(0, 40), off: !!x.off, at: x.at || new Date().toISOString() })).filter(x => x.code && x.name);
+      await put(CLIENTS_CUR, JSON.stringify({ list, savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
+      seasonCache.at = 0; res.status(200).json({ ok: true, count: list.length }); return;
+    }
     if (a === "icount" && req.method === "GET") {   // connection check (read-only call: the document types of the account)
       const tok = process.env.ICOUNT_TOKEN; if (!tok) { res.status(200).json({ ok: false, error: "no token" }); return; }
       if (!req.query.test) { res.status(200).json({ ok: true }); return; }
@@ -450,7 +482,7 @@ export default async function handler(req, res) {
       res.status(200).json({ url: b.url }); return;
     }
     if (a === "data" && req.method === "GET") { res.status(200).json(await readDb()); return; }
-    if (a === "data" && req.method === "PUT") {
+    if (a === "data" && req.method === "PUT") { seasonCache.at = 0;
       const { db, baseRev } = await readBody(req);
       if (!db || typeof db !== "object" || !Array.isArray(db.products) || !Array.isArray(db.shipments)) { res.status(400).json({ error: "bad data" }); return; }
       const versions = await dbVersions();

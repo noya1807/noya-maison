@@ -265,8 +265,8 @@ const daysTo=d=>d?Math.round((new Date(d+"T00:00")-new Date(new Date().toDateStr
 // ---------- navigation ----------
 $("#nav").onclick=async e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;sel=null;selOrder=null;render();};
 function render(){
-  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===(view==="agents"?"orders":view)));
-  ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,agents:renderAgents,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===(["agents","links"].includes(view)?"orders":view)));
+  ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,agents:renderAgents,links:renderLinks,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
   bindExceptions();try{navBadge();}catch(e){}
   if(!render.icDone&&typeof db!=="undefined"&&db.products){render.icDone=true;setTimeout(()=>{icountSync();},4000);setTimeout(()=>checkPayments(false),9000);}
   window.scrollTo(0,0);
@@ -1021,6 +1021,34 @@ function renderAgents(){
   document.querySelectorAll("[data-agdel]").forEach(b=>b.onclick=async()=>{const a=db.settings.agents[+b.dataset.agdel];if(!await askC(`להסיר את ${a.name} מרשימת היועצים? ההזמנות נשארות עם השם.`))return;db.settings.agents.splice(+b.dataset.agdel,1);touch();renderAgents();});
   $("#agCsv").onclick=()=>downloadCsv(`יועצים-${rangeLbl[agRange]}-${new Date().toISOString().slice(0,10)}.csv`,[["יועץ/ת","הזמנות מאושרות","מארזים","מכירות לפני מע״מ","רווח גולמי","עמלה %","עמלה ₪","ממתינות","הצעות פתוחות","הצעות שהפכו להזמנות","סה״כ הצעות"],...list.map(r=>{const p=r.name.startsWith("—")?0:agentPct(r.name);return [r.name,r.orders,r.boxes,Math.round(r.sales),Math.round(r.profit),p||"",p?Math.round(r.sales*p/100):"",r.pending,r.quotes,r.qWon,r.qAll];})]);
 }
+// ---------- personal company links: name + logo + consultant → build.noyaglobal.com/?c=code ----------
+const clLink=c=>`https://build.noyaglobal.com/?c=${c}`;
+async function pushClients(){try{await api("clients",{method:"POST",body:{list:db.settings.clientLinks||[]}});}catch(e){toast("הקישורים לא נשמרו בבונה – נסו שוב",6000);}}
+function renderLinks(){
+  const L=db.settings.clientLinks||[];
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>🔗 קישורים אישיים ללקוחות</h1><p class="sub">שולחים ללקוח קישור, והבונה נפתח אצלו עם השם והלוגו של החברה, והיועצ/ת כבר בחור/ה בטופס.</p></div><button class="btn ghost" id="lkBack">← חזרה להזמנות</button></div>
+  <div class="panel" style="margin-bottom:16px"><h2 style="margin-top:0">קישור חדש</h2>
+    <div class="grid"><label class="f">שם החברה (כמו שיופיע ללקוח)<input id="lkName" placeholder="אלביט מערכות"></label>
+      <label class="f">קוד קצר באנגלית (לא חובה)<input id="lkCode" dir="ltr" placeholder="elbit" maxlength="30"></label>
+      <label class="f">יועצ/ת<select id="lkAgent"><option value="">—</option>${agList().map(a=>`<option>${esc(a.name)}</option>`).join("")}</select></label>
+      <label class="f">לוגו החברה (PNG / JPG / SVG)<input id="lkLogo" type="file" accept=".png,.jpg,.jpeg,.webp,.svg"></label></div>
+    <div class="row" style="justify-content:flex-start;margin-top:10px"><button class="btn gold" id="lkAdd">+ יצירת קישור</button><span class="muted" id="lkSt"></span></div></div>
+  <div class="tablewrap"><table><thead><tr><th>לוגו</th><th>חברה</th><th>יועצ/ת</th><th>קישור</th><th></th></tr></thead><tbody>
+  ${L.map((x,i)=>`<tr style="${x.off?"opacity:.5":""}"><td>${x.logo?`<img src="${esc(x.logo)}" alt="" style="height:30px;max-width:90px;object-fit:contain">`:"—"}</td><td><b>${esc(x.name)}</b></td><td>${esc(x.agent||"")}</td>
+    <td><input readonly value="${esc(clLink(x.code))}" dir="ltr" style="width:100%;min-width:200px;font-size:12.5px" onclick="this.select()"></td>
+    <td style="white-space:nowrap"><button class="btn sm ghost" data-lkc="${i}">📋 העתקה</button> <a class="btn sm ghost" href="${esc(clLink(x.code))}" target="_blank" rel="noopener">👁 תצוגה</a> <button class="btn sm ghost" data-lko="${i}">${x.off?"הפעלה":"השבתה"}</button> <button class="btn sm ghost" data-lkd="${i}">✕</button></td></tr>`).join("")||`<tr><td colspan="5" class="muted">עוד אין קישורים.</td></tr>`}
+  </tbody></table></div>`;
+  $("#lkBack").onclick=async()=>{view="orders";render();};
+  $("#lkAdd").onclick=async()=>{const name=$("#lkName").value.trim();if(!name){toast("נא למלא שם חברה");return;}
+    let code=($("#lkCode").value||"").toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,30);if(!code)code=Math.random().toString(36).slice(2,7);
+    if((db.settings.clientLinks||[]).some(x=>x.code===code)){toast("הקוד הזה כבר קיים, בחרו אחר");return;}
+    let logo="";const f=$("#lkLogo").files[0];
+    if(f){$("#lkSt").textContent="מעלה לוגו…";try{const r=await fetch("api/logo",{method:"POST",headers:{"Content-Type":f.type||"application/octet-stream","x-file-name":encodeURIComponent(f.name)},body:f});const j=await r.json();if(!r.ok||!j.url)throw 0;logo=j.url;}catch(e){$("#lkSt").textContent="";toast("העלאת הלוגו נכשלה");return;}}
+    (db.settings.clientLinks??=[]).unshift({code,name,logo,agent:$("#lkAgent").value,at:new Date().toISOString()});touch();await pushClients();renderLinks();toast("✓ הקישור מוכן – העתיקו ושלחו ללקוח");};
+  document.querySelectorAll("[data-lkc]").forEach(b=>b.onclick=async()=>{const x=L[+b.dataset.lkc];try{await navigator.clipboard.writeText(clLink(x.code));toast("✓ הקישור הועתק");}catch(e){toast("סמנו את הקישור והעתיקו ידנית");}});
+  document.querySelectorAll("[data-lko]").forEach(b=>b.onclick=async()=>{const x=L[+b.dataset.lko];x.off=!x.off;touch();await pushClients();renderLinks();});
+  document.querySelectorAll("[data-lkd]").forEach(b=>b.onclick=async()=>{const x=L[+b.dataset.lkd];if(!await askC(`למחוק את הקישור של ${x.name}? מי שיפתח אותו יראה את הבונה הרגיל.`))return;L.splice(+b.dataset.lkd,1);touch();await pushClients();renderLinks();});
+}
 function renderOrders(){
   const inWork=o=>o.status==="approved"&&fulOf(o)!=="shipped",isDone=o=>o.status==="approved"&&fulOf(o)==="shipped";
   const byF=k=>db.orders.filter(o=>k==="all"?true:k==="work"?inWork(o):k==="done"?isDone(o):k==="unpaid"?(o.status==="approved"&&!o.paid?.full):o.status===k);
@@ -1033,7 +1061,7 @@ function renderOrders(){
   const pick={};if(work)list.filter(o=>["engrave","packing"].includes(fulOf(o))).forEach(o=>orderCalc(o).lines.forEach(l=>{const k=l.sku||l.name;(pick[k]??={name:l.sku?(prodBySku(l.sku)?.name||l.name):l.name,sku:l.sku,qty:0,orders:0});pick[k].qty+=num(l.qty);pick[k].orders++;}));
   const S=work?stockAll():{};const pickRows=Object.values(pick).sort((a,b)=>b.qty-a.qty);
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>הזמנות</h1><p class="sub">כל הזמנה מהבונה נכנסת לכאן לבד כ"ממתינה". רק הזמנות שאישרת נספרות ברווח ובמלאי.</p></div>
-    <div class="row"><button class="btn ghost" id="oPay" title="בודק ב-iCount אילו הזמנות כבר קיבלו קבלה">💰 בדיקת תשלומים</button><button class="btn ghost" id="oAgents">🧑‍💼 לפי יועץ/ת</button><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
+    <div class="row"><button class="btn ghost" id="oLinks" title="קישור לבונה עם השם והלוגו של חברה">🔗 קישורים אישיים</button><button class="btn ghost" id="oPay" title="בודק ב-iCount אילו הזמנות כבר קיבלו קבלה">💰 בדיקת תשלומים</button><button class="btn ghost" id="oAgents">🧑‍💼 לפי יועץ/ת</button><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
   ${["pending","work"].includes(ordFilter)?exceptionsPanel():""}
   <div id="jpBox" hidden style="margin:0 0 12px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(124,77,160,.10),rgba(124,77,160,.03));border:1px solid rgba(124,77,160,.25);color:#5b3a78"></div>
   <div class="row" style="margin-bottom:8px">${[["pending","ממתינות"],["work","בעבודה"],["done","נשלחו / נאספו"],["quote","הצעות מחיר"],["won","הצעות שהפכו להזמנה"],["lead","לידים 💾"],["approved","כל המאושרות"],["unpaid","💰 לא שולמו"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
@@ -1077,7 +1105,8 @@ function renderOrders(){
   if($("#oPickCsv"))$("#oPickCsv").onclick=()=>downloadCsv(`ליקוט-${new Date().toISOString().slice(0,10)}.csv`,[["פריט","מק״ט","כמות לארוז","בהזמנות"],...pickRows.map(r=>[r.name,r.sku||"",r.qty,r.orders])]);
   document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=async()=>{selOrder=tr.dataset.oid;view="orders";render();});
   $("#oAgents").onclick=async()=>{view="agents";render();};
-  $("#oPay").onclick=()=>checkPayments(true);
+  $("#oPay").onclick=async()=>checkPayments(true);
+  $("#oLinks").onclick=async()=>{view="links";render();};
   $("#oPull").onclick=async()=>{toast("בודק…");await pullInbox();renderOrders();};
   loadJack();bindExceptions();try{navBadge();}catch(e){}
   $("#oNew").onclick=async()=>{const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:"ידני",createdAt:new Date().toISOString(),status:"pending",customer:{},boxes:1,lines:[],engrave:false,card:false,dlvMode:"ship",gross:0,notes:""};
@@ -1297,12 +1326,19 @@ function renderSups(){
 }
 
 // ---------- settings ----------
-function bindAutoMail(){if($("#setIcOrder"))$("#setIcOrder").onchange=e=>{db.settings.icountAutoOrder=e.target.checked;touch();toast(e.target.checked?"✓ הזמנה תיווצר ב-iCount בכל אישור":"לא תיווצר הזמנה ב-iCount באישור");};
+function bindAutoMail(){["#seOn","#seName","#seDate","#seDl","#seDlL","#seCap","#seFrom"].forEach(k=>{if($(k))$(k).onchange=()=>{db.settings.season={on:$("#seOn").checked,name:$("#seName").value.trim(),date:$("#seDate").value,deadline:$("#seDl").value,deadlineLabel:$("#seDlL").value.trim(),capacity:num($("#seCap").value)||0,from:$("#seFrom").value};touch();toast("✓ נשמר – יופיע בבונה תוך כמה דקות");};});
+if($("#setIcOrder"))$("#setIcOrder").onchange=e=>{db.settings.icountAutoOrder=e.target.checked;touch();toast(e.target.checked?"✓ הזמנה תיווצר ב-iCount בכל אישור":"לא תיווצר הזמנה ב-iCount באישור");};
   if($("#setIcSync"))$("#setIcSync").onchange=e=>{db.settings.icountSyncOff=!e.target.checked;touch();toast(e.target.checked?"✓ סנכרון אוטומטי ל-iCount פעיל":"סנכרון ל-iCount כבוי");};
   if($("#setIcType"))$("#setIcType").onchange=e=>{db.settings.icountType=e.target.value;touch();toast("✓ נשמר");};
   if($("#icStat"))api("icount",{qs:"&test=1"}).then(j=>{$("#icStat").textContent=j.ok?"✓ מחובר ל-iCount":j.error==="no token"?"⚪ עוד לא מחובר (חסר ICOUNT_TOKEN ב-Vercel)":"⚠ iCount דחה את החיבור: "+j.error;}).catch(()=>{});if($("#setAutoMail"))$("#setAutoMail").onchange=e=>{db.settings.autoCustMail=e.target.checked;touch();toast(e.target.checked?"✓ מייל אוטומטי ללקוחות הופעל":"מייל אוטומטי ללקוחות כבוי");};}
 function renderSettings(){setTimeout(bindAutoMail,0);
   $("#view").innerHTML=`<h1>הגדרות</h1><p class="sub">קטגוריות, גיבוי ויציאה.</p>
+  <h2>🎉 השעון לחג (פס בראש הבונה)</h2><div class="panel">
+    <label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-weight:600"><input type="checkbox" id="seOn" ${db.settings.season?.on?"checked":""} style="width:18px;height:18px"> להציג את הפס בבונה</label>
+    <div class="grid" style="margin-top:8px"><label class="f">שם החג<input id="seName" value="${esc(db.settings.season?.name||"פסח")}"></label><label class="f">תאריך החג<input id="seDate" type="date" value="${esc(db.settings.season?.date||"")}"></label>
+      <label class="f">הזמנות עד תאריך<input id="seDl" type="date" value="${esc(db.settings.season?.deadline||"")}"></label><label class="f">איזה הזמנות (טקסט)<input id="seDlL" value="${esc(db.settings.season?.deadlineLabel||"הזמנות עם משלוח לכל מקבל")}"></label>
+      <label class="f">כמה מארזים אפשר לייצר לחג<input id="seCap" inputmode="numeric" dir="ltr" value="${esc(db.settings.season?.capacity||"")}" placeholder="למשל 15000"></label><label class="f">סופרים הזמנות מתאריך<input id="seFrom" type="date" value="${esc(db.settings.season?.from||"")}"></label></div>
+    <p class="muted" style="margin:6px 0 0">"נותרו X% מקומות" מוצג רק כשנשאר 60% או פחות, לפי המארזים בהזמנות הממתינות והמאושרות מאז התאריך שבחרתם. הפס מתעדכן בבונה תוך כמה דקות.</p></div>
   <h2>iCount</h2><div class="panel"><label class="f" style="max-width:320px">איזה מסמך ליצור מהזמנה מאושרת<select id="setIcType">${Object.entries(IC_TYPES).map(([k,l])=>`<option value="${k}" ${(db.settings.icountType||"deal")===k?"selected":""}>${l}</option>`).join("")}</select></label>
     <p class="muted" style="margin:6px 0 0" id="icStat">בודק חיבור…</p>
     <label style="display:flex;gap:8px;align-items:center;margin-top:8px;cursor:pointer"><input type="checkbox" id="setIcOrder" ${db.settings.icountAutoOrder===false?"":"checked"} style="width:18px;height:18px"> 📋 באישור סופי ליצור ב-iCount מסמך "הזמנה" (לא מסמך מס – ממנו ממירים ב-iCount לחשבונית / קבלה / ת. משלוח)</label>

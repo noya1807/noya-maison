@@ -1259,9 +1259,21 @@ h1.brand{margin:0;line-height:1.2}
 .brand-opt b{margin-inline-start:auto;color:#8a6a33;white-space:nowrap}
 .agent-row{display:block;margin:4px 0 12px}.agent-row select{display:block;width:100%;margin-top:4px}
 .qapprove{margin:14px 0 6px;padding:12px 16px;border-radius:12px;background:#2f7d4f;color:#fff;text-align:center;display:flex;flex-direction:column;gap:3px}.qapprove b{font-size:17px}.qapprove span{font-size:12.5px;opacity:.92}
+.season-bar{background:#3f271c;color:#f6e6c8;text-align:center;font-size:13.5px;line-height:1.5;padding:7px 12px;display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center;align-items:center}
+.season-bar b{color:#ffd98a;font-weight:700}.season-bar .sb-left{display:inline-flex;align-items:center;gap:6px}
+.season-bar .sb-meter{display:inline-block;width:70px;height:6px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden;vertical-align:middle}.season-bar .sb-meter i{display:block;height:100%;background:#ffd98a}
+.client-hello{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 14px;background:#fffaf0;border-bottom:1px solid #ecd9b8;font-size:16px;color:#3f271c;text-align:center}
+.client-hello img{height:38px;max-width:120px;object-fit:contain}
+.client-hello b{font-weight:700}
+.client-logo{position:absolute;z-index:6;top:10px;inset-inline-start:10px;background:rgba(255,255,255,.92);border-radius:10px;padding:6px 8px;box-shadow:0 2px 10px rgba(63,39,28,.18);pointer-events:none;display:flex;align-items:center;gap:6px}
+.client-logo img{height:34px;max-width:96px;object-fit:contain;display:block}
+.client-logo span{font-size:11px;color:#7a5a48;white-space:nowrap}
+.sum-img{position:relative}
 </style>
 </head>
 <body>
+<div class="season-bar" id="seasonBar" hidden></div>
+<div class="client-hello" id="clientHello" hidden></div>
 <header>
   <h1 class="brand">נויה במתנה<span class="brand-sep" aria-hidden="true">|</span><span class="brand-tool">בונה המארזים</span></h1>
   <button type="button" class="inst" id="instBtn" hidden aria-label="הוספת הבונה למסך הבית">📲 <span>הוספה למסך הבית</span></button>
@@ -3524,6 +3536,28 @@ const curAgent=()=>(document.getElementById("fAgent")?.value||"").trim().slice(0
   try{const q=new URLSearchParams(location.search).get("agent");if(q!==null){q.trim()?localStorage.setItem(AGENT_KEY,q.trim().slice(0,40)):localStorage.removeItem(AGENT_KEY);}}catch(e){}
   let a="";try{a=localStorage.getItem(AGENT_KEY)||"";}catch(e){}
   if(a&&[...sel.options].some(o=>o.value===a))sel.value=a;})();
+
+// ===== personal company link (?c=code): the company's name + logo are waiting for the customer, the form is pre-filled =====
+const CLIENT_KEY="noya_client";let CLIENT=null;
+async function loadClient(){let c="";try{const q=new URLSearchParams(location.search).get("c");if(q!==null){c=q.toLowerCase().replace(/[^a-z0-9-]/g,"");if(c)localStorage.setItem(CLIENT_KEY,c);else localStorage.removeItem(CLIENT_KEY);}else c=localStorage.getItem(CLIENT_KEY)||"";}catch(e){}
+  if(!c||!/^https?:/.test(location.protocol))return;
+  try{const r=await fetch(`/api/office?a=client&c=${encodeURIComponent(c)}`);if(!r.ok){try{localStorage.removeItem(CLIENT_KEY);}catch(e){}return;}CLIENT=await r.json();}catch(e){return;}
+  const h=$("clientHello");h.innerHTML=`${CLIENT.logo?`<img src="${esc(CLIENT.logo)}" alt="">`:""}<span>מארזי שי לעובדי <b>${esc(CLIENT.name)}</b> · נבנה במיוחד בשבילכם</span>`;h.hidden=false;
+  const tag=()=>CLIENT.logo?`<div class="client-logo"><img src="${esc(CLIENT.logo)}" alt=""><span>המיתוג שלכם</span></div>`:"";
+  if(CLIENT.logo){[$("scene"),document.querySelector(".sum-img")].forEach(el=>{if(el&&!el.querySelector(".client-logo"))el.insertAdjacentHTML("beforeend",tag());});
+    if(!engFiles.some(f=>f.url===CLIENT.logo))engFiles.push({name:`הלוגו של ${CLIENT.name}`,url:CLIENT.logo,err:""});try{renderEngFiles();}catch(e){}}
+  const org=$("fOrg");if(org&&!org.value)org.value=CLIENT.name;
+  const ag=$("fAgent");if(ag&&CLIENT.agent&&[...ag.options].some(o=>o.value===CLIENT.agent)){if(!ag.value)ag.value=CLIENT.agent;}
+}
+// ===== "השעון לחג": countdown + order deadline + production places left =====
+async function loadSeason(){if(!/^https?:/.test(location.protocol))return;try{const j=await (await fetch("/api/office?a=season")).json();if(!j||j.off||!j.date)return;
+  const day=d=>{const t=new Date(new Date().toDateString());return Math.ceil((new Date(d+"T00:00")-t)/864e5);},left=day(j.date);if(left<0)return;
+  const dl=j.deadline?day(j.deadline):null,fmt=d=>{const [y,m,dd]=d.split("-");return `${+dd}.${+m}`;};
+  const parts=[`🎉 <b>${esc(j.name||"החג")}</b> ${left===0?"היום":left===1?"מחר":`בעוד <b>${left}</b> ימים`}`];
+  if(j.deadline&&dl>=0)parts.push(`${esc(j.deadlineLabel||"הזמנות")} עד <b>${fmt(j.deadline)}</b>${dl<=7?` (עוד ${dl===0?"היום":dl+" ימים"})`:""}`);
+  if(j.leftPct!=null&&j.leftPct<=60)parts.push(`<span class="sb-left">נותרו <b>${j.leftPct}%</b> מקומות בייצור <span class="sb-meter"><i style="width:${j.leftPct}%"></i></span></span>`);
+  const b=$("seasonBar");b.innerHTML=parts.map(p=>`<span>${p}</span>`).join("");b.hidden=false;}catch(e){}}
+setTimeout(()=>{loadClient();loadSeason();},300);
 function orderPayload(ref,via){const g=id=>($(id)&&$(id).value||"").trim();
   const one=()=>({items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost()});
   const base=BTYPES?(()=>{const types=btFilled().map(i=>withBT(i,()=>({name:BTYPES[i].name,cardImg:BTYPES[i].cardUrl||"",...one()})));
