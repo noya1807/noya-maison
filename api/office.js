@@ -341,7 +341,7 @@ export default async function handler(req, res) {
       res.status(200).json({ code: it.code, name: it.name, logo: it.logo || "", agent: it.agent || "" }); return;
     }
     if (a === "season" && req.method === "GET") {   // public: holiday countdown bar
-      if (Date.now() - seasonCache.at > 300e3) {
+      if (Date.now() - seasonCache.at > 60e3) {
         const { db } = await readDb(); const se = db?.settings?.season || null; let v = null;
         if (se && se.on && se.date) {
           const from = se.from ? new Date(se.from) : new Date(Date.now() - 120 * 864e5);
@@ -351,7 +351,7 @@ export default async function handler(req, res) {
         }
         seasonCache = { at: Date.now(), v };
       }
-      res.setHeader("Cache-Control", "public, max-age=120");
+      res.setHeader("Cache-Control", "public, max-age=60");
       res.status(200).json(seasonCache.v || { off: true }); return;
     }
     if (a === "jackpot" && req.method === "GET") {
