@@ -1276,6 +1276,7 @@ h1.brand{margin:0;line-height:1.2}
 .il-wrap{display:flex;gap:10px;align-items:center;justify-content:center}.il-svg{height:min(62vh,560px);width:auto;flex:none}
 .il-land{fill:#efe2cf;stroke:#c9a465;stroke-width:1.2}.il-dot{fill:#d4a24c;fill-opacity:.85;stroke:#fff;stroke-width:1;transform-box:fill-box;transform-origin:center;animation:ilPop .6s cubic-bezier(.3,1.6,.5,1) both}
 @keyframes ilPop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.il-dot-s{fill-opacity:.6}
 .il-top{list-style:none;margin:0;padding:0;text-align:right;font-size:13.5px;line-height:1.9;color:#5b3d2e;min-width:96px}.il-top li::before{content:"● ";color:#d4a24c}
 .map-btn{border:1px solid #d8bf94;background:#fffaf0;color:#5b3d2e;border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;margin-inline-start:6px}
 @media (max-width:480px){.il-top{display:none}.il-svg{height:64vh}}
@@ -3584,6 +3585,13 @@ async function openMap(){let m=$("ilMapModal");if(!m){m=document.createElement("
   const agg={};Object.entries(j.cities||{}).forEach(([k,v])=>{const n=ilNorm(k);if(IL_C[n])agg[n]=(agg[n]||0)+v;});
   const list=Object.entries(agg).sort((a,b)=>b[1]-a[1]),mx=list[0]?.[1]||1;
   $("ilDots").innerHTML=list.map(([n,v],i)=>{const [x,y]=ilXY(IL_C[n]);const r=3+9*Math.sqrt(v/mx);return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" class="il-dot" style="animation-delay:${(i*0.06).toFixed(2)}s"><title>${esc(n)}</title></circle>`;}).join("");
+  // the remaining places we delivered to (the headline number) are drawn as small unnamed dots, spread over the populated areas (fixed pattern, same every time)
+  const extra=Math.max(0,(+j.places||0)-list.length);if(extra){const svg=m.querySelector(".il-svg"),land=svg.querySelector(".il-land");let seed=7,pts=[],tries=0;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+    const pt=svg.createSVGPoint?svg.createSVGPoint():null;
+    while(pts.length<extra&&tries<20000){tries++;const x=rnd()*IL_MAP.W,y=rnd()*IL_MAP.H;const keep=y<300?1:y<420?.35:y<560?.1:.25;if(rnd()>keep)continue;
+      let inside=true;if(pt&&land.isPointInFill){pt.x=x;pt.y=y;inside=land.isPointInFill(pt);}if(!inside)continue;
+      if(pts.some(([a,b])=>(a-x)**2+(b-y)**2<36))continue;pts.push([x,y]);}
+    $("ilDots").insertAdjacentHTML("afterbegin",pts.map(([x,y],i)=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" class="il-dot il-dot-s" style="animation-delay:${(0.4+i*0.012).toFixed(2)}s"/>`).join(""));}
   const boxes=(+document.getElementById("boxesSold")?.dataset?.to||48767).toLocaleString("he-IL"),orgs=(+document.getElementById("orgsCount")?.dataset?.to||606).toLocaleString("he-IL");
   const places=Math.max(list.length,+j.places||0);
   $("ilSub").innerHTML=`<b>${boxes}+</b> מארזים · <b>${orgs}+</b> ארגונים · <b>${places}+</b> ערים, יישובים וקיבוצים<br>מגבול הלבנון ועד אילת`;
