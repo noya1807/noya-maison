@@ -380,7 +380,8 @@ export default async function handler(req, res) {
       const tok = process.env.ICOUNT_TOKEN; if (!tok) { res.status(200).json({ ok: false, error: "חסר ICOUNT_TOKEN ב-Vercel" }); return; }
       const b = await readBody(req) || {};
       const doctype = ["deal", "offer", "order", "invoice", "invrec"].includes(b.doctype) ? b.doctype : "deal";
-      const items = (Array.isArray(b.items) ? b.items : []).slice(0, 60).map(i => ({ description: String(i.description || "").slice(0, 200), quantity: Math.max(0, +i.quantity || 0), unitprice: Math.round((+i.unitprice || 0) * 100) / 100 })).filter(i => i.description && i.quantity);
+      const items = (Array.isArray(b.items) ? b.items : []).slice(0, 200).map(i => ({ description: String(i.description || "").slice(0, 200), quantity: Math.max(0, +i.quantity || 0), unitprice: Math.round((+i.unitprice || 0) * 100) / 100,
+        ...(i.sku ? { sku: String(i.sku).slice(0, 40) } : {}), ...(+i.inventory_item_id ? { inventory_item_id: +i.inventory_item_id } : {}) })).filter(i => i.description && i.quantity);
       if (!items.length || !b.client_name) { res.status(400).json({ ok: false, error: "חסרים לקוח או שורות" }); return; }
       const body = { doctype, lang: "he", currency_code: "ILS", client_name: String(b.client_name).slice(0, 120), items, hwc: String(b.comments || "").slice(0, 500) };
       if (b.email) body.email = String(b.email).slice(0, 120);

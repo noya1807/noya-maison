@@ -176,7 +176,19 @@ async function icountSync(){
       if(r.status){if(r.inventory_item_id)p.icountId=r.inventory_item_id;p.icountSig=sig;n++;}else{bad++;p.icountErr=r.reason||"error";}}
     const del=[...(db.settings.icountDel||[])];for(const id of del){const r=await C("delete_item",{inventory_item_id:+id});if(r.status||r.reason==="item_not_found"){db.settings.icountDel=db.settings.icountDel.filter(x=>x!==id);n++;}else bad++;}
     if(n){touch();}if(bad)setSave(`⚠ ${bad} מוצרים לא סונכרנו ל-iCount`,"bad");
-  }catch(e){}finally{icountSync.busy=false;}}
+  }catch(e){}finally{icountSync.busy=false;}
+  await icountStockSync();}
+// stock mirror: iCount quantities always equal this system's stock on hand (this system stays the source of truth)
+async function icountStockSync(){
+  if(icountStockSync.busy||db.settings.icountSyncOff)return;icountStockSync.busy=true;let fixed=0,bad=0;
+  try{const C=(m,b)=>api("icountinv",{method:"POST",body:{method:"inventory/"+m,body:b}});
+    const j=await (await fetch(API+"?a=icount&test=1&probe=inventory/get_items",{credentials:"same-origin"})).json();
+    const cur={};Object.values(j.items||{}).forEach(x=>cur[x.inventory_item_id]=Number(x.stock)||0);const S=stockAll();
+    for(const p of db.products){if(!p.icountId||!(p.icountId in cur))continue;const want=Math.round(S[p.sku]?.stock||0),have=cur[p.icountId],d=want-have;if(!d)continue;
+      const r=d>0?await C("add_stock",{inventory_item_id:+p.icountId,quantity:d,comment:"סנכרון מלאי מממשק נויה"}):await C("reduce_stock",{inventory_item_id:+p.icountId,quantity:-d,comment:"סנכרון מלאי מממשק נויה"});
+      r.status?fixed++:bad++;}
+    db.settings.icountStockAt=new Date().toISOString();if(bad)setSave(`⚠ מלאי של ${bad} מוצרים לא סונכרן ל-iCount`,"bad");
+  }catch(e){}finally{icountStockSync.busy=false;}return fixed;}
 // ---------- helpers on the data ----------
 const catByName=n=>db.categories.find(c=>c.name.trim()===String(n||"").trim());
 const catName=code=>(db.categories.find(c=>c.code===code)||{}).name||code||"";
@@ -243,6 +255,7 @@ function render(){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===(view==="agents"?"orders":view)));
   ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,agents:renderAgents,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
   bindExceptions();try{navBadge();}catch(e){}
+  if(!render.icDone&&typeof db!=="undefined"&&db.products){render.icDone=true;setTimeout(()=>{icountSync();},4000);}
   window.scrollTo(0,0);
 }
 
@@ -1080,20 +1093,24 @@ function duplicateOrder(src){
   db.orders.unshift(o);touch();return o;}
 // ---------- iCount: one click from an approved order (no re-typing); the token lives only in Vercel ----------
 const IC_TYPES={deal:"חשבון עסקה",offer:"הצעת מחיר",order:"הזמנה",invoice:"חשבונית מס",invrec:"חשבונית מס קבלה"};
-function icountItems(o){const c=orderCalc(o),b=num(o.boxes)||1,shipNet=c.shipAtCost?c.fixed.ship:0,goods=c.net-shipNet,items=[];
-  const tps=Array.isArray(o.types)&&o.types.length>1&&o.types.every(t=>num(t.per))?o.types:null;
-  if(tps)tps.forEach(t=>items.push({description:`מארז שי – ${t.name}`,quantity:num(t.boxes),unitprice:num(t.per)}));
-  else items.push({description:`מארזי שי${o.lines?.length?` (${o.lines.filter(l=>!l.isPack).map(l=>l.name).slice(0,6).join(", ")})`:""}`.slice(0,200),quantity:b,unitprice:Math.round(goods/b*100)/100});
-  const sumT=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);if(tps&&Math.abs(sumT-goods)>1)items.push({description:"מיתוג / תוספות",quantity:1,unitprice:Math.round((goods-sumT)*100)/100});
+function icountItems(o){
+  // style of Noya's invoices: a box line with the price, then every product of the box at ₪0 (linked to its iCount item by SKU, so iCount deducts stock and reports by product)
+  const c=orderCalc(o),b=num(o.boxes)||1,shipNet=c.shipAtCost?c.fixed.ship:0,goods=c.net-shipNet,items=[];
+  const pid=sku=>db.products.find(p=>p.sku===sku)?.icountId;
+  const content=ls=>ls.forEach(l=>{const it={description:`· ${l.sku?(prodBySku(l.sku)?.name||l.name):l.name}`.slice(0,200),quantity:num(l.qty),unitprice:0};if(l.sku){it.sku=l.sku;if(pid(l.sku))it.inventory_item_id=+pid(l.sku);}if(it.quantity)items.push(it);});
+  const tps=Array.isArray(o.types)&&o.types.length>1?o.types:null;
+  if(tps){let sum=0;tps.forEach(t=>{const per=num(t.per)||0;sum+=per*num(t.boxes);items.push({description:`מארז ${t.name} בהתאמה אישית הכולל:`,quantity:num(t.boxes),unitprice:per});content(c.lines.filter(l=>l.type===t.name));});
+    if(Math.abs(sum-goods)>1)items.push({description:"מיתוג / תוספות",quantity:1,unitprice:Math.round((goods-sum)*100)/100});}
+  else{items.push({description:"מארז בהתאמה אישית הכולל:",quantity:b,unitprice:Math.round(goods/b*100)/100});content(c.lines);}
   if(shipNet>0)items.push({description:`משלוח – ${({ship:"לכתובת אחת",indiv:"לכל מקבל",vip:"VIP לכל מקבל",pickup:"איסוף"})[o.dlvMode]||""}`.trim(),quantity:1,unitprice:Math.round(shipNet*100)/100});
-  return items.filter(i=>i.quantity&&i.unitprice);}
+  return items;}
 async function icountCreate(o){
   const dt=db.settings.icountType||"deal",items=icountItems(o),tot=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);
-  if(!confirm(`ליצור ${IC_TYPES[dt]} ב-iCount?\n\nלקוח: ${o.customer?.org||o.customer?.name}\n${items.map(i=>`• ${i.description} – ${i.quantity} × ₪${i.unitprice}`).join("\n")}\nסה״כ לפני מע״מ: ₪${Math.round(tot).toLocaleString("he-IL")}`))return;
+  if(!confirm(`ליצור ${IC_TYPES[dt]} ב-iCount?\n\nלקוח: ${o.customer?.org||o.customer?.name}\n${items.map(i=>`${i.unitprice?"• ":"   "}${i.description} – ${i.quantity}${i.unitprice?` × ₪${i.unitprice}`:""}`).join("\n")}\nסה״כ לפני מע״מ: ₪${Math.round(tot).toLocaleString("he-IL")}`))return;
   toast("יוצר מסמך ב-iCount…");
   try{const j=await api("icount",{method:"POST",body:{doctype:dt,client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
     if(!j.ok){toast("iCount: "+(j.error||"שגיאה"),8000);return;}
-    o.icount={doctype:dt,docnum:j.docnum,url:j.url,at:new Date().toISOString()};touch();renderOrder();toast(`✓ נוצר ${IC_TYPES[dt]} ${j.docnum||""} ב-iCount`);}catch(e){toast("iCount: שגיאה בחיבור",6000);}}
+    o.icount={doctype:dt,docnum:j.docnum,url:j.url,at:new Date().toISOString()};touch();renderOrder();setTimeout(icountStockSync,3000);toast(`✓ נוצר ${IC_TYPES[dt]} ${j.docnum||""} ב-iCount`);}catch(e){toast("iCount: שגיאה בחיבור",6000);}}
 function renderOrder(){
   const o=db.orders.find(x=>x.id===selOrder);if(!o){selOrder=null;return render();}
   const locked=o.status!=="pending";const c=orderCalc(o);const S=stockAll();const dis=locked?"disabled":"";
