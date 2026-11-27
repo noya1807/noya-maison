@@ -195,7 +195,7 @@ function orderMail(o) {
   return notify(`${q ? "📝 הצעת מחיר" : "🛒 הזמנה חדשה"} ${o.ref} – ${who}${ag} · ${n} מארזים${goods ? ` · ₪${goods.toLocaleString("he-IL")} לפני מע״מ` : ""}`,
     `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#3f271c">
      <p style="font-size:17px"><b>${q ? "הצעת מחיר חדשה מהבונה" : "הזמנה חדשה מהבונה"}</b> · ${escH(o.ref)}</p>
-     <p>👤 ${escH(c.name)}${c.org ? ` · ${escH(c.org)}` : ""}${o.agent ? `<br>🧑‍💼 נציג / הגעה: <b>${escH(o.agent)}</b>` : ""}<br>📞 ${escH(c.phone)}${c.email ? `<br>✉️ ${escH(c.email)}` : ""}</p>
+     <p>👤 ${escH(c.name)}${c.org ? ` · ${escH(c.org)}` : ""}${o.agent ? `<br>🧑‍💼 יועץ/ת מארזים / הגעה: <b>${escH(o.agent)}</b>` : ""}<br>📞 ${escH(c.phone)}${c.email ? `<br>✉️ ${escH(c.email)}` : ""}</p>
      <p>📦 ${n} מארזים${o.perBox ? ` · ₪${escH(o.perBox)} למארז` : ""}${goods ? ` · סה״כ מוצרים ₪${goods.toLocaleString("he-IL")} לפני מע״מ` : ""}${types ? `<br>${types}` : ""}<br>🚚 ${escH(o.dlv?.name || "")}${o.dlv?.city ? ` · ${escH(o.dlv.city)}` : ""}</p>
      ${o.text ? `<pre style="white-space:pre-wrap;font-family:Arial,sans-serif;background:#faf6f1;padding:10px;border-radius:8px">${escH(String(o.text).slice(0, 4000))}</pre>` : ""}
      <p>היא כבר ממתינה בממשק הניהול ← הזמנות (לחצו "בדיקת הזמנות חדשות").</p></div>`);

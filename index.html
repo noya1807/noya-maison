@@ -1325,7 +1325,7 @@ h1.brand{margin:0;line-height:1.2}
       <div class="totals" id="totals"></div>
       <div class="actions"><button class="go" id="go">המשך לסיכום ←</button></div>
       <button type="button" class="save-box" data-save>💾 שמרו לי את המארז <small>וחזרו אליו מכל מכשיר</small></button>
-      <p class="note">המחירים לפני מע"מ. המחיר הסופי יאושר מול נציג.</p>
+      <p class="note">המחירים לפני מע"מ. המחיר הסופי יאושר מול יועץ/ת המארזים.</p>
     </div>
   </section>
 </div>
@@ -1357,7 +1357,7 @@ h1.brand{margin:0;line-height:1.2}
       <p class="ship-line" id="shipLine"></p>
       <div class="grand"><span>סה"כ לפני מע"מ</span><b id="grand"></b></div>
       <div class="vat-lines" id="vatLines"></div>
-      <p class="note">המחירים לפני מע"מ. המחיר הסופי, משלוח ומיתוג יאושרו מול נציג.</p>
+      <p class="note">המחירים לפני מע"מ. המחיר הסופי, משלוח ומיתוג יאושרו מול יועץ/ת המארזים.</p>
       <button type="button" class="quote-btn" id="quoteBtn">⬇ הורדת הצעת מחיר (PDF)</button>
       <span class="quote-sub">מסמך מסודר להעברה לאישור בארגון</span>
     </div>
@@ -1398,8 +1398,8 @@ h1.brand{margin:0;line-height:1.2}
         <label>אימייל<input id="fEmail" type="email" autocomplete="email"></label>
         <label>ארגון / חברה *<input id="fOrg" required autocomplete="organization"></label>
       </div>
-      <label class="agent-row" id="agentRow">איזה נציג מטפל בכם / איך הגעתם אלינו?
-        <select id="fAgent"><option value="">בחרו…</option><optgroup label="נציג מכירות"><option>משה</option><option>אפרת</option><option>ליגי</option></optgroup><optgroup label="הגעתי דרך"><option>חבר הפנה אותי</option><option>פייסבוק / אינסטגרם</option><option>גוגל</option><option>אחר</option></optgroup></select>
+      <label class="agent-row" id="agentRow">יועץ/ת המארזים שלכם / איך הגעתם אלינו? *
+        <select id="fAgent" required><option value="">בחרו…</option><optgroup label="יועץ/ת מארזים"><option>משה</option><option>אפרת</option><option>ליגי</option></optgroup><optgroup label="הגעתי דרך"><option>חבר הפנה אותי</option><option>פייסבוק / אינסטגרם</option><option>גוגל</option><option>אחר</option></optgroup></select>
       </label>
       <fieldset class="dlv">
         <legend>איך תרצו לקבל את ההזמנה? *</legend>
@@ -1518,7 +1518,7 @@ h1.brand{margin:0;line-height:1.2}
       <label><span>ארגון <span class="opt">(לא חובה)</span></span><input id="lOrg" autocomplete="organization"></label>
       <p class="err" id="leadErr" hidden></p>
       <div class="send" style="margin-top:6px"><button type="button" class="ghost" id="leadCancel">ביטול</button><button type="button" class="go" id="leadSave">שמרו לי את המארז</button></div>
-      <p class="note" style="margin-top:8px">נציג של נויה במתנה עשוי לחזור אליכם כדי לעזור. לא נשלח הודעות אוטומטיות.</p>
+      <p class="note" style="margin-top:8px">יועץ/ת מארזים של נויה במתנה עשוי/ה לחזור אליכם כדי לעזור. לא נשלח הודעות אוטומטיות.</p>
     </div>
     <div id="leadDone" hidden>
       <h3>✓ המארז נשמר</h3>
@@ -1585,7 +1585,7 @@ h1.brand{margin:0;line-height:1.2}
 <div class="sheet" id="sheet" role="dialog" aria-label="פרטי המארז">
   <div class="list" id="list2"></div><div class="totals" id="totals2"></div>
   <div class="actions"><button class="go" id="go2">המשך לסיכום ←</button></div>
-  <p class="note">המחירים לפני מע"מ. המחיר הסופי יאושר מול נציג.</p>
+  <p class="note">המחירים לפני מע"מ. המחיר הסופי יאושר מול יועץ/ת המארזים.</p>
 </div>
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="undo">ביטול</button></div>
 <button class="fab-reveal" id="fabReveal" hidden>חשפו את המארז ✨</button>
@@ -3155,7 +3155,7 @@ async function multiCard(){
     for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))x.fillRect(qx+k*cell,y+r*cell,Math.ceil(cell),Math.ceil(cell));
     x.textAlign="center";x.font=`600 21px ${BF}`;x.fillStyle="#6e4d3b";x.fillText("סרקו ועצבו מארז משלכם",qx+qs/2,y+qs+34);}catch(e){}}
   x.textAlign="right";x.fillStyle="#3f271c";x.font=`700 36px ${BF}`;x.fillText("📞 "+CARD_PHONE,W-P,y+40);x.font=`500 30px ${BF}`;x.fillText("✉️ "+CARD_MAIL,W-P,y+100);
-  x.font=`400 22px ${BF}`;x.fillStyle="#8a6d55";x.fillText("המחירים לפני מע״מ · המחיר הסופי יאושר מול נציג",W-P,y+150);
+  x.font=`400 22px ${BF}`;x.fillStyle="#8a6d55";x.fillText("המחירים לפני מע״מ · המחיר הסופי יאושר מול יועץ/ת המארזים",W-P,y+150);
   return c.toDataURL("image/jpeg",.9);}
 
 // landscape version for WhatsApp on a computer: WhatsApp shows a link's picture only when it's wide and light (≈300KB),
@@ -3466,6 +3466,7 @@ const FCHECK={
   fName:v=>v.trim()?"":"נא למלא שם מלא",
   fPhone:v=>/^(\+?972|0)\d{8,9}$/.test(v.replace(/[^\d+]/g,""))?"":"נא למלא מספר טלפון תקין",
   fOrg:v=>v.trim()?"":"נא למלא את שם הארגון או החברה",
+  fAgent:v=>v.trim()?"":"נא לבחור יועץ/ת מארזים או איך הגעתם אלינו",
   fEmail:v=>!v.trim()||/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.trim())?"":"כתובת המייל לא תקינה"};
 function checkField(id){
   const el=$(id),msg=FCHECK[id](el.value);el.classList.toggle("bad",!!msg);el.setAttribute("aria-invalid",msg?"true":"false");
@@ -3481,6 +3482,7 @@ function validate(){
   $("fErr").hidden=!bad.length;$("fErr").textContent=bad.length?(bad.length===1&&bad[0]==="dlv"?"נא לבחור איך לקבל את ההזמנה":"יש להשלים את השדות המסומנים"):"";
   return !bad.length;
 }
+$("fAgent").addEventListener("change",()=>checkField("fAgent"));
 Object.keys(FCHECK).forEach(id=>{$(id).addEventListener("blur",()=>{if($(id).value||$(id).classList.contains("bad"))checkField(id);});
   $(id).addEventListener("input",()=>{if($(id).classList.contains("bad"))checkField(id);});});
 let giftFor="";
@@ -3491,7 +3493,7 @@ function compLines(f){return [...[...cart].map(([id,q])=>`• ${byId[id].name}${
     ...(engSel.size?[`✨ מיתוג לוגו: ${engNames()} (+${ils(engCost())} למארז)`,!BTYPES&&f("engNotes")?`הערות למיתוג: ${f("engNotes")}`:null]:[]),
     ...(cardOn?[`💌 כרטיס ברכה ממותג 10×15 (+${ils(cardCost())} למארז)`,cardSelf?"עיצוב הכרטיס: הלקוח ישלח עיצוב מוכן בהמשך":`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[])].filter(x=>x!==null);}
 // what the private back office receives (orders, quotes and saved boxes)
-// who handles the order: a sales agent (משה / אפרת / ליגי) or how the customer found us. A personal link ?agent=<name> pre-selects the agent on that device.
+// who handles the order: a gift-box consultant (יועץ/ת מארזים) (משה / אפרת / ליגי) or how the customer found us. A personal link ?agent=<name> pre-selects the agent on that device.
 const AGENT_KEY="noya_agent";
 const curAgent=()=>(document.getElementById("fAgent")?.value||"").trim().slice(0,40);
 (()=>{const sel=document.getElementById("fAgent");if(!sel)return;
@@ -3519,11 +3521,11 @@ function buildOrder(){
   const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
   const sa=stockAlerts();
   const lines=[`הזמנת ${BTYPES?"מארזים":"מארז"} – נויה במתנה (${ref})`,"",...(sa.length?["לתשומת לב נויה במתנה:",...sa,""]:[]),
-    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,curAgent()?`🧑‍💼 נציג / הגעה: ${curAgent()}`:null,giftFor?`🎁 המתנות מיועדות ל: ${giftFor}`:null,"",
+    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,curAgent()?`🧑‍💼 יועץ/ת מארזים / הגעה: ${curAgent()}`:null,giftFor?`🎁 המתנות מיועדות ל: ${giftFor}`:null,"",
     ...(isIndiv()?[dlvMode()==="vip"?`⭐ אספקה: משלוח פרטני VIP לכל מקבל (${ils(CONFIG.vipPerBox)} למארז)`:`📦 אספקה: משלוח פרטני לכל מקבל (${ils(CONFIG.indivPerBox)} למארז)`,
       `📎 קובץ כתובות: ${addrFiles.filter(x=>x.url).map(x=>`${x.name} – ${x.url}${x.count?` (${x.count} כתובות)`:""}`).join(" | ")||"יישלח בהמשך"}`]
     :dlvMode()==="ship"?["🚚 אספקה: משלוח לכתובת אחת",
-      (f("fStreet")||f("fCity"))?`כתובת: ${[f("fStreet"),f("fCity")].filter(Boolean).join(", ")}${f("fAddrNote")?` · ${f("fAddrNote")}`:""}`:"כתובת: תושלם מול הנציג",
+      (f("fStreet")||f("fCity"))?`כתובת: ${[f("fStreet"),f("fCity")].filter(Boolean).join(", ")}${f("fAddrNote")?` · ${f("fAddrNote")}`:""}`:"כתובת: תושלם מול יועץ/ת המארזים",
       `איש קשר לקבלה: ${$("rcvSame").checked?`${f("fName")}, ${f("fPhone")}`:`${f("fRcvName")}, ${f("fRcvPhone")}`}`]
       :[`🏬 אספקה: איסוף עצמי מ${CONFIG.pickupAddress||""}`]),
     date?`תאריך אספקה רצוי: ${date}`:null,"",
@@ -3534,7 +3536,7 @@ function buildOrder(){
     !BTYPES&&orderImg.url?`📸 כרטיס ההזמנה (תמונה עם כל הפרטים): ${orderImg.url}`:null,!BTYPES&&orderImg.url?"":null,
     ...(BTYPES?[`סה"כ מארזים: ${totalBoxes()} (${btFilled().length} סוגים)`]:[`מחיר למארז (לפני מע"מ): ${money(orderPer())}`,`כמות מארזים: ${boxes}`]),
     dlvMode()!=="pickup"?`${dlvName()}: ${totalBoxes()} × ${ils(dlvRate())} = ${ils(shipCost())}`:"משלוח: איסוף עצמי (ללא עלות)",
-    ...(unpriced()?[`סה"כ: בהצעת מחיר (לאישור נציג)`]:[`סה"כ לפני מע"מ: ${ils(grandTotal())}`,`מע"מ 18%: ${ils(vatOf(grandTotal()))}`,`סה"כ כולל מע"מ: ${ils(withVat(grandTotal()))} (לאישור נציג)`]),
+    ...(unpriced()?[`סה"כ: בהצעת מחיר (לאישור יועץ/ת המארזים)`]:[`סה"כ לפני מע"מ: ${ils(grandTotal())}`,`מע"מ 18%: ${ils(vatOf(grandTotal()))}`,`סה"כ כולל מע"מ: ${ils(withVat(grandTotal()))} (לאישור יועץ/ת המארזים)`]),
     f("fNotes")?"":null,f("fNotes")?`הערות: ${f("fNotes")}`:null].filter(x=>x!==null);
   return {ref,text:lines.join("\n")};
 }
@@ -3616,7 +3618,7 @@ function quoteHTML(q,img){
   const rows=BTYPES?btFilled().flatMap(i=>withBT(i,()=>[`<tr class="sub"><td colspan="4">🎁 מארז ${esc(BTYPES[i].name)} · ${boxes} מארזים</td></tr>`,...typeRows(),`<tr><td colspan="3">סה״כ ${esc(BTYPES[i].name)}: ${boxes} × ${money(orderPer())}</td><td class="n">${noP?"—":ils(r2(orderPer()*boxes))}</td></tr>`])):typeRows();
   const beforeVat=grandTotal(),total=withVat(beforeVat),c=q.client||{},to=c.org||f("fOrg"),who=[c.name||f("fName"),c.phone||f("fPhone"),c.email||f("fEmail")].filter(Boolean).join(" · ");
   const ship=dlvMode()==="pickup"?`<div><span>איסוף עצמי</span><span>ללא עלות</span></div>`:`<div><span>${esc(dlvName())}: ${totalBoxes()} × ${ils(dlvRate())}</span><span>${ils(shipCost())}</span></div>`;
-  const tot=noP?`<div class="g"><span>סה"כ</span><span>יימסר ע"י נציג</span></div>`
+  const tot=noP?`<div class="g"><span>סה"כ</span><span>יימסר ע"י יועץ/ת המארזים</span></div>`
     :`<div><span>${BTYPES?`${totalBoxes()} מארזים (${btFilled().length} סוגים)`:`${boxes} מארזים × ${ils(orderPer())}`}</span><span>${ils(orderGoods())}</span></div>${ship}
       <div><span>סה"כ לפני מע"מ</span><span>${ils(r2(beforeVat))}</span></div><div><span>מע"מ 18%</span><span>${ils(r2(total-beforeVat))}</span></div>
       <div class="g"><span>סה"כ לתשלום כולל מע"מ</span><span>${ils(total)}</span></div>`;
@@ -3626,7 +3628,7 @@ function quoteHTML(q,img){
     <div class="qbody">${img?`<div class="qimg"><img src="${img}" alt=""></div>`:""}
       <table><thead><tr><th>פריט במארז</th><th class="n">כמות</th><th class="n">מחיר</th><th class="n">סה"כ</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
     <div class="qtot">${tot}</div>
-    <div class="qnotes"><div>• המחירים בטבלה לפני מע"מ. ההצעה כפופה לאישור סופי של נציג נויה במתנה.</div>
+    <div class="qnotes"><div>• המחירים בטבלה לפני מע"מ. ההצעה כפופה לאישור סופי של יועץ/ת המארזים של נויה במתנה.</div>
       <div>• מינימום הזמנה: ${ils(CONFIG.minOrder)}. מיתוג ולוגו בתוספת, לפי הבחירה.</div>
       <div>• ההצעה בתוקף ל-${QUOTE_DAYS} ימים, בכפוף למלאי.</div></div>
     <div class="qfoot"><span>054-3219070 · 053-7784388 · 053-3460081</span><span>${esc(CONFIG.orderEmail||"")} · NOYAGLOBAL.COM</span></div>`;

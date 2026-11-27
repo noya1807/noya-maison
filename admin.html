@@ -878,10 +878,10 @@ function renderAgents(){
   const list=Object.values(rows).sort((a,b)=>b.sales-a.sales);
   const T=list.reduce((t,r)=>({orders:t.orders+r.orders,boxes:t.boxes+r.boxes,sales:t.sales+r.sales,profit:t.profit+r.profit,com:t.com+r.sales*agentPct(r.name)/100}),{orders:0,boxes:0,sales:0,profit:0,com:0});
   const rangeLbl={month:"החודש",prev:"החודש הקודם",year:"השנה",all:"מאז ומעולם"};
-  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>🧑‍💼 מכירות לפי נציג</h1><p class="sub">רק הזמנות שאישרת נספרות במכירות ובעמלה. מכירות = לפני מע״מ, בלי משלוח.</p></div><button class="btn ghost" id="agBack">← חזרה להזמנות</button></div>
+  $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>🧑‍💼 מכירות לפי יועץ/ת מארזים</h1><p class="sub">רק הזמנות שאישרת נספרות במכירות ובעמלה. מכירות = לפני מע״מ, בלי משלוח.</p></div><button class="btn ghost" id="agBack">← חזרה להזמנות</button></div>
   <div class="row" style="margin-bottom:12px;gap:6px">${Object.entries(rangeLbl).map(([k,l])=>`<button class="btn sm ${agRange===k?"":"ghost"}" data-ag="${k}">${l}</button>`).join("")}
     <span style="flex:1"></span><button class="btn sm ghost" id="agCsv">⬇ הורדה לאקסל</button></div>
-  <div class="tablewrap" style="margin-bottom:18px"><table><thead><tr><th>נציג</th><th class="num">הזמנות מאושרות</th><th class="num">מארזים</th><th class="num">מכירות לפני מע״מ</th><th class="num">רווח גולמי</th><th class="num">עמלה %</th><th class="num">עמלה ₪</th><th class="num">ממתינות</th><th class="num">הצעות מחיר</th></tr></thead><tbody>
+  <div class="tablewrap" style="margin-bottom:18px"><table><thead><tr><th>יועץ/ת</th><th class="num">הזמנות מאושרות</th><th class="num">מארזים</th><th class="num">מכירות לפני מע״מ</th><th class="num">רווח גולמי</th><th class="num">עמלה %</th><th class="num">עמלה ₪</th><th class="num">ממתינות</th><th class="num">הצעות מחיר</th></tr></thead><tbody>
   ${list.map(r=>{const real=!r.name.startsWith("—"),pct=agentPct(r.name);return `<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.orders}</td><td class="num">${r.boxes.toLocaleString("he-IL")}</td><td class="num">${money(Math.round(r.sales))}</td><td class="num">${money(Math.round(r.profit))}</td>
     <td class="num">${real?`<input data-pct="${esc(r.name)}" value="${pct||""}" inputmode="decimal" dir="ltr" style="width:60px;text-align:center" placeholder="0">`:""}</td><td class="num"><b>${real&&pct?money(Math.round(r.sales*pct/100)):""}</b></td><td class="num">${r.pending||""}</td><td class="num">${r.quotes||""}</td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">אין הזמנות בתקופה הזו.</td></tr>`}
   ${list.length?`<tr style="font-weight:700;background:#faf3e6"><td>סה״כ ${rangeLbl[agRange]}</td><td class="num">${T.orders}</td><td class="num">${T.boxes.toLocaleString("he-IL")}</td><td class="num">${money(Math.round(T.sales))}</td><td class="num">${money(Math.round(T.profit))}</td><td></td><td class="num">${money(Math.round(T.com))}</td><td></td><td></td></tr>`:""}
@@ -890,17 +890,17 @@ function renderAgents(){
   <div class="tablewrap" style="margin-bottom:18px"><table><thead><tr><th>מקור</th><th class="num">הזמנות והצעות</th><th class="num">מאושרות</th><th class="num">מארזים</th><th class="num">מכירות לפני מע״מ</th></tr></thead><tbody>
   ${chList.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.all}</td><td class="num">${r.orders}</td><td class="num">${r.boxes.toLocaleString("he-IL")}</td><td class="num">${money(Math.round(r.sales))}</td></tr>`).join("")||`<tr><td colspan="5" class="muted">אין בתקופה הזו.</td></tr>`}
   </tbody></table></div>
-  <h2>קישורים אישיים לנציגים</h2>
-  <div class="panel"><p class="muted" style="margin-top:0">בטופס ההזמנה בבונה כל לקוח בוחר נציג (משה / אפרת / ליגי) או איך הגיע (חבר, פייסבוק/אינסטגרם, גוגל). נציג שפותח פעם אחת את הקישור האישי שלו – השם שלו כבר בחור אצלו בטופס. נציג חדש: מוסיפים כאן וגם צריך להוסיף אותו לרשימה בבונה (בקשו ממני).</p>
-    ${agList().map((a,i)=>`<div class="row" style="gap:8px;align-items:center;margin-bottom:6px"><b style="min-width:110px">${esc(a.name)}</b><input readonly value="${esc(agentLink(a.name))}" dir="ltr" style="flex:1;min-width:200px;font-size:12.5px" onclick="this.select()"><button class="btn sm ghost" data-agcopy="${i}">📋 העתקה</button><button class="btn sm ghost" data-agdel="${i}" title="הסרה מהרשימה (ההזמנות שלו נשארות)">✕</button></div>`).join("")||'<p class="muted">עוד אין נציגים ברשימה.</p>'}
-    <div class="row" style="gap:8px;margin-top:10px"><input id="agNew" placeholder="שם הנציג (כמו שיופיע בהזמנות)" maxlength="40" style="flex:1;max-width:280px"><button class="btn sm" id="agAdd">+ הוספת נציג</button></div></div>`;
+  <h2>קישורים אישיים ליועצי המארזים</h2>
+  <div class="panel"><p class="muted" style="margin-top:0">בטופס ההזמנה בבונה כל לקוח חייב לבחור יועץ/ת מארזים (משה / אפרת / ליגי) או איך הגיע (חבר, פייסבוק/אינסטגרם, גוגל). יועץ/ת שפותח/ת פעם אחת את הקישור האישי – השם כבר בחור אצלו/ה בטופס. יועץ/ת חדש/ה: מוסיפים כאן וגם צריך להוסיף אותו לרשימה בבונה (בקשו ממני).</p>
+    ${agList().map((a,i)=>`<div class="row" style="gap:8px;align-items:center;margin-bottom:6px"><b style="min-width:110px">${esc(a.name)}</b><input readonly value="${esc(agentLink(a.name))}" dir="ltr" style="flex:1;min-width:200px;font-size:12.5px" onclick="this.select()"><button class="btn sm ghost" data-agcopy="${i}">📋 העתקה</button><button class="btn sm ghost" data-agdel="${i}" title="הסרה מהרשימה (ההזמנות נשארות)">✕</button></div>`).join("")||'<p class="muted">עוד אין יועצים ברשימה.</p>'}
+    <div class="row" style="gap:8px;margin-top:10px"><input id="agNew" placeholder="שם היועץ/ת (כמו שיופיע בהזמנות)" maxlength="40" style="flex:1;max-width:280px"><button class="btn sm" id="agAdd">+ הוספת יועץ/ת</button></div></div>`;
   $("#agBack").onclick=()=>{view="orders";render();};
   document.querySelectorAll("[data-ag]").forEach(b=>b.onclick=()=>{agRange=b.dataset.ag;renderAgents();});
   document.querySelectorAll("[data-pct]").forEach(el=>el.onchange=()=>{agList();let a=db.settings.agents.find(x=>x.name===el.dataset.pct);if(!a)db.settings.agents.push(a={name:el.dataset.pct});a.pct=num(el.value)||0;touch();renderAgents();});
   $("#agAdd").onclick=()=>{const n=$("#agNew").value.trim().slice(0,40);if(!n)return;agList();if(!db.settings.agents.some(a=>a.name===n))db.settings.agents.push({name:n,pct:0});touch();renderAgents();};
   document.querySelectorAll("[data-agcopy]").forEach(b=>b.onclick=async()=>{const a=db.settings.agents[+b.dataset.agcopy];try{await navigator.clipboard.writeText(agentLink(a.name));toast("✓ הקישור הועתק");}catch(e){toast("סמנו את הקישור והעתיקו ידנית");}});
-  document.querySelectorAll("[data-agdel]").forEach(b=>b.onclick=()=>{const a=db.settings.agents[+b.dataset.agdel];if(!confirm(`להסיר את ${a.name} מרשימת הנציגים? ההזמנות שלו נשארות עם השם.`))return;db.settings.agents.splice(+b.dataset.agdel,1);touch();renderAgents();});
-  $("#agCsv").onclick=()=>downloadCsv(`נציגים-${rangeLbl[agRange]}-${new Date().toISOString().slice(0,10)}.csv`,[["נציג","הזמנות מאושרות","מארזים","מכירות לפני מע״מ","רווח גולמי","עמלה %","עמלה ₪","ממתינות","הצעות מחיר"],...list.map(r=>{const p=r.name.startsWith("—")?0:agentPct(r.name);return [r.name,r.orders,r.boxes,Math.round(r.sales),Math.round(r.profit),p||"",p?Math.round(r.sales*p/100):"",r.pending,r.quotes];})]);
+  document.querySelectorAll("[data-agdel]").forEach(b=>b.onclick=()=>{const a=db.settings.agents[+b.dataset.agdel];if(!confirm(`להסיר את ${a.name} מרשימת היועצים? ההזמנות נשארות עם השם.`))return;db.settings.agents.splice(+b.dataset.agdel,1);touch();renderAgents();});
+  $("#agCsv").onclick=()=>downloadCsv(`יועצים-${rangeLbl[agRange]}-${new Date().toISOString().slice(0,10)}.csv`,[["יועץ/ת","הזמנות מאושרות","מארזים","מכירות לפני מע״מ","רווח גולמי","עמלה %","עמלה ₪","ממתינות","הצעות מחיר"],...list.map(r=>{const p=r.name.startsWith("—")?0:agentPct(r.name);return [r.name,r.orders,r.boxes,Math.round(r.sales),Math.round(r.profit),p||"",p?Math.round(r.sales*p/100):"",r.pending,r.quotes];})]);
 }
 function renderOrders(){
   const inWork=o=>o.status==="approved"&&fulOf(o)!=="shipped",isDone=o=>o.status==="approved"&&fulOf(o)==="shipped";
@@ -914,7 +914,7 @@ function renderOrders(){
   const pick={};if(work)list.filter(o=>["engrave","packing"].includes(fulOf(o))).forEach(o=>orderCalc(o).lines.forEach(l=>{const k=l.sku||l.name;(pick[k]??={name:l.sku?(prodBySku(l.sku)?.name||l.name):l.name,sku:l.sku,qty:0,orders:0});pick[k].qty+=num(l.qty);pick[k].orders++;}));
   const S=work?stockAll():{};const pickRows=Object.values(pick).sort((a,b)=>b.qty-a.qty);
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>הזמנות</h1><p class="sub">כל הזמנה מהבונה נכנסת לכאן לבד כ"ממתינה". רק הזמנות שאישרת נספרות ברווח ובמלאי.</p></div>
-    <div class="row"><button class="btn ghost" id="oAgents">🧑‍💼 לפי נציג</button><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
+    <div class="row"><button class="btn ghost" id="oAgents">🧑‍💼 לפי יועץ/ת</button><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
   <div id="jpBox" hidden style="margin:0 0 12px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(124,77,160,.10),rgba(124,77,160,.03));border:1px solid rgba(124,77,160,.25);color:#5b3a78"></div>
   <div class="row" style="margin-bottom:8px">${[["pending","ממתינות"],["work","בעבודה"],["done","נשלחו / נאספו"],["quote","הצעות מחיר"],["lead","לידים 💾"],["approved","כל המאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
   <div class="row" style="margin-bottom:12px;gap:6px">${[["all","כל סוגי האספקה"],["pickup","🏬 איסוף"],["ship","🏢 לכתובת אחת"],["indiv","🏠 לכל מקבל"]].map(([k,l])=>`<button class="btn sm ${dlvFilter===k?"":"ghost"}" data-df="${k}">${l}</button>`).join("")}
@@ -998,7 +998,7 @@ function renderOrder(){
   </div>
   <h2>לקוח</h2><div class="panel"><div class="grid">
     ${[["name","שם"],["org","ארגון"],["phone","טלפון"],["email","מייל"]].map(([k,l])=>`<label class="f">${l}<input data-cu="${k}" value="${esc(o.customer?.[k]||"")}" ${dis} ${["phone","email"].includes(k)?'dir="ltr"':""}></label>`).join("")}
-    <label class="f">🧑‍💼 נציג מכירות<input id="oAgent" list="agentNames" value="${esc(o.agent||"")}" placeholder="ללא נציג"></label><datalist id="agentNames">${agentNames().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+    <label class="f">🧑‍💼 יועץ/ת מארזים / מקור<input id="oAgent" list="agentNames" value="${esc(o.agent||"")}" placeholder="לא צוין"></label><datalist id="agentNames">${agentNames().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
     <label class="f">כמות מארזים<input data-o="boxes" inputmode="numeric" dir="ltr" value="${esc(o.boxes)}" ${dis}></label>
     <label class="f">סה״כ לתשלום כולל מע״מ (₪)<input data-o="gross" inputmode="decimal" dir="ltr" value="${esc(o.gross)}" ${dis}></label>
     <label class="f">אספקה<select data-o="dlvMode" ${dis}>${[["ship","משלוח לכתובת אחת"],["indiv","משלוח פרטני לכל מקבל"],["vip","משלוח VIP לכל מקבל"],["pickup","איסוף עצמי"]].map(([k,l])=>`<option value="${k}" ${o.dlvMode===k?"selected":""}>${l}</option>`).join("")}</select></label>
@@ -1019,7 +1019,7 @@ function renderOrder(){
   $("#oBack").onclick=()=>{selOrder=null;render();};
   const re=()=>{touch();renderOrder();};
   document.querySelectorAll("[data-cu]").forEach(el=>el.onchange=()=>{(o.customer??={})[el.dataset.cu]=el.value.trim();touch();});
-  if($("#oAgent"))$("#oAgent").onchange=e=>{o.agent=e.target.value.trim().slice(0,40);touch();toast(o.agent?`הנציג: ${o.agent}`:"ללא נציג");};
+  if($("#oAgent"))$("#oAgent").onchange=e=>{o.agent=e.target.value.trim().slice(0,40);touch();toast(o.agent?`יועץ/ת / מקור: ${o.agent}`:"לא צוין");};
   document.querySelectorAll("[data-o]").forEach(el=>el.onchange=()=>{const k=el.dataset.o;o[k]=["boxes","gross"].includes(k)?num(el.value):el.value;
     if(k==="boxes")(o.lines||[]).forEach(l=>{if(l.perBox)l.qty=l.perBox*num(el.value);});re();});
   document.querySelectorAll("[data-ob]").forEach(el=>el.onchange=()=>{o[el.dataset.ob]=el.checked;re();});
