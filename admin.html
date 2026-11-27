@@ -261,7 +261,7 @@ function render(){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===(view==="agents"?"orders":view)));
   ({dash:renderDash,cash:renderCash,ships:sel?renderShip:renderShips,prods:renderProds,orders:selOrder?renderOrder:renderOrders,agents:renderAgents,stock:renderStock,sups:renderSups,settings:renderSettings})[view]();
   bindExceptions();try{navBadge();}catch(e){}
-  if(!render.icDone&&typeof db!=="undefined"&&db.products){render.icDone=true;setTimeout(()=>{icountSync();},4000);}
+  if(!render.icDone&&typeof db!=="undefined"&&db.products){render.icDone=true;setTimeout(()=>{icountSync();},4000);setTimeout(()=>checkPayments(false),9000);}
   window.scrollTo(0,0);
 }
 
@@ -1016,7 +1016,7 @@ function renderAgents(){
 }
 function renderOrders(){
   const inWork=o=>o.status==="approved"&&fulOf(o)!=="shipped",isDone=o=>o.status==="approved"&&fulOf(o)==="shipped";
-  const byF=k=>db.orders.filter(o=>k==="all"?true:k==="work"?inWork(o):k==="done"?isDone(o):o.status===k);
+  const byF=k=>db.orders.filter(o=>k==="all"?true:k==="work"?inWork(o):k==="done"?isDone(o):k==="unpaid"?(o.status==="approved"&&!o.paid?.full):o.status===k);
   const work=ordFilter==="work";
   const list=byF(ordFilter).filter(o=>dlvFilter==="all"||dlvGroup(o)===dlvFilter);
   if(work)list.sort((a,b)=>(ordDays(a)??9999)-(ordDays(b)??9999)||String(a.createdAt).localeCompare(String(b.createdAt)));   // in work: the most urgent date first
@@ -1026,10 +1026,10 @@ function renderOrders(){
   const pick={};if(work)list.filter(o=>["engrave","packing"].includes(fulOf(o))).forEach(o=>orderCalc(o).lines.forEach(l=>{const k=l.sku||l.name;(pick[k]??={name:l.sku?(prodBySku(l.sku)?.name||l.name):l.name,sku:l.sku,qty:0,orders:0});pick[k].qty+=num(l.qty);pick[k].orders++;}));
   const S=work?stockAll():{};const pickRows=Object.values(pick).sort((a,b)=>b.qty-a.qty);
   $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><div><h1>הזמנות</h1><p class="sub">כל הזמנה מהבונה נכנסת לכאן לבד כ"ממתינה". רק הזמנות שאישרת נספרות ברווח ובמלאי.</p></div>
-    <div class="row"><button class="btn ghost" id="oAgents">🧑‍💼 לפי יועץ/ת</button><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
+    <div class="row"><button class="btn ghost" id="oPay" title="בודק ב-iCount אילו הזמנות כבר קיבלו קבלה">💰 בדיקת תשלומים</button><button class="btn ghost" id="oAgents">🧑‍💼 לפי יועץ/ת</button><button class="btn ghost" id="oPull">בדיקת הזמנות חדשות</button><button class="btn" id="oNew">+ הזמנה ידנית</button></div></div>
   ${["pending","work"].includes(ordFilter)?exceptionsPanel():""}
   <div id="jpBox" hidden style="margin:0 0 12px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(124,77,160,.10),rgba(124,77,160,.03));border:1px solid rgba(124,77,160,.25);color:#5b3a78"></div>
-  <div class="row" style="margin-bottom:8px">${[["pending","ממתינות"],["work","בעבודה"],["done","נשלחו / נאספו"],["quote","הצעות מחיר"],["won","הצעות שהפכו להזמנה"],["lead","לידים 💾"],["approved","כל המאושרות"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
+  <div class="row" style="margin-bottom:8px">${[["pending","ממתינות"],["work","בעבודה"],["done","נשלחו / נאספו"],["quote","הצעות מחיר"],["won","הצעות שהפכו להזמנה"],["lead","לידים 💾"],["approved","כל המאושרות"],["unpaid","💰 לא שולמו"],["cancelled","בוטלו"],["all","הכל"]].map(([k,l])=>`<button class="btn sm ${ordFilter===k?"":"ghost"}" data-of="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
   <div class="row" style="margin-bottom:12px;gap:6px">${[["all","כל סוגי האספקה"],["pickup","🏬 איסוף"],["ship","🏢 לכתובת אחת"],["indiv","🏠 לכל מקבל"]].map(([k,l])=>`<button class="btn sm ${dlvFilter===k?"":"ghost"}" data-df="${k}">${l}</button>`).join("")}
     ${work?`<span style="flex:1"></span><button class="btn sm gold" id="oExport">⬇ ייצוא משלוחים מוכנים לשליח</button>`:""}</div>
   ${ordFilter==="pending"&&list.length?`<p class="muted" style="margin:-4px 0 10px">🔒 הזמנות כאן לא מתקדמות לאריזה, למשלוח או לייצוא עד שתאשר כל אחת סופית.</p>`:""}
@@ -1047,7 +1047,7 @@ function renderOrders(){
     <td><b>${esc(o.customer?.org||o.customer?.name||"")}</b>${o.customer?.org&&o.customer?.name?` <span class="muted">${esc(o.customer.name)}</span>`:""}${/בדיקה/.test(o.customer?.org||"")?' <span class="pill st-prod">בדיקה</span>':""}${o.agent?`<br><span class="muted" style="font-size:12px">🧑‍💼 ${esc(o.agent)}</span>`:""}</td>
     <td style="white-space:nowrap">${esc(DLV_SHORT[o.dlvMode]||"")}${["indiv","vip"].includes(o.dlvMode)&&!(o.addrFiles||[]).length?' <span class="warn" title="עוד לא הגיע קובץ כתובות">📎?</span>':""}</td><td class="num">${esc(o.boxes)}</td><td class="num">${money(Math.round(num(o.gross)))}</td>
     <td class="num ${pfText(c)}">${money(Math.round(c.profit))} (${Math.round(c.margin*100)}%)${num(o.boxes)?`<br><span style="font-size:12px">${money(Math.round(c.profit/num(o.boxes)))} למארז</span>`:""}${c.missing?' <span class="warn" title="חסרה עלות לחלק מהמוצרים – הרווח לא סופי">⚠</span>':""}</td>
-    <td>${(()=>{const fl=fulLabel(o);return fl?`<span class="pill ${fl[1]}">${fl[0]}</span>${o.status==="approved"&&fulOf(o)!=="shipped"&&shortOf(o)?' <span class="pill st-port" title="חסר מלאי לחלק מהמוצרים">⚠ חסר מלאי</span>':""}`:`<span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>`;})()}</td>
+    <td>${(()=>{const fl=fulLabel(o);return fl?`<span class="pill ${fl[1]}">${fl[0]}</span>${paidPill(o)}${o.status==="approved"&&fulOf(o)!=="shipped"&&shortOf(o)?' <span class="pill st-port" title="חסר מלאי לחלק מהמוצרים">⚠ חסר מלאי</span>':""}`:`<span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>`;})()}</td>
     ${work?`<td style="white-space:nowrap">${fulNext(o)?`<button class="btn sm gold" data-adv="${esc(o.id)}">${esc(fulNextLabel(o))}</button>`:""} ${waBtn(o,"btn sm ghost")}</td>`:""}</tr>`;}).join("")||`<tr><td colspan="10" class="muted">אין הזמנות כאן.</td></tr>`}
   </tbody></table></div>`;
   document.querySelectorAll("[data-of]").forEach(b=>b.onclick=()=>{ordFilter=b.dataset.of;renderOrders();});
@@ -1070,6 +1070,7 @@ function renderOrders(){
   if($("#oPickCsv"))$("#oPickCsv").onclick=()=>downloadCsv(`ליקוט-${new Date().toISOString().slice(0,10)}.csv`,[["פריט","מק״ט","כמות לארוז","בהזמנות"],...pickRows.map(r=>[r.name,r.sku||"",r.qty,r.orders])]);
   document.querySelectorAll("[data-oid]").forEach(tr=>tr.onclick=()=>{selOrder=tr.dataset.oid;view="orders";render();});
   $("#oAgents").onclick=()=>{view="agents";render();};
+  $("#oPay").onclick=()=>checkPayments(true);
   $("#oPull").onclick=async()=>{toast("בודק…");await pullInbox();renderOrders();};
   loadJack();bindExceptions();try{navBadge();}catch(e){}
   $("#oNew").onclick=()=>{const o={id:uid(),ref:"M-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,5).toUpperCase(),source:"ידני",createdAt:new Date().toISOString(),status:"pending",customer:{},boxes:1,lines:[],engrave:false,card:false,dlvMode:"ship",gross:0,notes:""};
@@ -1117,12 +1118,29 @@ async function icountCreate(o){
   try{const j=await api("icount",{method:"POST",body:{doctype:dt,client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
     if(!j.ok){toast("iCount: "+(j.error||"שגיאה"),8000);return;}
     o.icount={doctype:dt,docnum:j.docnum,url:j.url,at:new Date().toISOString()};touch();renderOrder();setTimeout(icountStockSync,3000);toast(`✓ נוצר ${IC_TYPES[dt]} ${j.docnum||""} ב-iCount`);}catch(e){toast("iCount: שגיאה בחיבור",6000);}}
+// ---------- payments from iCount: an order is "שולם" when a receipt / invoice-receipt was issued from its document chain in iCount ----------
+async function checkPayments(manual){
+  if(checkPayments.busy)return;checkPayments.busy=true;let changed=0;
+  try{const C=(m,b)=>api("icountinv",{method:"POST",body:{method:m,body:b}});
+    const todo=db.orders.filter(o=>o.icount?.docnum&&o.icount?.doctype&&!(o.paid?.full)&&o.status==="approved").slice(0,40);
+    for(const o of todo){const seen=new Set(),queue=[[o.icount.doctype,o.icount.docnum,0]];let sum=0,last="";
+      while(queue.length){const [dt,dn,depth]=queue.shift();const k=dt+dn;if(seen.has(k)||depth>4)continue;seen.add(k);
+        const r=await C("doc/info",{doctype:dt,docnum:+dn});const d=r.doc_info;if(!d)continue;
+        if(["receipt","invrec"].includes(dt)&&!d.is_cancelled){sum+=Number(d.total)||0;if(!last||d.dateissued>last)last=d.dateissued;}
+        (d.based_on_this||[]).forEach(x=>queue.push([x.doctype,x.docnum,depth+1]));}
+      const due=num(o.gross)||0,full=sum>0&&(!due||sum>=due-1);
+      const np=sum>0?{sum:Math.round(sum*100)/100,full,date:last,checkedAt:new Date().toISOString()}:null;
+      if(JSON.stringify(np&&{...np,checkedAt:0})!==JSON.stringify(o.paid&&{...o.paid,checkedAt:0})){o.paid=np;changed++;}}
+    if(changed){touch();if(view==="orders")render();}
+    if(manual)toast(changed?`✓ עודכנו ${changed} הזמנות לפי התשלומים ב-iCount`:"אין תשלומים חדשים ב-iCount");
+  }catch(e){if(manual)toast("לא הצלחתי לבדוק תשלומים ב-iCount");}finally{checkPayments.busy=false;}}
+const paidPill=o=>o.paid?.full?` <span class="pill st-wh" title="קבלה ב-iCount: ₪${o.paid.sum.toLocaleString("he-IL")} · ${o.paid.date||""}">💰 שולם</span>`:o.paid?` <span class="pill st-port" title="שולם חלקית לפי iCount">💰 חלקי ₪${o.paid.sum.toLocaleString("he-IL")}</span>`:(o.status==="approved"&&o.icount&&fulOf(o)==="shipped"?` <span class="pill st-prod">לא שולם</span>`:"");
 function renderOrder(){
   const o=db.orders.find(x=>x.id===selOrder);if(!o){selOrder=null;return render();}
   const locked=o.status!=="pending";const c=orderCalc(o);const S=stockAll();const dis=locked?"disabled":"";
   const prodOpts=db.products.map(p=>`<option value="${esc(p.sku)}">${esc(p.name)}</option>`).join("");
   $("#view").innerHTML=`<button class="back" id="oBack">→ כל ההזמנות</button>
-  <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>${o.quoteRef&&o.quoteRef!==o.ref?` · נוצרה מהצעת מחיר <a href="#" data-goref="${esc(o.quoteRef)}">${esc(o.quoteRef)}</a>`:o.quoteRef?" · נוצרה מהצעת המחיר הזו":""}${o.convertedTo?` · הפכה להזמנה <a href="#" data-goref="${esc(o.convertedTo)}">${esc(o.convertedTo)}</a>`:""}</p></div>
+  <div class="row" style="justify-content:space-between"><div><h1>הזמנה <span class="sku">${esc(o.ref||"")}</span></h1><p class="sub">${esc(o.source)} · ${esc(new Date(o.createdAt).toLocaleString("he-IL"))} · <span class="pill ${ORD_ST[o.status][1]}">${ORD_ST[o.status][0]}</span>${paidPill(o)}${o.quoteRef&&o.quoteRef!==o.ref?` · נוצרה מהצעת מחיר <a href="#" data-goref="${esc(o.quoteRef)}">${esc(o.quoteRef)}</a>`:o.quoteRef?" · נוצרה מהצעת המחיר הזו":""}${o.convertedTo?` · הפכה להזמנה <a href="#" data-goref="${esc(o.convertedTo)}">${esc(o.convertedTo)}</a>`:""}</p></div>
     <div class="row"><button class="btn ghost" id="oPrint">🖨 הדפסת הזמנה</button>${o.status==="approved"?`<button class="btn ghost" data-dup="${esc(o.id)}" title="הזמנה חדשה עם אותם מוצרים, כמויות, לקוח ואספקה">📋 שכפול</button>${o.icount?`<a class="btn ghost" ${o.icount.url?`href="${esc(o.icount.url)}" target="_blank" rel="noopener"`:""}>🧾 ${esc(IC_TYPES[o.icount.doctype]||"")} ${esc(o.icount.docnum||"")}</a>`:`<button class="btn ghost" id="oIcount" title="יוצר מסמך ב-iCount מההזמנה, בלי להקליד">🧾 ל-iCount</button>`}`:""}${waBtn(o,"btn ghost")}${okMail(o.customer?.email)&&!["lead","quote","won","lost"].includes(o.status)?`<button class="btn ghost" id="oMail" title="שולח ללקוח במייל את ההודעה של השלב הנוכחי">📧 עדכון במייל</button>`:""}${o.status==="approved"&&fulNext(o)?`<button class="btn gold" id="oAdv">${esc(fulNextLabel(o))}</button>`:""}${o.status==="pending"?`<button class="btn danger" id="oCancel">בוטלה</button><button class="btn gold" id="oApprove">✓ אישור סופי</button>`:o.status==="approved"?`<button class="btn ghost" id="oUnapprove">ביטול אישור</button>`:o.status==="quote"?`<button class="btn danger" id="oLost">✕ הלקוח ויתר</button><button class="btn gold" id="oQuoteOk">✓ הלקוח אישר – הפוך להזמנה</button>`:o.status==="lost"?`<button class="btn ghost" id="oReopen">פתיחה מחדש כהצעה</button>`:o.status==="won"?"":o.status==="lead"?`<button class="btn danger" id="oCancel">לא רלוונטי</button><button class="btn gold" id="oRestore">הלקוח הזמין ← העברה לממתינה</button>`:`<button class="btn ghost" id="oRestore">החזרה לממתינה</button>`}</div></div>
   ${o.status==="pending"?`<p class="warn" style="font-weight:700">🔒 כלל ברזל: ההזמנה לא תיכנס ל"בעבודה", לרשימת הליקוט או לייצוא לשליח עד שתלחץ "✓ אישור סופי".</p>`:""}
   ${locked?`<p class="muted">${o.status==="approved"?`אושרה ב-${esc(new Date(o.approvedAt).toLocaleDateString("he-IL"))}. העלות "הוקפאה" ביום האישור. כדי לשנות: "ביטול אישור".`:o.status==="quote"?"הצעת מחיר שהלקוח הוריד מהבונה. לא נספרת ברווח ובמלאי. כדאי לחזור אליו, ואם הזמין: \"הלקוח הזמין\".":o.status==="lead"?`💾 הלקוח שמר את המארז בבונה ועוד לא הזמין. לא נספר ברווח ובמלאי. כדאי להתקשר אליו${o.link?` · <a href="${esc(o.link)}" target="_blank" rel="noopener">פתיחת המארז שלו</a>`:""}.`:"ההזמנה בוטלה ולא נספרת."}</p>`:""}
