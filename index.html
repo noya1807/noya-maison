@@ -2269,7 +2269,8 @@ const sTick=()=>tone(1700+Math.random()*400,.022,"square",.03);
 const sThud=()=>{tone(170,.18,"triangle",.3,0,70);tone(950,.03,"square",.06);};
 const sLever=()=>{for(let i=0;i<5;i++)tone(720-i*70,.03,"square",.05,i*.04);tone(110,.22,"triangle",.28,.22,55);};
 const sWin=()=>{[784,1047,1319].forEach((f,i)=>tone(f,.22,"triangle",.1,i*.07));for(let i=0;i<16;i++){const t=.25+i*.075+Math.random()*.03;tone(2300+Math.random()*1400,.11,"triangle",.07,t);tone(4200+Math.random()*900,.05,"sine",.03,t+.012);}};
-const surImg=p=>esc(p.photo||p.img);
+// reels use small thumbnails (320px): many full-size photos in the rolling strips filled the iPhone app's image memory and some turned black
+const surImg=p=>{const u=p.photo||p.img||"";const m=/^img\/ph\/([\w-]+)\.(webp|jpg|png)$/.exec(u);return esc(m?`img/ph/t/${m[1]}.webp`:u);};
 const cellHTML=p=>p==="7"?`<div class="cell"><span class="seven">7</span></div>`:`<div class="cell"><img src="${surImg(p)}" alt=""></div>`;
 const JACK_EP=window.NOYA_OFFICE_ENDPOINT||"api/office";let JACK={meals:0};
 function surOpen(){let d=$("surModal");if(!d){d=document.createElement("div");d.id="surModal";d.className="mr-bg";document.body.appendChild(d);
@@ -2336,7 +2337,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
     col.querySelector(".reel-name").textContent=pick.jackpot?"":pick.items[k].name;if(++done===todo)surWin(pick,tick);};
   // warm up the final images while the reels roll
   if(!pick.jackpot)pick.items.forEach(it=>{if(it&&it!=="7"){const im=new Image();im.src=surImg(it);im.decode?.().catch(()=>{});}});
-  cols.forEach((col,k)=>{if(sur.held.has(k))return;todo++;
+  cols.forEach((col,k)=>{if(sur.held.has(k)){const st=col.querySelector(".strip"),it=sur.cur[k];if(st&&it){st.innerHTML=cellHTML(it);}return;}todo++;
     // ---- the LAST reel keeps rolling alone, slows down item by item, almost stops… and lands (tension!)
     if(!reduce&&k===lastK){const ord=live.length-1,K=5,strip=col.querySelector(".strip");col.querySelector(".reel-name").textContent="";
       const cells=[rnd(),pick.items[k],...Array.from({length:(matchMedia("(pointer:coarse)").matches?10+ord*4:16+ord*6)+K},rnd),sur.cur[k]||rnd()];
