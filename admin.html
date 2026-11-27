@@ -1124,7 +1124,8 @@ async function icClients(){if(IC_CLIENTS)return IC_CLIENTS;try{const l=await api
 const custKey=o=>phoneKey(o.customer?.phone)||orgKey(o.customer?.org)||String(o.customer?.email||"").toLowerCase();
 async function icClientFor(o){
   if(+o.icountClientId)return +o.icountClientId;const map=db.settings.icountClientMap||{},k=custKey(o);if(k&&+map[k])return +map[k];
-  const L=await icClients(),em=String(o.customer?.email||"").trim().toLowerCase();
+  const L=await icClients(),em=String(o.customer?.email||"").trim().toLowerCase(),vat=String(o.customer?.vat||"").replace(/\D/g,"");
+  if(vat.length>=8){const m=L.filter(c=>String(c.vat).replace(/\D/g,"").replace(/^0+/,"")===vat.replace(/^0+/,""));if(m.length===1)return m[0].id;if(m.length>1){const nm=orgKey(o.customer?.org);const mm=m.filter(c=>orgKey(c.name)===nm);return (mm[0]||m[0]).id;}}
   if(em){const m=L.filter(c=>c.email===em);if(m.length===1)return m[0].id;}
   const nm=orgKey(o.customer?.org||o.customer?.name);if(nm.length>=3){const m=L.filter(c=>orgKey(c.name)===nm);if(m.length===1)return m[0].id;}
   return 0;}
@@ -1134,7 +1135,7 @@ async function icountAutoOrder(o){
   if(db.settings.icountAutoOrder===false||(o.icountDocs||[]).some(d=>d.doctype==="order"))return;
   try{const items=icountItems(o);if(!items.length)return;
     const cid=await icClientFor(o);
-    const j=await api("icount",{method:"POST",body:{doctype:"order",client_id:cid,client_name:o.customer?.org||o.customer?.name||"לקוח",email:o.customer?.email||"",phone:o.customer?.phone||"",items,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}${o.agent?` · ${o.agent}`:""}`}});
+    const j=await api("icount",{method:"POST",body:{doctype:"order",client_id:cid,vat_id:o.customer?.vat||"",client_name:o.customer?.org||o.customer?.name||"לקוח",email:o.customer?.email||"",phone:o.customer?.phone||"",items,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}${o.agent?` · ${o.agent}`:""}`}});
     if(!j.ok){toast("ההזמנה לא נוצרה ב-iCount: "+(j.error||""),7000);return;}
     const doc={doctype:"order",docnum:j.docnum,url:j.url,at:new Date().toISOString()};(o.icountDocs??=[]).push(doc);if(!o.icount)o.icount=doc;icRemember(o,j.client_id||cid);touch();
     toast(`✓ נוצרה ב-iCount הזמנה מס׳ ${j.docnum}`);if(selOrder===o.id)renderOrder();setTimeout(icountStockSync,3000);
@@ -1171,7 +1172,7 @@ async function icountCreate(o,forceType,pay){
   const dt=forceType||db.settings.icountType||"deal",items=icountItems(o),tot=items.reduce((t,i)=>t+i.quantity*i.unitprice,0);
   if(!await askC(`ליצור ${IC_TYPES[dt]} ב-iCount?\n\nלקוח: ${o.customer?.org||o.customer?.name}\n${items.map(i=>`${i.unitprice?"• ":"   "}${i.description} – ${i.quantity}${i.unitprice?` × ₪${i.unitprice}`:""}`).join("\n")}${pay?`\n\nתשלום: ${({bank:"העברה בנקאית",cc:"כרטיס אשראי",cheque:"צ׳ק",cash:"מזומן"})[pay.method]}${pay.method==="cc"?` ${pay.cardType} ****${pay.last4} · ${pay.payments} תשלומים · אישור ${pay.conf}`:""}${pay.ref?` · אסמכתא ${pay.ref}`:""} · ₪${pay.sum.toLocaleString("he-IL")} · ${pay.date}`:""}\nסה״כ לפני מע״מ: ₪${Math.round(tot).toLocaleString("he-IL")}`))return;
   toast("יוצר מסמך ב-iCount…");
-  try{const cid=await icClientFor(o);const j=await api("icount",{method:"POST",body:{doctype:dt,client_id:cid,client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,pay,comments:`הזמנה ${o.ref}${pay?.ref?` · אסמכתא העברה: ${pay.ref}`:""}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
+  try{const cid=await icClientFor(o);const j=await api("icount",{method:"POST",body:{doctype:dt,client_id:cid,vat_id:o.customer?.vat||"",client_name:o.customer?.org||o.customer?.name||"",email:o.customer?.email||"",phone:o.customer?.phone||"",items,pay,comments:`הזמנה ${o.ref}${pay?.ref?` · אסמכתא העברה: ${pay.ref}`:""}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}`}});
     if(!j.ok){toast("iCount: "+(j.error||"שגיאה"),8000);return;}
     const doc={doctype:dt,docnum:j.docnum,url:j.url,at:new Date().toISOString()};icRemember(o,j.client_id||cid);(o.icountDocs??=[]).push(doc);if(dt!=="delcert"||!o.icount)o.icount=o.icount&&dt==="delcert"?o.icount:doc;touch();renderOrder();setTimeout(icountStockSync,3000);toast(`✓ נוצר ${IC_TYPES[dt]} ${j.docnum||""} ב-iCount`);}catch(e){toast("iCount: שגיאה בחיבור",6000);}}
 // ---------- payments from iCount: an order is "שולם" when a receipt / invoice-receipt was issued from its document chain in iCount ----------
@@ -1226,7 +1227,7 @@ function renderOrder(){
     ${o.cardImg?`<p style="margin:6px 0 0"><a href="${esc(o.cardImg)}" target="_blank" rel="noopener">📸 כרטיס ההזמנה (התמונה ששלח הלקוח)</a></p>`:""}
   </div>
   <h2>לקוח</h2><div class="panel"><div class="grid">
-    ${[["name","שם"],["org","ארגון"],["phone","טלפון"],["email","מייל"]].map(([k,l])=>`<label class="f">${l}<input data-cu="${k}" value="${esc(o.customer?.[k]||"")}" ${dis} ${["phone","email"].includes(k)?'dir="ltr"':""}></label>`).join("")}
+    ${[["name","שם"],["org","ארגון"],["vat","ח.פ / ע.מ"],["phone","טלפון"],["email","מייל"]].map(([k,l])=>`<label class="f">${l}<input data-cu="${k}" value="${esc(o.customer?.[k]||"")}" ${dis} ${["phone","email","vat"].includes(k)?'dir="ltr"':""}></label>`).join("")}
     <label class="f">🧑‍💼 יועץ/ת מארזים / מקור<input id="oAgent" list="agentNames" value="${esc(o.agent||"")}" placeholder="לא צוין"></label><label class="f">🗂 כרטיס לקוח ב-iCount<input id="oIcCl" list="icClList" placeholder="נבחר לבד לפי מייל / שם, או בחרו" value=""></label><datalist id="icClList"></datalist><datalist id="agentNames">${agentNames().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
     <label class="f">כמות מארזים<input data-o="boxes" inputmode="numeric" dir="ltr" value="${esc(o.boxes)}" ${dis}></label>
     <label class="f">סה״כ לתשלום כולל מע״מ (₪)<input data-o="gross" inputmode="decimal" dir="ltr" value="${esc(o.gross)}" ${dis}></label>
