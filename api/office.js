@@ -387,6 +387,13 @@ export default async function handler(req, res) {
       if (b.email) body.email = String(b.email).slice(0, 120);
       if (b.phone) body.client_phone = String(b.phone).slice(0, 30);
       if (b.vat_id) body.vat_id = String(b.vat_id).slice(0, 20);
+      if (doctype === "invrec") {   // a tax invoice-receipt must say how the customer paid
+        const p = b.pay || {}, sum = Math.round((+p.sum || 0) * 100) / 100, date = /^\d{4}-\d{2}-\d{2}$/.test(p.date || "") ? p.date : new Date().toISOString().slice(0, 10);
+        if (!(sum > 0)) { res.status(400).json({ ok: false, error: "חסר סכום תשלום" }); return; }
+        if (p.method === "cash") body.cash = { sum };
+        else if (p.method === "cheque") body.cheques = [{ sum, date, bank: +p.bank || 0, branch: +p.branch || 0, account: String(p.account || ""), number: String(p.number || "") }];
+        else body.banktransfer = { sum, date };
+      }
       try {
         const r = await fetch("https://api.icount.co.il/api/v3.php/doc/create", { method: "POST", headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
         const j = await r.json().catch(() => ({}));
