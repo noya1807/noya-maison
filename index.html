@@ -2330,7 +2330,7 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
   const live=cols.map((c,k)=>k).filter(k=>!sur.held.has(k)),cand=live.length>1?live.filter(k=>k!==sur.lastTense):live,lastK=cand[(Math.random()*cand.length)|0],slot2=slot;sur.lastTense=lastK;
   // phone apps: swapping a fresh <img> in at the stop sometimes painted a black tile → keep the strip that already shows the product (it was visible while rolling), just freeze it there
   const finishCol=(col,k)=>{const strip=col.querySelector(".strip"),item=pick.jackpot?"7":pick.items[k];
-    strip.getAnimations().forEach(a=>{try{a.commitStyles();}catch(e){}a.cancel();});
+    strip.style.transform=`translateY(${-ch}px)`;strip.getAnimations().forEach(a=>a.cancel());   // rest exactly on cell #1 (the target) – set explicitly, not taken from the animation
     const imgs=strip.querySelectorAll(".cell"),tgt=imgs[1];   // cells: [extra, target, …]; the strip rests with the target in the window
     if(!tgt||pick.jackpot){strip.innerHTML=cellHTML(item);strip.style.transform="";}
     else{const ti=tgt.querySelector("img");if(ti&&(!ti.complete||!ti.naturalWidth)){const src=ti.getAttribute("src");ti.removeAttribute("src");ti.setAttribute("src",src);}}
