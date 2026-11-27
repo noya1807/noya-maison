@@ -1118,6 +1118,15 @@ function icountItems(o){
   else{items.push({description:"מארז בהתאמה אישית הכולל:",quantity:b,unitprice:Math.round(goods/b*100)/100});content(c.lines);}
   if(shipNet>0)items.push({description:`משלוח – ${({ship:"לכתובת אחת",indiv:"לכל מקבל",vip:"VIP לכל מקבל",pickup:"איסוף"})[o.dlvMode]||""}`.trim(),quantity:1,unitprice:Math.round(shipNet*100)/100});
   return items;}
+// on final approval: an "הזמנה" document is created in iCount (not a tax document). Later, in iCount, it is converted to an invoice / receipt / delivery note as usual – the builder follows that chain for "שולם".
+async function icountAutoOrder(o){
+  if(db.settings.icountAutoOrder===false||(o.icountDocs||[]).some(d=>d.doctype==="order"))return;
+  try{const items=icountItems(o);if(!items.length)return;
+    const j=await api("icount",{method:"POST",body:{doctype:"order",client_name:o.customer?.org||o.customer?.name||"לקוח",email:o.customer?.email||"",phone:o.customer?.phone||"",items,comments:`הזמנה ${o.ref}${o.customer?.name&&o.customer?.org?` · איש קשר: ${o.customer.name}`:""}${o.agent?` · ${o.agent}`:""}`}});
+    if(!j.ok){toast("ההזמנה לא נוצרה ב-iCount: "+(j.error||""),7000);return;}
+    const doc={doctype:"order",docnum:j.docnum,url:j.url,at:new Date().toISOString()};(o.icountDocs??=[]).push(doc);if(!o.icount)o.icount=doc;touch();
+    toast(`✓ נוצרה ב-iCount הזמנה מס׳ ${j.docnum}`);if(selOrder===o.id)renderOrder();setTimeout(icountStockSync,3000);
+  }catch(e){toast("ההזמנה לא נוצרה ב-iCount (שגיאת חיבור)",6000);}}
 // choose the document; a tax invoice-receipt also needs how the customer paid
 function icountChoose(o){
   const total=Math.round(num(o.gross)*100)/100,today=new Date().toISOString().slice(0,10);
@@ -1237,7 +1246,7 @@ function renderOrder(){
     else if(k==="qty"){l.qty=num(el.value);l.perBox=0;}else l.unitCost=el.value.trim()===""?undefined:num(el.value);re();});
   document.querySelectorAll("[data-ldel]").forEach(b=>b.onclick=async()=>{o.lines.splice(+b.dataset.ldel,1);re();});
   if($("#oAddLine"))$("#oAddLine").onclick=async()=>{(o.lines??=[]).push({sku:"",name:"",qty:num(o.boxes)||1,perBox:1});re();};
-  const setSt=(st,msg)=>{const was=o.status;o.status=st;if(st==="approved"&&was!=="approved")setTimeout(()=>stageChanged(o),50);if(st!=="approved")o.ful="";if(st==="approved"){o.frozen=JSON.parse(JSON.stringify(orderCalc({...o,status:"pending"})));o.approvedAt=new Date().toISOString();}else{delete o.frozen;delete o.approvedAt;}touch();renderOrder();toast(msg);};
+  const setSt=(st,msg)=>{const was=o.status;o.status=st;if(st==="approved"&&was!=="approved"){setTimeout(()=>stageChanged(o),50);setTimeout(()=>icountAutoOrder(o),400);}if(st!=="approved")o.ful="";if(st==="approved"){o.frozen=JSON.parse(JSON.stringify(orderCalc({...o,status:"pending"})));o.approvedAt=new Date().toISOString();}else{delete o.frozen;delete o.approvedAt;}touch();renderOrder();toast(msg);};
   if($("#oApprove"))$("#oApprove").onclick=async()=>{const short=c.lines.filter(l=>l.sku&&(S[l.sku]?.available??0)<0);
     if(c.missing&&!await askC(`ל-${c.missing} שורות אין עלות, ולכן הרווח שיוקפא יהיה גבוה מהאמת. לאשר בכל זאת?`))return;
     if(!await askC("לאשר סופית? העלות תוקפא, ההזמנה תיספר ברווח והמוצרים יירדו מהמלאי."))return;setSt("approved","ההזמנה אושרה ✓");};
@@ -1272,13 +1281,15 @@ function renderSups(){
 }
 
 // ---------- settings ----------
-function bindAutoMail(){if($("#setIcSync"))$("#setIcSync").onchange=e=>{db.settings.icountSyncOff=!e.target.checked;touch();toast(e.target.checked?"✓ סנכרון אוטומטי ל-iCount פעיל":"סנכרון ל-iCount כבוי");};
+function bindAutoMail(){if($("#setIcOrder"))$("#setIcOrder").onchange=e=>{db.settings.icountAutoOrder=e.target.checked;touch();toast(e.target.checked?"✓ הזמנה תיווצר ב-iCount בכל אישור":"לא תיווצר הזמנה ב-iCount באישור");};
+  if($("#setIcSync"))$("#setIcSync").onchange=e=>{db.settings.icountSyncOff=!e.target.checked;touch();toast(e.target.checked?"✓ סנכרון אוטומטי ל-iCount פעיל":"סנכרון ל-iCount כבוי");};
   if($("#setIcType"))$("#setIcType").onchange=e=>{db.settings.icountType=e.target.value;touch();toast("✓ נשמר");};
   if($("#icStat"))api("icount",{qs:"&test=1"}).then(j=>{$("#icStat").textContent=j.ok?"✓ מחובר ל-iCount":j.error==="no token"?"⚪ עוד לא מחובר (חסר ICOUNT_TOKEN ב-Vercel)":"⚠ iCount דחה את החיבור: "+j.error;}).catch(()=>{});if($("#setAutoMail"))$("#setAutoMail").onchange=e=>{db.settings.autoCustMail=e.target.checked;touch();toast(e.target.checked?"✓ מייל אוטומטי ללקוחות הופעל":"מייל אוטומטי ללקוחות כבוי");};}
 function renderSettings(){setTimeout(bindAutoMail,0);
   $("#view").innerHTML=`<h1>הגדרות</h1><p class="sub">קטגוריות, גיבוי ויציאה.</p>
   <h2>iCount</h2><div class="panel"><label class="f" style="max-width:320px">איזה מסמך ליצור מהזמנה מאושרת<select id="setIcType">${Object.entries(IC_TYPES).map(([k,l])=>`<option value="${k}" ${(db.settings.icountType||"deal")===k?"selected":""}>${l}</option>`).join("")}</select></label>
     <p class="muted" style="margin:6px 0 0" id="icStat">בודק חיבור…</p>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:8px;cursor:pointer"><input type="checkbox" id="setIcOrder" ${db.settings.icountAutoOrder===false?"":"checked"} style="width:18px;height:18px"> 📋 באישור סופי ליצור ב-iCount מסמך "הזמנה" (לא מסמך מס – ממנו ממירים ב-iCount לחשבונית / קבלה / ת. משלוח)</label>
     <label style="display:flex;gap:8px;align-items:center;margin-top:8px;cursor:pointer"><input type="checkbox" id="setIcSync" ${db.settings.icountSyncOff?"":"checked"} style="width:18px;height:18px"> 🔄 סנכרון אוטומטי של המוצרים ל-iCount (מוצר חדש, שינוי שם, מחיר או עלות, מחיקה)</label>
     <p class="muted" style="margin:4px 0 0">${db.products.filter(p=>p.icountId&&p.icountSig===icSig(p)).length} מתוך ${db.products.length} מוצרים מסונכרנים. המלאי עצמו מנוהל רק כאן.</p><p class="muted" style="margin:4px 0 0">ההמלצה: "חשבון עסקה" – לא מסמך מס, ואחרי התשלום ממירים אותו ב-iCount לחשבונית. החיבור דורש מפתח API מ-iCount (הגדרות ← API) שמוכנס ב-Vercel בשם ICOUNT_TOKEN.</p></div>
   <h2>עדכונים ללקוחות</h2><div class="panel"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-weight:600"><input type="checkbox" id="setAutoMail" ${db.settings.autoCustMail?"checked":""} style="width:18px;height:18px"> 📧 לשלוח ללקוח מייל אוטומטי בכל מעבר שלב (אושרה · בהכנה · מוכנה · יצאה)</label>
