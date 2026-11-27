@@ -2036,13 +2036,14 @@ new ResizeObserver(()=>recompose(false)).observe(scene);
 })();
 // phone: while scrolling the products, keep a "reveal" button at hand (it just presses the existing reveal button)
 (()=>{const fab=document.getElementById("fabReveal"),bar=document.getElementById("aibar");let barSeen=true,gridSeen=false;const desk=matchMedia("(min-width:761px)");
-  const sync=()=>{const go=document.getElementById("aiGo");const show=!!go&&!go.disabled&&(!barSeen||(desk.matches&&gridSeen&&scrollY>250))&&!document.getElementById("buildView").hidden;
+  const sync=()=>{const go=document.getElementById("aiGo"),vg=document.getElementById("veilGo"),vr=vg&&!document.getElementById("veil").hidden?vg.getBoundingClientRect():null,veilSeen=!!vr&&vr.bottom>0&&vr.top<innerHeight;const show=!!go&&!go.disabled&&!veilSeen&&(!barSeen||(desk.matches&&gridSeen&&scrollY>250))&&!document.getElementById("buildView").hidden;
     if(show){fab.hidden=false;requestAnimationFrame(()=>fab.classList.remove("off"));}else{fab.classList.add("off");}};
   fab.classList.add("off");
   new IntersectionObserver(es=>{barSeen=es[es.length-1].isIntersecting;sync();}).observe(bar);
   new IntersectionObserver(es=>{gridSeen=es[es.length-1].isIntersecting;sync();},{rootMargin:"-30% 0px -30% 0px"}).observe(document.getElementById("grid"));
   addEventListener("scroll",()=>{clearTimeout(sync.t);sync.t=setTimeout(sync,120);},{passive:true});
   new MutationObserver(sync).observe(bar,{childList:true,subtree:true});
+  new MutationObserver(sync).observe(document.getElementById("veil"),{attributes:true,attributeFilter:["hidden"]});
   new MutationObserver(sync).observe(document.getElementById("buildView"),{attributes:true,attributeFilter:["hidden"]});
   fab.onclick=()=>{const go=document.getElementById("aiGo");if(!go)return;
     document.getElementById("scene").scrollIntoView({behavior:"smooth",block:"start"});
