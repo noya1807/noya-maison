@@ -372,7 +372,7 @@ export default async function handler(req, res) {
     if (a === "icountinv" && req.method === "POST") {   // owner only: iCount inventory calls (backup → delete old items → add the products), approved by the owner
       const tok = process.env.ICOUNT_TOKEN; if (!tok) { res.status(200).json({ status: false, reason: "no token" }); return; }
       const b = await readBody(req) || {}; const m = String(b.method || "");
-      if (!/^inventory\/[a-z_]{2,40}$/.test(m) && !/^doc\/(info|search|list|get_doc_url)$/.test(m) && m !== "bank/get_list") { res.status(400).json({ status: false, reason: "not allowed" }); return; }
+      if (!/^inventory\/[a-z_]{2,40}$/.test(m) && !/^doc\/(info|search|list|get_doc_url)$/.test(m) && m !== "bank/get_list" && !/^client\/(find|get_list|info)$/.test(m)) { res.status(400).json({ status: false, reason: "not allowed" }); return; }
       try { const r = await fetch("https://api.icount.co.il/api/v3.php/" + m, { method: "POST", headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" }, body: JSON.stringify(b.body || {}) });
         const j = await r.json().catch(() => ({})); delete j.api; res.status(200).json(j); } catch (e) { res.status(200).json({ status: false, reason: String(e.message || e) }); } return;
     }
