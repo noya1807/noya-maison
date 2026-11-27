@@ -3819,11 +3819,13 @@ const store={mode:"local",
       if(r.ok&&j&&("catalog" in j)){this.mode="server";return j.catalog;}}catch(e){}
     this.mode="local";try{const s=localStorage.getItem("noya_catalog");return s?JSON.parse(s):null;}catch(e){return null;}
   },
-  async check(key){if(this.mode!=="server")return true;const r=await fetch(CAT_ENDPOINT+"?auth=1",{headers:{"x-admin-key":key}});return r.ok;},
-  async upload(id,dataUrl,key){const r=await fetch(CAT_ENDPOINT+"?upload="+encodeURIComponent(id),{method:"POST",headers:{"Content-Type":"application/json","x-admin-key":key},body:JSON.stringify({orig:dataUrl})});
+  async check(key){if(this.mode!=="server")return true;   // log in through the back office (lockout + HttpOnly session cookie); the password is not kept in the page
+    const r=await fetch("/api/office?a=login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:key})});return r.ok;},
+  async session(){if(this.mode!=="server")return true;try{const r=await fetch("/api/office?a=me",{cache:"no-store"});return r.ok;}catch(e){return false;}},
+  async upload(id,dataUrl,key){const r=await fetch(CAT_ENDPOINT+"?upload="+encodeURIComponent(id),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orig:dataUrl})});
     const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||r.status);return j.url;},
   async save(cat,key){
-    if(this.mode==="server"){const r=await fetch(CAT_ENDPOINT,{method:"PUT",headers:{"Content-Type":"application/json","x-admin-key":key},body:JSON.stringify({catalog:cat})});
+    if(this.mode==="server"){const r=await fetch(CAT_ENDPOINT,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({catalog:cat})});
       const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||r.status);return cat;}
     localStorage.setItem("noya_catalog",JSON.stringify(cat));return cat;
   }};
@@ -3873,10 +3875,11 @@ async function loadSharedBox(){
 
 const ROLE_OPTS=[["stand","עומד"],["plat","מגש / משטח (מוצרים עומדים עליו)"],["lean","נשען על האריזה"],["lie","שוכב באלכסון"]];
 const isDirty=()=>JSON.stringify(draft)!==JSON.stringify(catalog);
-function openAdmin(){
+async function openAdmin(){
   const go=()=>{draft=JSON.parse(JSON.stringify(catalog));pendingOrig.clear();showView("admin");renderAdmin();};
+  if(store.mode==="server"&&!adminKey&&await store.session())adminKey="session";   // already logged in to the back office
   if(store.mode==="server"&&!adminKey){$("pwModal").hidden=false;$("pwIn").value="";$("pwErr").hidden=true;$("pwIn").focus();
-    $("pwOk").onclick=async()=>{const k=$("pwIn").value;if(await store.check(k)){adminKey=k;$("pwModal").hidden=true;go();}else{$("pwErr").hidden=false;$("pwErr").textContent="הסיסמה שגויה";}};
+    $("pwOk").onclick=async()=>{const k=$("pwIn").value;if(await store.check(k)){adminKey="session";$("pwModal").hidden=true;go();}else{$("pwErr").hidden=false;$("pwErr").textContent="הסיסמה שגויה";}};
     $("pwCancel").onclick=()=>{$("pwModal").hidden=true;location.hash="";};return;}
   go();
 }
@@ -3975,7 +3978,7 @@ async function aiCut(){
   const b=$("addAiCut"),m=$("addAiMsg");b.hidden=false;b.disabled=true;m.hidden=false;m.textContent="מסיר רקע עם AI… בדרך כלל 15–40 שניות";
   try{const oc=document.createElement("canvas"),s=Math.min(1,1024/Math.max(addImg.naturalWidth,addImg.naturalHeight));oc.width=Math.round(addImg.naturalWidth*s);oc.height=Math.round(addImg.naturalHeight*s);
     oc.getContext("2d").drawImage(addImg,0,0,oc.width,oc.height);
-    const r=await fetch(window.NOYA_CUT_ENDPOINT||"api/cutout",{method:"POST",headers:{"Content-Type":"application/json","x-admin-key":adminKey},body:JSON.stringify({image:oc.toDataURL("image/jpeg",.9)})});
+    const r=await fetch(window.NOYA_CUT_ENDPOINT||"api/cutout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:oc.toDataURL("image/jpeg",.9)})});
     const j=await r.json().catch(()=>({}));if(!r.ok||!j.image)throw new Error(j.error||r.status);
     const im=new Image();await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src=j.image;});
     const c=document.createElement("canvas");c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext("2d").drawImage(im,0,0);

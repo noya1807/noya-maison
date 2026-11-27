@@ -1,11 +1,12 @@
 // Background removal for products added in the admin screen (GPT Image, transparent output). Admin only.
-// POST {image: dataURL} with header x-admin-key → {image: dataURL (PNG with transparency)}
+// POST {image: dataURL} as a logged-in admin (session cookie; old x-admin-key header is transitional) → {image: dataURL (PNG with transparency)}
+import { adminOk } from "./_auth.js";
 export const config = { maxDuration: 120 };
 const MODEL = process.env.OPENAI_CUTOUT_MODEL || process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ error: "POST only" }); return; }
-  if (!process.env.ADMIN_PASSWORD || req.headers["x-admin-key"] !== process.env.ADMIN_PASSWORD) { res.status(401).json({ error: "סיסמת מנהל שגויה" }); return; }
+  { const a = await adminOk(req); if (!a.ok) { res.status(a.status).json({ error: a.error }); return; } }
   const key = process.env.OPENAI_API_KEY;
   if (!key) { res.status(500).json({ error: "OPENAI_API_KEY is not set" }); return; }
   try {

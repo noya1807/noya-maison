@@ -1,12 +1,13 @@
-// NOYA catalogue storage (Vercel Blob). GET is public; saving needs the ADMIN_PASSWORD (header x-admin-key).
+// NOYA catalogue storage (Vercel Blob). GET is public; saving needs an admin: the back-office session cookie
+// (preferred), or the old x-admin-key header (transitional, rate-limited) — see _auth.js.
 // GET            → {catalog} (null until the first save; the app then uses its built-in catalogue)
-// GET ?auth=1    → 200 if the password is right
+// GET ?auth=1    → 200 if the caller is an admin
 // POST ?upload=id {orig: dataURL}  → {url}   (original photo of a new product, used by the AI designer)
 // PUT {catalog}  → saves the whole catalogue
 import { put, list } from "@vercel/blob";
+import { adminOk } from "./_auth.js";
 
 const KEY = "catalog/catalog.json";
-const authed = req => !!process.env.ADMIN_PASSWORD && req.headers["x-admin-key"] === process.env.ADMIN_PASSWORD;
 
 // Public URL of a blob at a fixed path, built from the store id inside the token. Reading it this way costs
 // no Blob "operation" (only data transfer) — unlike list(), which counts as an advanced operation.
@@ -28,12 +29,12 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   try {
     if (req.method === "GET") {
-      if (req.query?.auth) { res.status(authed(req) ? 200 : 401).json({ ok: authed(req) }); return; }
+      if (req.query?.auth) { const a = await adminOk(req); res.status(a.ok ? 200 : a.status).json({ ok: a.ok, ...(a.ok ? {} : { error: a.error }) }); return; }
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");   // edge-cached: one read per minute, not per visitor
       res.status(200).json({ catalog: await readCatalog() });
       return;
     }
-    if (!authed(req)) { res.status(401).json({ error: "סיסמת מנהל שגויה" }); return; }
+    { const a = await adminOk(req); if (!a.ok) { res.status(a.status).json({ error: a.error }); return; } }
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     if (req.method === "POST" && req.query?.upload) {
       const id = String(req.query.upload).replace(/[^a-z0-9]/gi, "").slice(0, 20);
