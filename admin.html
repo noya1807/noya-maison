@@ -1330,7 +1330,9 @@ async function updateMap(){const st=$("#mapSt"),C=(m,b)=>api("icountinv",{method
   try{st.textContent="קורא כתובות לקוחות מ-iCount…";const L=await icClients();let i=0;
     for(let k=0;k<L.length;k+=6){await Promise.all(L.slice(k,k+6).map(async c=>{try{const r=await C("client/info",{client_id:c.id});add(r.client_info?.bus_city);}catch(e){}}));i=Math.min(L.length,k+6);if(st.isConnected)st.textContent=`קורא כתובות לקוחות מ-iCount… ${i}/${L.length}`;}
     db.orders.filter(o=>!["lead","cancelled"].includes(o.status)).forEach(o=>add(o.dlv?.city));
-    const j=await api("mapdata",{method:"POST",body:{cities}});db.settings.mapAt=new Date().toISOString();touch();
+    db.settings.mapPlaces=num($("#mapPlaces")?.value)||0;db.settings.mapExtra=($("#mapExtra")?.value||"").trim();
+    db.settings.mapExtra.split(/[,،\n]/).map(x=>x.trim()).filter(Boolean).forEach(c=>add(c));
+    const j=await api("mapdata",{method:"POST",body:{cities,places:db.settings.mapPlaces}});db.settings.mapAt=new Date().toISOString();touch();
     if(st.isConnected)st.textContent=`✓ המפה עודכנה – ${j.count} ערים ויישובים`;}catch(e){if(st.isConnected)st.textContent="העדכון נכשל – נסו שוב";}}
 function bindAutoMail(){if($("#mapUpd"))$("#mapUpd").onclick=async()=>updateMap();["#seOn","#seName","#seDate","#seDl","#seDlL","#seCap","#seFrom"].forEach(k=>{if($(k))$(k).onchange=()=>{db.settings.season={on:$("#seOn").checked,name:$("#seName").value.trim(),date:$("#seDate").value,deadline:$("#seDl").value,deadlineLabel:$("#seDlL").value.trim(),capacity:num($("#seCap").value)||0,from:$("#seFrom").value};touch();toast("✓ נשמר – יופיע בבונה תוך כמה דקות");};});
 if($("#setIcOrder"))$("#setIcOrder").onchange=e=>{db.settings.icountAutoOrder=e.target.checked;touch();toast(e.target.checked?"✓ הזמנה תיווצר ב-iCount בכל אישור":"לא תיווצר הזמנה ב-iCount באישור");};
@@ -1346,7 +1348,9 @@ function renderSettings(){setTimeout(bindAutoMail,0);
       <label class="f">כמה מארזים אפשר לייצר לחג<input id="seCap" inputmode="numeric" dir="ltr" value="${esc(db.settings.season?.capacity||"")}" placeholder="למשל 15000"></label><label class="f">סופרים הזמנות מתאריך<input id="seFrom" type="date" value="${esc(db.settings.season?.from||"")}"></label></div>
     <p class="muted" style="margin:6px 0 0">"נותרו X% מקומות" מוצג רק כשנשאר 60% או פחות, לפי המארזים בהזמנות הממתינות והמאושרות מאז התאריך שבחרתם. הפס מתעדכן בבונה תוך כמה דקות.</p></div>
   <h2>🗺 מפת המשלוחים בבונה</h2><div class="panel"><p class="muted" style="margin-top:0">הכפתור "📍 לאן שלחנו" בבונה מציג מפה של הערים שאליהן נשלחו מארזים – רק ערים וכמויות, בלי שמות לקוחות. המידע נאסף מכתובות הלקוחות ב-iCount ומההזמנות בבונה.</p>
-    <div class="row" style="justify-content:flex-start;gap:8px"><button class="btn" id="mapUpd">🔄 עדכון המפה עכשיו</button><span class="muted" id="mapSt">${db.settings.mapAt?`עודכן לאחרונה: ${new Date(db.settings.mapAt).toLocaleDateString("he-IL")}`:"עוד לא עודכנה"}</span></div></div>
+    <div class="grid"><label class="f">לכמה ערים, יישובים וקיבוצים שלחנו (מוצג בכותרת)<input id="mapPlaces" inputmode="numeric" dir="ltr" value="${esc(db.settings.mapPlaces??200)}"></label>
+      <label class="f">יישובים נוספים שאליהם שלחנו (מופרדים בפסיק)<input id="mapExtra" value="${esc(db.settings.mapExtra??"אילת")}"></label></div>
+    <div class="row" style="justify-content:flex-start;gap:8px;margin-top:8px"><button class="btn" id="mapUpd">🔄 עדכון המפה עכשיו</button><span class="muted" id="mapSt">${db.settings.mapAt?`עודכן לאחרונה: ${new Date(db.settings.mapAt).toLocaleDateString("he-IL")}`:"עוד לא עודכנה"}</span></div></div>
   <h2>iCount</h2><div class="panel"><label class="f" style="max-width:320px">איזה מסמך ליצור מהזמנה מאושרת<select id="setIcType">${Object.entries(IC_TYPES).map(([k,l])=>`<option value="${k}" ${(db.settings.icountType||"deal")===k?"selected":""}>${l}</option>`).join("")}</select></label>
     <p class="muted" style="margin:6px 0 0" id="icStat">בודק חיבור…</p>
     <label style="display:flex;gap:8px;align-items:center;margin-top:8px;cursor:pointer"><input type="checkbox" id="setIcOrder" ${db.settings.icountAutoOrder===false?"":"checked"} style="width:18px;height:18px"> 📋 באישור סופי ליצור ב-iCount מסמך "הזמנה" (לא מסמך מס – ממנו ממירים ב-iCount לחשבונית / קבלה / ת. משלוח)</label>

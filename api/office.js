@@ -390,7 +390,8 @@ export default async function handler(req, res) {
     if (a === "mapdata" && req.method === "POST") {   // owner only: delivered cities (counts only)
       const b = await readBody(req) || {}; const cities = {};
       Object.entries(b.cities || {}).slice(0, 2000).forEach(([k, v]) => { const n = String(k).slice(0, 40).trim(); if (n && +v > 0) cities[n] = Math.round(+v); });
-      await put(MAP_CUR, JSON.stringify({ cities, updatedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 300 });
+      const places = Math.max(0, Math.min(5000, Math.round(+b.places || 0)));
+      await put(MAP_CUR, JSON.stringify({ cities, places, updatedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 300 });
       res.status(200).json({ ok: true, count: Object.keys(cities).length }); return;
     }
     if (a === "clients" && req.method === "POST") {   // owner only: save the personal links list

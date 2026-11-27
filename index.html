@@ -3585,7 +3585,8 @@ async function openMap(){let m=$("ilMapModal");if(!m){m=document.createElement("
   const list=Object.entries(agg).sort((a,b)=>b[1]-a[1]),mx=list[0]?.[1]||1;
   $("ilDots").innerHTML=list.map(([n,v],i)=>{const [x,y]=ilXY(IL_C[n]);const r=3+9*Math.sqrt(v/mx);return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" class="il-dot" style="animation-delay:${(i*0.06).toFixed(2)}s"><title>${esc(n)}</title></circle>`;}).join("");
   const boxes=(+document.getElementById("boxesSold")?.dataset?.to||48767).toLocaleString("he-IL"),orgs=(+document.getElementById("orgsCount")?.dataset?.to||606).toLocaleString("he-IL");
-  $("ilSub").innerHTML=`<b>${boxes}+</b> מארזים · <b>${orgs}+</b> ארגונים · ${list.length?`<b>${list.length}</b> ערים ויישובים`:"מאילת ועד קריית שמונה"}`;
+  const places=Math.max(list.length,+j.places||0);
+  $("ilSub").innerHTML=`<b>${boxes}+</b> מארזים · <b>${orgs}+</b> ארגונים · <b>${places}+</b> ערים, יישובים וקיבוצים<br>מגבול הלבנון ועד אילת`;
   $("ilTop").innerHTML=list.slice(0,8).map(([n])=>`<li>${esc(n)}</li>`).join("");}
 function orderPayload(ref,via){const g=id=>($(id)&&$(id).value||"").trim();
   const one=()=>({items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost()});
