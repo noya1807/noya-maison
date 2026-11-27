@@ -379,7 +379,7 @@ export default async function handler(req, res) {
     if (a === "icount" && req.method === "POST") {   // owner only: create a document in iCount from an approved order (token in ICOUNT_TOKEN, set by the owner in Vercel)
       const tok = process.env.ICOUNT_TOKEN; if (!tok) { res.status(200).json({ ok: false, error: "חסר ICOUNT_TOKEN ב-Vercel" }); return; }
       const b = await readBody(req) || {};
-      const doctype = ["deal", "offer", "order", "invoice", "invrec"].includes(b.doctype) ? b.doctype : "deal";
+      const doctype = ["deal", "offer", "order", "invoice", "invrec", "delcert"].includes(b.doctype) ? b.doctype : "deal";
       const items = (Array.isArray(b.items) ? b.items : []).slice(0, 200).map(i => ({ description: String(i.description || "").slice(0, 200), quantity: Math.max(0, +i.quantity || 0), unitprice: Math.round((+i.unitprice || 0) * 100) / 100,
         ...(i.sku ? { sku: String(i.sku).slice(0, 40) } : {}), ...(+i.inventory_item_id ? { inventory_item_id: +i.inventory_item_id } : {}) })).filter(i => i.description && i.quantity);
       if (!items.length || !b.client_name) { res.status(400).json({ ok: false, error: "חסרים לקוח או שורות" }); return; }
