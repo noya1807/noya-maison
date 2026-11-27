@@ -723,12 +723,25 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .jp-again{position:relative;z-index:2;margin:4px 0 0!important;width:auto!important;padding:6px 16px!important;border:1px solid rgba(227,197,140,.7);border-radius:99px;background:rgba(255,246,210,.06);color:#ffe6a3;font:inherit;font-size:13px;font-weight:800;cursor:pointer;opacity:0;transform:scale(.85);transition:opacity .45s .15s,transform .45s .15s}
 .jp-again:hover{background:rgba(255,246,210,.16)}
 #surAct:empty{display:none}
-/* HOLD buttons: a ring of little bulbs that blinks (steady lit once held) */
-.hold:not(:disabled){border:3px dotted #fff3c4!important;padding:2px 0!important;animation:holdBulb .6s steps(1) infinite}
-.reel-col:nth-child(2) .hold:not(:disabled){animation-delay:.2s}.reel-col:nth-child(3) .hold:not(:disabled){animation-delay:.4s}.reel-col:nth-child(4) .hold:not(:disabled){animation-delay:.1s}
-@keyframes holdBulb{0%{border-color:#fff3c4;box-shadow:0 2px 0 #6e4d3b,0 0 9px rgba(255,214,106,.85)}50%{border-color:#9c7740;box-shadow:0 2px 0 #6e4d3b}}
-.hold[aria-pressed="true"]:not(:disabled){animation:none;border-color:#ffd76a!important;box-shadow:0 2px 0 #5a0f08,0 0 12px rgba(255,214,106,.95)}
-@media (prefers-reduced-motion:reduce){.hold:not(:disabled){animation:none}}
+/* HOLD buttons: big round bulbs running around the button + a gentle "breathing" – says "press me". Held = bulbs steady lit */
+.hold{position:relative}
+.hold:not(:disabled){animation:holdBreath 1.6s ease-in-out infinite}
+.hold:not(:disabled)::before{content:"";position:absolute;inset:-5px -4px;border-radius:12px;pointer-events:none;
+  --b:radial-gradient(circle,#fff6d2 0 2.6px,rgba(255,214,106,.55) 3.4px,transparent 4.4px);
+  background:var(--b) 0 0/13px 9px repeat-x,var(--b) 0 100%/13px 9px repeat-x,var(--b) 0 0/9px 13px repeat-y,var(--b) 100% 0/9px 13px repeat-y;
+  filter:drop-shadow(0 0 2px rgba(255,214,106,.9));animation:holdChase .7s linear infinite}
+.reel-col:nth-child(2) .hold:not(:disabled)::before{animation-delay:-.23s}.reel-col:nth-child(3) .hold:not(:disabled)::before{animation-delay:-.46s}
+@keyframes holdChase{to{background-position:13px 0,-13px 100%,0 -13px,100% 13px}}
+@keyframes holdBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+.hold:not(:disabled):hover{animation-duration:.8s}.hold:not(:disabled):hover::before{animation-duration:.25s}
+.hold[aria-pressed="true"]:not(:disabled){animation:none}
+.hold[aria-pressed="true"]:not(:disabled)::before{animation:none;filter:drop-shadow(0 0 4px rgba(255,214,106,1))}
+.hold-hint{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);z-index:6;white-space:nowrap;direction:rtl;background:#fffaf3;color:#3f271c;font-weight:800;font-size:13px;padding:7px 14px;border-radius:99px;box-shadow:0 0 0 2px #e3c58c,0 8px 20px rgba(0,0,0,.45);animation:hintIn .4s cubic-bezier(.2,1.5,.4,1),hintBob 1.2s ease-in-out .4s infinite;pointer-events:none}
+.hold-hint::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:7px solid transparent;border-top-color:#fffaf3}
+@keyframes hintIn{from{opacity:0;transform:translate(-50%,8px) scale(.85)}to{opacity:1;transform:translateX(-50%)}}
+@keyframes hintBob{50%{transform:translate(-50%,-4px)}}
+@media (max-width:480px){.hold-hint{font-size:11.5px;padding:6px 10px}}
+@media (prefers-reduced-motion:reduce){.hold:not(:disabled),.hold:not(:disabled)::before,.hold-hint{animation:none}}
 .jp-btns{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:8px}.jp-btns .jp-take,.jp-btns .jp-again{margin:0!important}.jp-take:disabled{opacity:.6;cursor:default}
 @keyframes jtPulse{50%{box-shadow:0 0 0 2px #fff6d2,0 0 30px rgba(255,214,106,1)}}
 @media (max-width:480px){.jp-take{font-size:13.5px;padding:8px 16px!important}}.jackpot.jp-flash b,.jackpot.jp-flash small{animation:jpTx .5s steps(1) 3}
@@ -2353,6 +2366,7 @@ function surWin(pick,tick){if(pick.jackpot)return surJackWin(pick,tick);clearInt
   jack.innerHTML=`<b>🎉 בינגו! פגעתם באחד מ־${combosShort()}</b><small>${ils(r2(pick.sum))} למארז</small>${JP_TAKE}`;$("surAct").innerHTML=surActs();
   requestAnimationFrame(buildJB);setTimeout(()=>jack.querySelectorAll(".jp-take,.jp-again").forEach(t=>t.classList.add("in")),1500);
   const box=d.querySelector(".mr.sur");slot.classList.remove("spinning");slot.classList.add("win");box.classList.add("win");sWin();buzz([12,50,12,50,30]);
+  try{if(!localStorage.getItem("noya_hold_hint")&&surN()>1){localStorage.setItem("noya_hold_hint","1");setTimeout(()=>{const r=$("surReels");if(!r||sur.busy)return;const h=document.createElement("div");h.className="hold-hint";h.textContent="👆 אהבתם מוצר? נעלו אותו וסובבו שוב";r.appendChild(h);const bye=()=>{h.remove();d.removeEventListener("click",bye,true);};setTimeout(bye,4500);d.addEventListener("click",bye,true);},1700);}}catch(e){}
   surCoins();surFountain();
   setTimeout(()=>{slot.classList.remove("win");box.classList.remove("win");},2800);}
 function surCoins(){const tray=$("surTray"),jack=$("surJack");if(!tray||!jack)return;const tr=tray.getBoundingClientRect(),jr=jack.getBoundingClientRect(),reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
