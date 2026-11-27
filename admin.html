@@ -171,8 +171,9 @@ async function icountSync(){
   try{const C=(m,b)=>api("icountinv",{method:"POST",body:{method:"inventory/"+m,body:b}});
     const todo=db.products.filter(p=>p.sku&&p.icountSig!==icSig(p));
     for(const p of todo.slice(0,60)){const sig=icSig(p),body={sku:p.sku,description:p.name,unitprice:+(+p.salePrice||0).toFixed(2),cost_amount:+(+costOf(p.sku)||0).toFixed(2),long_description:(p.setInfo||"").slice(0,250)};
-      let r=p.icountId?await C("update_item",{inventory_item_id:+p.icountId,...body}):await C("add_item",body);
-      if(!r.status&&p.icountId&&r.reason==="item_not_found"){r=await C("add_item",body);}
+      const st0=Math.max(0,Math.round(stockAll()[p.sku]?.stock||0));   // "stock" on creation makes iCount manage quantities for the item
+      let r=p.icountId?await C("update_item",{inventory_item_id:+p.icountId,...body}):await C("add_item",{...body,stock:st0});
+      if(!r.status&&p.icountId&&r.reason==="item_not_found"){r=await C("add_item",{...body,stock:st0});}
       if(r.status){if(r.inventory_item_id)p.icountId=r.inventory_item_id;p.icountSig=sig;n++;}else{bad++;p.icountErr=r.reason||"error";}}
     const del=[...(db.settings.icountDel||[])];for(const id of del){const r=await C("delete_item",{inventory_item_id:+id});if(r.status||r.reason==="item_not_found"){db.settings.icountDel=db.settings.icountDel.filter(x=>x!==id);n++;}else bad++;}
     if(n){touch();}if(bad)setSave(`⚠ ${bad} מוצרים לא סונכרנו ל-iCount`,"bad");
@@ -184,10 +185,15 @@ async function icountStockSync(){
   try{const C=(m,b)=>api("icountinv",{method:"POST",body:{method:"inventory/"+m,body:b}});
     const j=await (await fetch(API+"?a=icount&test=1&probe=inventory/get_items",{credentials:"same-origin"})).json();
     const cur={};Object.values(j.items||{}).forEach(x=>cur[x.inventory_item_id]=Number(x.stock)||0);const S=stockAll();
-    for(const p of db.products){if(!p.icountId||!(p.icountId in cur))continue;const want=Math.round(S[p.sku]?.stock||0),have=cur[p.icountId],d=want-have;if(!d)continue;
+    const raw={};Object.values(j.items||{}).forEach(x=>raw[x.inventory_item_id]=x.stock);
+    for(const p of db.products){if(!p.icountId||!(p.icountId in cur))continue;const want=Math.max(0,Math.round(S[p.sku]?.stock||0));
+      if(raw[p.icountId]===""||raw[p.icountId]==null){   // item created without quantity tracking: re-create it with its stock (no documents point to it yet)
+        const body={sku:p.sku,description:p.name,unitprice:+(+p.salePrice||0).toFixed(2),cost_amount:+(+costOf(p.sku)||0).toFixed(2),long_description:(p.setInfo||"").slice(0,250),stock:want};
+        const d0=await C("delete_item",{inventory_item_id:+p.icountId});const a0=d0.status?await C("add_item",body):d0;if(a0.status&&a0.inventory_item_id){p.icountId=a0.inventory_item_id;p.icountSig=icSig(p);fixed++;dirty=true;}else bad++;continue;}
+      const have=cur[p.icountId],d=want-have;if(!d)continue;
       const r=d>0?await C("add_stock",{inventory_item_id:+p.icountId,quantity:d,comment:"סנכרון מלאי מממשק נויה"}):await C("reduce_stock",{inventory_item_id:+p.icountId,quantity:-d,comment:"סנכרון מלאי מממשק נויה"});
       r.status?fixed++:bad++;}
-    db.settings.icountStockAt=new Date().toISOString();if(bad)setSave(`⚠ מלאי של ${bad} מוצרים לא סונכרן ל-iCount`,"bad");
+    db.settings.icountStockAt=new Date().toISOString();if(dirty)touch();if(bad)setSave(`⚠ מלאי של ${bad} מוצרים לא סונכרן ל-iCount`,"bad");
   }catch(e){}finally{icountStockSync.busy=false;}return fixed;}
 // ---------- helpers on the data ----------
 const catByName=n=>db.categories.find(c=>c.name.trim()===String(n||"").trim());
