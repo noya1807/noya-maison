@@ -246,7 +246,7 @@ export default async function handler(req, res) {
       if (++inboxCount > INBOX_DAILY) { res.status(429).json({ error: "limit" }); return; }
       const o = await readBody(req);
       const raw = JSON.stringify(o || {});
-      if (raw.length > 40000 || !/^NOYA-[A-Z0-9-]{4,24}$/i.test(String(o?.ref || ""))) { res.status(400).json({ error: "bad order" }); return; }
+      if (raw.length > 40000 || !/^(NOYA|Q)-[A-Z0-9-]{4,24}$/i.test(String(o?.ref || ""))) { res.status(400).json({ error: "bad order" }); return; }
       o.receivedAt = new Date().toISOString();
       if (/^NOYA-LOADTEST/i.test(String(o.ref))) { res.status(200).json({ ok: true, test: true }); return; }   // load test: validated, never stored or mailed
       await put(`${INBOX_PREFIX}${String(o.ref).replace(/[^A-Z0-9-]/gi, "")}.bin`, encrypt(Buffer.from(JSON.stringify(o))), { access: "public", contentType: "application/octet-stream", addRandomSuffix: true });
