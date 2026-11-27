@@ -120,7 +120,7 @@ kind=approval כשנדרשת החלטה של משה (כסף, רכש, מחיר, �
 
 // ---------- model call (Anthropic Messages API) ----------
 export async function callModel({ system, user, model, maxTokens = 1800 }, fetchImpl = fetch) {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = String(process.env.ANTHROPIC_API_KEY || "").trim().replace(/^["']|["']$/g, "");   // tolerate a stray space or quotes from copy-paste
   if (!key) throw Object.assign(new Error("ANTHROPIC_API_KEY לא מוגדר"), { code: "nokey" });
   const r = await fetchImpl("https://api.anthropic.com/v1/messages", { method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
