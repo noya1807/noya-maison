@@ -1257,9 +1257,7 @@ h1.brand{margin:0;line-height:1.2}
 .brand-opt{display:flex;align-items:center;gap:6px;margin:6px 8px 8px;padding:6px 9px;border:1px dashed #cfab6c;border-radius:10px;background:#fffaf0;font-size:13px;cursor:pointer;line-height:1.3}
 .brand-opt input{accent-color:#b08a4f;width:16px;height:16px;flex:none}
 .brand-opt b{margin-inline-start:auto;color:#8a6a33;white-space:nowrap}
-.agent-row{display:flex;gap:10px;align-items:flex-end;margin:4px 0 10px;padding:8px 10px;border-radius:10px;background:#f6efe3;border:1px dashed #cbb48f}
-.agent-row label{flex:1}.agent-off{border:0;background:none;color:#8a6d4c;text-decoration:underline;font-size:12.5px;cursor:pointer;padding:6px 2px}
-.agent-row[hidden]{display:none}
+.agent-row{display:block;margin:4px 0 12px}.agent-row select{display:block;width:100%;margin-top:4px}
 </style>
 </head>
 <body>
@@ -1400,10 +1398,9 @@ h1.brand{margin:0;line-height:1.2}
         <label>אימייל<input id="fEmail" type="email" autocomplete="email"></label>
         <label>ארגון / חברה *<input id="fOrg" required autocomplete="organization"></label>
       </div>
-      <div class="agent-row" id="agentRow" hidden>
-        <label>🧑‍💼 נציג מכירות<input id="fAgent" autocomplete="off" maxlength="40"></label>
-        <button type="button" class="agent-off" id="agentOff" title="המכשיר הזה לא של נציג – להסתיר את השדה">לא נציג? הסתרה</button>
-      </div>
+      <label class="agent-row" id="agentRow">איזה נציג מטפל בכם / איך הגעתם אלינו?
+        <select id="fAgent"><option value="">בחרו…</option><optgroup label="נציג מכירות"><option>משה</option><option>אפרת</option><option>ליגי</option></optgroup><optgroup label="הגעתי דרך"><option>חבר הפנה אותי</option><option>פייסבוק / אינסטגרם</option><option>גוגל</option><option>אחר</option></optgroup></select>
+      </label>
       <fieldset class="dlv">
         <legend>איך תרצו לקבל את ההזמנה? *</legend>
         <div class="dlv-opts">
@@ -3494,15 +3491,13 @@ function compLines(f){return [...[...cart].map(([id,q])=>`• ${byId[id].name}${
     ...(engSel.size?[`✨ מיתוג לוגו: ${engNames()} (+${ils(engCost())} למארז)`,!BTYPES&&f("engNotes")?`הערות למיתוג: ${f("engNotes")}`:null]:[]),
     ...(cardOn?[`💌 כרטיס ברכה ממותג 10×15 (+${ils(cardCost())} למארז)`,cardSelf?"עיצוב הכרטיס: הלקוח ישלח עיצוב מוכן בהמשך":`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[])].filter(x=>x!==null);}
 // what the private back office receives (orders, quotes and saved boxes)
-// sales agents: a personal link ?agent=<name> remembers the agent on that device; the field shows only on agent devices
+// who handles the order: a sales agent (משה / אפרת / ליגי) or how the customer found us. A personal link ?agent=<name> pre-selects the agent on that device.
 const AGENT_KEY="noya_agent";
-const curAgent=()=>{const r=document.getElementById("agentRow");return r&&!r.hidden?(document.getElementById("fAgent").value||"").trim().slice(0,40):"";};
-(()=>{try{const q=new URLSearchParams(location.search).get("agent");if(q!==null){q.trim()?localStorage.setItem(AGENT_KEY,q.trim().slice(0,40)):localStorage.removeItem(AGENT_KEY);}}catch(e){}
+const curAgent=()=>(document.getElementById("fAgent")?.value||"").trim().slice(0,40);
+(()=>{const sel=document.getElementById("fAgent");if(!sel)return;
+  try{const q=new URLSearchParams(location.search).get("agent");if(q!==null){q.trim()?localStorage.setItem(AGENT_KEY,q.trim().slice(0,40)):localStorage.removeItem(AGENT_KEY);}}catch(e){}
   let a="";try{a=localStorage.getItem(AGENT_KEY)||"";}catch(e){}
-  const row=document.getElementById("agentRow"),inp=document.getElementById("fAgent");if(!row||!inp)return;
-  if(a){row.hidden=false;inp.value=a;}
-  inp.addEventListener("change",()=>{try{inp.value.trim()?localStorage.setItem(AGENT_KEY,inp.value.trim().slice(0,40)):0;}catch(e){}});
-  document.getElementById("agentOff").onclick=()=>{try{localStorage.removeItem(AGENT_KEY);}catch(e){}inp.value="";row.hidden=true;};})();
+  if(a&&[...sel.options].some(o=>o.value===a))sel.value=a;})();
 function orderPayload(ref,via){const g=id=>($(id)&&$(id).value||"").trim();
   const one=()=>({items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost()});
   const base=BTYPES?(()=>{const types=btFilled().map(i=>withBT(i,()=>({name:BTYPES[i].name,cardImg:BTYPES[i].cardUrl||"",...one()})));
@@ -3524,7 +3519,7 @@ function buildOrder(){
   const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
   const sa=stockAlerts();
   const lines=[`הזמנת ${BTYPES?"מארזים":"מארז"} – נויה במתנה (${ref})`,"",...(sa.length?["לתשומת לב נויה במתנה:",...sa,""]:[]),
-    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,curAgent()?`🧑‍💼 נציג מכירות: ${curAgent()}`:null,giftFor?`🎁 המתנות מיועדות ל: ${giftFor}`:null,"",
+    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,curAgent()?`🧑‍💼 נציג / הגעה: ${curAgent()}`:null,giftFor?`🎁 המתנות מיועדות ל: ${giftFor}`:null,"",
     ...(isIndiv()?[dlvMode()==="vip"?`⭐ אספקה: משלוח פרטני VIP לכל מקבל (${ils(CONFIG.vipPerBox)} למארז)`:`📦 אספקה: משלוח פרטני לכל מקבל (${ils(CONFIG.indivPerBox)} למארז)`,
       `📎 קובץ כתובות: ${addrFiles.filter(x=>x.url).map(x=>`${x.name} – ${x.url}${x.count?` (${x.count} כתובות)`:""}`).join(" | ")||"יישלח בהמשך"}`]
     :dlvMode()==="ship"?["🚚 אספקה: משלוח לכתובת אחת",

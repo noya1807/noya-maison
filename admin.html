@@ -856,8 +856,11 @@ function exportCourier(list){
   downloadCsv(`משלוחים-${new Date().toISOString().slice(0,10)}.csv`,rows);toast(`יוצאו ${rows.length-1} הזמנות לקובץ`);}
 const ORD_ST={lead:["ליד – מארז שמור","st-order"],quote:["הצעת מחיר","st-order"],pending:["ממתינה לאישור","st-port"],approved:["מאושרת","st-wh"],cancelled:["בוטלה","st-order"]};
 // ---------- sales agents: who brought each order, totals and commission ----------
-const agentNames=()=>[...new Set([...(db.settings.agents||[]).map(a=>a.name),...db.orders.map(o=>o.agent).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,"he"));
-const agentPct=n=>num((db.settings.agents||[]).find(a=>a.name===n)?.pct);
+const AG_DEFAULT=["משה","אפרת","ליגי"],AG_CHANNELS=["חבר הפנה אותי","פייסבוק / אינסטגרם","גוגל","אחר"];
+const agList=()=>{if(!db.settings.agents)db.settings.agents=AG_DEFAULT.map(name=>({name,pct:0}));return db.settings.agents;};
+const isAgent=n=>agList().some(a=>a.name===n);
+const agentNames=()=>[...new Set([...agList().map(a=>a.name),...AG_CHANNELS,...db.orders.map(o=>o.agent).filter(Boolean)])];
+const agentPct=n=>num(agList().find(a=>a.name===n)?.pct);
 const agentLink=n=>`https://build.noyaglobal.com/?agent=${encodeURIComponent(n)}`;
 let agRange="month";
 function renderAgents(){
@@ -865,10 +868,13 @@ function renderAgents(){
   const R={month:[new Date(y,m,1),new Date(y,m+1,1)],prev:[new Date(y,m-1,1),new Date(y,m,1)],year:[new Date(y,0,1),new Date(y+1,0,1)],all:[new Date(0),new Date(9e15)]}[agRange];
   const inR=o=>{const d=new Date(o.approvedAt||o.createdAt);return d>=R[0]&&d<R[1];};
   const rows={};const add=(n,k,v)=>{(rows[n]??={name:n,orders:0,boxes:0,sales:0,profit:0,pending:0,quotes:0})[k]+=v;};
-  db.orders.filter(o=>inR(o)).forEach(o=>{const n=o.agent||"— ללא נציג";
+  const ch={};const addC=(n,k,v)=>{(ch[n]??={name:n,orders:0,boxes:0,sales:0,all:0})[k]+=v;};
+  db.orders.filter(o=>inR(o)&&o.status!=="cancelled"&&o.status!=="lead").forEach(o=>{const n=o.agent&&!isAgent(o.agent)?o.agent:!o.agent?"— לא צוין":"";if(!n)return;addC(n,"all",1);if(o.status==="approved"){const c=orderCalc(o);addC(n,"orders",1);addC(n,"boxes",num(o.boxes));addC(n,"sales",c.net-(c.shipAtCost?c.fixed.ship:0));}});
+  const chList=Object.values(ch).sort((a,b)=>b.all-a.all);
+  db.orders.filter(o=>inR(o)&&isAgent(o.agent)).forEach(o=>{const n=o.agent;
     if(o.status==="approved"){const c=orderCalc(o);add(n,"orders",1);add(n,"boxes",num(o.boxes));add(n,"sales",c.net-(c.shipAtCost?c.fixed.ship:0));add(n,"profit",c.profit);}
     else if(o.status==="pending")add(n,"pending",1);else if(o.status==="quote")add(n,"quotes",1);});
-  (db.settings.agents||[]).forEach(a=>rows[a.name]??={name:a.name,orders:0,boxes:0,sales:0,profit:0,pending:0,quotes:0});
+  agList().forEach(a=>rows[a.name]??={name:a.name,orders:0,boxes:0,sales:0,profit:0,pending:0,quotes:0});
   const list=Object.values(rows).sort((a,b)=>b.sales-a.sales);
   const T=list.reduce((t,r)=>({orders:t.orders+r.orders,boxes:t.boxes+r.boxes,sales:t.sales+r.sales,profit:t.profit+r.profit,com:t.com+r.sales*agentPct(r.name)/100}),{orders:0,boxes:0,sales:0,profit:0,com:0});
   const rangeLbl={month:"החודש",prev:"החודש הקודם",year:"השנה",all:"מאז ומעולם"};
@@ -880,14 +886,18 @@ function renderAgents(){
     <td class="num">${real?`<input data-pct="${esc(r.name)}" value="${pct||""}" inputmode="decimal" dir="ltr" style="width:60px;text-align:center" placeholder="0">`:""}</td><td class="num"><b>${real&&pct?money(Math.round(r.sales*pct/100)):""}</b></td><td class="num">${r.pending||""}</td><td class="num">${r.quotes||""}</td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">אין הזמנות בתקופה הזו.</td></tr>`}
   ${list.length?`<tr style="font-weight:700;background:#faf3e6"><td>סה״כ ${rangeLbl[agRange]}</td><td class="num">${T.orders}</td><td class="num">${T.boxes.toLocaleString("he-IL")}</td><td class="num">${money(Math.round(T.sales))}</td><td class="num">${money(Math.round(T.profit))}</td><td></td><td class="num">${money(Math.round(T.com))}</td><td></td><td></td></tr>`:""}
   </tbody></table></div>
+  <h2>לקוחות שהגיעו לבד – מאיפה?</h2>
+  <div class="tablewrap" style="margin-bottom:18px"><table><thead><tr><th>מקור</th><th class="num">הזמנות והצעות</th><th class="num">מאושרות</th><th class="num">מארזים</th><th class="num">מכירות לפני מע״מ</th></tr></thead><tbody>
+  ${chList.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.all}</td><td class="num">${r.orders}</td><td class="num">${r.boxes.toLocaleString("he-IL")}</td><td class="num">${money(Math.round(r.sales))}</td></tr>`).join("")||`<tr><td colspan="5" class="muted">אין בתקופה הזו.</td></tr>`}
+  </tbody></table></div>
   <h2>קישורים אישיים לנציגים</h2>
-  <div class="panel"><p class="muted" style="margin-top:0">כל נציג פותח פעם אחת את הקישור שלו בטלפון או במחשב. מאז הבונה זוכר אותו, ובטופס ההזמנה מופיע שדה "נציג מכירות" עם השם שלו. לקוחות רגילים לא רואים את השדה.</p>
-    ${(db.settings.agents||[]).map((a,i)=>`<div class="row" style="gap:8px;align-items:center;margin-bottom:6px"><b style="min-width:110px">${esc(a.name)}</b><input readonly value="${esc(agentLink(a.name))}" dir="ltr" style="flex:1;min-width:200px;font-size:12.5px" onclick="this.select()"><button class="btn sm ghost" data-agcopy="${i}">📋 העתקה</button><button class="btn sm ghost" data-agdel="${i}" title="הסרה מהרשימה (ההזמנות שלו נשארות)">✕</button></div>`).join("")||'<p class="muted">עוד אין נציגים ברשימה.</p>'}
+  <div class="panel"><p class="muted" style="margin-top:0">בטופס ההזמנה בבונה כל לקוח בוחר נציג (משה / אפרת / ליגי) או איך הגיע (חבר, פייסבוק/אינסטגרם, גוגל). נציג שפותח פעם אחת את הקישור האישי שלו – השם שלו כבר בחור אצלו בטופס. נציג חדש: מוסיפים כאן וגם צריך להוסיף אותו לרשימה בבונה (בקשו ממני).</p>
+    ${agList().map((a,i)=>`<div class="row" style="gap:8px;align-items:center;margin-bottom:6px"><b style="min-width:110px">${esc(a.name)}</b><input readonly value="${esc(agentLink(a.name))}" dir="ltr" style="flex:1;min-width:200px;font-size:12.5px" onclick="this.select()"><button class="btn sm ghost" data-agcopy="${i}">📋 העתקה</button><button class="btn sm ghost" data-agdel="${i}" title="הסרה מהרשימה (ההזמנות שלו נשארות)">✕</button></div>`).join("")||'<p class="muted">עוד אין נציגים ברשימה.</p>'}
     <div class="row" style="gap:8px;margin-top:10px"><input id="agNew" placeholder="שם הנציג (כמו שיופיע בהזמנות)" maxlength="40" style="flex:1;max-width:280px"><button class="btn sm" id="agAdd">+ הוספת נציג</button></div></div>`;
   $("#agBack").onclick=()=>{view="orders";render();};
   document.querySelectorAll("[data-ag]").forEach(b=>b.onclick=()=>{agRange=b.dataset.ag;renderAgents();});
-  document.querySelectorAll("[data-pct]").forEach(el=>el.onchange=()=>{db.settings.agents??=[];let a=db.settings.agents.find(x=>x.name===el.dataset.pct);if(!a)db.settings.agents.push(a={name:el.dataset.pct});a.pct=num(el.value)||0;touch();renderAgents();});
-  $("#agAdd").onclick=()=>{const n=$("#agNew").value.trim().slice(0,40);if(!n)return;db.settings.agents??=[];if(!db.settings.agents.some(a=>a.name===n))db.settings.agents.push({name:n,pct:0});touch();renderAgents();};
+  document.querySelectorAll("[data-pct]").forEach(el=>el.onchange=()=>{agList();let a=db.settings.agents.find(x=>x.name===el.dataset.pct);if(!a)db.settings.agents.push(a={name:el.dataset.pct});a.pct=num(el.value)||0;touch();renderAgents();});
+  $("#agAdd").onclick=()=>{const n=$("#agNew").value.trim().slice(0,40);if(!n)return;agList();if(!db.settings.agents.some(a=>a.name===n))db.settings.agents.push({name:n,pct:0});touch();renderAgents();};
   document.querySelectorAll("[data-agcopy]").forEach(b=>b.onclick=async()=>{const a=db.settings.agents[+b.dataset.agcopy];try{await navigator.clipboard.writeText(agentLink(a.name));toast("✓ הקישור הועתק");}catch(e){toast("סמנו את הקישור והעתיקו ידנית");}});
   document.querySelectorAll("[data-agdel]").forEach(b=>b.onclick=()=>{const a=db.settings.agents[+b.dataset.agdel];if(!confirm(`להסיר את ${a.name} מרשימת הנציגים? ההזמנות שלו נשארות עם השם.`))return;db.settings.agents.splice(+b.dataset.agdel,1);touch();renderAgents();});
   $("#agCsv").onclick=()=>downloadCsv(`נציגים-${rangeLbl[agRange]}-${new Date().toISOString().slice(0,10)}.csv`,[["נציג","הזמנות מאושרות","מארזים","מכירות לפני מע״מ","רווח גולמי","עמלה %","עמלה ₪","ממתינות","הצעות מחיר"],...list.map(r=>{const p=r.name.startsWith("—")?0:agentPct(r.name);return [r.name,r.orders,r.boxes,Math.round(r.sales),Math.round(r.profit),p||"",p?Math.round(r.sales*p/100):"",r.pending,r.quotes];})]);
