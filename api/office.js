@@ -125,6 +125,20 @@ async function updateAi(fn) {
   }
   throw new Error("שמירת נתוני ה-AI נכשלה, נסו שוב");
 }
+// money / key problems with the AI model → one e-mail to Moshe a day + a banner in the Command Center
+const AI_MONEY = /credit balance|too low|billing|insufficient|quota|invalid x-api-key|authentication|permission|api key|ANTHROPIC_API_KEY/i;
+async function aiAlert(errors) {
+  const bad = (errors || []).find(e => AI_MONEY.test(e)); if (!bad) return null;
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
+  const credit = /credit|too low|billing|insufficient|quota/i.test(bad);
+  const text = credit ? "נגמר הקרדיט של Claude, ולכן צוות ה-AI לא רץ. כל שאר המערכת עובדת כרגיל." : "מפתח Claude לא עובד, ולכן צוות ה-AI לא רץ. כל שאר המערכת עובדת כרגיל.";
+  const { store } = await readAi();
+  if (store.alert?.day === today) return store.alert;
+  const alert = { day: today, at: new Date().toISOString(), credit, text };
+  await updateAi(st => { st.alert = alert; return st; });
+  await notify(credit ? "⚠️ נגמר הקרדיט של צוות ה-AI" : "⚠️ מפתח Claude לא עובד", `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#3f271c"><p><b>${escH(text)}</b></p><p>${credit ? "מה לעשות: להיכנס ל-platform.claude.com ← Billing ולטעון קרדיט (או להפעיל טעינה אוטומטית). אם המנוי מחובר – הקרדיט יתחדש בתחילת החודש." : "מה לעשות: לבדוק ב-Vercel שהמפתח ANTHROPIC_API_KEY נכון ופעיל ב-platform.claude.com."}</p><p style="color:#8a7563;font-size:13px">ההודעה נשלחת פעם אחת ביום לכל היותר.</p></div>`).catch(() => {});
+  return alert;
+}
 const cronAuth = req => process.env.CRON_SECRET ? req.headers.authorization === `Bearer ${process.env.CRON_SECRET}` : /vercel-cron/i.test(req.headers["user-agent"] || "");
 
 const blobUrlOk = u => { try { const x = new URL(u); return x.protocol === "https:" && x.hostname.endsWith(".blob.vercel-storage.com") && x.pathname.startsWith("/" + DOC_PREFIX); } catch (e) { return false; } };
@@ -324,18 +338,20 @@ export default async function handler(req, res) {
     if (a === "aidaily" || a === "aiboard") {   // Vercel Cron (06:30 daily / Sunday 07:00), or the owner's "run now"
       const owner = authed(req);
       if (!cronAuth(req) && !owner) { res.status(401).json({ error: "unauthorized" }); return; }
-      if (!process.env.ANTHROPIC_API_KEY) { res.status(200).json({ ok: false, error: "ANTHROPIC_API_KEY לא מוגדר ב-Vercel" }); return; }
       const { db } = await readDb();
+      if (!process.env.ANTHROPIC_API_KEY) { if (db?.settings?.ai?.on) await aiAlert(["ANTHROPIC_API_KEY missing"]).catch(() => {}); res.status(200).json({ ok: false, error: "ANTHROPIC_API_KEY לא מוגדר ב-Vercel" }); return; }
       if (!owner && !db?.settings?.ai?.on) { res.status(200).json({ ok: true, skipped: "AI כבוי בהגדרות" }); return; }
       const { store } = await readAi();
       if (a === "aidaily") {
         const run = await AI.runDaily(db || {}, store);
-        const saved = await updateAi(s => AI.mergeDaily(s, run));
-        res.status(200).json({ ok: true, tasks: run.tasks.length, ceo: !!run.ceo, calls: run.log.calls, errors: run.log.errors, rev: saved.rev }); return;
+        const saved = await updateAi(s => { const m = AI.mergeDaily(s, run); if (!run.log.errors.length) delete m.alert; return m; });
+        const alert = await aiAlert(run.log.errors).catch(() => null);
+        res.status(200).json({ ok: true, alert: alert?.text || "", tasks: run.tasks.length, ceo: !!run.ceo, calls: run.log.calls, errors: run.log.errors, rev: saved.rev }); return;
       }
       const body = req.method === "POST" ? await readBody(req).catch(() => ({})) : {};
       const b = await AI.runBoard(db || {}, store, { topic: body.topic || "" });
       const saved = await updateAi(s => { s.board = [b.report, ...(s.board || [])].slice(0, 20); s.runs = [b.log, ...(s.runs || [])].slice(0, 60); return s; });
+      await aiAlert(b.log.errors).catch(() => null);
       res.status(200).json({ ok: true, directors: Object.keys(b.report.opinions).length, errors: b.log.errors, rev: saved.rev }); return;
     }
     if (a === "digest") {   // daily Vercel Cron (and the owner can trigger it from the admin)
