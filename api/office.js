@@ -37,7 +37,7 @@ const INBOX_DAILY = +(process.env.INBOX_DAILY_LIMIT || Infinity);
 let inboxDay = "", inboxCount = 0;
 const KEEP_VERSIONS = 30;                         // older database versions are pruned (they double as history)
 const MAX_FILE = Math.floor(4.3 * 1024 * 1024);   // Vercel function body limit is 4.5 MB
-const SESSION_HOURS = 12;
+const SESSION_HOURS = 48;   // Moshe asked for 48 h (was 12 h); the cookie stays HttpOnly + Secure + SameSite=Strict
 const COOKIE = "noya_office";
 
 const secretBase = () => process.env.OFFICE_KEY || process.env.BLOB_READ_WRITE_TOKEN || "";
