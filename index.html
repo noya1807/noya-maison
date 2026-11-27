@@ -1258,6 +1258,7 @@ h1.brand{margin:0;line-height:1.2}
 .brand-opt input{accent-color:#b08a4f;width:16px;height:16px;flex:none}
 .brand-opt b{margin-inline-start:auto;color:#8a6a33;white-space:nowrap}
 .agent-row{display:block;margin:4px 0 12px}.agent-row select{display:block;width:100%;margin-top:4px}
+.qapprove{margin:14px 0 6px;padding:12px 16px;border-radius:12px;background:#2f7d4f;color:#fff;text-align:center;display:flex;flex-direction:column;gap:3px}.qapprove b{font-size:17px}.qapprove span{font-size:12.5px;opacity:.92}
 </style>
 </head>
 <body>
@@ -3494,7 +3495,11 @@ function compLines(f){return [...[...cart].map(([id,q])=>`• ${byId[id].name}${
     ...(cardOn?[`💌 כרטיס ברכה ממותג 10×15 (+${ils(cardCost())} למארז)`,cardSelf?"עיצוב הכרטיס: הלקוח ישלח עיצוב מוכן בהמשך":`נוסח הברכה: ${f("cardText")||"נבקש הצעה לנוסח"}`]:[])].filter(x=>x!==null);}
 // what the private back office receives (orders, quotes and saved boxes)
 // who handles the order: a gift-box consultant (יועץ/ת מארזים) (משה / אפרת / ליגי) or how the customer found us. A personal link ?agent=<name> pre-selects the agent on that device.
-const AGENT_KEY="noya_agent";
+const AGENT_KEY="noya_agent",QUOTE_KEY="noya_quote";
+// the last quote this customer downloaded (or opened from the approval link in its PDF): an order sent while it is valid is linked to it
+const curQuote=()=>{try{const j=JSON.parse(localStorage.getItem(QUOTE_KEY)||"null");return j&&/^Q-[A-Z0-9-]{4,24}$/i.test(j.ref)&&Date.now()<j.until?j.ref:"";}catch(e){return "";}};
+const keepQuote=(ref,days)=>{try{localStorage.setItem(QUOTE_KEY,JSON.stringify({ref,until:Date.now()+(days||30)*864e5}));}catch(e){}};
+(()=>{try{const q=new URLSearchParams(location.search).get("q");if(q&&/^Q-[A-Z0-9-]{4,24}$/i.test(q))keepQuote(q.toUpperCase(),30);}catch(e){}})();
 const curAgent=()=>(document.getElementById("fAgent")?.value||"").trim().slice(0,40);
 (()=>{const sel=document.getElementById("fAgent");if(!sel)return;
   try{const q=new URLSearchParams(location.search).get("agent");if(q!==null){q.trim()?localStorage.setItem(AGENT_KEY,q.trim().slice(0,40)):localStorage.removeItem(AGENT_KEY);}}catch(e){}
@@ -3505,7 +3510,7 @@ function orderPayload(ref,via){const g=id=>($(id)&&$(id).value||"").trim();
   const base=BTYPES?(()=>{const types=btFilled().map(i=>withBT(i,()=>({name:BTYPES[i].name,cardImg:BTYPES[i].cardUrl||"",...one()})));
       return {items:types.flatMap(t=>t.items),pack:null,boxes:totalBoxes(),perBox:r2(orderGoods()/(totalBoxes()||1)),engrave:types.reduce((n,t)=>n+t.engrave,0),card:types.reduce((n,t)=>n+t.card,0),types,cardImg:types.find(t=>t.cardImg)?.cardImg||""};})()
     :{...one(),cardImg:orderImg.url||""};
-  return {ref,via,agent:curAgent(),customer:{name:g("fName"),phone:g("fPhone"),email:g("fEmail"),org:g("fOrg")},...base,
+  return {ref,via,agent:curAgent(),quoteRef:curQuote(),customer:{name:g("fName"),phone:g("fPhone"),email:g("fEmail"),org:g("fOrg")},...base,
     dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost()),...(dlvMode()==="ship"?{city:g("fCity"),street:g("fStreet"),addrNote:g("fAddrNote"),
       rcvName:$("rcvSame").checked?g("fName"):g("fRcvName"),rcvPhone:$("rcvSame").checked?g("fPhone"):g("fRcvPhone")}:{}),files:addrFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url,count:x.count||0}))},
     lateKey:lateKey||(lateKey=Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10)),engraveFiles:engFiles.filter(x=>x.url).map(x=>({name:x.name,url:x.url})),
@@ -3521,7 +3526,7 @@ function buildOrder(){
   const f=id=>$(id).value.trim(), date=f("fDate")?new Date(f("fDate")).toLocaleDateString("he-IL"):"";
   const sa=stockAlerts();
   const lines=[`הזמנת ${BTYPES?"מארזים":"מארז"} – נויה במתנה (${ref})`,"",...(sa.length?["לתשומת לב נויה במתנה:",...sa,""]:[]),
-    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,curAgent()?`🧑‍💼 יועץ/ת מארזים / הגעה: ${curAgent()}`:null,giftFor?`🎁 המתנות מיועדות ל: ${giftFor}`:null,"",
+    `שם: ${f("fName")}`,`טלפון: ${f("fPhone")}`,f("fEmail")?`מייל: ${f("fEmail")}`:null,f("fOrg")?`ארגון: ${f("fOrg")}`:null,curAgent()?`🧑‍💼 יועץ/ת מארזים / הגעה: ${curAgent()}`:null,curQuote()?`📝 לפי הצעת מחיר: ${curQuote()}`:null,giftFor?`🎁 המתנות מיועדות ל: ${giftFor}`:null,"",
     ...(isIndiv()?[dlvMode()==="vip"?`⭐ אספקה: משלוח פרטני VIP לכל מקבל (${ils(CONFIG.vipPerBox)} למארז)`:`📦 אספקה: משלוח פרטני לכל מקבל (${ils(CONFIG.indivPerBox)} למארז)`,
       `📎 קובץ כתובות: ${addrFiles.filter(x=>x.url).map(x=>`${x.name} – ${x.url}${x.count?` (${x.count} כתובות)`:""}`).join(" | ")||"יישלח בהמשך"}`]
     :dlvMode()==="ship"?["🚚 אספקה: משלוח לכתובת אחת",
@@ -3549,7 +3554,7 @@ async function send(kind){
   if(isIndiv()&&addrFiles.some(f=>!f.url&&!f.err)){showToast("רגע, קובץ הכתובות עדיין עולה…");return;}
   const o=buildOrder();orderText=o.text;lastSend=kind;
   // copy of the order for the private back office (profit, stock). Fire-and-forget: never blocks or changes the customer flow.
-  try{fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({...orderPayload(o.ref,kind),text:o.text})}).catch(()=>{});}catch(e){}
+  try{fetch(window.NOYA_INBOX_ENDPOINT||"api/office?a=inbox",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({...orderPayload(o.ref,kind),text:o.text})}).then(r=>{if(r.ok)setTimeout(()=>{try{localStorage.removeItem(QUOTE_KEY);}catch(e){}},60000);}).catch(()=>{});}catch(e){}
   let href;
   if(kind==="wa") href=`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(o.text)}`;
   else if(CONFIG.orderEmail) href=`mailto:${CONFIG.orderEmail}?subject=${encodeURIComponent("הזמנת מארז "+o.ref)}&body=${encodeURIComponent(o.text)}`;
@@ -3628,6 +3633,7 @@ function quoteHTML(q,img){
     <div class="qbody">${img?`<div class="qimg"><img src="${img}" alt=""></div>`:""}
       <table><thead><tr><th>פריט במארז</th><th class="n">כמות</th><th class="n">מחיר</th><th class="n">סה"כ</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
     <div class="qtot">${tot}</div>
+    ${q.approve?`<div class="qapprove"><b>✅ מאשרים את ההצעה? לחצו כאן להזמנה</b><span>המארז ייפתח מוכן בטופס ההזמנה · או השיבו לנו בוואטסאפ 054-3219070</span></div>`:""}
     <div class="qnotes"><div>• המחירים בטבלה לפני מע"מ. ההצעה כפופה לאישור סופי של יועץ/ת המארזים של נויה במתנה.</div>
       <div>• מינימום הזמנה: ${ils(CONFIG.minOrder)}. מיתוג ולוגו בתוספת, לפי הבחירה.</div>
       <div>• ההצעה בתוקף ל-${QUOTE_DAYS} ימים, בכפוף למלאי.</div></div>
@@ -3657,6 +3663,10 @@ async function makeQuotePdf(client){
   const d=new Date(),u=new Date(d.getTime()+QUOTE_DAYS*864e5),fmt=x=>x.toLocaleDateString("he-IL");
   const q={client,ref:"Q-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase(),date:fmt(d),until:fmt(u)};
   const img=await imgAsData($("sumImg").src);let box;
+  // approval link: opens this exact box in the builder at the order form; the order is linked to this quote
+  q.approve="";if(shareAvailable){try{const u=await Promise.race([(async()=>shareLink(multiOn()?await multiCard():await boxCard(currentBoxImage()),"order"))(),new Promise((_,j)=>setTimeout(()=>j(new Error("slow")),9000))]);
+    const id=(String(u).match(/\/s\/([a-z0-9]{6,24})/)||[])[1];if(id)q.approve=`${location.origin}/?box=${id}&go=sum&q=${q.ref}`;}catch(e){}}
+  keepQuote(q.ref,QUOTE_DAYS);
   try{
     box=document.createElement("div");box.className="qdoc";box.innerHTML=quoteHTML(q,img);document.body.appendChild(box);
     await document.fonts?.ready;if(img)await new Promise(r=>{const i=box.querySelector("img");if(!i||i.complete)r();else{i.onload=i.onerror=r;}});
@@ -3665,7 +3675,9 @@ async function makeQuotePdf(client){
     for(let y=0,pg=0;y<cv.height;y+=pxPerPage,pg++){
       const h=Math.min(pxPerPage,cv.height-y),c=document.createElement("canvas");c.width=cv.width;c.height=h;
       const g=c.getContext("2d");g.fillStyle="#fffaf3";g.fillRect(0,0,c.width,h);g.drawImage(cv,0,y,cv.width,h,0,0,cv.width,h);
-      if(pg)pdf.addPage();pdf.addImage(c.toDataURL("image/jpeg",.9),"JPEG",0,0,W,h*W/cv.width);}
+      if(pg)pdf.addPage();pdf.addImage(c.toDataURL("image/jpeg",.9),"JPEG",0,0,W,h*W/cv.width);
+      const ab=box.querySelector(".qapprove");if(ab&&q.approve){const br=box.getBoundingClientRect(),r=ab.getBoundingClientRect(),k=cv.width/br.width,top=(r.top-br.top)*k;
+        if(top>=y&&top<y+h)pdf.link((r.left-br.left)*k*W/cv.width,(top-y)*W/cv.width,r.width*k*W/cv.width,r.height*k*W/cv.width,{url:q.approve});}}
     q.name=`הצעת-מחיר-נויה-במתנה-${q.ref}.pdf`;q.pdf=pdf;q.blob=pdf.output("blob");return q;
   }finally{box&&box.remove();}
 }
@@ -3688,14 +3700,14 @@ $("qmMake").onclick=async()=>{
       customer:{name:q.client.name,phone:q.client.phone,email:q.client.email,org:q.client.org},items:[...cart].map(([id,n])=>[id,byId[id].name,n,+byId[id].price||0]),
       pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost(),
       dlv:{mode:dlvMode(),name:dlvName(),rate:dlvRate(),total:withVat(shipCost())},total:withVat(grandTotal()),totalNet:grandTotal(),
-      notes:q.url?`קובץ ההצעה: ${q.url}`:"",text:`הצעת מחיר ${q.ref} (הלקוח הוריד מהבונה)\nבתוקף עד ${q.until}${q.url?`\nקובץ: ${q.url}`:""}`})}).catch(()=>{});}catch(e){}});
+      notes:q.url?`קובץ ההצעה: ${q.url}`:"",link:q.approve||"",text:`הצעת מחיר ${q.ref} (הלקוח הוריד מהבונה)\nבתוקף עד ${q.until}${q.url?`\nקובץ: ${q.url}`:""}${q.approve?`\nקישור אישור להזמנה: ${q.approve}`:""}`})}).catch(()=>{});}catch(e){}});
   }catch(e){showToast("לא הצלחנו להכין את הקובץ. נסו שוב, או שלחו לנו את ההזמנה ונשלח הצעת מחיר.");}
   finally{btn.disabled=false;btn.textContent=old;}
 };
 async function quoteMsg(){const q=lastQuote;if(!q)return "";
   if(q.upload)await Promise.race([q.upload,new Promise(r=>setTimeout(r,8000))]);
   return [`הצעת מחיר ${q.ref} – נויה במתנה`,`עבור: ${q.client.org}`,`${boxes} מארזים · ${money(orderPer())} למארז (לפני מע"מ)`,unpriced()?`סה"כ: בהצעת מחיר`:`סה"כ: ${ils(grandTotal())} לפני מע"מ · ${ils(withVat(grandTotal()))} כולל מע"מ`,`בתוקף עד ${q.until}`,"",
-    q.url?`לצפייה והורדה של ההצעה:\n${q.url}`:"(קובץ ההצעה מצורף)"].join("\n");}
+    q.url?`לצפייה והורדה של ההצעה:\n${q.url}`:"(קובץ ההצעה מצורף)",q.approve?`\n✅ לאישור ההצעה ולהזמנה:\n${q.approve}`:""].filter(Boolean).join("\n");}
 $("qmWa").onclick=async()=>{const w=window.open("","_blank");const t=await quoteMsg();const u=`https://wa.me/?text=${encodeURIComponent(t)}`;if(w)w.location.href=u;else location.href=u;};
 $("qmMail").onclick=async()=>{const t=await quoteMsg();location.href=`mailto:?cc=${encodeURIComponent(CONFIG.orderEmail||"")}&subject=${encodeURIComponent(`הצעת מחיר ${lastQuote.ref} – נויה במתנה`)}&body=${encodeURIComponent(t)}`;};
 $("qmShare").onclick=async()=>{const q=lastQuote;if(!q)return;try{await navigator.share({files:[q.file],title:`הצעת מחיר ${q.ref}`,text:`הצעת מחיר ${q.ref} – נויה במתנה`});}catch(e){}};
