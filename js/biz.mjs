@@ -48,6 +48,12 @@ export function shipPayments(s) {
   return { rows, open, left: open.reduce((t, r) => t + r.amount, 0), ok: c.ok };
 }
 
+// landed cost per SKU, averaged over containers with full data (same as skuCosts() in admin.html)
+export function skuCosts(db) {
+  const acc = {};
+  (db.shipments || []).forEach(s => { const c = shipCalc(JSON.parse(JSON.stringify(s))); if (!c.ok) return; c.lines.forEach(l => { if (!l.sku || !l.landed) return; const o = acc[l.sku] ??= { q: 0, v: 0 }; o.q += num(l.qty); o.v += l.landed * num(l.qty); }); });
+  return Object.fromEntries(Object.entries(acc).map(([k, o]) => [k, o.q ? o.v / o.q : 0]));
+}
 // ---------- stock (same as admin.html) ----------
 export function stockAll(db) {
   const m = {}; const o = k => m[k] ??= { received: 0, consumed: 0, reserved: 0, adj: 0, transit: 0, eta: "" };

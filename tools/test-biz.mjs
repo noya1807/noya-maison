@@ -15,9 +15,9 @@ function grab(start) {
   if (start.startsWith("function")) { let d = 0, j = admin.indexOf("{", i); for (; j < admin.length; j++) { if (admin[j] === "{") d++; else if (admin[j] === "}" && --d === 0) break; } return admin.slice(i, j + 1); }
   return admin.slice(i, admin.indexOf("\n", i));
 }
-const code = ["const num=", "const money=", "const COSTS=", "const costMethod=", "function normShip", "const lineCur=", "const rateOf=", "const shipCurs=", "function shipCalc", "function shipPayments", "function stockAll"].map(grab).join("\n");
+const code = ["function skuCosts", "const num=", "const money=", "const COSTS=", "const costMethod=", "function normShip", "const lineCur=", "const rateOf=", "const shipCurs=", "function shipCalc", "function shipPayments", "function stockAll"].map(grab).join("\n");
 const ctx = vm.createContext({ db: null });
-vm.runInContext(code + "\nthis.A={shipCalc,shipPayments,stockAll};", ctx);
+vm.runInContext(code + "\nthis.A={shipCalc,shipPayments,stockAll,skuCosts};", ctx);
 const A = ctx.A;
 
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -46,6 +46,7 @@ for (const s of sample.shipments) {
 }
 ctx.db = clone(sample);
 assert.deepEqual(B.stockAll(clone(sample)), JSON.parse(JSON.stringify(vm.runInContext("A.stockAll()", ctx))), "stockAll differs"); n++;
+assert.deepEqual(B.skuCosts(clone(sample)), JSON.parse(JSON.stringify(vm.runInContext("A.skuCosts()", ctx))), "skuCosts differs"); n++;
 
 // forecast sanity: money in, money out, balance
 const db = clone(sample);

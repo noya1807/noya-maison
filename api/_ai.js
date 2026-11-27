@@ -8,7 +8,7 @@
 // tools/test-ai.mjs checks these rules on every push.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { num, isoDay, addDays, stockAll, shipCalc, shipPayments, cashForecast, receivables, salesBetween } from "../js/biz.mjs";
+import { num, isoDay, addDays, stockAll, shipCalc, shipPayments, cashForecast, receivables, salesBetween, skuCosts } from "../js/biz.mjs";
 
 export const MANAGERS = [
   { id: "finance", name: "מנהל כספים ותזרים" },
@@ -43,7 +43,7 @@ const orgOf = o => clip(o.customer?.org || o.customer?.name || "", 60);   // com
 export function snapshot(db, today = isoDay(new Date())) {
   db = db || {}; const orders = db.orders || [], products = db.products || [], ships = db.shipments || [];
   const pName = Object.fromEntries(products.map(p => [p.sku, clip(p.name, 60)]));
-  const S = stockAll(db), F = cashForecast(db, { today });
+  const S = stockAll(db), F = cashForecast(db, { today }), LC = skuCosts(db);
   const monthStart = today.slice(0, 8) + "01", prevStart = addDays(monthStart, -1).slice(0, 8) + "01", prevEnd = addDays(monthStart, -1);
   const lyFrom = addDays(today, -365), lyTo = addDays(today, -365 + 60);
   // sales velocity: units per sku in approved orders of the last 60 days
@@ -85,7 +85,7 @@ export function snapshot(db, today = isoDay(new Date())) {
       note: "אין חיבור לנתוני פרסום (Google/Meta). הערוץ נקבע לפי מה שהלקוח או היועץ בחרו בטופס.",
     },
     product: {
-      items: products.filter(p => !p.hidden).map(p => ({ sku: p.sku, name: pName[p.sku], salePrice: num(p.salePrice), landedCost: +num(p.landedCost).toFixed(2), sold60d: r0(vel[p.sku]), available: r0(S[p.sku]?.available) })).slice(0, 160),
+      items: products.filter(p => !p.hidden).map(p => ({ sku: p.sku, name: pName[p.sku], salePrice: num(p.salePrice), landedCost: +(LC[p.sku] || num(p.landedCost)).toFixed(2), margin: num(p.salePrice) > 0 && (LC[p.sku] || num(p.landedCost)) > 0 ? +((num(p.salePrice) - (LC[p.sku] || num(p.landedCost))) / num(p.salePrice)).toFixed(3) : null, sold60d: r0(vel[p.sku]), available: r0(S[p.sku]?.available) })).slice(0, 160),
     },
     ops: {
       byStage: ["engrave", "packing", "ready"].map(st => ({ stage: st, orders: orders.filter(o => ful(o) === st).length, boxes: orders.filter(o => ful(o) === st).reduce((t, o) => t + num(o.boxes), 0) })),
