@@ -698,7 +698,7 @@ fieldset.dlv.bad .dlv-opts .dlv-opt{border-color:#c0392b}
 .slot.win .bulbs i{animation-duration:.22s}
 .slot-reels{display:flex;direction:rtl;gap:7px;background:#1f130d;padding:7px;border-radius:12px;box-shadow:inset 0 3px 12px rgba(0,0,0,.65)}
 .reel-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
-.reel-win{position:relative;width:100%;height:calc(var(--ch,100px)*1.25);overflow:hidden;border-radius:8px;background:#fffaf3;isolation:isolate;transform:translateZ(0)}
+.reel-win{position:relative;width:100%;height:calc(var(--ch,100px)*1.25);overflow:hidden;border-radius:8px;background:#fffaf3;isolation:isolate}
 .reel-win::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(31,19,13,.8),rgba(31,19,13,0) 24%,rgba(255,255,255,.16) 46%,rgba(31,19,13,0) 74%,rgba(31,19,13,.8))}
 .reel-col.held .reel-win{box-shadow:0 0 0 3px #d62d1f}
 .reel-col.stop .reel-win{animation:reelShake .25s ease}@keyframes reelShake{40%{transform:translateY(2px)}}
@@ -2328,16 +2328,17 @@ function surSpin(){if(sur.busy)return;const pick=surPick();if(!pick){showToast(s
   const cols=[...reels.querySelectorAll(".reel-col")];let order=0,todo=0,done=0;
   const tick=setInterval(sTick,70);
   const live=cols.map((c,k)=>k).filter(k=>!sur.held.has(k)),cand=live.length>1?live.filter(k=>k!==sur.lastTense):live,lastK=cand[(Math.random()*cand.length)|0],slot2=slot;sur.lastTense=lastK;
-  // iPhone app (WebKit): a new <img> swapped into a layer that was just animated can stay black → decode first, swap, then repaint the layer
-  const finishCol=async(col,k)=>{const strip=col.querySelector(".strip"),item=pick.jackpot?"7":pick.items[k];
-    if(item!=="7"){const im=new Image();im.src=surImg(item);try{await Promise.race([im.decode(),new Promise(r=>setTimeout(r,600))]);}catch(e){}}
-    strip.getAnimations().forEach(a=>a.cancel());strip.innerHTML=cellHTML(item);strip.style.transform="";
-    const w=col.querySelector(".reel-win");w.style.transform="translateZ(1px)";void w.offsetHeight;requestAnimationFrame(()=>{w.style.transform="";});
-    const ni=strip.querySelector("img");if(ni&&!ni.complete)ni.addEventListener("load",()=>{w.style.opacity=".999";requestAnimationFrame(()=>w.style.opacity="");},{once:true});
+  // phone apps: swapping a fresh <img> in at the stop sometimes painted a black tile → keep the strip that already shows the product (it was visible while rolling), just freeze it there
+  const finishCol=(col,k)=>{const strip=col.querySelector(".strip"),item=pick.jackpot?"7":pick.items[k];
+    strip.getAnimations().forEach(a=>{try{a.commitStyles();}catch(e){}a.cancel();});
+    const imgs=strip.querySelectorAll(".cell"),tgt=imgs[1];   // cells: [extra, target, …]; the strip rests with the target in the window
+    if(!tgt||pick.jackpot){strip.innerHTML=cellHTML(item);strip.style.transform="";}
+    else{const ti=tgt.querySelector("img");if(ti&&(!ti.complete||!ti.naturalWidth)){const src=ti.getAttribute("src");ti.removeAttribute("src");ti.setAttribute("src",src);}}
+    setTimeout(()=>{if(!col.isConnected)return;const ti=strip.querySelectorAll(".cell")[1]?.querySelector("img");if(ti&&!ti.naturalWidth){const src=ti.getAttribute("src");ti.removeAttribute("src");ti.setAttribute("src",src);}},700);
     col.querySelector(".reel-name").textContent=pick.jackpot?"":pick.items[k].name;if(++done===todo)surWin(pick,tick);};
   // warm up the final images while the reels roll
   if(!pick.jackpot)pick.items.forEach(it=>{if(it&&it!=="7"){const im=new Image();im.src=surImg(it);im.decode?.().catch(()=>{});}});
-  cols.forEach((col,k)=>{if(sur.held.has(k)){const st=col.querySelector(".strip"),it=sur.cur[k];if(st&&it){st.innerHTML=cellHTML(it);}return;}todo++;
+  cols.forEach((col,k)=>{if(sur.held.has(k)){const st=col.querySelector(".strip"),it=sur.cur[k];if(st&&it){st.getAnimations().forEach(x=>x.cancel());st.innerHTML=cellHTML(it);st.style.transform="";}return;}todo++;
     // ---- the LAST reel keeps rolling alone, slows down item by item, almost stops… and lands (tension!)
     if(!reduce&&k===lastK){const ord=live.length-1,K=5,strip=col.querySelector(".strip");col.querySelector(".reel-name").textContent="";
       const cells=[rnd(),pick.items[k],...Array.from({length:(matchMedia("(pointer:coarse)").matches?10+ord*4:16+ord*6)+K},rnd),sur.cur[k]||rnd()];
