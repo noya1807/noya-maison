@@ -61,3 +61,11 @@ assert.equal(f.weeks.flatMap(w => w.items).filter(i => i.label === "שכירות
 assert.equal(Math.round(f.weeks.at(-1).balance), Math.round(50000 + f.totalIn - f.totalOut));
 n += 5;
 console.log(`✓ biz.mjs matches admin.html (${n} checks)`);
+
+// extra expected income (debts from sales outside the builder) lands in the forecast
+{ const d2 = JSON.parse(JSON.stringify(db)); d2.incomes = [{ id: "i1", name: "עירייה", amount: 90000, date: "2026-12-20" }, { id: "i2", name: "באיחור", amount: 5000, date: "2026-11-01" }, { id: "i3", name: "כבוי", amount: 999, date: "2026-12-20", off: true }];
+  const g = B.cashForecast(d2, { today: "2026-12-01", days: 90 });
+  assert.equal(Math.round(g.totalIn), 10000 + 95000);
+  assert.ok(g.weeks[0].items.some(i => i.label === "באיחור" && i.late));
+  assert.equal(g.extraIn.length, 2);
+  console.log("✓ expected incomes included in the forecast"); }

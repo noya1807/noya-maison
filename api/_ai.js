@@ -59,6 +59,7 @@ export function snapshot(db, today = isoDay(new Date())) {
       overdue: F.overdue.map(r => ({ order: r.id, ref: r.ref, org: clip(r.who, 60), amount: r0(r.amount), daysLate: daysBetween(r.due, today) })).slice(0, 30),
       upcomingOut: F.weeks.slice(0, 5).flatMap(w => w.items.filter(i => i.kind === "out").map(i => ({ what: clip(i.label, 80), amount: r0(i.amount), due: i.due, ship: i.ship || null }))).slice(0, 30),
       unscheduledOut: F.noDate.map(i => ({ what: clip(i.label, 80), amount: r0(i.amount), ship: i.ship })).slice(0, 20),
+      expectedIncome: F.extraIn.map(x => ({ from: clip(x.name, 60), amount: r0(x.amount), due: x.due, late: x.late })).slice(0, 40),   // debts from sales made outside the builder, entered by Moshe
       pipeline: r0(F.pipeline),
       thisMonth: salesBetween(db, monthStart, today), lastMonth: salesBetween(db, prevStart, prevEnd),
       expenses: (db.expenses || []).filter(e => !e.off).map(e => ({ name: clip(e.name, 40), amount: r0(e.amount), every: e.every })),

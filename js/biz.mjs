@@ -114,13 +114,16 @@ export function cashForecast(db, { today, days = 90 } = {}) {
   const wk = d => { if (!d || d < today) return weeks[0]; return weeks.find(w => d >= w.from && d <= w.to) || null; };
   const rec = receivables(db, today);
   rec.forEach(r => { const w = wk(r.due); if (w) { w.in += r.amount; w.items.push({ kind: "in", label: r.who, ref: r.ref, amount: r.amount, due: r.due, late: r.late }); } });
+  // expected income that is not an order in this system (db.incomes: {id,name,amount,date,off}) — e.g. debts from earlier sales
+  const extraIn = (db.incomes || []).filter(x => !x.off && num(x.amount) > 0);
+  extraIn.forEach(x => { const d = dayOf(x.date) || today, w = wk(d); if (w) { w.in += num(x.amount); w.items.push({ kind: "in", label: x.name || "הכנסה צפויה", amount: num(x.amount), due: d, late: d < today, income: x.id }); } });
   const noDate = [];
   (db.shipments || []).forEach(s => { const P = shipPayments(s); P.open.forEach(p => { const item = { kind: "out", label: `${s.name || "מכולה"} · ${p.label}`, amount: p.amount, due: p.due, ship: s.id };
     if (!p.due) { noDate.push(item); return; } const w = wk(p.due); if (w) { w.out += p.amount; w.items.push(item); } }); });
   (db.expenses || []).forEach(e => expenseDates(e, today, end).forEach(d => { const w = wk(d); if (w) { w.out += num(e.amount); w.items.push({ kind: "out", label: e.name || "הוצאה", amount: num(e.amount), due: d, expense: e.id }); } }));
   const start = num(db.settings?.cashStart?.amount); let bal = start, low = null;
   weeks.forEach(w => { w.net = w.in - w.out; bal += w.net; w.balance = bal; if (!low || bal < low.balance) low = { from: w.from, balance: bal }; });
-  return { today, end, weeks, start, hasStart: !!db.settings?.cashStart, totalIn: weeks.reduce((t, w) => t + w.in, 0), totalOut: weeks.reduce((t, w) => t + w.out, 0), lowest: low, noDate, overdue: rec.filter(r => r.late), pipeline: pipeline(db) };
+  return { today, end, weeks, start, hasStart: !!db.settings?.cashStart, totalIn: weeks.reduce((t, w) => t + w.in, 0), totalOut: weeks.reduce((t, w) => t + w.out, 0), lowest: low, noDate, overdue: rec.filter(r => r.late), extraIn: extraIn.map(x => ({ id: x.id, name: x.name || "", amount: num(x.amount), due: dayOf(x.date) || today, late: (dayOf(x.date) || today) < today })), pipeline: pipeline(db) };
 }
 
 // ---------- sales and profit for a period (approved orders, frozen calculation at approval) ----------
