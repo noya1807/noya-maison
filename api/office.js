@@ -224,6 +224,8 @@ const saveJack = s => put(JACK_CUR, JSON.stringify({ meals: s.meals, wins: s.win
 // personal company links (?c=code): name + logo + consultant, readable by the builder (no personal data)
 const CLIENTS_CUR = "public/clients/list.json";
 async function readClients() { const host = blobHost(); if (!host) return []; try { const r = await fetch(host + CLIENTS_CUR + "?t=" + Math.floor(Date.now() / 30000), { cache: "no-store" }); if (r.ok) return (await r.json()).list || []; } catch (e) {} return []; }
+const MAP_CUR = "public/map/cities.json";   // where boxes were delivered: { city: count } (no names of customers)
+async function readMap() { const host = blobHost(); if (!host) return null; try { const r = await fetch(host + MAP_CUR + "?t=" + Math.floor(Date.now() / 60000), { cache: "no-store" }); if (r.ok) return await r.json(); } catch (e) {} return null; }
 // holiday countdown bar: name, date, order deadline, production capacity → % of places left (from the orders in the database)
 let seasonCache = { at: 0, v: null };
 async function readShowcase() {
@@ -340,6 +342,7 @@ export default async function handler(req, res) {
       if (!it) { res.status(404).json({ error: "not found" }); return; }
       res.status(200).json({ code: it.code, name: it.name, logo: it.logo || "", agent: it.agent || "" }); return;
     }
+    if (a === "map" && req.method === "GET") { const m = await readMap(); res.setHeader("Cache-Control", "public, max-age=300"); res.status(200).json(m || { cities: {} }); return; }
     if (a === "season" && req.method === "GET") {   // public: holiday countdown bar
       if (Date.now() - seasonCache.at > 60e3) {
         const { db } = await readDb(); const se = db?.settings?.season || null; let v = null;
@@ -384,6 +387,12 @@ export default async function handler(req, res) {
     if (a === "me") { res.status(200).json({ ok: true }); return; }
     if (a === "jackpots" && req.method === "GET") { res.status(200).json({ ...(await readJack()), mail: !!process.env.RESEND_API_KEY }); return; }
     if (a === "notifytest" && req.method === "POST") { const r = await jackMail({ at: new Date().toISOString() }, true); res.status(r.ok ? 200 : 400).json(r); return; }
+    if (a === "mapdata" && req.method === "POST") {   // owner only: delivered cities (counts only)
+      const b = await readBody(req) || {}; const cities = {};
+      Object.entries(b.cities || {}).slice(0, 2000).forEach(([k, v]) => { const n = String(k).slice(0, 40).trim(); if (n && +v > 0) cities[n] = Math.round(+v); });
+      await put(MAP_CUR, JSON.stringify({ cities, updatedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 300 });
+      res.status(200).json({ ok: true, count: Object.keys(cities).length }); return;
+    }
     if (a === "clients" && req.method === "POST") {   // owner only: save the personal links list
       const b = await readBody(req) || {};
       const list = (Array.isArray(b.list) ? b.list : []).slice(0, 500).map(x => ({ code: String(x.code || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30), name: String(x.name || "").slice(0, 80), logo: /^https:\/\//.test(x.logo || "") ? String(x.logo).slice(0, 400) : "", agent: String(x.agent || "").slice(0, 40), off: !!x.off, at: x.at || new Date().toISOString() })).filter(x => x.code && x.name);
