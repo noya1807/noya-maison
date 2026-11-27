@@ -1277,6 +1277,9 @@ h1.brand{margin:0;line-height:1.2}
 .il-land{fill:#efe2cf;stroke:#c9a465;stroke-width:1.2}.il-dot{fill:#d4a24c;fill-opacity:.85;stroke:#fff;stroke-width:1;transform-box:fill-box;transform-origin:center;animation:ilPop .6s cubic-bezier(.3,1.6,.5,1) both}
 @keyframes ilPop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
 .il-dot-s{fill-opacity:.6}
+.il-wrap{position:relative}.il-dot{cursor:pointer;transition:r .15s}.il-dot.on{fill:#b8862f;fill-opacity:1;stroke:#3f271c;stroke-width:1.5}
+.il-tip{position:absolute;transform:translate(-50%,calc(-100% - 10px));background:#3f271c;color:#fff7e6;border-radius:10px;padding:6px 10px;font-size:14px;line-height:1.3;white-space:nowrap;pointer-events:none;z-index:2;display:flex;flex-direction:column;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.il-tip small{font-size:11.5px;opacity:.8}.il-tip::after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:#3f271c;border-bottom:0}
 .il-top{list-style:none;margin:0;padding:0;text-align:right;font-size:13.5px;line-height:1.9;color:#5b3d2e;min-width:96px}.il-top li::before{content:"● ";color:#d4a24c}
 .map-btn{border:1px solid #d8bf94;background:#fffaf0;color:#5b3d2e;border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;margin-inline-start:6px}
 @media (max-width:480px){.il-top{display:none}.il-svg{height:64vh}}
@@ -3579,22 +3582,27 @@ const ilNorm=c=>{let x=String(c||"").replace(/["'״׳()]/g,"").replace(/[-–]/g
   if(IL_C[x])return x;const hit=Object.keys(IL_C).filter(k=>x.includes(k)).sort((a,b)=>b.length-a.length)[0];return hit||x;};
 const ilXY=([lon,lat])=>{const r=Math.PI/180;return [IL_MAP.s*lon*r+IL_MAP.tx,IL_MAP.ty-IL_MAP.s*Math.log(Math.tan(Math.PI/4+lat*r/2))];};
 async function openMap(){let m=$("ilMapModal");if(!m){m=document.createElement("div");m.id="ilMapModal";m.className="il-modal";document.body.appendChild(m);}
-  m.innerHTML=`<div class="il-card" role="dialog" aria-label="לאן שלחנו מארזים"><button class="il-x" aria-label="סגירה">✕</button><h3>📍 לאן שלחנו מארזים</h3><p class="il-sub" id="ilSub">טוען…</p><div class="il-wrap"><svg viewBox="0 0 ${IL_MAP.W} ${IL_MAP.H}" class="il-svg" aria-hidden="true"><path d="${IL_MAP.d}" class="il-land"/><g id="ilDots"></g></svg><ol class="il-top" id="ilTop"></ol></div></div>`;
+  m.innerHTML=`<div class="il-card" role="dialog" aria-label="לאן שלחנו מארזים"><button class="il-x" aria-label="סגירה">✕</button><h3>📍 לאן שלחנו מארזים</h3><p class="il-sub" id="ilSub">טוען…</p><div class="il-wrap"><svg viewBox="0 0 ${IL_MAP.W} ${IL_MAP.H}" class="il-svg" aria-hidden="true"><path d="${IL_MAP.d}" class="il-land"/><g id="ilDots"></g></svg><div class="il-tip" id="ilTip" hidden></div><ol class="il-top" id="ilTop"></ol></div></div>`;
   m.hidden=false;m.querySelector(".il-x").onclick=()=>m.hidden=true;m.onclick=e=>{if(e.target===m)m.hidden=true;};
   let j={cities:{}};try{j=await (await fetch("/api/office?a=map")).json();}catch(e){}
   const agg={};Object.entries(j.cities||{}).forEach(([k,v])=>{const n=ilNorm(k);if(IL_C[n])agg[n]=(agg[n]||0)+v;});
   const list=Object.entries(agg).sort((a,b)=>b[1]-a[1]),mx=list[0]?.[1]||1;
-  $("ilDots").innerHTML=list.map(([n,v],i)=>{const [x,y]=ilXY(IL_C[n]);const r=3+9*Math.sqrt(v/mx);return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" class="il-dot" style="animation-delay:${(i*0.06).toFixed(2)}s"><title>${esc(n)}</title></circle>`;}).join("");
+  $("ilDots").innerHTML=list.map(([n,v],i)=>{const [x,y]=ilXY(IL_C[n]);const r=3+9*Math.sqrt(v/mx);return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" class="il-dot" data-n="${esc(n)}" style="animation-delay:${(i*0.06).toFixed(2)}s"></circle>`;}).join("");
   // the remaining places we delivered to (the headline number) are drawn as small unnamed dots, spread over the populated areas (fixed pattern, same every time)
   const extra=Math.max(0,(+j.places||0)-list.length);if(extra){const svg=m.querySelector(".il-svg"),land=svg.querySelector(".il-land");let seed=7,pts=[],tries=0;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
     const pt=svg.createSVGPoint?svg.createSVGPoint():null;
     while(pts.length<extra&&tries<20000){tries++;const x=rnd()*IL_MAP.W,y=rnd()*IL_MAP.H;const keep=y<300?1:y<420?.35:y<560?.1:.25;if(rnd()>keep)continue;
       let inside=true;if(pt&&land.isPointInFill){pt.x=x;pt.y=y;inside=land.isPointInFill(pt);}if(!inside)continue;
       if(pts.some(([a,b])=>(a-x)**2+(b-y)**2<36))continue;pts.push([x,y]);}
-    $("ilDots").insertAdjacentHTML("afterbegin",pts.map(([x,y],i)=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" class="il-dot il-dot-s" style="animation-delay:${(0.4+i*0.012).toFixed(2)}s"/>`).join(""));}
+    $("ilDots").insertAdjacentHTML("afterbegin",pts.map(([x,y],i)=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" class="il-dot il-dot-s" data-n="" style="animation-delay:${(0.4+i*0.012).toFixed(2)}s"/>`).join(""));}
   const boxes=(+document.getElementById("boxesSold")?.dataset?.to||48767).toLocaleString("he-IL"),orgs=(+document.getElementById("orgsCount")?.dataset?.to||606).toLocaleString("he-IL");
   const places=Math.max(list.length,+j.places||0);
   $("ilSub").innerHTML=`<b>${boxes}+</b> מארזים · <b>${orgs}+</b> ארגונים · <b>${places}+</b> ערים, יישובים וקיבוצים<br>מגבול הלבנון ועד אילת`;
+  // name of the place on hover (mouse) or tap (phone)
+  const wrap=m.querySelector(".il-wrap"),tip=$("ilTip");
+  const show=(c,ev)=>{const n=c.dataset.n;tip.innerHTML=n?`📍 <b>${n}</b><small>שלחנו לכאן מארזים</small>`:`📍 <b>עוד יישוב</b><small>שהגענו אליו עם מארזים</small>`;tip.hidden=false;
+    const wr=wrap.getBoundingClientRect(),cr=c.getBoundingClientRect();tip.style.left=(cr.left+cr.width/2-wr.left)+"px";tip.style.top=(cr.top-wr.top)+"px";m.querySelectorAll(".il-dot.on").forEach(x=>x.classList.remove("on"));c.classList.add("on");};
+  m.querySelectorAll(".il-dot").forEach(c=>{c.addEventListener("mouseenter",e=>show(c,e));c.addEventListener("click",e=>{e.stopPropagation();show(c,e);});c.addEventListener("mouseleave",()=>{tip.hidden=true;c.classList.remove("on");});});
   $("ilTop").innerHTML=list.slice(0,8).map(([n])=>`<li>${esc(n)}</li>`).join("");}
 function orderPayload(ref,via){const g=id=>($(id)&&$(id).value||"").trim();
   const one=()=>({items:[...cart].map(([id,q])=>[id,byId[id].name,q,+byId[id].price||0]),pack:pack.none?null:{id:pack.id,name:pack.name,price:packCharge(),listPrice:+pack.price||0,free:packIsFree(pack)},boxes,perBox:orderPer(),engrave:engCost(),card:cardCost()});
