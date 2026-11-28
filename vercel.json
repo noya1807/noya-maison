@@ -32,6 +32,25 @@
           "value": "no-store"
         }
       ]
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "cat"
+        }
+      ],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        },
+        {
+          "key": "Link",
+          "value": "<https://build.noyaglobal.com/>; rel=\"canonical\""
+        }
+      ]
     }
   ],
   "crons": [
