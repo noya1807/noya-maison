@@ -380,7 +380,8 @@ export default async function handler(req, res) {
         ${n ? d.G.map(x => `<p style="margin:14px 0 4px"><b>${x.icon} ${x.title} (${x.items.length})</b></p><ul style="margin:0;padding-inline-start:18px">${x.items.slice(0, 30).map(i => `<li>${i}</li>`).join("")}</ul>`).join("") : "<p>✅ שום דבר לא תקוע.</p>"}
         <p style="margin-top:16px"><a href="https://build.noyaglobal.com/admin" style="background:#7a5230;color:#fff;padding:9px 16px;border-radius:8px;text-decoration:none">פתיחת ממשק הניהול</a></p>
         <p style="color:#8a7563;font-size:12.5px">חוסרי מלאי מופיעים בממשק עצמו (לוח בקרה ← דורש טיפול היום).</p></div>`;
-      const r = await notify(`☀️ דורש טיפול היום: ${n} פריטים${blobs.length ? ` · ${blobs.length} חדשים מהבונה` : ""}`, html);
+      const aiN = (aiHtml.match(/<li>/g) || []).length;
+      const r = await notify(`☀️ ${aiN ? `${aiN} החלטות מהמנכ״ל · ` : ""}דורש טיפול היום: ${n} פריטים${blobs.length ? ` · ${blobs.length} חדשים מהבונה` : ""}`, html);
       res.status(200).json({ ok: r.ok, sent: r.ok, items: n, error: r.error }); return;
     }
     if (a === "track" && req.method === "GET") {   // public: the customer's personal order page (order number + private key from the order)
