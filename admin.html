@@ -809,6 +809,9 @@ async function loadJack(){const el=$("#jpBox");if(!el)return;
     el.querySelectorAll("[data-jd]").forEach(b=>b.onclick=async()=>{if(!await askC("לסמן שהעברת 21 ארוחות חמות ל\"האור של אורי\"? המונה באתר יעלה ב-21."))return;b.disabled=true;try{await api("jackpotdone",{method:"POST",body:{id:b.dataset.jd}});toast("✓ נרשם. המונה באתר יתעדכן תוך דקה");loadJack();}catch(e){toast(e.message);b.disabled=false;}});
     $("#jpTest")&&($("#jpTest").onclick=async()=>{const b=$("#jpTest");b.disabled=true;try{await api("notifytest",{method:"POST"});toast("נשלח מייל בדיקה ✓ בדוק את תיבת הדואר");}catch(e){toast("המייל לא נשלח: "+e.message,6000);}b.disabled=false;});
     el.querySelectorAll("[data-jx]").forEach(b=>b.onclick=async()=>{if(b.dataset.shown&&!await askC("למחוק את ה-777 הזה? הוא לא ייספר לתרומה, ומכונת המזל תוכל להוציא 777 חדש השבוע."))return;b.disabled=true;try{await api("jackpotdel",{method:"POST",body:{id:b.dataset.jx}});loadJack();}catch(e){toast(e.message);b.disabled=false;}});
+    try{const sh=await fetch("/api/office?a=share").then(r=>r.json());const ks=Object.keys(sh.months||{}).sort().reverse().slice(0,4);
+      el.insertAdjacentHTML("beforeend",`<div style="margin-top:10px;padding-top:8px;border-top:1px solid #eee"><b>📲 שיתופים בסטורי מהבונה (₪18 לארוחה)</b> · החודש: <b>${num(sh.month)}</b> מתוך ${num(sh.cap)} = <b>₪${num(sh.month*18)}</b> להעברה · סה״כ מאז ההתחלה: ${num(sh.total)} ארוחות`
+        +(ks.length?`<div class="muted" style="margin-top:4px">${ks.map(k=>`${k.slice(5)}/${k.slice(0,4)}: ${num(sh.months[k])} ארוחות (₪${num(sh.months[k]*18)})`).join(" · ")}</div>`:"")+`</div>`);}catch(e){}
   }catch(e){el.hidden=true;}}
 function orderFromBuilder(o){
   const boxes=Math.max(1,num(o.boxes)||1);

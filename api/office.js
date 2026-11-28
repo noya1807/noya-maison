@@ -18,6 +18,7 @@
 // PUT  ?a=showcase {list}            → saves that list (owner only)
 // POST ?a=showcaseimg {image}        → stores one showcase photo (dataURL, JPEG) → {url}
 // GET  ?a=jackpot                    → PUBLIC: meals donated through the slot machine (777) → {meals, perWin}
+// GET/POST ?a=share                → PUBLIC: story shares from the builder (₪18 meal each, monthly cap SHARE_CAP=100, one per IP a day)
 // POST ?a=spin                       → PUBLIC: the server decides if this pull is a 777 (1 in 777, at most one per week) → {jackpot, id}
 // POST ?a=spinshown {id} | spinvoid {id} → PUBLIC: the builder showed it / could not show it in time
 // GET  ?a=jackpots                   → owner: all 777s; POST ?a=jackpotdone {id} → donation sent (+21 meals); POST ?a=jackpotdel {id}
@@ -214,6 +215,16 @@ async function readJack() {
   if (host) { try { const r = await fetch(host + JACK_CUR + "?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); return { meals: +j.meals || 0, wins: Array.isArray(j.wins) ? j.wins : [] }; } } catch (e) {} }
   return { meals: 0, wins: [] };
 }
+// ---- story shares from the builder → Noya donates ₪18 (one hot meal) to "האור של אורי" per share, up to SHARE_CAP a month (the owner pays it monthly by the counter)
+const SHARE_CUR = "public/share/state.json", SHARE_CAP = +(process.env.SHARE_CAP || 100);
+let shareDay = "", shareIp = new Set();
+const ilMonth = () => new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 7);
+async function readShare() {
+  const host = blobHost();
+  if (host) { try { const r = await fetch(host + SHARE_CUR + "?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); return { total: +j.total || 0, months: j.months && typeof j.months === "object" ? j.months : {} }; } } catch (e) {} }
+  return { total: 0, months: {} };
+}
+const shareOut = s => { const m = +s.months[ilMonth()] || 0; return { total: s.total, month: m, cap: SHARE_CAP, left: Math.max(0, SHARE_CAP - m), months: s.months }; };
 // e-mail alert to the owner (Resend). Needs RESEND_API_KEY in Vercel; NOTIFY_EMAIL / NOTIFY_FROM are optional.
 async function notify(subject, html) {
   const key = process.env.RESEND_API_KEY; if (!key) return { ok: false, error: "no key" };
@@ -429,6 +440,22 @@ export default async function handler(req, res) {
     if (a === "jackpot" && req.method === "GET") {
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
       const s = await readJack(); res.status(200).json({ meals: s.meals, perWin: JACK_MEALS }); return;
+    }
+    if (a === "share" && req.method === "GET") {
+      res.setHeader("Cache-Control", "no-store");
+      res.status(200).json(shareOut(await readShare())); return;
+    }
+    if (a === "share" && req.method === "POST") {
+      const today = new Date().toISOString().slice(0, 10);
+      if (today !== shareDay) { shareDay = today; shareIp = new Set(); }
+      const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "?";
+      const s = await readShare(), k = ilMonth();
+      if (shareIp.has(ip)) { res.status(200).json({ ...shareOut(s), counted: false }); return; }
+      shareIp.add(ip);
+      if ((+s.months[k] || 0) >= SHARE_CAP) { res.status(200).json({ ...shareOut(s), counted: false, full: true }); return; }
+      s.months[k] = (+s.months[k] || 0) + 1; s.total++;
+      await put(SHARE_CUR, JSON.stringify({ total: s.total, months: s.months, savedAt: new Date().toISOString() }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
+      res.status(200).json({ ...shareOut(s), counted: true }); return;
     }
     if (a === "spin" && req.method === "POST") {
       const today = new Date().toISOString().slice(0, 10);
